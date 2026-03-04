@@ -29,13 +29,13 @@ TronRental provides a REST API for renting TRON energy and bandwidth. Reduce you
 All API requests use the following base URL:
 
 ```
-https://tronrental.com/api/v1
+https://api.tronrental.com/v1
 ```
 
 ### Quick example
 
 ```bash
-curl -X POST https://tronrental.com/api/v1/energy/buy \
+curl -X POST https://api.tronrental.com/v1/energy/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -43,6 +43,17 @@ curl -X POST https://tronrental.com/api/v1/energy/buy \
     "energy_amount": 65000,
     "duration_hours": 1
   }'
+```
+
+```json Response
+{
+  "order_id": 12345,
+  "address": "TYourTronAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
 ```
 
 ## Next steps

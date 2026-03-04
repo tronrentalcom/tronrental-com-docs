@@ -33,6 +33,20 @@ Returns available preset package sizes, pricing, and limits.
 ### Example
 
 ```bash
-curl https://tronrental.com/api/v1/transfer-packages/tiers \
+curl https://api.tronrental.com/v1/transfer-packages/tiers \
   -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tiers": [
+    { "size": 100, "price_trx": "270.00" },
+    { "size": 500, "price_trx": "1350.00" },
+    { "size": 1000, "price_trx": "2700.00" }
+  ],
+  "single_transfer_price": "2.70",
+  "bw_fee_per_transfer": "0.30",
+  "min_custom_size": 1,
+  "max_custom_size": 10000
+}
 ```

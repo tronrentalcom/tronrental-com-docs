@@ -40,6 +40,61 @@ Configure a webhook URL to receive real-time HTTP POST notifications when events
 - Must respond with `2xx` status within 10 seconds
 - Failed deliveries are retried up to 3 times with exponential backoff
 
+### Verifying webhook signatures
+
+Every webhook request includes an `X-Webhook-Signature` header containing an HMAC-SHA256 signature. Use this to verify that the request is from TronRental.
+
+The signature is computed over the raw request body using your webhook secret (returned when you [configure your webhook](/api-reference/webhooks/configure)).
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+
+def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(
+        secret.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+# In your webhook handler:
+# payload = request.body  (raw bytes)
+# signature = request.headers["X-Webhook-Signature"]
+# secret = "whsec_abc123..."  (from configure response)
+# if not verify_webhook(payload, signature, secret):
+#     return Response(status_code=401)
+```
+
+```javascript JavaScript
+const crypto = require("crypto");
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+
+// In your webhook handler:
+// const payload = req.rawBody;  // raw request body string
+// const signature = req.headers["x-webhook-signature"];
+// const secret = "whsec_abc123...";
+// if (!verifyWebhook(payload, signature, secret)) {
+//   return res.status(401).send("Invalid signature");
+// }
+```
+</CodeGroup>
+
+<Warning>
+  Always verify the signature before processing webhook data. Use constant-time comparison (`hmac.compare_digest` / `crypto.timingSafeEqual`) to prevent timing attacks.
+</Warning>
+
 <Warning>
   Webhook URLs cannot point to `localhost`, `127.0.0.1`, or other private addresses.
 </Warning>

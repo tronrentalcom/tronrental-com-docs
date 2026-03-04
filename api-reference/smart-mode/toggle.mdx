@@ -21,6 +21,17 @@ Returns the updated subscription object with new `status`.
 ### Example
 
 ```bash
-curl -X POST https://tronrental.com/api/v1/smart-mode/42/toggle \
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
   -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "paused",
+  "bw_guarantee": true,
+  "created_at": "2026-03-05T12:00:00Z"
+}
 ```

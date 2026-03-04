@@ -10,7 +10,7 @@ Sign up and create an API key at [tronrental.com/dashboard/api](https://tronrent
 ## 2. Check prices
 
 ```bash
-curl https://tronrental.com/api/v1/prices
+curl https://api.tronrental.com/v1/prices
 ```
 
 ```json
@@ -28,7 +28,7 @@ curl https://tronrental.com/api/v1/prices
 Check your deposit address:
 
 ```bash
-curl https://tronrental.com/api/v1/account/deposit \
+curl https://api.tronrental.com/v1/account/deposit \
   -H "X-API-Key: your_api_key"
 ```
 
@@ -37,7 +37,7 @@ Send TRX or USDT to the returned `deposit_address`. Deposits are credited automa
 ## 4. Buy energy
 
 ```bash
-curl -X POST https://tronrental.com/api/v1/energy/buy \
+curl -X POST https://api.tronrental.com/v1/energy/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -65,7 +65,7 @@ The energy will be delegated to the target address within seconds.
 Check your order status:
 
 ```bash
-curl https://tronrental.com/api/v1/orders \
+curl https://api.tronrental.com/v1/orders \
   -H "X-API-Key: your_api_key"
 ```
 
@@ -81,7 +81,7 @@ curl https://tronrental.com/api/v1/orders \
 import requests
 
 API_KEY = "your_api_key"
-BASE = "https://tronrental.com/api/v1"
+BASE = "https://api.tronrental.com/v1"
 headers = {"X-API-Key": API_KEY}
 
 # Buy energy
@@ -95,7 +95,7 @@ print(resp.json())
 
 ```javascript JavaScript
 const API_KEY = "your_api_key";
-const BASE = "https://tronrental.com/api/v1";
+const BASE = "https://api.tronrental.com/v1";
 
 const res = await fetch(`${BASE}/energy/buy`, {
   method: "POST",

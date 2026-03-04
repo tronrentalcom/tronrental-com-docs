@@ -57,7 +57,7 @@ Creates a payment invoice that generates a unique deposit address. When payment 
 ### Example
 
 ```bash
-curl -X POST https://tronrental.com/api/v1/invoices \
+curl -X POST https://api.tronrental.com/v1/invoices \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -65,6 +65,20 @@ curl -X POST https://tronrental.com/api/v1/invoices \
     "transfer_count": 1,
     "duration_hours": 1
   }'
+```
+
+```json Response
+{
+  "invoice_id": 789,
+  "payment_address": "TPaymentAddress...",
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "price_usdt": "0.64",
+  "status": "pending",
+  "expires_at": "2026-03-05T12:30:00Z"
+}
 ```
 
 <Info>

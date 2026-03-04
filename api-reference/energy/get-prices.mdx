@@ -44,21 +44,25 @@ Returns current market prices for energy and bandwidth.
 
 <CodeGroup>
 ```bash cURL
-curl https://tronrental.com/api/v1/prices
+curl https://api.tronrental.com/v1/prices
 ```
 
 ```python Python
 import requests
-resp = requests.get("https://tronrental.com/api/v1/prices")
+resp = requests.get("https://api.tronrental.com/v1/prices")
 print(resp.json())
 ```
 
 ```javascript JavaScript
-const resp = await fetch("https://tronrental.com/api/v1/prices");
+const resp = await fetch("https://api.tronrental.com/v1/prices");
 const data = await resp.json();
 console.log(data);
 ```
 </CodeGroup>
+
+<Info>
+  Response values below are examples. Actual prices update in real-time based on market conditions.
+</Info>
 
 ```json Response
 {

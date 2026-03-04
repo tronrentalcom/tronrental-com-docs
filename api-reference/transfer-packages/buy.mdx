@@ -29,7 +29,7 @@ Returns the created package object with `id`, `address`, `remaining_transfers`, 
 ### Example
 
 ```bash
-curl -X POST https://tronrental.com/api/v1/transfer-packages/buy \
+curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -37,6 +37,19 @@ curl -X POST https://tronrental.com/api/v1/transfer-packages/buy \
     "size": 500,
     "bw_guarantee": true
   }'
+```
+
+```json Response
+{
+  "id": 101,
+  "address": "TYourAddress...",
+  "total_transfers": 500,
+  "remaining_transfers": 500,
+  "bw_guarantee": true,
+  "price_trx": "1350.00",
+  "status": "active",
+  "created_at": "2026-03-05T12:00:00Z"
+}
 ```
 
 <Info>

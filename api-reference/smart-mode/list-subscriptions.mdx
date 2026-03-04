@@ -39,6 +39,27 @@ Array of subscription objects:
 ### Example
 
 ```bash
-curl https://tronrental.com/api/v1/smart-mode/subscriptions \
+curl https://api.tronrental.com/v1/smart-mode/subscriptions \
   -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 42,
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "status": "active",
+    "bw_guarantee": true,
+    "created_at": "2026-03-05T12:00:00Z"
+  },
+  {
+    "id": 43,
+    "address": "TAnotherAddress...",
+    "label": null,
+    "status": "paused",
+    "bw_guarantee": false,
+    "created_at": "2026-03-04T10:00:00Z"
+  }
+]
 ```
