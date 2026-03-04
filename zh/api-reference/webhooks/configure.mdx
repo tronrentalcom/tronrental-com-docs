@@ -1,0 +1,35 @@
+---
+title: 配置 Webhook
+api: POST /api/v1/webhooks/configure
+description: "设置您的 Webhook URL"
+---
+
+## 配置 Webhook
+
+设置或更新您的 Webhook URL。每个账户仅支持一个 URL。
+
+### 请求体
+
+<ParamField body="url" type="string" required>
+  HTTPS Webhook URL
+</ParamField>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/webhooks/configure \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
+```
+
+```json Response
+{
+  "url": "https://yourserver.com/webhook/tronrental",
+  "secret": "whsec_abc123...",
+  "active": true,
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+要删除 Webhook，请发送空 URL 或在控制面板中删除。

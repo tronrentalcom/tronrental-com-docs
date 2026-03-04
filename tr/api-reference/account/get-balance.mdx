@@ -1,0 +1,28 @@
+---
+title: Bakiye Al
+api: GET /api/v1/account/balance
+description: "Hesap bakiyenizi alin"
+---
+
+## Bakiye Al
+
+Guncel TRX bakiyenizi dondurur.
+
+### Yanit
+
+<ResponseField name="balance_trx" type="string">
+  TRX cinsinden hesap bakiyesi (ondalik dize)
+</ResponseField>
+
+### Ornek
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "balance_trx": "156.50"
+}
+```

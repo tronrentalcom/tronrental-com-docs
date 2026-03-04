@@ -1,0 +1,39 @@
+---
+title: Akilli Mod Genel Bakis
+description: "Her USDT transferi icin otomatik enerji"
+---
+
+## Akilli Mod
+
+Akilli Mod, izlenen bir adresten yapilan her giden USDT transferi icin otomatik olarak enerji saglar. Manuel API cagrisi gerekmez — sadece etkinlestirin ve transfer yapin.
+
+### Nasil calisir
+
+1. Bir TRON adresi icin Akilli Mod'u **etkinlestirin**
+2. Bu adres her USDT gonderdiginde, enerji **otomatik olarak devredilir**
+3. Gunluk abonelik ucreti + transfer basina ucret bakiyenizden dusulur
+4. Bakiye tukenirse abonelik duraklatilir (silinmez)
+
+### Fiyatlandirma
+
+| Ucret | Tutar |
+|-----|--------|
+| Gunluk abonelik | 3,0 TRX/gun |
+| USDT transfer basina | 2,7 TRX x carpan |
+| BW Garantisi (istege bagli) | +0,3 TRX/transfer |
+
+Transfer carpani, halihazirda USDT bulunan adresler icin `1` (65K enerji) ve ilk kez alici olanlar icin `2` (131K enerji) seklindedir.
+
+<Tip>
+  **BW Garantisi** (varsayilan olarak etkin), islemin bant genisligi maliyetini karsilamak icin 350 bant genisligi devreder.
+  Bu olmadan, gonderenin ~0,35 TRX degerinde bant genisligi veya donmus TRX'e ihtiyaci vardir.
+</Tip>
+
+<Info>
+  Yukaridaki fiyatlar varsayilandir. Gercek oranlarinizi kontrol etmek icin [`GET /smart-mode/fees`](/api-reference/smart-mode/get-fees) kullanin — ozel fiyatlandirma uygulanabilir.
+</Info>
+
+### Sinirlar
+
+- Hesap basina en fazla 5 aktif abonelik
+- Yuksek hacimli kullanicilar icin ozel fiyatlandirma mevcuttur (destek ile iletisime gecin)

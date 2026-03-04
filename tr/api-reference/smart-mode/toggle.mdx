@@ -1,0 +1,37 @@
+---
+title: Aboneligi Degistir
+api: POST /api/v1/smart-mode/{subscription_id}/toggle
+description: "Bir Akilli Mod aboneligini duraklatma veya devam ettirme"
+---
+
+## Aboneligi Degistir
+
+Aktif bir aboneligi duraklatir veya duraklatilmis bir aboneligi devam ettirir. Duraklatilmis durumdayken ucret alinmaz ve transferler izlenmez.
+
+### Yol parametreleri
+
+<ParamField path="subscription_id" type="number" required>
+  Abonelik kimlik numarasi
+</ParamField>
+
+### Yanit
+
+Yeni `status` ile guncellenmis abonelik nesnesini dondurur.
+
+### Ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "paused",
+  "bw_guarantee": true,
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```

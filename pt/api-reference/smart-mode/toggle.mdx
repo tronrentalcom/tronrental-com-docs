@@ -1,0 +1,37 @@
+---
+title: Alternar Assinatura
+api: POST /api/v1/smart-mode/{subscription_id}/toggle
+description: "Pausar ou retomar uma assinatura do Smart Mode"
+---
+
+## Alternar Assinatura
+
+Pausa uma assinatura ativa ou retoma uma pausada. Enquanto pausada, nenhuma taxa é cobrada e as transferências não são monitoradas.
+
+### Parâmetros de caminho
+
+<ParamField path="subscription_id" type="number" required>
+  ID da assinatura
+</ParamField>
+
+### Resposta
+
+Retorna o objeto da assinatura atualizado com o novo `status`.
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "paused",
+  "bw_guarantee": true,
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```

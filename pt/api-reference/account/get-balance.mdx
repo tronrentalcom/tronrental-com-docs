@@ -1,0 +1,28 @@
+---
+title: Consultar Saldo
+api: GET /api/v1/account/balance
+description: "Obter o saldo da sua conta"
+---
+
+## Consultar Saldo
+
+Retorna o seu saldo atual em TRX.
+
+### Resposta
+
+<ResponseField name="balance_trx" type="string">
+  Saldo da conta em TRX (string decimal)
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "balance_trx": "156.50"
+}
+```

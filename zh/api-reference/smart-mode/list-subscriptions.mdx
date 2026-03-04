@@ -1,0 +1,65 @@
+---
+title: 订阅列表
+api: GET /api/v1/smart-mode/subscriptions
+description: "列出您的活跃智能模式订阅"
+---
+
+## 订阅列表
+
+返回所有活跃和暂停的智能模式订阅。已停用的订阅不会包含在内。
+
+### 响应
+
+订阅对象数组：
+
+<ResponseField name="id" type="number">
+  订阅 ID
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  被监控的 TRON 地址
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  可选标签
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` 或 `paused`
+</ResponseField>
+
+<ResponseField name="bw_guarantee" type="boolean">
+  是否启用带宽保障
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 时间戳
+</ResponseField>
+
+### 示例
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/subscriptions \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 42,
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "status": "active",
+    "bw_guarantee": true,
+    "created_at": "2026-03-05T12:00:00Z"
+  },
+  {
+    "id": 43,
+    "address": "TAnotherAddress...",
+    "label": null,
+    "status": "paused",
+    "bw_guarantee": false,
+    "created_at": "2026-03-04T10:00:00Z"
+  }
+]
+```

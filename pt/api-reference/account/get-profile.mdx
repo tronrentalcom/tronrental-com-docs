@@ -1,0 +1,53 @@
+---
+title: Consultar Perfil
+api: GET /api/v1/account/profile
+description: "Obter o perfil da sua conta"
+---
+
+## Consultar Perfil
+
+Retorna as informações do perfil da sua conta.
+
+### Resposta
+
+<ResponseField name="id" type="number">
+  ID do usuário
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Endereço de e-mail (se definido)
+</ResponseField>
+
+<ResponseField name="tron_address" type="string">
+  Endereço TRON vinculado (se definido)
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  Saldo da conta em TRX
+</ResponseField>
+
+<ResponseField name="totp_enabled" type="boolean">
+  Se o 2FA está ativado
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Timestamp de criação da conta
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl https://api.tronrental.com/v1/account/profile \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 1,
+  "email": "user@example.com",
+  "tron_address": "TYourAddress...",
+  "balance_trx": "150.50",
+  "totp_enabled": false,
+  "created_at": "2026-01-15T10:00:00Z"
+}
+```

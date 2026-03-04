@@ -1,0 +1,38 @@
+---
+title: Obtener tarifas
+api: GET /api/v1/smart-mode/fees
+description: "Obtener precios actuales de Smart Mode"
+---
+
+## Obtener tarifas de Smart Mode
+
+Devuelve los precios actuales de Smart Mode para tu cuenta. Si tienes precios personalizados configurados, devuelve tus tarifas personalizadas.
+
+### Respuesta
+
+<ResponseField name="subscription_fee_trx" type="string">
+  Tarifa de suscripcion diaria en TRX
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  Tarifa por transferencia en TRX
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string">
+  Tarifa de Garantia de BW por transferencia en TRX
+</ResponseField>
+
+### Ejemplo
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/fees \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "bw_fee_trx": "0.3"
+}
+```

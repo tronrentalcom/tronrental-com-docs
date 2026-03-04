@@ -1,0 +1,85 @@
+---
+title: Cekimler
+description: "Hesabinizdan TRX cekin"
+---
+
+## Cekim Olustur
+
+<div>
+  `POST /api/v1/account/withdrawal`
+</div>
+
+Herhangi bir TRON adresine TRX ceker. Ucret: 1 TRX.
+
+### Istek govdesi
+
+<ParamField body="to_address" type="string" required>
+  Hedef TRON adresi
+</ParamField>
+
+<ParamField body="amount_trx" type="string" required>
+  TRX cinsinden cekilecek miktar
+</ParamField>
+
+<ParamField body="totp_code" type="string">
+  2FA kodu (2FA etkinse)
+</ParamField>
+
+### Ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/account/withdrawal \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to_address": "TDestinationAddress...",
+    "amount_trx": "100"
+  }'
+```
+
+```json Response
+{
+  "id": 56,
+  "to_address": "TDestinationAddress...",
+  "amount_trx": "100.00",
+  "fee_trx": "1.00",
+  "status": "completed",
+  "tx_hash": "a1b2c3d4e5f6...",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+## Cekimleri Listele
+
+<div>
+  `GET /api/v1/account/withdrawals`
+</div>
+
+Cekim gecmisinizi dondurur.
+
+```bash
+curl https://api.tronrental.com/v1/account/withdrawals \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 56,
+    "to_address": "TDestinationAddress...",
+    "amount_trx": "100.00",
+    "fee_trx": "1.00",
+    "status": "completed",
+    "tx_hash": "a1b2c3d4e5f6...",
+    "created_at": "2026-03-05T12:00:00Z"
+  }
+]
+```
+
+### Cekim durumlari
+
+| Durum | Aciklama |
+|--------|-------------|
+| `pending` | Isleme alinmak uzere siraya alindi |
+| `completed` | TRX gonderildi, tx_hash mevcut |
+| `failed` | Basarisiz oldu, tutar iade edildi |

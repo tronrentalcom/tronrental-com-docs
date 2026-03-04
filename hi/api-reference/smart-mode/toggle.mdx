@@ -1,0 +1,37 @@
+---
+title: सब्सक्रिप्शन टॉगल करें
+api: POST /api/v1/smart-mode/{subscription_id}/toggle
+description: "Smart Mode सब्सक्रिप्शन को रोकें या फिर से शुरू करें"
+---
+
+## सब्सक्रिप्शन टॉगल करें
+
+सक्रिय सब्सक्रिप्शन को रोकता है या रोके गए को फिर से शुरू करता है। रोके जाने पर, कोई शुल्क नहीं लिया जाता और ट्रांसफर मॉनिटर नहीं किए जाते।
+
+### पथ पैरामीटर
+
+<ParamField path="subscription_id" type="number" required>
+  सब्सक्रिप्शन ID
+</ParamField>
+
+### रिस्पॉन्स
+
+नए `status` के साथ अपडेटेड सब्सक्रिप्शन ऑब्जेक्ट लौटाता है।
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "paused",
+  "bw_guarantee": true,
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```

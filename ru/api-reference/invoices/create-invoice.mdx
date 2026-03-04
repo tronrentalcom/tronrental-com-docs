@@ -1,0 +1,87 @@
+---
+title: Создать инвойс
+api: POST /api/v1/invoices
+description: "Создание платёжного инвойса для делегирования энергии"
+---
+
+## Создать инвойс
+
+Создаёт платёжный инвойс, генерирующий уникальный адрес для оплаты. При получении платежа (TRX или USDT) энергия автоматически делегируется на целевой адрес.
+
+**Полезно для интеграций, где конечные пользователи платят напрямую** — баланс аккаунта не требуется.
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Целевой адрес TRON для получения энергии
+</ParamField>
+
+<ParamField body="energy_amount" type="number">
+  Количество энергии (32 000 – 5 000 000). Используйте это ИЛИ `transfer_count`.
+</ParamField>
+
+<ParamField body="transfer_count" type="number">
+  Количество переводов USDT (1 – 100). Каждый перевод = 65 000 энергии.
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Длительность аренды (1 или 24 часа)
+</ParamField>
+
+### Ответ
+
+<ResponseField name="invoice_id" type="number">
+  Уникальный идентификатор инвойса
+</ResponseField>
+
+<ResponseField name="payment_address" type="string">
+  Уникальный адрес для оплаты — отправьте TRX или USDT сюда
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Цена в TRX
+</ResponseField>
+
+<ResponseField name="price_usdt" type="string">
+  Цена в USDT
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Статус инвойса: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ResponseField>
+
+<ResponseField name="expires_at" type="string">
+  Время истечения в формате ISO 8601
+</ResponseField>
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/invoices \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "transfer_count": 1,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "invoice_id": 789,
+  "payment_address": "TPaymentAddress...",
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "price_usdt": "0.64",
+  "status": "pending",
+  "expires_at": "2026-03-05T12:30:00Z"
+}
+```
+
+<Info>
+  Инвойсы истекают через 30 минут, если оплата не получена.
+  Принимаются платежи как в TRX, так и в USDT на сгенерированный адрес.
+</Info>

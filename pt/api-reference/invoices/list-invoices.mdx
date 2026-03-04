@@ -1,0 +1,51 @@
+---
+title: Listar Faturas
+api: GET /api/v1/invoices/my
+description: "Listar suas faturas com filtragem opcional"
+---
+
+## Listar Faturas
+
+Retorna uma lista paginada das suas faturas.
+
+### Parâmetros de consulta
+
+<ParamField query="page" type="number" default="1">
+  Número da página
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filtrar por status: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ParamField>
+
+### Resposta
+
+Retorna um objeto paginado com array `invoices` e contagem `total`.
+
+### Exemplo
+
+```bash
+curl "https://api.tronrental.com/v1/invoices/my?page=1&status=delegated" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "invoices": [
+    {
+      "invoice_id": 789,
+      "payment_address": "TPaymentAddress...",
+      "address": "TRecipientAddress...",
+      "energy_amount": 65000,
+      "duration_hours": 1,
+      "price_trx": "2.75",
+      "price_usdt": "0.64",
+      "status": "delegated",
+      "created_at": "2026-03-05T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pages": 1
+}
+```

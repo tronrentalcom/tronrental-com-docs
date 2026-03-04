@@ -1,0 +1,77 @@
+---
+title: Fiyatlari Al
+api: GET /api/v1/prices
+description: "Guncel enerji ve bant genisligi fiyatlarini alin"
+---
+
+## Fiyatlari Al
+
+Enerji ve bant genisligi icin guncel piyasa fiyatlarini dondurur.
+
+**Bu uc nokta herkese aciktir — kimlik dogrulama gerektirmez.**
+
+### Yanit
+
+<ResponseField name="energy_price_sun" type="number">
+  Birim basina SUN cinsinden guncel enerji fiyati
+</ResponseField>
+
+<ResponseField name="energy_price_1k_trx" type="string">
+  1.000 enerji birimi icin TRX cinsinden fiyat
+</ResponseField>
+
+<ResponseField name="bw_price_1k_trx" type="string">
+  1.000 bant genisligi birimi icin TRX cinsinden fiyat
+</ResponseField>
+
+<ResponseField name="trx_usd_rate" type="string">
+  Guncel TRX/USD doviz kuru
+</ResponseField>
+
+<ResponseField name="burn_sun_per_energy" type="number">
+  Ag yakma orani — enerji birimi basina SUN (su anda 100)
+</ResponseField>
+
+<ResponseField name="min_energy" type="number">
+  Siparis basina minimum enerji miktari
+</ResponseField>
+
+<ResponseField name="max_energy" type="number">
+  Siparis basina maksimum enerji miktari
+</ResponseField>
+
+### Ornek
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  Asagidaki yanit degerleri ornektir. Gercek fiyatlar piyasa kosullarina gore gercek zamanli olarak guncellenir.
+</Info>
+
+```json Response
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100,
+  "min_energy": 32000,
+  "max_energy": 5000000
+}
+```

@@ -1,0 +1,58 @@
+---
+title: Etkinlestir
+api: POST /api/v1/smart-mode/activate
+description: "Bir TRON adresi icin Akilli Mod'u etkinlestirin"
+---
+
+## Akilli Mod'u Etkinlestir
+
+Belirtilen adres icin otomatik enerji teslimini baslatir. Ilk gunluk ucret hemen tahsil edilir.
+
+### Istek govdesi
+
+<ParamField body="address" type="string" required>
+  Izlenecek TRON adresi
+</ParamField>
+
+<ParamField body="label" type="string">
+  Bu abonelik icin istege bagli etiket
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  BW Garantisini etkinlestir (transfer basina +0,3 TRX)
+</ParamField>
+
+### Yanit
+
+`id`, `address`, `status` ve ucret detaylarini iceren olusturulan abonelik nesnesini dondurur.
+
+### Ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "active",
+  "bw_guarantee": true,
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Warning>
+  Adres ayni anda aktif bir Transfer Paketine sahip olamaz.
+  Akilli Mod ve Transfer Paketleri adres basina birbirini dislar.
+</Warning>

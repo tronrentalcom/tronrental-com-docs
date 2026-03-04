@@ -1,0 +1,65 @@
+---
+title: Список подписок
+api: GET /api/v1/smart-mode/subscriptions
+description: "Список ваших активных подписок Smart Mode"
+---
+
+## Список подписок
+
+Возвращает все активные и приостановленные подписки Smart Mode. Деактивированные подписки не включаются.
+
+### Ответ
+
+Массив объектов подписок:
+
+<ResponseField name="id" type="number">
+  ID подписки
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Отслеживаемый адрес TRON
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  Необязательная метка
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` или `paused`
+</ResponseField>
+
+<ResponseField name="bw_guarantee" type="boolean">
+  Включена ли BW Guarantee
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Временная метка в формате ISO 8601
+</ResponseField>
+
+### Пример
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/subscriptions \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 42,
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "status": "active",
+    "bw_guarantee": true,
+    "created_at": "2026-03-05T12:00:00Z"
+  },
+  {
+    "id": 43,
+    "address": "TAnotherAddress...",
+    "label": null,
+    "status": "paused",
+    "bw_guarantee": false,
+    "created_at": "2026-03-04T10:00:00Z"
+  }
+]
+```

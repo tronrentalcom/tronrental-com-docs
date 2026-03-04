@@ -1,0 +1,71 @@
+---
+title: Введение
+description: "TronRental API — программный доступ к аренде энергии и bandwidth в сети TRON"
+---
+
+## Добро пожаловать в TronRental API
+
+TronRental предоставляет REST API для аренды энергии и bandwidth в сети TRON. Снижайте стоимость переводов USDT до 80% по сравнению со сжиганием TRX.
+
+### Что вы можете делать
+
+<CardGroup cols={2}>
+  <Card title="Покупка энергии" icon="bolt" href="/api-reference/energy/buy-energy">
+    Покупайте энергию для любого адреса TRON. Оплата за транзакцию или оптом.
+  </Card>
+  <Card title="Smart Mode" icon="wand-magic-sparkles" href="/api-reference/smart-mode/overview">
+    Автоматическая доставка энергии для каждого исходящего перевода USDT.
+  </Card>
+  <Card title="Пакеты переводов" icon="box" href="/api-reference/transfer-packages/overview">
+    Предоплаченные пакеты переводов USDT с гарантированной энергией.
+  </Card>
+  <Card title="Инвойсы" icon="file-invoice" href="/api-reference/invoices/create-invoice">
+    Создавайте платёжные инвойсы на энергию — вашим пользователям не нужен аккаунт.
+  </Card>
+</CardGroup>
+
+### Базовый URL
+
+Все API-запросы используют следующий базовый URL:
+
+```
+https://api.tronrental.com/v1
+```
+
+### Быстрый пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourTronAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "order_id": 12345,
+  "address": "TYourTronAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+## Следующие шаги
+
+<Steps>
+  <Step title="Получите API-ключ">
+    Зарегистрируйтесь на [tronrental.com](https://tronrental.com/auth/register) и создайте API-ключ в [личном кабинете](https://tronrental.com/dashboard/api).
+  </Step>
+  <Step title="Проверьте текущие цены">
+    Вызовите `GET /api/v1/prices`, чтобы узнать актуальные цены на энергию и bandwidth.
+  </Step>
+  <Step title="Сделайте первую покупку">
+    Используйте `POST /api/v1/energy/buy` для покупки энергии на адрес TRON.
+  </Step>
+</Steps>

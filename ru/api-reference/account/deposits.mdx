@@ -1,0 +1,51 @@
+---
+title: Депозиты
+description: "Пополнение аккаунта в TRX или USDT"
+---
+
+## Получить адрес для депозита
+
+<div>
+  `GET /api/v1/account/deposit`
+</div>
+
+Возвращает ваш персональный адрес для пополнения и принимаемые валюты.
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "deposit_address": "TYourDepositAddress...",
+  "accepted_currencies": ["TRX", "USDT"],
+  "usdt_to_trx_rate": "26.5",
+  "trx_usd_rate": "0.234"
+}
+```
+
+## Список депозитов
+
+<div>
+  `GET /api/v1/account/deposits`
+</div>
+
+Возвращает историю ваших депозитов.
+
+```bash
+curl https://api.tronrental.com/v1/account/deposits \
+  -H "X-API-Key: your_api_key"
+```
+
+### Статусы депозитов
+
+| Статус | Описание |
+|--------|----------|
+| `pending` | Транзакция обнаружена, ожидание подтверждения |
+| `confirmed` | Зачислено на ваш баланс |
+| `expired` | Адрес для депозита истёк |
+
+<Info>
+  Депозиты зачисляются автоматически. Депозиты в TRX зачисляются 1:1. Депозиты в USDT конвертируются в TRX по текущему рыночному курсу.
+</Info>

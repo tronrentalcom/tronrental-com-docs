@@ -1,0 +1,58 @@
+---
+title: Comprar paquete
+api: POST /api/v1/transfer-packages/buy
+description: "Comprar un paquete de transferencias con saldo de la cuenta"
+---
+
+## Comprar paquete de transferencias
+
+Compra un paquete de transferencias usando el saldo de tu cuenta.
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Direccion TRON a monitorear
+</ParamField>
+
+<ParamField body="size" type="number" required>
+  Numero de transferencias (1 – 10,000)
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  Habilitar Garantia de BW
+</ParamField>
+
+### Respuesta
+
+Devuelve el objeto del paquete creado con `id`, `address`, `remaining_transfers`, `status` y `price_trx`.
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "size": 500,
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 101,
+  "address": "TYourAddress...",
+  "total_transfers": 500,
+  "remaining_transfers": 500,
+  "bw_guarantee": true,
+  "price_trx": "1350.00",
+  "status": "active",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Info>
+  Tambien puedes pagar mediante factura usando `POST /api/v1/transfer-packages/buy-invoice` —
+  esto genera una direccion de pago para TRX/USDT.
+</Info>

@@ -1,0 +1,51 @@
+---
+title: Yatirmalar
+description: "Hesabiniza TRX veya USDT yatirin"
+---
+
+## Yatirma Adresi Al
+
+<div>
+  `GET /api/v1/account/deposit`
+</div>
+
+Kisisel yatirma adresinizi ve kabul edilen para birimlerini dondurur.
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "deposit_address": "TYourDepositAddress...",
+  "accepted_currencies": ["TRX", "USDT"],
+  "usdt_to_trx_rate": "26.5",
+  "trx_usd_rate": "0.234"
+}
+```
+
+## Yatirmalari Listele
+
+<div>
+  `GET /api/v1/account/deposits`
+</div>
+
+Yatirma gecmisinizi dondurur.
+
+```bash
+curl https://api.tronrental.com/v1/account/deposits \
+  -H "X-API-Key: your_api_key"
+```
+
+### Yatirma durumlari
+
+| Durum | Aciklama |
+|--------|-------------|
+| `pending` | Islem algilandi, onay bekleniyor |
+| `confirmed` | Bakiyenize eklendi |
+| `expired` | Yatirma adresinin suresi doldu |
+
+<Info>
+  Yatirmalar otomatik olarak hesabiniza eklenir. TRX yatirmalari 1:1 oranindadir. USDT yatirmalari guncel piyasa kurunda TRX'e donusturulur.
+</Info>

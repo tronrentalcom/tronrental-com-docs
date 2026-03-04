@@ -1,0 +1,71 @@
+---
+title: Errores
+description: "Codigos de error de la API y su manejo"
+---
+
+## Formato de errores
+
+Todos los errores devuelven una respuesta JSON con un campo `detail`:
+
+```json
+{
+  "detail": "Insufficient balance"
+}
+```
+
+Algunos errores incluyen un `code` estructurado para manejo programatico:
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Not enough TRX balance"
+    }
+  }
+}
+```
+
+## Codigos de estado HTTP
+
+| Codigo | Significado |
+|--------|-------------|
+| `200` | Exito |
+| `400` | Solicitud incorrecta — parametros invalidos |
+| `401` | No autorizado — clave API faltante o invalida |
+| `403` | Prohibido — clave deshabilitada o accion no permitida |
+| `404` | No encontrado |
+| `409` | Conflicto — solicitud duplicada o conflicto de recursos |
+| `422` | Error de validacion — verifica el cuerpo de la solicitud |
+| `429` | Limite de tasa excedido |
+| `500` | Error del servidor |
+
+## Codigos de error comunes
+
+| Codigo | Descripcion |
+|--------|-------------|
+| `INSUFFICIENT_BALANCE` | Saldo de la cuenta insuficiente para esta operacion |
+| `ADDRESS_ALREADY_ACTIVE` | Smart Mode ya esta activo para esta direccion |
+| `ORDER_NOT_FOUND` | El ID de orden no existe |
+| `INVALID_ADDRESS` | Direccion TRON no valida |
+| `RATE_LIMITED` | Demasiadas solicitudes, reintenta despues del tiempo de espera |
+| `PASSKEY_REQUIRED` | El retiro requiere verificacion con passkey |
+| `2FA_REQUIRED` | El retiro requiere codigo 2FA |
+
+## Estrategia de reintentos
+
+Para errores `429` y `5xx`, implementa retroceso exponencial:
+
+```python
+import time
+import requests
+
+def api_call_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.get(url, **kwargs)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            time.sleep(2 ** attempt)
+            continue
+        return resp
+    raise Exception("Max retries exceeded")
+```

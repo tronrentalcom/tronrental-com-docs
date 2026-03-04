@@ -1,0 +1,57 @@
+---
+title: बैंडविड्थ खरीदें
+api: POST /api/v1/bandwidth/buy
+description: "TRON एड्रेस के लिए बैंडविड्थ खरीदें"
+---
+
+## बैंडविड्थ खरीदें
+
+निर्दिष्ट TRON एड्रेस को बैंडविड्थ डेलिगेट करता है।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  लक्ष्य TRON एड्रेस
+</ParamField>
+
+<ParamField body="bandwidth_amount" type="number" required>
+  बैंडविड्थ की मात्रा (न्यूनतम 350, अधिकतम 100,000)
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  किराए की अवधि घंटों में
+</ParamField>
+
+### रिस्पॉन्स
+
+`order_id`, `status`, और `price_trx` के साथ ऑर्डर ऑब्जेक्ट लौटाता है।
+
+### मूल्य निर्धारण
+
+बैंडविड्थ मूल्य: `(volume / 1000) × 9.6 / 24 + 0.2 TRX`
+
+0.2 TRX का निश्चित शुल्क सभी बैंडविड्थ ऑर्डर पर लागू होता है।
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TTargetAddress...",
+    "bandwidth_amount": 1000,
+    "duration_hours": 24
+  }'
+```
+
+```json Response
+{
+  "order_id": 5678,
+  "address": "TTargetAddress...",
+  "bandwidth_amount": 1000,
+  "duration_hours": 24,
+  "price_trx": "9.80",
+  "status": "pending"
+}
+```

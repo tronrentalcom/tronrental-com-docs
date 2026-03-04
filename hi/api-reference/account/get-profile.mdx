@@ -1,0 +1,53 @@
+---
+title: प्रोफ़ाइल प्राप्त करें
+api: GET /api/v1/account/profile
+description: "अपनी अकाउंट प्रोफ़ाइल प्राप्त करें"
+---
+
+## प्रोफ़ाइल प्राप्त करें
+
+आपकी अकाउंट प्रोफ़ाइल जानकारी लौटाता है।
+
+### रिस्पॉन्स
+
+<ResponseField name="id" type="number">
+  उपयोगकर्ता ID
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  ईमेल एड्रेस (यदि सेट है)
+</ResponseField>
+
+<ResponseField name="tron_address" type="string">
+  लिंक किया गया TRON एड्रेस (यदि सेट है)
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  TRX में अकाउंट बैलेंस
+</ResponseField>
+
+<ResponseField name="totp_enabled" type="boolean">
+  2FA सक्षम है या नहीं
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  अकाउंट निर्माण टाइमस्टैम्प
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl https://api.tronrental.com/v1/account/profile \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 1,
+  "email": "user@example.com",
+  "tron_address": "TYourAddress...",
+  "balance_trx": "150.50",
+  "totp_enabled": false,
+  "created_at": "2026-01-15T10:00:00Z"
+}
+```

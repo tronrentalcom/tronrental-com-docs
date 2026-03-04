@@ -1,0 +1,52 @@
+---
+title: Kademeleri Al
+api: GET /api/v1/transfer-packages/tiers
+description: "Mevcut paket boyutlarini ve fiyatlandirmayi alin"
+---
+
+## Paket Kademelerini Al
+
+Mevcut onceden ayarlanmis paket boyutlarini, fiyatlandirmayi ve sinirlari dondurur.
+
+### Yanit
+
+<ResponseField name="tiers" type="array">
+  Boyut ve toplam fiyat iceren onceden ayarlanmis paket secenekleri dizisi
+</ResponseField>
+
+<ResponseField name="single_transfer_price" type="string">
+  TRX cinsinden tek transfer fiyati
+</ResponseField>
+
+<ResponseField name="bw_fee_per_transfer" type="string">
+  TRX cinsinden transfer basina BW Garantisi ucreti
+</ResponseField>
+
+<ResponseField name="min_custom_size" type="number">
+  Minimum ozel paket boyutu (1)
+</ResponseField>
+
+<ResponseField name="max_custom_size" type="number">
+  Maksimum ozel paket boyutu (10.000)
+</ResponseField>
+
+### Ornek
+
+```bash
+curl https://api.tronrental.com/v1/transfer-packages/tiers \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tiers": [
+    { "size": 100, "price_trx": "270.00" },
+    { "size": 500, "price_trx": "1350.00" },
+    { "size": 1000, "price_trx": "2700.00" }
+  ],
+  "single_transfer_price": "2.70",
+  "bw_fee_per_transfer": "0.30",
+  "min_custom_size": 1,
+  "max_custom_size": 10000
+}
+```

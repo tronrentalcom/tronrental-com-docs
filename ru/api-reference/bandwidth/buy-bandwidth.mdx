@@ -1,0 +1,57 @@
+---
+title: Купить bandwidth
+api: POST /api/v1/bandwidth/buy
+description: "Покупка bandwidth для адреса TRON"
+---
+
+## Купить bandwidth
+
+Делегирует bandwidth на указанный адрес TRON.
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Целевой адрес TRON
+</ParamField>
+
+<ParamField body="bandwidth_amount" type="number" required>
+  Количество bandwidth (мин. 350, макс. 100 000)
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Длительность аренды в часах
+</ParamField>
+
+### Ответ
+
+Возвращает объект заказа с `order_id`, `status` и `price_trx`.
+
+### Ценообразование
+
+Цена bandwidth: `(volume / 1000) × 9.6 / 24 + 0.2 TRX`
+
+Фиксированная комиссия 0.2 TRX применяется ко всем заказам bandwidth.
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TTargetAddress...",
+    "bandwidth_amount": 1000,
+    "duration_hours": 24
+  }'
+```
+
+```json Response
+{
+  "order_id": 5678,
+  "address": "TTargetAddress...",
+  "bandwidth_amount": 1000,
+  "duration_hours": 24,
+  "price_trx": "9.80",
+  "status": "pending"
+}
+```

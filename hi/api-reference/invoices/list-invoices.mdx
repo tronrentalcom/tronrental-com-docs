@@ -1,0 +1,51 @@
+---
+title: इनवॉइस सूची
+api: GET /api/v1/invoices/my
+description: "वैकल्पिक फ़िल्टरिंग के साथ अपने इनवॉइस की सूची देखें"
+---
+
+## इनवॉइस सूची
+
+आपके इनवॉइस की पेजिनेटेड सूची लौटाता है।
+
+### क्वेरी पैरामीटर
+
+<ParamField query="page" type="number" default="1">
+  पेज नंबर
+</ParamField>
+
+<ParamField query="status" type="string">
+  स्टेटस के अनुसार फ़िल्टर: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ParamField>
+
+### रिस्पॉन्स
+
+`invoices` ऐरे और `total` काउंट के साथ पेजिनेटेड ऑब्जेक्ट लौटाता है।
+
+### उदाहरण
+
+```bash
+curl "https://api.tronrental.com/v1/invoices/my?page=1&status=delegated" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "invoices": [
+    {
+      "invoice_id": 789,
+      "payment_address": "TPaymentAddress...",
+      "address": "TRecipientAddress...",
+      "energy_amount": 65000,
+      "duration_hours": 1,
+      "price_trx": "2.75",
+      "price_usdt": "0.64",
+      "status": "delegated",
+      "created_at": "2026-03-05T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pages": 1
+}
+```

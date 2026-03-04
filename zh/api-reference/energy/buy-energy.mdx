@@ -1,0 +1,111 @@
+---
+title: 购买能量
+api: POST /api/v1/energy/buy
+description: "为 TRON 地址购买能量"
+---
+
+## 购买能量
+
+将能量委托给指定的 TRON 地址。费用从您的账户余额中扣除。
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  目标 TRON 地址（T... 格式，34 个字符）
+</ParamField>
+
+<ParamField body="energy_amount" type="number" required>
+  要委托的能量数量（最小 32,000，最大 5,000,000）
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  租赁时长，以小时计（1 或 24）
+</ParamField>
+
+### 响应
+
+<ResponseField name="order_id" type="number">
+  唯一订单标识符
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  目标地址
+</ResponseField>
+
+<ResponseField name="energy_amount" type="number">
+  已委托的能量
+</ResponseField>
+
+<ResponseField name="duration_hours" type="number">
+  租赁时长
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  总费用，以 TRX 计
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  订单状态：`pending`、`filled`、`failed`
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourRecipientAddress1234567890abc",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/energy/buy",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourRecipientAddress1234567890abc",
+        "energy_amount": 65000,
+        "duration_hours": 1,
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/buy", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "your_api_key",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    address: "TYourRecipientAddress1234567890abc",
+    energy_amount: 65000,
+    duration_hours: 1,
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "order_id": 12345,
+  "address": "TYourRecipientAddress1234567890abc",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+<Tip>
+  **65,000 能量**可覆盖一笔向已持有 USDT 地址的转账。
+  对于首次接收 USDT 的地址（新建存储槽），请使用 **131,000**。
+</Tip>

@@ -1,0 +1,46 @@
+---
+title: Limites de tasa
+description: "Politica de limitacion de tasa de la API"
+---
+
+## Limites de tasa
+
+Los endpoints de la API tienen limites de tasa para garantizar un uso justo y la estabilidad del servicio.
+
+### Limites por endpoint
+
+| Endpoint | Limite |
+|----------|--------|
+| `GET /prices` | 60 solicitudes/minuto |
+| `POST /energy/buy` | 30 solicitudes/minuto |
+| `POST /bandwidth/buy` | 30 solicitudes/minuto |
+| `POST /invoices` | 20 solicitudes/minuto |
+| `POST /smart-mode/activate` | 10 solicitudes/minuto |
+| `POST /account/withdrawal` | 1 solicitud/minuto |
+| Otros endpoints | 60 solicitudes/minuto |
+
+### Encabezados de limite de tasa
+
+Las respuestas incluyen informacion sobre limites de tasa en los encabezados:
+
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 58
+X-RateLimit-Reset: 1709568000
+```
+
+### Exceder los limites
+
+Cuando se excede el limite de tasa, recibiras HTTP `429`:
+
+```json
+{
+  "detail": "Rate limit exceeded. Try again in 30 seconds."
+}
+```
+
+Implementa retroceso exponencial para los reintentos. No reintentes inmediatamente.
+
+### Necesitas limites mas altos?
+
+Contactanos via [Telegram](https://t.me/TronRentalcom_bot) para limites de tasa personalizados para integraciones de alto volumen.

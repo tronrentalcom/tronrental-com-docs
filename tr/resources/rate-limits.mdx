@@ -1,0 +1,46 @@
+---
+title: Hiz Sinirlari
+description: "API hiz sinirlandirma politikasi"
+---
+
+## Hiz Sinirlari
+
+API uc noktalari, adil kullanim ve hizmet kararliligi saglamak icin hiz sinirlidir.
+
+### Uc noktaya gore sinirlar
+
+| Uc Nokta | Sinir |
+|----------|-------|
+| `GET /prices` | 60 istek/dakika |
+| `POST /energy/buy` | 30 istek/dakika |
+| `POST /bandwidth/buy` | 30 istek/dakika |
+| `POST /invoices` | 20 istek/dakika |
+| `POST /smart-mode/activate` | 10 istek/dakika |
+| `POST /account/withdrawal` | 1 istek/dakika |
+| Diger uc noktalar | 60 istek/dakika |
+
+### Hiz siniri basliklari
+
+Yanitlar, basliklarda hiz siniri bilgisi icerir:
+
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 58
+X-RateLimit-Reset: 1709568000
+```
+
+### Sinirlarin asilmasi
+
+Hiz siniri asildiginda HTTP `429` alirsiniz:
+
+```json
+{
+  "detail": "Rate limit exceeded. Try again in 30 seconds."
+}
+```
+
+Yeniden denemeler icin ustel geri cekilme uygulayin. Hemen yeniden denemeyin.
+
+### Daha yuksek sinirlar mi gerekiyor?
+
+Yuksek hacimli entegrasyonlar icin ozel hiz sinirlari almak uzere [Telegram](https://t.me/TronRentalcom_bot) uzerinden bizimle iletisime gecin.

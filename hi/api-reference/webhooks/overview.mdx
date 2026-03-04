@@ -1,0 +1,100 @@
+---
+title: Webhooks अवलोकन
+description: "अकाउंट इवेंट के लिए रियल-टाइम नोटिफिकेशन प्राप्त करें"
+---
+
+## Webhooks
+
+अपने अकाउंट पर इवेंट होने पर रियल-टाइम HTTP POST नोटिफिकेशन प्राप्त करने के लिए webhook URL कॉन्फ़िगर करें।
+
+### समर्थित इवेंट
+
+| इवेंट | विवरण |
+|-------|-------------|
+| `order.filled` | एनर्जी ऑर्डर पूरा हुआ |
+| `order.failed` | एनर्जी ऑर्डर विफल |
+| `deposit.confirmed` | डिपॉज़िट बैलेंस में क्रेडिट हुआ |
+| `invoice.paid` | इनवॉइस भुगतान प्राप्त |
+| `invoice.delegated` | इनवॉइस एनर्जी डेलिगेट की गई |
+| `smart_mode.transfer` | Smart Mode ट्रांसफर प्रोसेस हुआ |
+| `withdrawal.completed` | निकासी भेजी गई |
+
+### Webhook पेलोड
+
+```json
+{
+  "event": "order.filled",
+  "data": {
+    "order_id": 1234,
+    "address": "TAddress...",
+    "energy_amount": 65000,
+    "price_trx": "2.75"
+  },
+  "timestamp": "2026-03-04T12:00:00Z"
+}
+```
+
+### आवश्यकताएं
+
+- URL को **HTTPS** का उपयोग करना चाहिए
+- 10 सेकंड के भीतर `2xx` स्टेटस के साथ रिस्पॉन्ड करना चाहिए
+- विफल डिलीवरी एक्सपोनेंशियल बैकऑफ़ के साथ 3 बार तक पुनः प्रयास की जाती हैं
+
+### Webhook सिग्नेचर सत्यापित करना
+
+प्रत्येक webhook अनुरोध में HMAC-SHA256 सिग्नेचर वाला `X-Webhook-Signature` हेडर शामिल होता है। इसका उपयोग यह सत्यापित करने के लिए करें कि अनुरोध TronRental से है।
+
+सिग्नेचर आपके webhook सीक्रेट (जब आप [अपना webhook कॉन्फ़िगर](/api-reference/webhooks/configure) करते हैं तब लौटाया जाता है) का उपयोग करके रॉ अनुरोध बॉडी पर कंप्यूट किया जाता है।
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+
+def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(
+        secret.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+# In your webhook handler:
+# payload = request.body  (raw bytes)
+# signature = request.headers["X-Webhook-Signature"]
+# secret = "whsec_abc123..."  (from configure response)
+# if not verify_webhook(payload, signature, secret):
+#     return Response(status_code=401)
+```
+
+```javascript JavaScript
+const crypto = require("crypto");
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+
+// In your webhook handler:
+// const payload = req.rawBody;  // raw request body string
+// const signature = req.headers["x-webhook-signature"];
+// const secret = "whsec_abc123...";
+// if (!verifyWebhook(payload, signature, secret)) {
+//   return res.status(401).send("Invalid signature");
+// }
+```
+</CodeGroup>
+
+<Warning>
+  Webhook डेटा प्रोसेस करने से पहले हमेशा सिग्नेचर सत्यापित करें। टाइमिंग अटैक को रोकने के लिए कॉन्स्टेंट-टाइम कम्पैरिज़न (`hmac.compare_digest` / `crypto.timingSafeEqual`) का उपयोग करें।
+</Warning>
+
+<Warning>
+  Webhook URL `localhost`, `127.0.0.1`, या अन्य प्राइवेट एड्रेस की ओर पॉइंट नहीं कर सकते।
+</Warning>

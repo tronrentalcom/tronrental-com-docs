@@ -1,0 +1,35 @@
+---
+title: Devre Disi Birak
+api: POST /api/v1/smart-mode/{subscription_id}/deactivate
+description: "Bir Akilli Mod aboneligini kalici olarak devre disi birakin"
+---
+
+## Aboneligi Devre Disi Birak
+
+Bir Akilli Mod aboneligini kalici olarak devre disi birakir. Bu islem geri alinamaz — yeniden etkinlestirmek icin yeni bir abonelik olusturmaniz gerekir.
+
+### Yol parametreleri
+
+<ParamField path="subscription_id" type="number" required>
+  Abonelik kimlik numarasi
+</ParamField>
+
+### Yanit
+
+Devre disi birakilmis abonelik nesnesini dondurur.
+
+### Ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "status": "deactivated",
+  "message": "Subscription permanently deactivated"
+}
+```

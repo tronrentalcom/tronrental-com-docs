@@ -1,0 +1,38 @@
+---
+title: Ucretleri Al
+api: GET /api/v1/smart-mode/fees
+description: "Guncel Akilli Mod fiyatlandirmasini alin"
+---
+
+## Akilli Mod Ucretlerini Al
+
+Hesabiniz icin guncel Akilli Mod fiyatlandirmasini dondurur. Ozel fiyatlandirma yapilandirildiysa, kisisellestirilmis oranlarinizi dondurur.
+
+### Yanit
+
+<ResponseField name="subscription_fee_trx" type="string">
+  TRX cinsinden gunluk abonelik ucreti
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  TRX cinsinden transfer basina ucret
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string">
+  TRX cinsinden transfer basina BW Garantisi ucreti
+</ResponseField>
+
+### Ornek
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/fees \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "bw_fee_trx": "0.3"
+}
+```

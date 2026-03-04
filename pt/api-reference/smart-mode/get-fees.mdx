@@ -1,0 +1,38 @@
+---
+title: Consultar Taxas
+api: GET /api/v1/smart-mode/fees
+description: "Obter preços atuais do Smart Mode"
+---
+
+## Consultar Taxas do Smart Mode
+
+Retorna os preços atuais do Smart Mode para sua conta. Se houver preços personalizados configurados, retorna suas taxas personalizadas.
+
+### Resposta
+
+<ResponseField name="subscription_fee_trx" type="string">
+  Taxa de assinatura diária em TRX
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  Taxa por transferência em TRX
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string">
+  Taxa do BW Guarantee por transferência em TRX
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/fees \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "bw_fee_trx": "0.3"
+}
+```

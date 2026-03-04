@@ -1,0 +1,114 @@
+---
+title: Início Rápido
+description: "Compre energia TRON em menos de 5 minutos"
+---
+
+## 1. Obtenha sua chave de API
+
+Cadastre-se e crie uma chave de API em [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api).
+
+## 2. Consulte os preços
+
+```bash
+curl https://api.tronrental.com/v1/prices
+```
+
+```json
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100
+}
+```
+
+## 3. Deposite TRX
+
+Consulte seu endereço de depósito:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+Envie TRX ou USDT para o `deposit_address` retornado. Os depósitos são creditados automaticamente.
+
+## 4. Compre energia
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json
+{
+  "order_id": 1234,
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+A energia será delegada ao endereço de destino em segundos.
+
+## 5. Verifique
+
+Consulte o status do seu pedido:
+
+```bash
+curl https://api.tronrental.com/v1/orders \
+  -H "X-API-Key: your_api_key"
+```
+
+<Tip>
+  **65.000 energia** é suficiente para uma transferência USDT para um endereço que já possui USDT.
+  Para destinatários de USDT pela primeira vez, use **131.000 energia**.
+</Tip>
+
+## Exemplos de código
+
+<CodeGroup>
+```python Python
+import requests
+
+API_KEY = "your_api_key"
+BASE = "https://api.tronrental.com/v1"
+headers = {"X-API-Key": API_KEY}
+
+# Buy energy
+resp = requests.post(f"{BASE}/energy/buy", headers=headers, json={
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1,
+})
+print(resp.json())
+```
+
+```javascript JavaScript
+const API_KEY = "your_api_key";
+const BASE = "https://api.tronrental.com/v1";
+
+const res = await fetch(`${BASE}/energy/buy`, {
+  method: "POST",
+  headers: {
+    "X-API-Key": API_KEY,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    address: "TRecipientAddress...",
+    energy_amount: 65000,
+    duration_hours: 1,
+  }),
+});
+console.log(await res.json());
+```
+</CodeGroup>

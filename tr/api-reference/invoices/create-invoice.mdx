@@ -1,0 +1,87 @@
+---
+title: Fatura Olustur
+api: POST /api/v1/invoices
+description: "Enerji devretme icin odeme faturasi olusturun"
+---
+
+## Fatura Olustur
+
+Benzersiz bir yatirma adresi olusturan bir odeme faturasi yaratir. Odeme (TRX veya USDT) alindiginda, enerji otomatik olarak hedef adrese devredilir.
+
+**Son kullanicilarin dogrudan odeme yaptigi entegrasyonlar icin kullanislidir** — hesap bakiyesi gerektirmez.
+
+### Istek govdesi
+
+<ParamField body="address" type="string" required>
+  Enerji alacak hedef TRON adresi
+</ParamField>
+
+<ParamField body="energy_amount" type="number">
+  Enerji miktari (32.000 – 5.000.000). Bunu VEYA `transfer_count` kullanin.
+</ParamField>
+
+<ParamField body="transfer_count" type="number">
+  USDT transfer sayisi (1 – 100). Her transfer = 65.000 enerji.
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Kiralama suresi (1 veya 24 saat)
+</ParamField>
+
+### Yanit
+
+<ResponseField name="invoice_id" type="number">
+  Benzersiz fatura tanimlayicisi
+</ResponseField>
+
+<ResponseField name="payment_address" type="string">
+  Benzersiz yatirma adresi — buraya TRX veya USDT gonderin
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  TRX cinsinden fiyat
+</ResponseField>
+
+<ResponseField name="price_usdt" type="string">
+  USDT cinsinden fiyat
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Fatura durumu: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ResponseField>
+
+<ResponseField name="expires_at" type="string">
+  ISO 8601 son kullanma zamani
+</ResponseField>
+
+### Ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/invoices \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "transfer_count": 1,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "invoice_id": 789,
+  "payment_address": "TPaymentAddress...",
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "price_usdt": "0.64",
+  "status": "pending",
+  "expires_at": "2026-03-05T12:30:00Z"
+}
+```
+
+<Info>
+  Faturalar, odeme alinmazsa 30 dakika sonra sona erer.
+  Olusturulan adreste hem TRX hem de USDT odemeleri kabul edilir.
+</Info>

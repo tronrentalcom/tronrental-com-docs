@@ -1,0 +1,43 @@
+---
+title: 套餐列表
+api: GET /api/v1/transfer-packages/my
+description: "列出您的转账套餐"
+---
+
+## 我的套餐列表
+
+返回您所有的转账套餐。
+
+### 响应
+
+套餐对象数组，包含 `id`、`address`、`total_transfers`、`remaining_transfers`、`status` 和 `created_at`。
+
+### 套餐状态
+
+| 状态 | 描述 |
+|--------|-------------|
+| `pending_payment` | 等待账单付款 |
+| `active` | 正在监控地址，转账可用 |
+| `completed` | 所有转账已用完 |
+| `cancelled` | 已被用户取消 |
+
+### 示例
+
+```bash
+curl https://api.tronrental.com/v1/transfer-packages/my \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 101,
+    "address": "TYourAddress...",
+    "total_transfers": 500,
+    "remaining_transfers": 312,
+    "bw_guarantee": true,
+    "status": "active",
+    "created_at": "2026-03-01T10:00:00Z"
+  }
+]
+```

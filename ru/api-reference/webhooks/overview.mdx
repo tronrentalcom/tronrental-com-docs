@@ -1,0 +1,100 @@
+---
+title: Обзор вебхуков
+description: "Получайте уведомления в реальном времени о событиях аккаунта"
+---
+
+## Вебхуки
+
+Настройте URL вебхука для получения HTTP POST уведомлений в реальном времени при возникновении событий на вашем аккаунте.
+
+### Поддерживаемые события
+
+| Событие | Описание |
+|---------|----------|
+| `order.filled` | Заказ на энергию выполнен |
+| `order.failed` | Заказ на энергию не удался |
+| `deposit.confirmed` | Депозит зачислен на баланс |
+| `invoice.paid` | Оплата инвойса получена |
+| `invoice.delegated` | Энергия по инвойсу делегирована |
+| `smart_mode.transfer` | Перевод Smart Mode обработан |
+| `withdrawal.completed` | Вывод отправлен |
+
+### Формат данных вебхука
+
+```json
+{
+  "event": "order.filled",
+  "data": {
+    "order_id": 1234,
+    "address": "TAddress...",
+    "energy_amount": 65000,
+    "price_trx": "2.75"
+  },
+  "timestamp": "2026-03-04T12:00:00Z"
+}
+```
+
+### Требования
+
+- URL должен использовать **HTTPS**
+- Должен ответить статусом `2xx` в течение 10 секунд
+- Неудачные доставки повторяются до 3 раз с экспоненциальной задержкой
+
+### Проверка подписи вебхука
+
+Каждый запрос вебхука содержит заголовок `X-Webhook-Signature` с подписью HMAC-SHA256. Используйте его для проверки того, что запрос отправлен TronRental.
+
+Подпись вычисляется по необработанному телу запроса с использованием секрета вебхука (возвращается при [настройке вебхука](/api-reference/webhooks/configure)).
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+
+def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(
+        secret.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+# In your webhook handler:
+# payload = request.body  (raw bytes)
+# signature = request.headers["X-Webhook-Signature"]
+# secret = "whsec_abc123..."  (from configure response)
+# if not verify_webhook(payload, signature, secret):
+#     return Response(status_code=401)
+```
+
+```javascript JavaScript
+const crypto = require("crypto");
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+
+// In your webhook handler:
+// const payload = req.rawBody;  // raw request body string
+// const signature = req.headers["x-webhook-signature"];
+// const secret = "whsec_abc123...";
+// if (!verifyWebhook(payload, signature, secret)) {
+//   return res.status(401).send("Invalid signature");
+// }
+```
+</CodeGroup>
+
+<Warning>
+  Всегда проверяйте подпись перед обработкой данных вебхука. Используйте сравнение с постоянным временем (`hmac.compare_digest` / `crypto.timingSafeEqual`) для предотвращения атак по времени.
+</Warning>
+
+<Warning>
+  URL вебхуков не могут указывать на `localhost`, `127.0.0.1` или другие приватные адреса.
+</Warning>

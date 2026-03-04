@@ -1,0 +1,35 @@
+---
+title: निष्क्रिय करें
+api: POST /api/v1/smart-mode/{subscription_id}/deactivate
+description: "Smart Mode सब्सक्रिप्शन को स्थायी रूप से निष्क्रिय करें"
+---
+
+## सब्सक्रिप्शन निष्क्रिय करें
+
+Smart Mode सब्सक्रिप्शन को स्थायी रूप से निष्क्रिय करता है। इस क्रिया को पूर्ववत नहीं किया जा सकता — फिर से सक्षम करने के लिए आपको नया सब्सक्रिप्शन बनाना होगा।
+
+### पथ पैरामीटर
+
+<ParamField path="subscription_id" type="number" required>
+  सब्सक्रिप्शन ID
+</ParamField>
+
+### रिस्पॉन्स
+
+निष्क्रिय किया गया सब्सक्रिप्शन ऑब्जेक्ट लौटाता है।
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "status": "deactivated",
+  "message": "Subscription permanently deactivated"
+}
+```

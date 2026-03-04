@@ -1,0 +1,65 @@
+---
+title: Listar suscripciones
+api: GET /api/v1/smart-mode/subscriptions
+description: "Listar tus suscripciones activas de Smart Mode"
+---
+
+## Listar suscripciones
+
+Devuelve todas las suscripciones activas y pausadas de Smart Mode. Las suscripciones desactivadas no se incluyen.
+
+### Respuesta
+
+Array de objetos de suscripcion:
+
+<ResponseField name="id" type="number">
+  ID de la suscripcion
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Direccion TRON monitoreada
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  Etiqueta opcional
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` o `paused`
+</ResponseField>
+
+<ResponseField name="bw_guarantee" type="boolean">
+  Si la Garantia de BW esta habilitada
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Marca de tiempo ISO 8601
+</ResponseField>
+
+### Ejemplo
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/subscriptions \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 42,
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "status": "active",
+    "bw_guarantee": true,
+    "created_at": "2026-03-05T12:00:00Z"
+  },
+  {
+    "id": 43,
+    "address": "TAnotherAddress...",
+    "label": null,
+    "status": "paused",
+    "bw_guarantee": false,
+    "created_at": "2026-03-04T10:00:00Z"
+  }
+]
+```

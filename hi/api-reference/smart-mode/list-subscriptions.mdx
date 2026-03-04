@@ -1,0 +1,65 @@
+---
+title: सब्सक्रिप्शन सूची
+api: GET /api/v1/smart-mode/subscriptions
+description: "अपने सक्रिय Smart Mode सब्सक्रिप्शन की सूची देखें"
+---
+
+## सब्सक्रिप्शन सूची
+
+सभी सक्रिय और रोके गए Smart Mode सब्सक्रिप्शन लौटाता है। निष्क्रिय किए गए सब्सक्रिप्शन शामिल नहीं हैं।
+
+### रिस्पॉन्स
+
+सब्सक्रिप्शन ऑब्जेक्ट्स का ऐरे:
+
+<ResponseField name="id" type="number">
+  सब्सक्रिप्शन ID
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  मॉनिटर किया गया TRON एड्रेस
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  वैकल्पिक लेबल
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` या `paused`
+</ResponseField>
+
+<ResponseField name="bw_guarantee" type="boolean">
+  BW Guarantee सक्षम है या नहीं
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 टाइमस्टैम्प
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/subscriptions \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 42,
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "status": "active",
+    "bw_guarantee": true,
+    "created_at": "2026-03-05T12:00:00Z"
+  },
+  {
+    "id": 43,
+    "address": "TAnotherAddress...",
+    "label": null,
+    "status": "paused",
+    "bw_guarantee": false,
+    "created_at": "2026-03-04T10:00:00Z"
+  }
+]
+```

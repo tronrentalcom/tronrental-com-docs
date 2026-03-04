@@ -1,0 +1,87 @@
+---
+title: 创建账单
+api: POST /api/v1/invoices
+description: "为能量委托创建支付账单"
+---
+
+## 创建账单
+
+创建一个支付账单，生成唯一的充值地址。当收到付款（TRX 或 USDT）后，能量将自动委托到目标地址。
+
+**适用于终端用户直接付款的集成场景** — 无需账户余额。
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  接收能量的目标 TRON 地址
+</ParamField>
+
+<ParamField body="energy_amount" type="number">
+  能量数量（32,000 – 5,000,000）。与 `transfer_count` 二选一。
+</ParamField>
+
+<ParamField body="transfer_count" type="number">
+  USDT 转账笔数（1 – 100）。每笔转账 = 65,000 能量。
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  租赁时长（1 或 24 小时）
+</ParamField>
+
+### 响应
+
+<ResponseField name="invoice_id" type="number">
+  唯一账单标识符
+</ResponseField>
+
+<ResponseField name="payment_address" type="string">
+  唯一充值地址 — 将 TRX 或 USDT 发送到此地址
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  价格，以 TRX 计
+</ResponseField>
+
+<ResponseField name="price_usdt" type="string">
+  价格，以 USDT 计
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  账单状态：`pending`、`paid`、`delegated`、`expired`、`failed`
+</ResponseField>
+
+<ResponseField name="expires_at" type="string">
+  ISO 8601 格式的过期时间戳
+</ResponseField>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/invoices \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "transfer_count": 1,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "invoice_id": 789,
+  "payment_address": "TPaymentAddress...",
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "price_usdt": "0.64",
+  "status": "pending",
+  "expires_at": "2026-03-05T12:30:00Z"
+}
+```
+
+<Info>
+  账单在 30 分钟内未收到付款将自动过期。
+  生成的地址同时接受 TRX 和 USDT 付款。
+</Info>

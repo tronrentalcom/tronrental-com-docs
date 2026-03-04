@@ -1,0 +1,46 @@
+---
+title: 速率限制
+description: "API 速率限制策略"
+---
+
+## 速率限制
+
+API 端点设有速率限制，以确保公平使用和服务稳定性。
+
+### 各端点限制
+
+| 端点 | 限制 |
+|----------|-------|
+| `GET /prices` | 60 次请求/分钟 |
+| `POST /energy/buy` | 30 次请求/分钟 |
+| `POST /bandwidth/buy` | 30 次请求/分钟 |
+| `POST /invoices` | 20 次请求/分钟 |
+| `POST /smart-mode/activate` | 10 次请求/分钟 |
+| `POST /account/withdrawal` | 1 次请求/分钟 |
+| 其他端点 | 60 次请求/分钟 |
+
+### 速率限制响应头
+
+响应中包含速率限制信息的请求头：
+
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 58
+X-RateLimit-Reset: 1709568000
+```
+
+### 超出限制
+
+当达到速率限制时，您将收到 HTTP `429`：
+
+```json
+{
+  "detail": "Rate limit exceeded. Try again in 30 seconds."
+}
+```
+
+请实现指数退避重试。请勿立即重试。
+
+### 需要更高的限制？
+
+通过 [Telegram](https://t.me/TronRentalcom_bot) 联系我们，为大流量集成获取自定义速率限制。

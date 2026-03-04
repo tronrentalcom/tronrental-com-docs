@@ -1,0 +1,52 @@
+---
+title: Autenticacion
+description: "Como autenticarse con la API de TronRental"
+---
+
+## Autenticacion con clave API
+
+Todas las solicitudes a la API requieren una clave API proporcionada en el encabezado `X-API-Key`.
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+### Obtener una clave API
+
+1. Registrate en [tronrental.com](https://tronrental.com/auth/register)
+2. Ve a [Panel de control → Claves API](https://tronrental.com/dashboard/api)
+3. Haz clic en **Crear clave API**
+4. Copia y almacena tu clave de forma segura — solo se muestra una vez
+
+### Lista blanca de IP (opcional)
+
+Puedes restringir tu clave API a direcciones IP especificas para mayor seguridad. Configura esto en el panel de control al crear o editar una clave.
+
+### Permisos de la clave
+
+Cada clave API tiene acceso completo a las operaciones de la API de tu cuenta:
+- Comprar energia y ancho de banda
+- Gestionar suscripciones de Smart Mode
+- Crear facturas
+- Consultar saldo e historial de transacciones
+
+<Warning>
+  Mantiene tu clave API en secreto. No la expongas en codigo del lado del cliente, repositorios publicos o URLs.
+</Warning>
+
+## Limites de tasa
+
+Las claves API tienen limites de tasa por endpoint. Consulta [Limites de tasa](/resources/rate-limits) para mas detalles.
+
+## Errores
+
+Los errores de autenticacion devuelven HTTP `401`:
+
+```json
+{
+  "detail": "Invalid or missing API key"
+}
+```
+
+Si tu clave esta deshabilitada o bloqueada, recibiras HTTP `403`.

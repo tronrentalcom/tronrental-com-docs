@@ -1,0 +1,87 @@
+---
+title: Criar Fatura
+api: POST /api/v1/invoices
+description: "Criar uma fatura de pagamento para delegação de energia"
+---
+
+## Criar Fatura
+
+Cria uma fatura de pagamento que gera um endereço de depósito único. Quando o pagamento (TRX ou USDT) é recebido, a energia é automaticamente delegada ao endereço de destino.
+
+**Útil para integrações onde os usuários finais pagam diretamente** — sem necessidade de saldo na conta.
+
+### Corpo da requisição
+
+<ParamField body="address" type="string" required>
+  Endereço TRON de destino para receber energia
+</ParamField>
+
+<ParamField body="energy_amount" type="number">
+  Quantidade de energia (32.000 – 5.000.000). Use este OU `transfer_count`.
+</ParamField>
+
+<ParamField body="transfer_count" type="number">
+  Número de transferências USDT (1 – 100). Cada transferência = 65.000 energia.
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Duração do aluguel (1 ou 24 horas)
+</ParamField>
+
+### Resposta
+
+<ResponseField name="invoice_id" type="number">
+  Identificador único da fatura
+</ResponseField>
+
+<ResponseField name="payment_address" type="string">
+  Endereço de depósito único — envie TRX ou USDT para cá
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Preço em TRX
+</ResponseField>
+
+<ResponseField name="price_usdt" type="string">
+  Preço em USDT
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status da fatura: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ResponseField>
+
+<ResponseField name="expires_at" type="string">
+  Timestamp de expiração em ISO 8601
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/invoices \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "transfer_count": 1,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "invoice_id": 789,
+  "payment_address": "TPaymentAddress...",
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "price_usdt": "0.64",
+  "status": "pending",
+  "expires_at": "2026-03-05T12:30:00Z"
+}
+```
+
+<Info>
+  As faturas expiram após 30 minutos se nenhum pagamento for recebido.
+  Pagamentos em TRX e USDT são aceitos no endereço gerado.
+</Info>

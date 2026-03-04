@@ -1,0 +1,71 @@
+---
+title: 简介
+description: "TronRental API — 以编程方式访问 TRON 能量和带宽租赁服务"
+---
+
+## 欢迎使用 TronRental API
+
+TronRental 提供 REST API，用于租赁 TRON 能量和带宽。与直接燃烧 TRX 相比，可节省高达 80% 的 USDT 转账费用。
+
+### 您可以做什么
+
+<CardGroup cols={2}>
+  <Card title="购买能量" icon="bolt" href="/api-reference/energy/buy-energy">
+    为任意 TRON 地址购买能量。支持按笔或批量购买。
+  </Card>
+  <Card title="智能模式" icon="wand-magic-sparkles" href="/api-reference/smart-mode/overview">
+    每笔 USDT 转出时自动提供能量。
+  </Card>
+  <Card title="转账套餐" icon="box" href="/api-reference/transfer-packages/overview">
+    预付费的 USDT 转账套餐，保证提供能量。
+  </Card>
+  <Card title="账单" icon="file-invoice" href="/api-reference/invoices/create-invoice">
+    为能量创建支付账单 — 您的用户无需注册账户。
+  </Card>
+</CardGroup>
+
+### 基础 URL
+
+所有 API 请求使用以下基础 URL：
+
+```
+https://api.tronrental.com/v1
+```
+
+### 快速示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourTronAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "order_id": 12345,
+  "address": "TYourTronAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+## 后续步骤
+
+<Steps>
+  <Step title="获取 API 密钥">
+    在 [tronrental.com](https://tronrental.com/auth/register) 注册，然后在[控制面板](https://tronrental.com/dashboard/api)中创建 API 密钥。
+  </Step>
+  <Step title="查询当前价格">
+    调用 `GET /api/v1/prices` 查看当前能量和带宽价格。
+  </Step>
+  <Step title="完成首笔购买">
+    使用 `POST /api/v1/energy/buy` 为 TRON 地址购买能量。
+  </Step>
+</Steps>

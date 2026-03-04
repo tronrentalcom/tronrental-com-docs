@@ -1,0 +1,77 @@
+---
+title: Получить цены
+api: GET /api/v1/prices
+description: "Получить текущие цены на энергию и bandwidth"
+---
+
+## Получить цены
+
+Возвращает текущие рыночные цены на энергию и bandwidth.
+
+**Этот эндпоинт публичный — аутентификация не требуется.**
+
+### Ответ
+
+<ResponseField name="energy_price_sun" type="number">
+  Текущая цена энергии в SUN за единицу
+</ResponseField>
+
+<ResponseField name="energy_price_1k_trx" type="string">
+  Цена за 1 000 единиц энергии в TRX
+</ResponseField>
+
+<ResponseField name="bw_price_1k_trx" type="string">
+  Цена за 1 000 единиц bandwidth в TRX
+</ResponseField>
+
+<ResponseField name="trx_usd_rate" type="string">
+  Текущий курс TRX/USD
+</ResponseField>
+
+<ResponseField name="burn_sun_per_energy" type="number">
+  Сетевая стоимость сжигания — SUN за единицу энергии (в настоящее время 100)
+</ResponseField>
+
+<ResponseField name="min_energy" type="number">
+  Минимальное количество энергии за заказ
+</ResponseField>
+
+<ResponseField name="max_energy" type="number">
+  Максимальное количество энергии за заказ
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  Значения в ответе ниже приведены для примера. Реальные цены обновляются в реальном времени в зависимости от рыночных условий.
+</Info>
+
+```json Response
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100,
+  "min_energy": 32000,
+  "max_energy": 5000000
+}
+```

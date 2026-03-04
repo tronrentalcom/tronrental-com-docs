@@ -1,0 +1,114 @@
+---
+title: Hizli Baslangic
+description: "5 dakikadan kisa surede TRON enerjisi satin alin"
+---
+
+## 1. API anahtarinizi alin
+
+[tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) adresinden kaydolun ve bir API anahtari olusturun.
+
+## 2. Fiyatlari kontrol edin
+
+```bash
+curl https://api.tronrental.com/v1/prices
+```
+
+```json
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100
+}
+```
+
+## 3. TRX yatirin
+
+Yatirma adresinizi kontrol edin:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+Donen `deposit_address` adresine TRX veya USDT gonderin. Yatirmalar otomatik olarak hesabiniza eklenir.
+
+## 4. Enerji satin alin
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json
+{
+  "order_id": 1234,
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+Enerji, hedef adrese saniyeler icinde devredilecektir.
+
+## 5. Dogrulama
+
+Siparis durumunuzu kontrol edin:
+
+```bash
+curl https://api.tronrental.com/v1/orders \
+  -H "X-API-Key: your_api_key"
+```
+
+<Tip>
+  **65.000 enerji**, halihazirda USDT bulunan bir adrese tek bir USDT transferi icin yeterlidir.
+  Ilk kez USDT alacak adresler icin **131.000 enerji** kullanin.
+</Tip>
+
+## Kod ornekleri
+
+<CodeGroup>
+```python Python
+import requests
+
+API_KEY = "your_api_key"
+BASE = "https://api.tronrental.com/v1"
+headers = {"X-API-Key": API_KEY}
+
+# Buy energy
+resp = requests.post(f"{BASE}/energy/buy", headers=headers, json={
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1,
+})
+print(resp.json())
+```
+
+```javascript JavaScript
+const API_KEY = "your_api_key";
+const BASE = "https://api.tronrental.com/v1";
+
+const res = await fetch(`${BASE}/energy/buy`, {
+  method: "POST",
+  headers: {
+    "X-API-Key": API_KEY,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    address: "TRecipientAddress...",
+    energy_amount: 65000,
+    duration_hours: 1,
+  }),
+});
+console.log(await res.json());
+```
+</CodeGroup>

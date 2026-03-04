@@ -1,0 +1,71 @@
+---
+title: Erros
+description: "Códigos de erro da API e tratamento"
+---
+
+## Formato de erro
+
+Todos os erros retornam uma resposta JSON com um campo `detail`:
+
+```json
+{
+  "detail": "Insufficient balance"
+}
+```
+
+Alguns erros incluem um `code` estruturado para tratamento programático:
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Not enough TRX balance"
+    }
+  }
+}
+```
+
+## Códigos de Status HTTP
+
+| Código | Significado |
+|--------|-------------|
+| `200` | Sucesso |
+| `400` | Requisição inválida — parâmetros incorretos |
+| `401` | Não autorizado — chave de API ausente ou inválida |
+| `403` | Proibido — chave desabilitada ou ação não permitida |
+| `404` | Não encontrado |
+| `409` | Conflito — requisição duplicada ou conflito de recurso |
+| `422` | Erro de validação — verifique o corpo da requisição |
+| `429` | Limite de taxa excedido |
+| `500` | Erro do servidor |
+
+## Códigos de erro comuns
+
+| Código | Descrição |
+|--------|-----------|
+| `INSUFFICIENT_BALANCE` | Saldo da conta insuficiente para esta operação |
+| `ADDRESS_ALREADY_ACTIVE` | Smart Mode já está ativo para este endereço |
+| `ORDER_NOT_FOUND` | ID do pedido não existe |
+| `INVALID_ADDRESS` | Endereço TRON inválido |
+| `RATE_LIMITED` | Muitas requisições, tente novamente após o período de espera |
+| `PASSKEY_REQUIRED` | Saque requer verificação por passkey |
+| `2FA_REQUIRED` | Saque requer código 2FA |
+
+## Estratégia de retry
+
+Para erros `429` e `5xx`, implemente backoff exponencial:
+
+```python
+import time
+import requests
+
+def api_call_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.get(url, **kwargs)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            time.sleep(2 ** attempt)
+            continue
+        return resp
+    raise Exception("Max retries exceeded")
+```

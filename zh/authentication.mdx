@@ -1,0 +1,52 @@
+---
+title: 身份验证
+description: "如何通过 TronRental API 进行身份验证"
+---
+
+## API 密钥验证
+
+所有 API 请求需要在 `X-API-Key` 请求头中传入 API 密钥。
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+### 获取 API 密钥
+
+1. 在 [tronrental.com](https://tronrental.com/auth/register) 注册
+2. 前往[控制面板 → API 密钥](https://tronrental.com/dashboard/api)
+3. 点击 **创建 API 密钥**
+4. 复制并安全保存您的密钥 — 密钥仅显示一次
+
+### IP 白名单（可选）
+
+您可以将 API 密钥限制为特定 IP 地址，以提高安全性。在创建或编辑密钥时，可在控制面板中进行配置。
+
+### 密钥权限
+
+每个 API 密钥都拥有您账户所有 API 操作的完整访问权限：
+- 购买能量和带宽
+- 管理智能模式订阅
+- 创建账单
+- 查询余额和交易历史
+
+<Warning>
+  请妥善保管您的 API 密钥。请勿在客户端代码、公开仓库或 URL 中暴露密钥。
+</Warning>
+
+## 速率限制
+
+API 密钥按端点进行速率限制。详情请参阅[速率限制](/resources/rate-limits)。
+
+## 错误
+
+身份验证错误将返回 HTTP `401`：
+
+```json
+{
+  "detail": "Invalid or missing API key"
+}
+```
+
+如果您的密钥已被禁用或封锁，将收到 HTTP `403`。

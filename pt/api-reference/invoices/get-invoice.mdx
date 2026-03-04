@@ -1,0 +1,54 @@
+---
+title: Consultar Fatura
+api: GET /api/v1/invoices/{invoice_id}
+description: "Obter detalhes da fatura por ID"
+---
+
+## Consultar Fatura
+
+Retorna detalhes e status atual de uma fatura.
+
+### Parâmetros de caminho
+
+<ParamField path="invoice_id" type="number" required>
+  ID da fatura
+</ParamField>
+
+### Resposta
+
+Retorna o objeto completo da fatura incluindo `status`, `payment_address`, `price_trx`, `price_usdt`, `tx_hash` e timestamps.
+
+### Status da fatura
+
+| Status | Descrição |
+|--------|-----------|
+| `pending` | Aguardando pagamento |
+| `paid` | Pagamento recebido, delegação em andamento |
+| `delegated` | Energia delegada com sucesso |
+| `expired` | Nenhum pagamento recebido antes da expiração |
+| `failed` | Delegação falhou (pagamento reembolsado) |
+
+### Exemplo
+
+```bash
+curl https://api.tronrental.com/v1/invoices/12345 \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "invoice_id": 12345,
+  "payment_address": "TPaymentAddress...",
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "price_usdt": "0.64",
+  "status": "delegated",
+  "tx_hash": "a1b2c3d4e5f6...",
+  "paid_at": "2026-03-05T12:05:00Z",
+  "delegated_at": "2026-03-05T12:05:30Z",
+  "expires_at": "2026-03-05T12:30:00Z",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```

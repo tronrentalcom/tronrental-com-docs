@@ -1,0 +1,71 @@
+---
+title: Introduccion
+description: "API de TronRental — acceso programatico al alquiler de energia y ancho de banda en TRON"
+---
+
+## Bienvenido a la API de TronRental
+
+TronRental ofrece una API REST para alquilar energia y ancho de banda en TRON. Reduce los costos de transferencia de USDT hasta un 80% en comparacion con la quema de TRX.
+
+### Que puedes hacer
+
+<CardGroup cols={2}>
+  <Card title="Comprar Energia" icon="bolt" href="/api-reference/energy/buy-energy">
+    Compra energia para cualquier direccion TRON. Paga por transaccion o en volumen.
+  </Card>
+  <Card title="Smart Mode" icon="wand-magic-sparkles" href="/api-reference/smart-mode/overview">
+    Entrega automatica de energia para cada transferencia USDT saliente.
+  </Card>
+  <Card title="Paquetes de Transferencias" icon="box" href="/api-reference/transfer-packages/overview">
+    Paquetes prepagados de transferencias USDT con energia garantizada.
+  </Card>
+  <Card title="Facturas" icon="file-invoice" href="/api-reference/invoices/create-invoice">
+    Crea facturas de pago para energia — sin necesidad de cuenta para tus usuarios.
+  </Card>
+</CardGroup>
+
+### URL base
+
+Todas las solicitudes a la API utilizan la siguiente URL base:
+
+```
+https://api.tronrental.com/v1
+```
+
+### Ejemplo rapido
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourTronAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "order_id": 12345,
+  "address": "TYourTronAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+## Siguientes pasos
+
+<Steps>
+  <Step title="Obtener tu clave API">
+    Registrate en [tronrental.com](https://tronrental.com/auth/register) y crea una clave API en el [panel de control](https://tronrental.com/dashboard/api).
+  </Step>
+  <Step title="Consultar precios actuales">
+    Llama a `GET /api/v1/prices` para ver los precios actuales de energia y ancho de banda.
+  </Step>
+  <Step title="Realizar tu primera compra">
+    Usa `POST /api/v1/energy/buy` para comprar energia para una direccion TRON.
+  </Step>
+</Steps>

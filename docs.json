@@ -35,94 +35,675 @@
         "url": "https://tronrental.com"
       }
     ],
-    "tabs": [
+    "languages": [
       {
-        "tab": "Guides",
-        "groups": [
+        "language": "en",
+        "tabs": [
           {
-            "group": "Getting Started",
-            "pages": [
-              "introduction",
-              "authentication",
-              "quickstart",
-              "errors"
+            "tab": "Guides",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "introduction",
+                  "authentication",
+                  "quickstart",
+                  "errors"
+                ]
+              },
+              {
+                "group": "TRON Energy",
+                "pages": [
+                  "resources/tron-energy"
+                ]
+              }
             ]
           },
           {
-            "group": "TRON Energy",
-            "pages": [
-              "resources/tron-energy"
+            "tab": "API Reference",
+            "groups": [
+              {
+                "group": "Core API",
+                "pages": [
+                  "api-reference/energy/get-prices",
+                  "api-reference/energy/buy-energy",
+                  "api-reference/energy/activate-address",
+                  "api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Invoices",
+                "pages": [
+                  "api-reference/invoices/create-invoice",
+                  "api-reference/invoices/get-invoice",
+                  "api-reference/invoices/list-invoices"
+                ]
+              },
+              {
+                "group": "Smart Mode",
+                "pages": [
+                  "api-reference/smart-mode/overview",
+                  "api-reference/smart-mode/get-fees",
+                  "api-reference/smart-mode/activate",
+                  "api-reference/smart-mode/list-subscriptions",
+                  "api-reference/smart-mode/toggle",
+                  "api-reference/smart-mode/deactivate"
+                ]
+              },
+              {
+                "group": "Transfer Packages",
+                "pages": [
+                  "api-reference/transfer-packages/overview",
+                  "api-reference/transfer-packages/get-tiers",
+                  "api-reference/transfer-packages/buy",
+                  "api-reference/transfer-packages/list"
+                ]
+              },
+              {
+                "group": "Account",
+                "pages": [
+                  "api-reference/account/get-balance",
+                  "api-reference/account/get-profile",
+                  "api-reference/account/deposits",
+                  "api-reference/account/withdrawals"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "api-reference/webhooks/overview",
+                  "api-reference/webhooks/configure",
+                  "api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Resources",
+            "groups": [
+              {
+                "group": "Resources",
+                "pages": [
+                  "resources/rate-limits",
+                  "resources/changelog"
+                ]
+              }
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
-        "groups": [
+        "language": "ru",
+        "tabs": [
           {
-            "group": "Core API",
-            "pages": [
-              "api-reference/energy/get-prices",
-              "api-reference/energy/buy-energy",
-              "api-reference/energy/activate-address",
-              "api-reference/bandwidth/buy-bandwidth"
+            "tab": "Руководства",
+            "groups": [
+              {
+                "group": "Начало работы",
+                "pages": [
+                  "ru/introduction",
+                  "ru/authentication",
+                  "ru/quickstart",
+                  "ru/errors"
+                ]
+              },
+              {
+                "group": "Энергия TRON",
+                "pages": [
+                  "ru/resources/tron-energy"
+                ]
+              }
             ]
           },
           {
-            "group": "Invoices",
-            "pages": [
-              "api-reference/invoices/create-invoice",
-              "api-reference/invoices/get-invoice",
-              "api-reference/invoices/list-invoices"
+            "tab": "Справочник API",
+            "groups": [
+              {
+                "group": "Основное API",
+                "pages": [
+                  "ru/api-reference/energy/get-prices",
+                  "ru/api-reference/energy/buy-energy",
+                  "ru/api-reference/energy/activate-address",
+                  "ru/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Инвойсы",
+                "pages": [
+                  "ru/api-reference/invoices/create-invoice",
+                  "ru/api-reference/invoices/get-invoice",
+                  "ru/api-reference/invoices/list-invoices"
+                ]
+              },
+              {
+                "group": "Smart Mode",
+                "pages": [
+                  "ru/api-reference/smart-mode/overview",
+                  "ru/api-reference/smart-mode/get-fees",
+                  "ru/api-reference/smart-mode/activate",
+                  "ru/api-reference/smart-mode/list-subscriptions",
+                  "ru/api-reference/smart-mode/toggle",
+                  "ru/api-reference/smart-mode/deactivate"
+                ]
+              },
+              {
+                "group": "Пакеты переводов",
+                "pages": [
+                  "ru/api-reference/transfer-packages/overview",
+                  "ru/api-reference/transfer-packages/get-tiers",
+                  "ru/api-reference/transfer-packages/buy",
+                  "ru/api-reference/transfer-packages/list"
+                ]
+              },
+              {
+                "group": "Аккаунт",
+                "pages": [
+                  "ru/api-reference/account/get-balance",
+                  "ru/api-reference/account/get-profile",
+                  "ru/api-reference/account/deposits",
+                  "ru/api-reference/account/withdrawals"
+                ]
+              },
+              {
+                "group": "Вебхуки",
+                "pages": [
+                  "ru/api-reference/webhooks/overview",
+                  "ru/api-reference/webhooks/configure",
+                  "ru/api-reference/webhooks/events"
+                ]
+              }
             ]
           },
           {
-            "group": "Smart Mode",
-            "pages": [
-              "api-reference/smart-mode/overview",
-              "api-reference/smart-mode/get-fees",
-              "api-reference/smart-mode/activate",
-              "api-reference/smart-mode/list-subscriptions",
-              "api-reference/smart-mode/toggle",
-              "api-reference/smart-mode/deactivate"
-            ]
-          },
-          {
-            "group": "Transfer Packages",
-            "pages": [
-              "api-reference/transfer-packages/overview",
-              "api-reference/transfer-packages/get-tiers",
-              "api-reference/transfer-packages/buy",
-              "api-reference/transfer-packages/list"
-            ]
-          },
-          {
-            "group": "Account",
-            "pages": [
-              "api-reference/account/get-balance",
-              "api-reference/account/get-profile",
-              "api-reference/account/deposits",
-              "api-reference/account/withdrawals"
-            ]
-          },
-          {
-            "group": "Webhooks",
-            "pages": [
-              "api-reference/webhooks/overview",
-              "api-reference/webhooks/configure",
-              "api-reference/webhooks/events"
+            "tab": "Ресурсы",
+            "groups": [
+              {
+                "group": "Ресурсы",
+                "pages": [
+                  "ru/resources/rate-limits",
+                  "ru/resources/changelog"
+                ]
+              }
             ]
           }
         ]
       },
       {
-        "tab": "Resources",
-        "groups": [
+        "language": "zh",
+        "tabs": [
           {
-            "group": "Resources",
-            "pages": [
-              "resources/rate-limits",
-              "resources/changelog"
+            "tab": "指南",
+            "groups": [
+              {
+                "group": "快速入门",
+                "pages": [
+                  "zh/introduction",
+                  "zh/authentication",
+                  "zh/quickstart",
+                  "zh/errors"
+                ]
+              },
+              {
+                "group": "TRON 能量",
+                "pages": [
+                  "zh/resources/tron-energy"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API 参考",
+            "groups": [
+              {
+                "group": "核心 API",
+                "pages": [
+                  "zh/api-reference/energy/get-prices",
+                  "zh/api-reference/energy/buy-energy",
+                  "zh/api-reference/energy/activate-address",
+                  "zh/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "发票",
+                "pages": [
+                  "zh/api-reference/invoices/create-invoice",
+                  "zh/api-reference/invoices/get-invoice",
+                  "zh/api-reference/invoices/list-invoices"
+                ]
+              },
+              {
+                "group": "Smart Mode",
+                "pages": [
+                  "zh/api-reference/smart-mode/overview",
+                  "zh/api-reference/smart-mode/get-fees",
+                  "zh/api-reference/smart-mode/activate",
+                  "zh/api-reference/smart-mode/list-subscriptions",
+                  "zh/api-reference/smart-mode/toggle",
+                  "zh/api-reference/smart-mode/deactivate"
+                ]
+              },
+              {
+                "group": "转账套餐",
+                "pages": [
+                  "zh/api-reference/transfer-packages/overview",
+                  "zh/api-reference/transfer-packages/get-tiers",
+                  "zh/api-reference/transfer-packages/buy",
+                  "zh/api-reference/transfer-packages/list"
+                ]
+              },
+              {
+                "group": "账户",
+                "pages": [
+                  "zh/api-reference/account/get-balance",
+                  "zh/api-reference/account/get-profile",
+                  "zh/api-reference/account/deposits",
+                  "zh/api-reference/account/withdrawals"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "zh/api-reference/webhooks/overview",
+                  "zh/api-reference/webhooks/configure",
+                  "zh/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "资源",
+            "groups": [
+              {
+                "group": "资源",
+                "pages": [
+                  "zh/resources/rate-limits",
+                  "zh/resources/changelog"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "es",
+        "tabs": [
+          {
+            "tab": "Guías",
+            "groups": [
+              {
+                "group": "Primeros pasos",
+                "pages": [
+                  "es/introduction",
+                  "es/authentication",
+                  "es/quickstart",
+                  "es/errors"
+                ]
+              },
+              {
+                "group": "Energía TRON",
+                "pages": [
+                  "es/resources/tron-energy"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Referencia API",
+            "groups": [
+              {
+                "group": "API Principal",
+                "pages": [
+                  "es/api-reference/energy/get-prices",
+                  "es/api-reference/energy/buy-energy",
+                  "es/api-reference/energy/activate-address",
+                  "es/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Facturas",
+                "pages": [
+                  "es/api-reference/invoices/create-invoice",
+                  "es/api-reference/invoices/get-invoice",
+                  "es/api-reference/invoices/list-invoices"
+                ]
+              },
+              {
+                "group": "Smart Mode",
+                "pages": [
+                  "es/api-reference/smart-mode/overview",
+                  "es/api-reference/smart-mode/get-fees",
+                  "es/api-reference/smart-mode/activate",
+                  "es/api-reference/smart-mode/list-subscriptions",
+                  "es/api-reference/smart-mode/toggle",
+                  "es/api-reference/smart-mode/deactivate"
+                ]
+              },
+              {
+                "group": "Paquetes de transferencia",
+                "pages": [
+                  "es/api-reference/transfer-packages/overview",
+                  "es/api-reference/transfer-packages/get-tiers",
+                  "es/api-reference/transfer-packages/buy",
+                  "es/api-reference/transfer-packages/list"
+                ]
+              },
+              {
+                "group": "Cuenta",
+                "pages": [
+                  "es/api-reference/account/get-balance",
+                  "es/api-reference/account/get-profile",
+                  "es/api-reference/account/deposits",
+                  "es/api-reference/account/withdrawals"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "es/api-reference/webhooks/overview",
+                  "es/api-reference/webhooks/configure",
+                  "es/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Recursos",
+            "groups": [
+              {
+                "group": "Recursos",
+                "pages": [
+                  "es/resources/rate-limits",
+                  "es/resources/changelog"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "tr",
+        "tabs": [
+          {
+            "tab": "Kılavuzlar",
+            "groups": [
+              {
+                "group": "Başlarken",
+                "pages": [
+                  "tr/introduction",
+                  "tr/authentication",
+                  "tr/quickstart",
+                  "tr/errors"
+                ]
+              },
+              {
+                "group": "TRON Enerji",
+                "pages": [
+                  "tr/resources/tron-energy"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Referansı",
+            "groups": [
+              {
+                "group": "Temel API",
+                "pages": [
+                  "tr/api-reference/energy/get-prices",
+                  "tr/api-reference/energy/buy-energy",
+                  "tr/api-reference/energy/activate-address",
+                  "tr/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Faturalar",
+                "pages": [
+                  "tr/api-reference/invoices/create-invoice",
+                  "tr/api-reference/invoices/get-invoice",
+                  "tr/api-reference/invoices/list-invoices"
+                ]
+              },
+              {
+                "group": "Smart Mode",
+                "pages": [
+                  "tr/api-reference/smart-mode/overview",
+                  "tr/api-reference/smart-mode/get-fees",
+                  "tr/api-reference/smart-mode/activate",
+                  "tr/api-reference/smart-mode/list-subscriptions",
+                  "tr/api-reference/smart-mode/toggle",
+                  "tr/api-reference/smart-mode/deactivate"
+                ]
+              },
+              {
+                "group": "Transfer Paketleri",
+                "pages": [
+                  "tr/api-reference/transfer-packages/overview",
+                  "tr/api-reference/transfer-packages/get-tiers",
+                  "tr/api-reference/transfer-packages/buy",
+                  "tr/api-reference/transfer-packages/list"
+                ]
+              },
+              {
+                "group": "Hesap",
+                "pages": [
+                  "tr/api-reference/account/get-balance",
+                  "tr/api-reference/account/get-profile",
+                  "tr/api-reference/account/deposits",
+                  "tr/api-reference/account/withdrawals"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "tr/api-reference/webhooks/overview",
+                  "tr/api-reference/webhooks/configure",
+                  "tr/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Kaynaklar",
+            "groups": [
+              {
+                "group": "Kaynaklar",
+                "pages": [
+                  "tr/resources/rate-limits",
+                  "tr/resources/changelog"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "pt",
+        "tabs": [
+          {
+            "tab": "Guias",
+            "groups": [
+              {
+                "group": "Primeiros passos",
+                "pages": [
+                  "pt/introduction",
+                  "pt/authentication",
+                  "pt/quickstart",
+                  "pt/errors"
+                ]
+              },
+              {
+                "group": "Energia TRON",
+                "pages": [
+                  "pt/resources/tron-energy"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Referência API",
+            "groups": [
+              {
+                "group": "API Principal",
+                "pages": [
+                  "pt/api-reference/energy/get-prices",
+                  "pt/api-reference/energy/buy-energy",
+                  "pt/api-reference/energy/activate-address",
+                  "pt/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Faturas",
+                "pages": [
+                  "pt/api-reference/invoices/create-invoice",
+                  "pt/api-reference/invoices/get-invoice",
+                  "pt/api-reference/invoices/list-invoices"
+                ]
+              },
+              {
+                "group": "Smart Mode",
+                "pages": [
+                  "pt/api-reference/smart-mode/overview",
+                  "pt/api-reference/smart-mode/get-fees",
+                  "pt/api-reference/smart-mode/activate",
+                  "pt/api-reference/smart-mode/list-subscriptions",
+                  "pt/api-reference/smart-mode/toggle",
+                  "pt/api-reference/smart-mode/deactivate"
+                ]
+              },
+              {
+                "group": "Pacotes de transferência",
+                "pages": [
+                  "pt/api-reference/transfer-packages/overview",
+                  "pt/api-reference/transfer-packages/get-tiers",
+                  "pt/api-reference/transfer-packages/buy",
+                  "pt/api-reference/transfer-packages/list"
+                ]
+              },
+              {
+                "group": "Conta",
+                "pages": [
+                  "pt/api-reference/account/get-balance",
+                  "pt/api-reference/account/get-profile",
+                  "pt/api-reference/account/deposits",
+                  "pt/api-reference/account/withdrawals"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "pt/api-reference/webhooks/overview",
+                  "pt/api-reference/webhooks/configure",
+                  "pt/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Recursos",
+            "groups": [
+              {
+                "group": "Recursos",
+                "pages": [
+                  "pt/resources/rate-limits",
+                  "pt/resources/changelog"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "hi",
+        "tabs": [
+          {
+            "tab": "गाइड",
+            "groups": [
+              {
+                "group": "शुरुआत",
+                "pages": [
+                  "hi/introduction",
+                  "hi/authentication",
+                  "hi/quickstart",
+                  "hi/errors"
+                ]
+              },
+              {
+                "group": "TRON एनर्जी",
+                "pages": [
+                  "hi/resources/tron-energy"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API संदर्भ",
+            "groups": [
+              {
+                "group": "मुख्य API",
+                "pages": [
+                  "hi/api-reference/energy/get-prices",
+                  "hi/api-reference/energy/buy-energy",
+                  "hi/api-reference/energy/activate-address",
+                  "hi/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "इनवॉइस",
+                "pages": [
+                  "hi/api-reference/invoices/create-invoice",
+                  "hi/api-reference/invoices/get-invoice",
+                  "hi/api-reference/invoices/list-invoices"
+                ]
+              },
+              {
+                "group": "Smart Mode",
+                "pages": [
+                  "hi/api-reference/smart-mode/overview",
+                  "hi/api-reference/smart-mode/get-fees",
+                  "hi/api-reference/smart-mode/activate",
+                  "hi/api-reference/smart-mode/list-subscriptions",
+                  "hi/api-reference/smart-mode/toggle",
+                  "hi/api-reference/smart-mode/deactivate"
+                ]
+              },
+              {
+                "group": "ट्रांसफर पैकेज",
+                "pages": [
+                  "hi/api-reference/transfer-packages/overview",
+                  "hi/api-reference/transfer-packages/get-tiers",
+                  "hi/api-reference/transfer-packages/buy",
+                  "hi/api-reference/transfer-packages/list"
+                ]
+              },
+              {
+                "group": "खाता",
+                "pages": [
+                  "hi/api-reference/account/get-balance",
+                  "hi/api-reference/account/get-profile",
+                  "hi/api-reference/account/deposits",
+                  "hi/api-reference/account/withdrawals"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "hi/api-reference/webhooks/overview",
+                  "hi/api-reference/webhooks/configure",
+                  "hi/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "संसाधन",
+            "groups": [
+              {
+                "group": "संसाधन",
+                "pages": [
+                  "hi/resources/rate-limits",
+                  "hi/resources/changelog"
+                ]
+              }
             ]
           }
         ]

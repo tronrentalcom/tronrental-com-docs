@@ -1,0 +1,38 @@
+---
+title: शुल्क प्राप्त करें
+api: GET /api/v1/smart-mode/fees
+description: "वर्तमान Smart Mode मूल्य निर्धारण प्राप्त करें"
+---
+
+## Smart Mode शुल्क प्राप्त करें
+
+आपके अकाउंट के लिए वर्तमान Smart Mode मूल्य निर्धारण लौटाता है। यदि कस्टम प्राइसिंग कॉन्फ़िगर है, तो आपकी व्यक्तिगत दरें लौटाता है।
+
+### रिस्पॉन्स
+
+<ResponseField name="subscription_fee_trx" type="string">
+  TRX में दैनिक सब्सक्रिप्शन शुल्क
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  TRX में प्रति-ट्रांसफर शुल्क
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string">
+  TRX में प्रति ट्रांसफर BW Guarantee शुल्क
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/fees \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "bw_fee_trx": "0.3"
+}
+```

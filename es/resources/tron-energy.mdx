@@ -1,0 +1,39 @@
+---
+title: Energia TRON explicada
+description: "Entendiendo la energia TRON y por que alquilarla ahorra dinero"
+---
+
+## Que es la energia TRON?
+
+La energia es un recurso en la blockchain TRON necesario para ejecutar contratos inteligentes. Cada transferencia de tokens TRC-20 (como USDT) consume energia.
+
+### Consumo de energia para transferencias USDT
+
+| Escenario | Energia necesaria |
+|-----------|-------------------|
+| El destinatario **tiene** USDT | **~65,000** (exacto: 64,285) |
+| El destinatario **no tiene** USDT | **~131,000** (exacto: 130,285) |
+
+La diferencia se debe a la creacion de slots de almacenamiento — enviar USDT a un nuevo titular requiere crear una nueva entrada en el contrato del token.
+
+### Sin energia: se quema TRX
+
+Si no tienes energia, la red quema TRX de tu cuenta para cubrir el costo:
+
+```
+64,285 energy × 100 SUN/energy = 6,428,500 SUN = 6.43 TRX
+```
+
+A las tasas actuales, eso equivale aproximadamente a **$1.50 por transferencia USDT**.
+
+### Con energia alquilada: 60-80% de ahorro
+
+Alquilar energia cuesta aproximadamente **2.5-3.0 TRX por transferencia** — lo que te ahorra un 50-60% comparado con la quema.
+
+### Como funciona el alquiler
+
+La energia se proporciona mediante **delegacion de recursos** — una funcion de la red TRON donde una cuenta comparte temporalmente sus recursos en staking con otra. La energia aparece en la direccion de destino y se consume durante la siguiente transaccion.
+
+<Tip>
+  Usa la [Calculadora de Energia](https://tronrental.com/energy-calculator) para verificar si una direccion destinataria necesita 65K o 131K de energia.
+</Tip>

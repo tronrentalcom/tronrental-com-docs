@@ -1,0 +1,57 @@
+---
+title: Comprar ancho de banda
+api: POST /api/v1/bandwidth/buy
+description: "Comprar ancho de banda para una direccion TRON"
+---
+
+## Comprar ancho de banda
+
+Delega ancho de banda a la direccion TRON especificada.
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Direccion TRON de destino
+</ParamField>
+
+<ParamField body="bandwidth_amount" type="number" required>
+  Cantidad de ancho de banda (min 350, max 100,000)
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Duracion del alquiler en horas
+</ParamField>
+
+### Respuesta
+
+Devuelve un objeto de orden con `order_id`, `status` y `price_trx`.
+
+### Precios
+
+Precio del ancho de banda: `(volumen / 1000) × 9.6 / 24 + 0.2 TRX`
+
+La tarifa fija de 0.2 TRX se aplica a todas las ordenes de ancho de banda.
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TTargetAddress...",
+    "bandwidth_amount": 1000,
+    "duration_hours": 24
+  }'
+```
+
+```json Response
+{
+  "order_id": 5678,
+  "address": "TTargetAddress...",
+  "bandwidth_amount": 1000,
+  "duration_hours": 24,
+  "price_trx": "9.80",
+  "status": "pending"
+}
+```

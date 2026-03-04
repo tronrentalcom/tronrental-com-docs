@@ -1,0 +1,35 @@
+---
+title: Настройка вебхука
+api: POST /api/v1/webhooks/configure
+description: "Установить URL вебхука"
+---
+
+## Настройка вебхука
+
+Устанавливает или обновляет URL вебхука. Допускается только один URL на аккаунт.
+
+### Тело запроса
+
+<ParamField body="url" type="string" required>
+  HTTPS URL вебхука
+</ParamField>
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/webhooks/configure \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
+```
+
+```json Response
+{
+  "url": "https://yourserver.com/webhook/tronrental",
+  "secret": "whsec_abc123...",
+  "active": true,
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+Для удаления вебхука отправьте пустой URL или удалите через личный кабинет.

@@ -1,0 +1,71 @@
+---
+title: त्रुटियां
+description: "API त्रुटि कोड और हैंडलिंग"
+---
+
+## त्रुटि प्रारूप
+
+सभी त्रुटियां `detail` फ़ील्ड के साथ JSON रिस्पॉन्स लौटाती हैं:
+
+```json
+{
+  "detail": "Insufficient balance"
+}
+```
+
+कुछ त्रुटियों में प्रोग्रामेटिक हैंडलिंग के लिए एक संरचित `code` शामिल होता है:
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Not enough TRX balance"
+    }
+  }
+}
+```
+
+## HTTP स्टेटस कोड
+
+| कोड | अर्थ |
+|------|---------|
+| `200` | सफल |
+| `400` | खराब अनुरोध — अमान्य पैरामीटर |
+| `401` | अनधिकृत — API कुंजी गायब या अमान्य |
+| `403` | निषिद्ध — कुंजी अक्षम या कार्रवाई की अनुमति नहीं |
+| `404` | नहीं मिला |
+| `409` | कॉन्फ्लिक्ट — डुप्लिकेट अनुरोध या रिसोर्स कॉन्फ्लिक्ट |
+| `422` | वैलिडेशन त्रुटि — अनुरोध बॉडी जांचें |
+| `429` | रेट लिमिट पार हो गई |
+| `500` | सर्वर त्रुटि |
+
+## सामान्य त्रुटि कोड
+
+| कोड | विवरण |
+|------|-------------|
+| `INSUFFICIENT_BALANCE` | इस ऑपरेशन के लिए अकाउंट बैलेंस बहुत कम |
+| `ADDRESS_ALREADY_ACTIVE` | इस एड्रेस के लिए Smart Mode पहले से सक्रिय है |
+| `ORDER_NOT_FOUND` | ऑर्डर ID मौजूद नहीं है |
+| `INVALID_ADDRESS` | मान्य TRON एड्रेस नहीं है |
+| `RATE_LIMITED` | बहुत अधिक अनुरोध, कूलडाउन के बाद पुनः प्रयास करें |
+| `PASSKEY_REQUIRED` | निकासी के लिए passkey सत्यापन आवश्यक |
+| `2FA_REQUIRED` | निकासी के लिए 2FA कोड आवश्यक |
+
+## पुनः प्रयास रणनीति
+
+`429` और `5xx` त्रुटियों के लिए, एक्सपोनेंशियल बैकऑफ़ लागू करें:
+
+```python
+import time
+import requests
+
+def api_call_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.get(url, **kwargs)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            time.sleep(2 ** attempt)
+            continue
+        return resp
+    raise Exception("Max retries exceeded")
+```

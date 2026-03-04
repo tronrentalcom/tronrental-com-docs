@@ -1,0 +1,100 @@
+---
+title: Visão Geral dos Webhooks
+description: "Receba notificações em tempo real para eventos da conta"
+---
+
+## Webhooks
+
+Configure uma URL de webhook para receber notificações HTTP POST em tempo real quando eventos ocorrerem na sua conta.
+
+### Eventos suportados
+
+| Evento | Descrição |
+|--------|-----------|
+| `order.filled` | Pedido de energia concluído |
+| `order.failed` | Pedido de energia falhou |
+| `deposit.confirmed` | Depósito creditado no saldo |
+| `invoice.paid` | Pagamento da fatura recebido |
+| `invoice.delegated` | Energia da fatura delegada |
+| `smart_mode.transfer` | Transferência do Smart Mode processada |
+| `withdrawal.completed` | Saque enviado |
+
+### Payload do webhook
+
+```json
+{
+  "event": "order.filled",
+  "data": {
+    "order_id": 1234,
+    "address": "TAddress...",
+    "energy_amount": 65000,
+    "price_trx": "2.75"
+  },
+  "timestamp": "2026-03-04T12:00:00Z"
+}
+```
+
+### Requisitos
+
+- A URL deve usar **HTTPS**
+- Deve responder com status `2xx` em até 10 segundos
+- Entregas com falha são retentadas até 3 vezes com backoff exponencial
+
+### Verificando assinaturas de webhook
+
+Cada requisição de webhook inclui um cabeçalho `X-Webhook-Signature` contendo uma assinatura HMAC-SHA256. Use isso para verificar que a requisição é da TronRental.
+
+A assinatura é calculada sobre o corpo bruto da requisição usando seu segredo de webhook (retornado quando você [configura seu webhook](/api-reference/webhooks/configure)).
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+
+def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(
+        secret.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+# In your webhook handler:
+# payload = request.body  (raw bytes)
+# signature = request.headers["X-Webhook-Signature"]
+# secret = "whsec_abc123..."  (from configure response)
+# if not verify_webhook(payload, signature, secret):
+#     return Response(status_code=401)
+```
+
+```javascript JavaScript
+const crypto = require("crypto");
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+
+// In your webhook handler:
+// const payload = req.rawBody;  // raw request body string
+// const signature = req.headers["x-webhook-signature"];
+// const secret = "whsec_abc123...";
+// if (!verifyWebhook(payload, signature, secret)) {
+//   return res.status(401).send("Invalid signature");
+// }
+```
+</CodeGroup>
+
+<Warning>
+  Sempre verifique a assinatura antes de processar os dados do webhook. Use comparação em tempo constante (`hmac.compare_digest` / `crypto.timingSafeEqual`) para prevenir ataques de timing.
+</Warning>
+
+<Warning>
+  URLs de webhook não podem apontar para `localhost`, `127.0.0.1` ou outros endereços privados.
+</Warning>

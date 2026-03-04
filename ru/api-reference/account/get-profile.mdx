@@ -1,0 +1,53 @@
+---
+title: Получить профиль
+api: GET /api/v1/account/profile
+description: "Получить профиль вашего аккаунта"
+---
+
+## Получить профиль
+
+Возвращает информацию о профиле вашего аккаунта.
+
+### Ответ
+
+<ResponseField name="id" type="number">
+  ID пользователя
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Адрес электронной почты (если указан)
+</ResponseField>
+
+<ResponseField name="tron_address" type="string">
+  Привязанный адрес TRON (если указан)
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  Баланс аккаунта в TRX
+</ResponseField>
+
+<ResponseField name="totp_enabled" type="boolean">
+  Включена ли двухфакторная аутентификация
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Временная метка создания аккаунта
+</ResponseField>
+
+### Пример
+
+```bash
+curl https://api.tronrental.com/v1/account/profile \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 1,
+  "email": "user@example.com",
+  "tron_address": "TYourAddress...",
+  "balance_trx": "150.50",
+  "totp_enabled": false,
+  "created_at": "2026-01-15T10:00:00Z"
+}
+```

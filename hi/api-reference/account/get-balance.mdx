@@ -1,0 +1,28 @@
+---
+title: बैलेंस प्राप्त करें
+api: GET /api/v1/account/balance
+description: "अपना अकाउंट बैलेंस प्राप्त करें"
+---
+
+## बैलेंस प्राप्त करें
+
+आपका वर्तमान TRX बैलेंस लौटाता है।
+
+### रिस्पॉन्स
+
+<ResponseField name="balance_trx" type="string">
+  TRX में अकाउंट बैलेंस (दशमलव स्ट्रिंग)
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "balance_trx": "156.50"
+}
+```

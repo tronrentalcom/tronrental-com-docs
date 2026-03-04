@@ -1,0 +1,87 @@
+---
+title: इनवॉइस बनाएं
+api: POST /api/v1/invoices
+description: "एनर्जी डेलिगेशन के लिए पेमेंट इनवॉइस बनाएं"
+---
+
+## इनवॉइस बनाएं
+
+एक पेमेंट इनवॉइस बनाता है जो एक विशिष्ट डिपॉज़िट एड्रेस जनरेट करता है। जब भुगतान (TRX या USDT) प्राप्त होता है, तो एनर्जी स्वचालित रूप से लक्ष्य एड्रेस को डेलिगेट की जाती है।
+
+**उन इंटीग्रेशन के लिए उपयोगी जहां अंतिम उपयोगकर्ता सीधे भुगतान करते हैं** — अकाउंट बैलेंस की आवश्यकता नहीं।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  एनर्जी प्राप्त करने वाला लक्ष्य TRON एड्रेस
+</ParamField>
+
+<ParamField body="energy_amount" type="number">
+  एनर्जी मात्रा (32,000 – 5,000,000)। इसका या `transfer_count` का उपयोग करें।
+</ParamField>
+
+<ParamField body="transfer_count" type="number">
+  USDT ट्रांसफर की संख्या (1 – 100)। प्रत्येक ट्रांसफर = 65,000 एनर्जी।
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  किराए की अवधि (1 या 24 घंटे)
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="invoice_id" type="number">
+  विशिष्ट इनवॉइस पहचानकर्ता
+</ResponseField>
+
+<ResponseField name="payment_address" type="string">
+  विशिष्ट डिपॉज़िट एड्रेस — यहां TRX या USDT भेजें
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  TRX में मूल्य
+</ResponseField>
+
+<ResponseField name="price_usdt" type="string">
+  USDT में मूल्य
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  इनवॉइस स्टेटस: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ResponseField>
+
+<ResponseField name="expires_at" type="string">
+  ISO 8601 समाप्ति टाइमस्टैम्प
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/invoices \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "transfer_count": 1,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "invoice_id": 789,
+  "payment_address": "TPaymentAddress...",
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "price_usdt": "0.64",
+  "status": "pending",
+  "expires_at": "2026-03-05T12:30:00Z"
+}
+```
+
+<Info>
+  यदि कोई भुगतान प्राप्त नहीं होता है तो इनवॉइस 30 मिनट बाद समाप्त हो जाते हैं।
+  जनरेट किए गए एड्रेस पर TRX और USDT दोनों भुगतान स्वीकार किए जाते हैं।
+</Info>

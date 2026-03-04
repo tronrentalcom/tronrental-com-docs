@@ -1,0 +1,53 @@
+---
+title: Profil Al
+api: GET /api/v1/account/profile
+description: "Hesap profilinizi alin"
+---
+
+## Profil Al
+
+Hesap profil bilgilerinizi dondurur.
+
+### Yanit
+
+<ResponseField name="id" type="number">
+  Kullanici kimlik numarasi
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  E-posta adresi (ayarlanmissa)
+</ResponseField>
+
+<ResponseField name="tron_address" type="string">
+  Bagli TRON adresi (ayarlanmissa)
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  TRX cinsinden hesap bakiyesi
+</ResponseField>
+
+<ResponseField name="totp_enabled" type="boolean">
+  2FA'nin etkin olup olmadigi
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Hesap olusturma zaman damgasi
+</ResponseField>
+
+### Ornek
+
+```bash
+curl https://api.tronrental.com/v1/account/profile \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 1,
+  "email": "user@example.com",
+  "tron_address": "TYourAddress...",
+  "balance_trx": "150.50",
+  "totp_enabled": false,
+  "created_at": "2026-01-15T10:00:00Z"
+}
+```

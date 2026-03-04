@@ -1,0 +1,28 @@
+---
+title: 获取余额
+api: GET /api/v1/account/balance
+description: "获取您的账户余额"
+---
+
+## 获取余额
+
+返回您当前的 TRX 余额。
+
+### 响应
+
+<ResponseField name="balance_trx" type="string">
+  账户余额，以 TRX 计（十进制字符串）
+</ResponseField>
+
+### 示例
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "balance_trx": "156.50"
+}
+```

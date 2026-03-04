@@ -1,0 +1,35 @@
+---
+title: Desativar
+api: POST /api/v1/smart-mode/{subscription_id}/deactivate
+description: "Desativar permanentemente uma assinatura do Smart Mode"
+---
+
+## Desativar Assinatura
+
+Desativa permanentemente uma assinatura do Smart Mode. Esta ação não pode ser desfeita — você precisará criar uma nova assinatura para reativar.
+
+### Parâmetros de caminho
+
+<ParamField path="subscription_id" type="number" required>
+  ID da assinatura
+</ParamField>
+
+### Resposta
+
+Retorna o objeto da assinatura desativada.
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "status": "deactivated",
+  "message": "Subscription permanently deactivated"
+}
+```

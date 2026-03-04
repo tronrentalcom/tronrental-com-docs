@@ -1,0 +1,39 @@
+---
+title: Visão Geral do Smart Mode
+description: "Energia automática para cada transferência USDT"
+---
+
+## Smart Mode
+
+O Smart Mode fornece energia automaticamente para cada transferência USDT de saída de um endereço monitorado. Sem necessidade de chamadas manuais à API — basta ativar e transferir.
+
+### Como funciona
+
+1. **Ative** o Smart Mode para um endereço TRON
+2. Toda vez que esse endereço enviar USDT, a energia é **delegada automaticamente**
+3. Taxa de assinatura diária + taxa por transferência deduzidas do seu saldo
+4. Se o saldo acabar, a assinatura é pausada (não excluída)
+
+### Preços
+
+| Taxa | Valor |
+|------|-------|
+| Assinatura diária | 3,0 TRX/dia |
+| Por transferência USDT | 2,7 TRX × multiplicador |
+| BW Guarantee (opcional) | +0,3 TRX/transferência |
+
+O multiplicador de transferência é `1` para endereços que já possuem USDT (65K energia) e `2` para destinatários pela primeira vez (131K energia).
+
+<Tip>
+  **BW Guarantee** (ativado por padrão) delega 350 de largura de banda para cobrir o custo de largura de banda da transação.
+  Sem ele, o remetente precisa de ~0,35 TRX em largura de banda ou TRX congelado.
+</Tip>
+
+<Info>
+  Os preços acima são padrão. Use [`GET /smart-mode/fees`](/api-reference/smart-mode/get-fees) para verificar suas taxas reais — preços personalizados podem ser aplicados.
+</Info>
+
+### Limites
+
+- Máximo de 5 assinaturas ativas por conta
+- Preços personalizados disponíveis para usuários de alto volume (entre em contato com o suporte)

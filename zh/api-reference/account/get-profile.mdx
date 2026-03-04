@@ -1,0 +1,53 @@
+---
+title: 获取资料
+api: GET /api/v1/account/profile
+description: "获取您的账户资料"
+---
+
+## 获取资料
+
+返回您的账户资料信息。
+
+### 响应
+
+<ResponseField name="id" type="number">
+  用户 ID
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  电子邮箱（如已设置）
+</ResponseField>
+
+<ResponseField name="tron_address" type="string">
+  已关联的 TRON 地址（如已设置）
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  账户余额，以 TRX 计
+</ResponseField>
+
+<ResponseField name="totp_enabled" type="boolean">
+  是否已启用双重验证
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  账户创建时间戳
+</ResponseField>
+
+### 示例
+
+```bash
+curl https://api.tronrental.com/v1/account/profile \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 1,
+  "email": "user@example.com",
+  "tron_address": "TYourAddress...",
+  "balance_trx": "150.50",
+  "totp_enabled": false,
+  "created_at": "2026-01-15T10:00:00Z"
+}
+```

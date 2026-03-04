@@ -1,0 +1,51 @@
+---
+title: Depositos
+description: "Depositar TRX o USDT en tu cuenta"
+---
+
+## Obtener direccion de deposito
+
+<div>
+  `GET /api/v1/account/deposit`
+</div>
+
+Devuelve tu direccion de deposito personal y las monedas aceptadas.
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "deposit_address": "TYourDepositAddress...",
+  "accepted_currencies": ["TRX", "USDT"],
+  "usdt_to_trx_rate": "26.5",
+  "trx_usd_rate": "0.234"
+}
+```
+
+## Listar depositos
+
+<div>
+  `GET /api/v1/account/deposits`
+</div>
+
+Devuelve tu historial de depositos.
+
+```bash
+curl https://api.tronrental.com/v1/account/deposits \
+  -H "X-API-Key: your_api_key"
+```
+
+### Estados del deposito
+
+| Estado | Descripcion |
+|--------|-------------|
+| `pending` | Transaccion detectada, esperando confirmacion |
+| `confirmed` | Acreditado a tu saldo |
+| `expired` | Direccion de deposito expirada |
+
+<Info>
+  Los depositos se acreditan automaticamente. Los depositos en TRX son 1:1. Los depositos en USDT se convierten a TRX a la tasa de mercado actual.
+</Info>

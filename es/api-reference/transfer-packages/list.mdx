@@ -1,0 +1,43 @@
+---
+title: Listar paquetes
+api: GET /api/v1/transfer-packages/my
+description: "Listar tus paquetes de transferencias"
+---
+
+## Listar mis paquetes
+
+Devuelve todos tus paquetes de transferencias.
+
+### Respuesta
+
+Array de objetos de paquetes con `id`, `address`, `total_transfers`, `remaining_transfers`, `status` y `created_at`.
+
+### Estados del paquete
+
+| Estado | Descripcion |
+|--------|-------------|
+| `pending_payment` | Esperando pago de la factura |
+| `active` | Monitoreando direccion, transferencias disponibles |
+| `completed` | Todas las transferencias utilizadas |
+| `cancelled` | Cancelado por el usuario |
+
+### Ejemplo
+
+```bash
+curl https://api.tronrental.com/v1/transfer-packages/my \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 101,
+    "address": "TYourAddress...",
+    "total_transfers": 500,
+    "remaining_transfers": 312,
+    "bw_guarantee": true,
+    "status": "active",
+    "created_at": "2026-03-01T10:00:00Z"
+  }
+]
+```

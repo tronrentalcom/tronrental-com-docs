@@ -1,0 +1,77 @@
+---
+title: Obtener precios
+api: GET /api/v1/prices
+description: "Obtener precios actuales de energia y ancho de banda"
+---
+
+## Obtener precios
+
+Devuelve los precios de mercado actuales para energia y ancho de banda.
+
+**Este endpoint es publico — no requiere autenticacion.**
+
+### Respuesta
+
+<ResponseField name="energy_price_sun" type="number">
+  Precio actual de energia en SUN por unidad
+</ResponseField>
+
+<ResponseField name="energy_price_1k_trx" type="string">
+  Precio por 1,000 unidades de energia en TRX
+</ResponseField>
+
+<ResponseField name="bw_price_1k_trx" type="string">
+  Precio por 1,000 unidades de ancho de banda en TRX
+</ResponseField>
+
+<ResponseField name="trx_usd_rate" type="string">
+  Tasa de cambio actual TRX/USD
+</ResponseField>
+
+<ResponseField name="burn_sun_per_energy" type="number">
+  Tasa de quema de la red — SUN por unidad de energia (actualmente 100)
+</ResponseField>
+
+<ResponseField name="min_energy" type="number">
+  Cantidad minima de energia por orden
+</ResponseField>
+
+<ResponseField name="max_energy" type="number">
+  Cantidad maxima de energia por orden
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  Los valores de respuesta a continuacion son ejemplos. Los precios reales se actualizan en tiempo real segun las condiciones del mercado.
+</Info>
+
+```json Response
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100,
+  "min_energy": 32000,
+  "max_energy": 5000000
+}
+```

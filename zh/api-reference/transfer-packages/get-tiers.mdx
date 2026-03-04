@@ -1,0 +1,52 @@
+---
+title: 获取套餐档位
+api: GET /api/v1/transfer-packages/tiers
+description: "获取可用的套餐规模和定价"
+---
+
+## 获取套餐档位
+
+返回可用的预设套餐规模、定价和限制。
+
+### 响应
+
+<ResponseField name="tiers" type="array">
+  预设套餐选项数组，包含规模和总价
+</ResponseField>
+
+<ResponseField name="single_transfer_price" type="string">
+  单笔转账价格，以 TRX 计
+</ResponseField>
+
+<ResponseField name="bw_fee_per_transfer" type="string">
+  每笔转账的带宽保障费，以 TRX 计
+</ResponseField>
+
+<ResponseField name="min_custom_size" type="number">
+  自定义套餐最小规模（1）
+</ResponseField>
+
+<ResponseField name="max_custom_size" type="number">
+  自定义套餐最大规模（10,000）
+</ResponseField>
+
+### 示例
+
+```bash
+curl https://api.tronrental.com/v1/transfer-packages/tiers \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tiers": [
+    { "size": 100, "price_trx": "270.00" },
+    { "size": 500, "price_trx": "1350.00" },
+    { "size": 1000, "price_trx": "2700.00" }
+  ],
+  "single_transfer_price": "2.70",
+  "bw_fee_per_transfer": "0.30",
+  "min_custom_size": 1,
+  "max_custom_size": 10000
+}
+```

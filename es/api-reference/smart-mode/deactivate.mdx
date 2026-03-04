@@ -1,0 +1,35 @@
+---
+title: Desactivar
+api: POST /api/v1/smart-mode/{subscription_id}/deactivate
+description: "Desactivar permanentemente una suscripcion de Smart Mode"
+---
+
+## Desactivar suscripcion
+
+Desactiva permanentemente una suscripcion de Smart Mode. Esta accion no se puede deshacer — necesitaras crear una nueva suscripcion para volver a habilitarla.
+
+### Parametros de ruta
+
+<ParamField path="subscription_id" type="number" required>
+  ID de la suscripcion
+</ParamField>
+
+### Respuesta
+
+Devuelve el objeto de suscripcion desactivado.
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "status": "deactivated",
+  "message": "Subscription permanently deactivated"
+}
+```

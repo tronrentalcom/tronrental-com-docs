@@ -1,0 +1,85 @@
+---
+title: 提现
+description: "从您的账户提现 TRX"
+---
+
+## 创建提现
+
+<div>
+  `POST /api/v1/account/withdrawal`
+</div>
+
+将 TRX 提现到任意 TRON 地址。手续费：1 TRX。
+
+### 请求体
+
+<ParamField body="to_address" type="string" required>
+  目标 TRON 地址
+</ParamField>
+
+<ParamField body="amount_trx" type="string" required>
+  提现金额，以 TRX 计
+</ParamField>
+
+<ParamField body="totp_code" type="string">
+  双重验证码（如已启用双重验证）
+</ParamField>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/account/withdrawal \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to_address": "TDestinationAddress...",
+    "amount_trx": "100"
+  }'
+```
+
+```json Response
+{
+  "id": 56,
+  "to_address": "TDestinationAddress...",
+  "amount_trx": "100.00",
+  "fee_trx": "1.00",
+  "status": "completed",
+  "tx_hash": "a1b2c3d4e5f6...",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+## 提现列表
+
+<div>
+  `GET /api/v1/account/withdrawals`
+</div>
+
+返回您的提现历史。
+
+```bash
+curl https://api.tronrental.com/v1/account/withdrawals \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 56,
+    "to_address": "TDestinationAddress...",
+    "amount_trx": "100.00",
+    "fee_trx": "1.00",
+    "status": "completed",
+    "tx_hash": "a1b2c3d4e5f6...",
+    "created_at": "2026-03-05T12:00:00Z"
+  }
+]
+```
+
+### 提现状态
+
+| 状态 | 描述 |
+|--------|-------------|
+| `pending` | 已排队处理 |
+| `completed` | TRX 已发送，tx_hash 可用 |
+| `failed` | 失败，金额已退回 |

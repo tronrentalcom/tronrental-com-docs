@@ -1,0 +1,71 @@
+---
+title: परिचय
+description: "TronRental API — TRON एनर्जी और बैंडविड्थ रेंटल के लिए प्रोग्रामेटिक एक्सेस"
+---
+
+## TronRental API में आपका स्वागत है
+
+TronRental TRON एनर्जी और बैंडविड्थ किराए पर लेने के लिए एक REST API प्रदान करता है। TRX बर्न करने की तुलना में अपनी USDT ट्रांसफर लागत को 80% तक कम करें।
+
+### आप क्या कर सकते हैं
+
+<CardGroup cols={2}>
+  <Card title="एनर्जी खरीदें" icon="bolt" href="/api-reference/energy/buy-energy">
+    किसी भी TRON एड्रेस के लिए एनर्जी खरीदें। प्रति ट्रांज़ैक्शन या बल्क में भुगतान करें।
+  </Card>
+  <Card title="Smart Mode" icon="wand-magic-sparkles" href="/api-reference/smart-mode/overview">
+    हर आउटगोइंग USDT ट्रांसफर के लिए स्वचालित एनर्जी डिलीवरी।
+  </Card>
+  <Card title="Transfer Packages" icon="box" href="/api-reference/transfer-packages/overview">
+    गारंटीड एनर्जी के साथ USDT ट्रांसफर के प्रीपेड पैकेज।
+  </Card>
+  <Card title="Invoices" icon="file-invoice" href="/api-reference/invoices/create-invoice">
+    एनर्जी के लिए पेमेंट इनवॉइस बनाएं — आपके उपयोगकर्ताओं को अकाउंट की आवश्यकता नहीं।
+  </Card>
+</CardGroup>
+
+### बेस URL
+
+सभी API अनुरोध निम्नलिखित बेस URL का उपयोग करते हैं:
+
+```
+https://api.tronrental.com/v1
+```
+
+### त्वरित उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourTronAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "order_id": 12345,
+  "address": "TYourTronAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+## अगले कदम
+
+<Steps>
+  <Step title="अपनी API कुंजी प्राप्त करें">
+    [tronrental.com](https://tronrental.com/auth/register) पर साइन अप करें और [डैशबोर्ड](https://tronrental.com/dashboard/api) में API कुंजी बनाएं।
+  </Step>
+  <Step title="वर्तमान कीमतें देखें">
+    वर्तमान एनर्जी और बैंडविड्थ कीमतें देखने के लिए `GET /api/v1/prices` कॉल करें।
+  </Step>
+  <Step title="अपनी पहली खरीदारी करें">
+    TRON एड्रेस के लिए एनर्जी खरीदने हेतु `POST /api/v1/energy/buy` का उपयोग करें।
+  </Step>
+</Steps>

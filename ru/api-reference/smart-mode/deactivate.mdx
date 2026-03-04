@@ -1,0 +1,35 @@
+---
+title: Деактивация
+api: POST /api/v1/smart-mode/{subscription_id}/deactivate
+description: "Окончательная деактивация подписки Smart Mode"
+---
+
+## Деактивация подписки
+
+Окончательно деактивирует подписку Smart Mode. Это действие нельзя отменить — для повторного включения потребуется создать новую подписку.
+
+### Параметры пути
+
+<ParamField path="subscription_id" type="number" required>
+  ID подписки
+</ParamField>
+
+### Ответ
+
+Возвращает деактивированный объект подписки.
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "status": "deactivated",
+  "message": "Subscription permanently deactivated"
+}
+```

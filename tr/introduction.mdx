@@ -1,0 +1,71 @@
+---
+title: Giris
+description: "TronRental API — TRON enerji ve bant genisligi kiralamaya programatik erisim"
+---
+
+## TronRental API'ye Hos Geldiniz
+
+TronRental, TRON enerjisi ve bant genisligi kiralamak icin bir REST API sunar. TRX yakma yontemine kiyasla USDT transfer maliyetlerinizi %80'e kadar azaltin.
+
+### Neler yapabilirsiniz
+
+<CardGroup cols={2}>
+  <Card title="Enerji Satin Al" icon="bolt" href="/api-reference/energy/buy-energy">
+    Herhangi bir TRON adresi icin enerji satin alin. Islem basina veya toplu odeme yapin.
+  </Card>
+  <Card title="Akilli Mod" icon="wand-magic-sparkles" href="/api-reference/smart-mode/overview">
+    Her giden USDT transferi icin otomatik enerji teslimat.
+  </Card>
+  <Card title="Transfer Paketleri" icon="box" href="/api-reference/transfer-packages/overview">
+    Garantili enerji ile on odemeli USDT transfer paketleri.
+  </Card>
+  <Card title="Faturalar" icon="file-invoice" href="/api-reference/invoices/create-invoice">
+    Enerji icin odeme faturralari olusturun — kullanicilariniz icin hesap gerektirmez.
+  </Card>
+</CardGroup>
+
+### Temel URL
+
+Tum API istekleri asagidaki temel URL'yi kullanir:
+
+```
+https://api.tronrental.com/v1
+```
+
+### Hizli ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourTronAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json Response
+{
+  "order_id": 12345,
+  "address": "TYourTronAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+## Sonraki adimlar
+
+<Steps>
+  <Step title="API anahtarinizi alin">
+    [tronrental.com](https://tronrental.com/auth/register) adresinden kaydolun ve [kontrol panelinde](https://tronrental.com/dashboard/api) bir API anahtari olusturun.
+  </Step>
+  <Step title="Guncel fiyatlari kontrol edin">
+    Guncel enerji ve bant genisligi fiyatlarini gormek icin `GET /api/v1/prices` cagrisin yapin.
+  </Step>
+  <Step title="Ilk satin aliminizi yapin">
+    Bir TRON adresi icin enerji satin almak uzere `POST /api/v1/energy/buy` kullanin.
+  </Step>
+</Steps>

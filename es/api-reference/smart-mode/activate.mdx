@@ -1,0 +1,58 @@
+---
+title: Activar
+api: POST /api/v1/smart-mode/activate
+description: "Activar Smart Mode para una direccion TRON"
+---
+
+## Activar Smart Mode
+
+Inicia la entrega automatica de energia para la direccion especificada. La primera tarifa diaria se cobra inmediatamente.
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Direccion TRON a monitorear
+</ParamField>
+
+<ParamField body="label" type="string">
+  Etiqueta opcional para esta suscripcion
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  Habilitar Garantia de BW (+0.3 TRX por transferencia)
+</ParamField>
+
+### Respuesta
+
+Devuelve el objeto de suscripcion creado con `id`, `address`, `status` y detalles de tarifas.
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "active",
+  "bw_guarantee": true,
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Warning>
+  La direccion no puede tener un Paquete de Transferencias activo al mismo tiempo.
+  Smart Mode y los Paquetes de Transferencias son mutuamente excluyentes por direccion.
+</Warning>

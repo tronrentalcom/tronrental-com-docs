@@ -1,0 +1,39 @@
+---
+title: TRON Enerjisi Aciklamasi
+description: "TRON enerjisini anlama ve kiralamanin neden tasarruf sagladigi"
+---
+
+## TRON Enerjisi Nedir?
+
+Enerji, TRON blok zincirinde akilli sozlesmeleri calistirmak icin gereken bir kaynaktir. Her TRC-20 token transferi (USDT gibi) enerji tuketir.
+
+### USDT transferleri icin enerji tuketimi
+
+| Senaryo | Gereken enerji |
+|----------|--------------|
+| Alici **USDT'ye sahip** | **~65.000** (tam: 64.285) |
+| Alici **USDT'ye sahip degil** | **~131.000** (tam: 130.285) |
+
+Fark, depolama alani olusturmasindan kaynaklanir — USDT'yi yeni bir sahibe gondermek, token sozlesmesinde yeni bir kayit olusturmayi gerektirir.
+
+### Enerji olmadan: TRX yakilir
+
+Enerjiniz yoksa, ag maliyeti karsilamak icin hesabinizdan TRX yakar:
+
+```
+64,285 energy × 100 SUN/energy = 6,428,500 SUN = 6.43 TRX
+```
+
+Guncel kurlarla bu, USDT transferi basina yaklasik **1,50 $** demektir.
+
+### Kiralanan enerji ile: %60-80 tasarruf
+
+Enerji kiralamak, transfer basina yaklasik **2,5-3,0 TRX** maliyetindedir — yakma yontemine kiyasla %50-60 tasarruf saglar.
+
+### Kiralama nasil calisir
+
+Enerji, **kaynak devretme** yoluyla saglanir — bu, bir TRON ag ozelligidir ve bir hesap, stake edilmis kaynaklarini gecici olarak baska bir hesapla payalasir. Enerji hedef adreste gorunur ve bir sonraki islemde tuketilir.
+
+<Tip>
+  Alici adresin 65K mi yoksa 131K enerji mi gerektirdigini kontrol etmek icin [Enerji Hesaplayici](https://tronrental.com/energy-calculator) kullanin.
+</Tip>

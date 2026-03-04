@@ -1,0 +1,39 @@
+---
+title: Vision general de Smart Mode
+description: "Energia automatica para cada transferencia USDT"
+---
+
+## Smart Mode
+
+Smart Mode proporciona energia automaticamente para cada transferencia USDT saliente desde una direccion monitoreada. No se necesitan llamadas manuales a la API — solo activa y transfiere.
+
+### Como funciona
+
+1. **Activa** Smart Mode para una direccion TRON
+2. Cada vez que esa direccion envia USDT, la energia se **delega automaticamente**
+3. La tarifa de suscripcion diaria + tarifa por transferencia se deducen de tu saldo
+4. Si el saldo se agota, la suscripcion se pausa (no se elimina)
+
+### Precios
+
+| Tarifa | Monto |
+|--------|-------|
+| Suscripcion diaria | 3.0 TRX/dia |
+| Por transferencia USDT | 2.7 TRX × multiplicador |
+| Garantia de BW (opcional) | +0.3 TRX/transferencia |
+
+El multiplicador de transferencia es `1` para direcciones que ya poseen USDT (65K de energia) y `2` para destinatarios que reciben por primera vez (131K de energia).
+
+<Tip>
+  **Garantia de BW** (habilitada por defecto) delega 350 de ancho de banda para cubrir el costo de ancho de banda de la transaccion.
+  Sin ella, el remitente necesita ~0.35 TRX en ancho de banda o TRX congelado.
+</Tip>
+
+<Info>
+  Los precios anteriores son los predeterminados. Usa [`GET /smart-mode/fees`](/api-reference/smart-mode/get-fees) para consultar tus tarifas reales — pueden aplicarse precios personalizados.
+</Info>
+
+### Limites
+
+- Maximo 5 suscripciones activas por cuenta
+- Precios personalizados disponibles para usuarios de alto volumen (contacta soporte)

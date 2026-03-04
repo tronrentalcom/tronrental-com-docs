@@ -1,0 +1,114 @@
+---
+title: 快速开始
+description: "5 分钟内购买 TRON 能量"
+---
+
+## 1. 获取 API 密钥
+
+注册并在 [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) 创建 API 密钥。
+
+## 2. 查询价格
+
+```bash
+curl https://api.tronrental.com/v1/prices
+```
+
+```json
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100
+}
+```
+
+## 3. 充值 TRX
+
+查看您的充值地址：
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+将 TRX 或 USDT 发送到返回的 `deposit_address`。充值将自动到账。
+
+## 4. 购买能量
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json
+{
+  "order_id": 1234,
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+能量将在几秒内委托到目标地址。
+
+## 5. 验证
+
+查看您的订单状态：
+
+```bash
+curl https://api.tronrental.com/v1/orders \
+  -H "X-API-Key: your_api_key"
+```
+
+<Tip>
+  **65,000 能量**足以完成一笔向已持有 USDT 地址的转账。
+  对于首次接收 USDT 的地址，请使用 **131,000 能量**。
+</Tip>
+
+## 代码示例
+
+<CodeGroup>
+```python Python
+import requests
+
+API_KEY = "your_api_key"
+BASE = "https://api.tronrental.com/v1"
+headers = {"X-API-Key": API_KEY}
+
+# Buy energy
+resp = requests.post(f"{BASE}/energy/buy", headers=headers, json={
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1,
+})
+print(resp.json())
+```
+
+```javascript JavaScript
+const API_KEY = "your_api_key";
+const BASE = "https://api.tronrental.com/v1";
+
+const res = await fetch(`${BASE}/energy/buy`, {
+  method: "POST",
+  headers: {
+    "X-API-Key": API_KEY,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    address: "TRecipientAddress...",
+    energy_amount: 65000,
+    duration_hours: 1,
+  }),
+});
+console.log(await res.json());
+```
+</CodeGroup>

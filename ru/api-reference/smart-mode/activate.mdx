@@ -1,0 +1,58 @@
+---
+title: Активация
+api: POST /api/v1/smart-mode/activate
+description: "Активация Smart Mode для адреса TRON"
+---
+
+## Активация Smart Mode
+
+Запускает автоматическую доставку энергии для указанного адреса. Первая ежедневная плата списывается немедленно.
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Адрес TRON для мониторинга
+</ParamField>
+
+<ParamField body="label" type="string">
+  Необязательная метка для этой подписки
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  Включить BW Guarantee (+0.3 TRX за перевод)
+</ParamField>
+
+### Ответ
+
+Возвращает созданный объект подписки с `id`, `address`, `status` и деталями тарифов.
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "active",
+  "bw_guarantee": true,
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Warning>
+  Адрес не может одновременно иметь активный пакет переводов.
+  Smart Mode и пакеты переводов взаимоисключающи для одного адреса.
+</Warning>

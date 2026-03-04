@@ -1,0 +1,77 @@
+---
+title: कीमतें प्राप्त करें
+api: GET /api/v1/prices
+description: "वर्तमान एनर्जी और बैंडविड्थ कीमतें प्राप्त करें"
+---
+
+## कीमतें प्राप्त करें
+
+एनर्जी और बैंडविड्थ की वर्तमान बाजार कीमतें लौटाता है।
+
+**यह एंडपॉइंट सार्वजनिक है — प्रमाणीकरण आवश्यक नहीं है।**
+
+### रिस्पॉन्स
+
+<ResponseField name="energy_price_sun" type="number">
+  प्रति यूनिट SUN में वर्तमान एनर्जी मूल्य
+</ResponseField>
+
+<ResponseField name="energy_price_1k_trx" type="string">
+  TRX में 1,000 एनर्जी यूनिट की कीमत
+</ResponseField>
+
+<ResponseField name="bw_price_1k_trx" type="string">
+  TRX में 1,000 बैंडविड्थ यूनिट की कीमत
+</ResponseField>
+
+<ResponseField name="trx_usd_rate" type="string">
+  वर्तमान TRX/USD विनिमय दर
+</ResponseField>
+
+<ResponseField name="burn_sun_per_energy" type="number">
+  नेटवर्क बर्न दर — प्रति एनर्जी यूनिट SUN (वर्तमान में 100)
+</ResponseField>
+
+<ResponseField name="min_energy" type="number">
+  प्रति ऑर्डर न्यूनतम एनर्जी मात्रा
+</ResponseField>
+
+<ResponseField name="max_energy" type="number">
+  प्रति ऑर्डर अधिकतम एनर्जी मात्रा
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  नीचे दिए गए रिस्पॉन्स मान उदाहरण हैं। वास्तविक कीमतें बाजार की स्थितियों के आधार पर रियल-टाइम में अपडेट होती हैं।
+</Info>
+
+```json Response
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100,
+  "min_energy": 32000,
+  "max_energy": 5000000
+}
+```

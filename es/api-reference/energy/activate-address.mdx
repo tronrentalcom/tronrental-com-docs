@@ -1,0 +1,43 @@
+---
+title: Activar direccion
+api: POST /api/v1/energy/activate
+description: "Activar una direccion TRON inactiva en la blockchain"
+---
+
+## Activar direccion
+
+Activa una direccion TRON que nunca ha recibido ninguna transaccion. Es necesario antes de que la direccion pueda recibir tokens.
+
+**Costo: 1.1 TRX** (se deduce de tu saldo)
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Direccion TRON a activar (formato T...)
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="success" type="boolean">
+  Si la activacion fue exitosa
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string">
+  Hash de la transaccion de activacion
+</ResponseField>
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/energy/activate \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"address": "TNewInactiveAddress..."}'
+```
+
+```json Response
+{
+  "success": true,
+  "tx_hash": "a1b2c3d4e5f6..."
+}
+```

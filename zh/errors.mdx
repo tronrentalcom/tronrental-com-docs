@@ -1,0 +1,71 @@
+---
+title: 错误处理
+description: "API 错误代码及处理方式"
+---
+
+## 错误格式
+
+所有错误返回包含 `detail` 字段的 JSON 响应：
+
+```json
+{
+  "detail": "Insufficient balance"
+}
+```
+
+部分错误包含结构化的 `code`，用于程序化处理：
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Not enough TRX balance"
+    }
+  }
+}
+```
+
+## HTTP 状态码
+
+| 状态码 | 含义 |
+|------|---------|
+| `200` | 成功 |
+| `400` | 错误请求 — 参数无效 |
+| `401` | 未授权 — API 密钥缺失或无效 |
+| `403` | 禁止访问 — 密钥已禁用或操作不被允许 |
+| `404` | 未找到 |
+| `409` | 冲突 — 重复请求或资源冲突 |
+| `422` | 验证错误 — 请检查请求体 |
+| `429` | 超出速率限制 |
+| `500` | 服务器错误 |
+
+## 常见错误代码
+
+| 代码 | 描述 |
+|------|-------------|
+| `INSUFFICIENT_BALANCE` | 账户余额不足 |
+| `ADDRESS_ALREADY_ACTIVE` | 该地址已激活智能模式 |
+| `ORDER_NOT_FOUND` | 订单 ID 不存在 |
+| `INVALID_ADDRESS` | 不是有效的 TRON 地址 |
+| `RATE_LIMITED` | 请求过多，请在冷却后重试 |
+| `PASSKEY_REQUIRED` | 提现需要通行密钥验证 |
+| `2FA_REQUIRED` | 提现需要双重验证码 |
+
+## 重试策略
+
+对于 `429` 和 `5xx` 错误，请实现指数退避重试：
+
+```python
+import time
+import requests
+
+def api_call_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.get(url, **kwargs)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            time.sleep(2 ** attempt)
+            continue
+        return resp
+    raise Exception("Max retries exceeded")
+```

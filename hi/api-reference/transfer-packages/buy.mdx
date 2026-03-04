@@ -1,0 +1,58 @@
+---
+title: पैकेज खरीदें
+api: POST /api/v1/transfer-packages/buy
+description: "अकाउंट बैलेंस से ट्रांसफर पैकेज खरीदें"
+---
+
+## Transfer Package खरीदें
+
+आपके अकाउंट बैलेंस का उपयोग करके ट्रांसफर पैकेज खरीदता है।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  मॉनिटर करने के लिए TRON एड्रेस
+</ParamField>
+
+<ParamField body="size" type="number" required>
+  ट्रांसफर की संख्या (1 – 10,000)
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  BW Guarantee सक्षम करें
+</ParamField>
+
+### रिस्पॉन्स
+
+`id`, `address`, `remaining_transfers`, `status`, और `price_trx` के साथ बनाया गया पैकेज ऑब्जेक्ट लौटाता है।
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "size": 500,
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 101,
+  "address": "TYourAddress...",
+  "total_transfers": 500,
+  "remaining_transfers": 500,
+  "bw_guarantee": true,
+  "price_trx": "1350.00",
+  "status": "active",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Info>
+  आप `POST /api/v1/transfer-packages/buy-invoice` के माध्यम से इनवॉइस द्वारा भी भुगतान कर सकते हैं —
+  यह TRX/USDT के लिए एक पेमेंट एड्रेस जनरेट करता है।
+</Info>

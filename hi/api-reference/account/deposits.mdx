@@ -1,0 +1,51 @@
+---
+title: डिपॉज़िट
+description: "अपने अकाउंट में TRX या USDT जमा करें"
+---
+
+## डिपॉज़िट एड्रेस प्राप्त करें
+
+<div>
+  `GET /api/v1/account/deposit`
+</div>
+
+आपका व्यक्तिगत डिपॉज़िट एड्रेस और स्वीकृत मुद्राएं लौटाता है।
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "deposit_address": "TYourDepositAddress...",
+  "accepted_currencies": ["TRX", "USDT"],
+  "usdt_to_trx_rate": "26.5",
+  "trx_usd_rate": "0.234"
+}
+```
+
+## डिपॉज़िट सूची
+
+<div>
+  `GET /api/v1/account/deposits`
+</div>
+
+आपका डिपॉज़िट इतिहास लौटाता है।
+
+```bash
+curl https://api.tronrental.com/v1/account/deposits \
+  -H "X-API-Key: your_api_key"
+```
+
+### डिपॉज़िट स्टेटस
+
+| स्टेटस | विवरण |
+|--------|-------------|
+| `pending` | ट्रांज़ैक्शन डिटेक्ट हुआ, पुष्टि की प्रतीक्षा |
+| `confirmed` | आपके बैलेंस में क्रेडिट किया गया |
+| `expired` | डिपॉज़िट एड्रेस समाप्त हो गया |
+
+<Info>
+  डिपॉज़िट स्वचालित रूप से क्रेडिट किए जाते हैं। TRX डिपॉज़िट 1:1 हैं। USDT डिपॉज़िट वर्तमान बाजार दर पर TRX में परिवर्तित किए जाते हैं।
+</Info>

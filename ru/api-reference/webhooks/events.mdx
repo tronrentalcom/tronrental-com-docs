@@ -1,0 +1,61 @@
+---
+title: Журнал вебхуков
+api: GET /api/v1/webhooks/logs
+description: "Просмотр журнала доставки вебхуков"
+---
+
+## Журнал вебхуков
+
+Возвращает последние попытки доставки вебхуков для отладки.
+
+### Ответ
+
+Массив записей журнала:
+
+<ResponseField name="id" type="number">
+  ID записи журнала
+</ResponseField>
+
+<ResponseField name="event_type" type="string">
+  Событие, вызвавшее вебхук
+</ResponseField>
+
+<ResponseField name="payload" type="object">
+  Отправленные данные
+</ResponseField>
+
+<ResponseField name="response_status" type="number">
+  HTTP-код ответа вашего сервера
+</ResponseField>
+
+<ResponseField name="attempts" type="number">
+  Количество попыток доставки
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Временная метка
+</ResponseField>
+
+### Пример
+
+```bash
+curl https://api.tronrental.com/v1/webhooks/logs \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 1,
+    "event_type": "order.filled",
+    "payload": {
+      "order_id": 12345,
+      "address": "TAddress...",
+      "energy_amount": 65000
+    },
+    "response_status": 200,
+    "attempts": 1,
+    "created_at": "2026-03-05T12:00:00Z"
+  }
+]
+```

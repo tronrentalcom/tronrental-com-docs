@@ -1,0 +1,65 @@
+---
+title: Abonelikleri Listele
+api: GET /api/v1/smart-mode/subscriptions
+description: "Aktif Akilli Mod aboneliklerinizi listeleyin"
+---
+
+## Abonelikleri Listele
+
+Tum aktif ve duraklatilmis Akilli Mod aboneliklerini dondurur. Devre disi birakilmis abonelikler dahil edilmez.
+
+### Yanit
+
+Abonelik nesneleri dizisi:
+
+<ResponseField name="id" type="number">
+  Abonelik kimlik numarasi
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Izlenen TRON adresi
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  Istege bagli etiket
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` veya `paused`
+</ResponseField>
+
+<ResponseField name="bw_guarantee" type="boolean">
+  BW Garantisinin etkin olup olmadigi
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 zaman damgasi
+</ResponseField>
+
+### Ornek
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/subscriptions \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 42,
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "status": "active",
+    "bw_guarantee": true,
+    "created_at": "2026-03-05T12:00:00Z"
+  },
+  {
+    "id": 43,
+    "address": "TAnotherAddress...",
+    "label": null,
+    "status": "paused",
+    "bw_guarantee": false,
+    "created_at": "2026-03-04T10:00:00Z"
+  }
+]
+```

@@ -1,0 +1,52 @@
+---
+title: Kimlik Dogrulama
+description: "TronRental API ile kimlik dogrulama yontemi"
+---
+
+## API Anahtari ile Kimlik Dogrulama
+
+Tum API istekleri, `X-API-Key` basliginda iletilen bir API anahtari gerektirir.
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+### API anahtari edinme
+
+1. [tronrental.com](https://tronrental.com/auth/register) adresinden kaydolun
+2. [Kontrol Paneli → API Anahtarlari](https://tronrental.com/dashboard/api) sayfasina gidin
+3. **API Anahtari Olustur** butonuna tiklayin
+4. Anahtarinizi kopyalayin ve guvenli bir sekilde saklayin — yalnizca bir kez gosterilir
+
+### IP Beyaz Listesi (istege bagli)
+
+Ek guvenlik icin API anahtarinizi belirli IP adresleriyle sinirlandirabilirsini. Bunu, anahtar olusturma veya duzenleme sirasinda kontrol panelinden yapilandirabilirsini.
+
+### Anahtar izinleri
+
+Her API anahtari, hesabinizin API islemlerine tam erisime sahiptir:
+- Enerji ve bant genisligi satin alma
+- Akilli Mod aboneliklerini yonetme
+- Fatura olusturma
+- Bakiye ve islem gecmisini kontrol etme
+
+<Warning>
+  API anahtarinizi gizli tutun. Istemci tarafli kodda, herkese acik depolarda veya URL'lerde ifsa etmeyin.
+</Warning>
+
+## Hiz Sinirlari
+
+API anahtarlari uç nokta basina hiz sinirlidir. Ayrintilar icin [Hiz Sinirlari](/resources/rate-limits) sayfasina bakin.
+
+## Hatalar
+
+Kimlik dogrulama hatalari HTTP `401` dondurur:
+
+```json
+{
+  "detail": "Invalid or missing API key"
+}
+```
+
+Anahtariniz devre disi birakilmis veya engellenmisse HTTP `403` alirsiniz.

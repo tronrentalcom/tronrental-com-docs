@@ -1,0 +1,100 @@
+---
+title: Webhooks 概述
+description: "接收账户事件的实时通知"
+---
+
+## Webhooks
+
+配置 Webhook URL，在您的账户发生事件时接收实时 HTTP POST 通知。
+
+### 支持的事件
+
+| 事件 | 描述 |
+|-------|-------------|
+| `order.filled` | 能量订单已完成 |
+| `order.failed` | 能量订单失败 |
+| `deposit.confirmed` | 充值已入账 |
+| `invoice.paid` | 账单已收到付款 |
+| `invoice.delegated` | 账单能量已委托 |
+| `smart_mode.transfer` | 智能模式转账已处理 |
+| `withdrawal.completed` | 提现已发送 |
+
+### Webhook 负载
+
+```json
+{
+  "event": "order.filled",
+  "data": {
+    "order_id": 1234,
+    "address": "TAddress...",
+    "energy_amount": 65000,
+    "price_trx": "2.75"
+  },
+  "timestamp": "2026-03-04T12:00:00Z"
+}
+```
+
+### 要求
+
+- URL 必须使用 **HTTPS**
+- 必须在 10 秒内返回 `2xx` 状态码
+- 投递失败会以指数退避方式最多重试 3 次
+
+### 验证 Webhook 签名
+
+每个 Webhook 请求都包含一个 `X-Webhook-Signature` 请求头，内含 HMAC-SHA256 签名。使用此签名验证请求是否来自 TronRental。
+
+签名基于原始请求体，使用您的 Webhook 密钥（在[配置 Webhook](/api-reference/webhooks/configure) 时返回）计算。
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+
+def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(
+        secret.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+# In your webhook handler:
+# payload = request.body  (raw bytes)
+# signature = request.headers["X-Webhook-Signature"]
+# secret = "whsec_abc123..."  (from configure response)
+# if not verify_webhook(payload, signature, secret):
+#     return Response(status_code=401)
+```
+
+```javascript JavaScript
+const crypto = require("crypto");
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+
+// In your webhook handler:
+// const payload = req.rawBody;  // raw request body string
+// const signature = req.headers["x-webhook-signature"];
+// const secret = "whsec_abc123...";
+// if (!verifyWebhook(payload, signature, secret)) {
+//   return res.status(401).send("Invalid signature");
+// }
+```
+</CodeGroup>
+
+<Warning>
+  处理 Webhook 数据前务必验证签名。使用常量时间比较（`hmac.compare_digest` / `crypto.timingSafeEqual`）以防止计时攻击。
+</Warning>
+
+<Warning>
+  Webhook URL 不能指向 `localhost`、`127.0.0.1` 或其他私有地址。
+</Warning>

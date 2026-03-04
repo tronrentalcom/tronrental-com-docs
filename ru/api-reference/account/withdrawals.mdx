@@ -1,0 +1,85 @@
+---
+title: Выводы
+description: "Вывод TRX с вашего аккаунта"
+---
+
+## Создать вывод
+
+<div>
+  `POST /api/v1/account/withdrawal`
+</div>
+
+Выводит TRX на любой адрес TRON. Комиссия: 1 TRX.
+
+### Тело запроса
+
+<ParamField body="to_address" type="string" required>
+  Адрес TRON назначения
+</ParamField>
+
+<ParamField body="amount_trx" type="string" required>
+  Сумма вывода в TRX
+</ParamField>
+
+<ParamField body="totp_code" type="string">
+  Код 2FA (если 2FA включена)
+</ParamField>
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/account/withdrawal \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to_address": "TDestinationAddress...",
+    "amount_trx": "100"
+  }'
+```
+
+```json Response
+{
+  "id": 56,
+  "to_address": "TDestinationAddress...",
+  "amount_trx": "100.00",
+  "fee_trx": "1.00",
+  "status": "completed",
+  "tx_hash": "a1b2c3d4e5f6...",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+## Список выводов
+
+<div>
+  `GET /api/v1/account/withdrawals`
+</div>
+
+Возвращает историю ваших выводов.
+
+```bash
+curl https://api.tronrental.com/v1/account/withdrawals \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 56,
+    "to_address": "TDestinationAddress...",
+    "amount_trx": "100.00",
+    "fee_trx": "1.00",
+    "status": "completed",
+    "tx_hash": "a1b2c3d4e5f6...",
+    "created_at": "2026-03-05T12:00:00Z"
+  }
+]
+```
+
+### Статусы выводов
+
+| Статус | Описание |
+|--------|----------|
+| `pending` | В очереди на обработку |
+| `completed` | TRX отправлены, tx_hash доступен |
+| `failed` | Ошибка, сумма возвращена |

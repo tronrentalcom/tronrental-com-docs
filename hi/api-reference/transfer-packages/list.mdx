@@ -1,0 +1,43 @@
+---
+title: पैकेज सूची
+api: GET /api/v1/transfer-packages/my
+description: "अपने ट्रांसफर पैकेज की सूची देखें"
+---
+
+## मेरे पैकेज की सूची
+
+आपके सभी ट्रांसफर पैकेज लौटाता है।
+
+### रिस्पॉन्स
+
+`id`, `address`, `total_transfers`, `remaining_transfers`, `status`, और `created_at` के साथ पैकेज ऑब्जेक्ट्स का ऐरे।
+
+### पैकेज स्टेटस
+
+| स्टेटस | विवरण |
+|--------|-------------|
+| `pending_payment` | इनवॉइस भुगतान की प्रतीक्षा |
+| `active` | एड्रेस मॉनिटर हो रहा है, ट्रांसफर उपलब्ध |
+| `completed` | सभी ट्रांसफर उपयोग हो चुके |
+| `cancelled` | उपयोगकर्ता द्वारा रद्द |
+
+### उदाहरण
+
+```bash
+curl https://api.tronrental.com/v1/transfer-packages/my \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 101,
+    "address": "TYourAddress...",
+    "total_transfers": 500,
+    "remaining_transfers": 312,
+    "bw_guarantee": true,
+    "status": "active",
+    "created_at": "2026-03-01T10:00:00Z"
+  }
+]
+```

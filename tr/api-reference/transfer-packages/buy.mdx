@@ -1,0 +1,58 @@
+---
+title: Paket Satin Al
+api: POST /api/v1/transfer-packages/buy
+description: "Hesap bakiyesi ile transfer paketi satin alin"
+---
+
+## Transfer Paketi Satin Al
+
+Hesap bakiyenizi kullanarak bir transfer paketi satin alir.
+
+### Istek govdesi
+
+<ParamField body="address" type="string" required>
+  Izlenecek TRON adresi
+</ParamField>
+
+<ParamField body="size" type="number" required>
+  Transfer sayisi (1 – 10.000)
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  BW Garantisini etkinlestir
+</ParamField>
+
+### Yanit
+
+`id`, `address`, `remaining_transfers`, `status` ve `price_trx` iceren olusturulan paket nesnesini dondurur.
+
+### Ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "size": 500,
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 101,
+  "address": "TYourAddress...",
+  "total_transfers": 500,
+  "remaining_transfers": 500,
+  "bw_guarantee": true,
+  "price_trx": "1350.00",
+  "status": "active",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Info>
+  Ayrica `POST /api/v1/transfer-packages/buy-invoice` kullanarak fatura ile de odeme yapabilirsiniz —
+  bu, TRX/USDT icin bir odeme adresi olusturur.
+</Info>

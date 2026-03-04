@@ -1,0 +1,58 @@
+---
+title: सक्रिय करें
+api: POST /api/v1/smart-mode/activate
+description: "TRON एड्रेस के लिए Smart Mode सक्रिय करें"
+---
+
+## Smart Mode सक्रिय करें
+
+निर्दिष्ट एड्रेस के लिए स्वचालित एनर्जी डिलीवरी शुरू करता है। पहला दैनिक शुल्क तुरंत लिया जाता है।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  मॉनिटर करने के लिए TRON एड्रेस
+</ParamField>
+
+<ParamField body="label" type="string">
+  इस सब्सक्रिप्शन के लिए वैकल्पिक लेबल
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  BW Guarantee सक्षम करें (+0.3 TRX प्रति ट्रांसफर)
+</ParamField>
+
+### रिस्पॉन्स
+
+`id`, `address`, `status`, और शुल्क विवरण के साथ बनाया गया सब्सक्रिप्शन ऑब्जेक्ट लौटाता है।
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourAddress...",
+  "label": "Main wallet",
+  "status": "active",
+  "bw_guarantee": true,
+  "subscription_fee_trx": "3.0",
+  "transfer_fee_trx": "2.7",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Warning>
+  एड्रेस पर एक ही समय में सक्रिय Transfer Package नहीं हो सकता।
+  Smart Mode और Transfer Packages प्रति एड्रेस परस्पर अनन्य हैं।
+</Warning>

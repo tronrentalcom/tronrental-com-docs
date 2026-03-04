@@ -1,0 +1,65 @@
+---
+title: Listar Assinaturas
+api: GET /api/v1/smart-mode/subscriptions
+description: "Listar suas assinaturas ativas do Smart Mode"
+---
+
+## Listar Assinaturas
+
+Retorna todas as assinaturas do Smart Mode ativas e pausadas. Assinaturas desativadas não são incluídas.
+
+### Resposta
+
+Array de objetos de assinatura:
+
+<ResponseField name="id" type="number">
+  ID da assinatura
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Endereço TRON monitorado
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  Rótulo opcional
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` ou `paused`
+</ResponseField>
+
+<ResponseField name="bw_guarantee" type="boolean">
+  Se o BW Guarantee está ativado
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Timestamp ISO 8601
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl https://api.tronrental.com/v1/smart-mode/subscriptions \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+[
+  {
+    "id": 42,
+    "address": "TYourAddress...",
+    "label": "Main wallet",
+    "status": "active",
+    "bw_guarantee": true,
+    "created_at": "2026-03-05T12:00:00Z"
+  },
+  {
+    "id": 43,
+    "address": "TAnotherAddress...",
+    "label": null,
+    "status": "paused",
+    "bw_guarantee": false,
+    "created_at": "2026-03-04T10:00:00Z"
+  }
+]
+```

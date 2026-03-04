@@ -1,0 +1,51 @@
+---
+title: 充值
+description: "向您的账户充值 TRX 或 USDT"
+---
+
+## 获取充值地址
+
+<div>
+  `GET /api/v1/account/deposit`
+</div>
+
+返回您的专属充值地址和接受的币种。
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "deposit_address": "TYourDepositAddress...",
+  "accepted_currencies": ["TRX", "USDT"],
+  "usdt_to_trx_rate": "26.5",
+  "trx_usd_rate": "0.234"
+}
+```
+
+## 充值列表
+
+<div>
+  `GET /api/v1/account/deposits`
+</div>
+
+返回您的充值历史。
+
+```bash
+curl https://api.tronrental.com/v1/account/deposits \
+  -H "X-API-Key: your_api_key"
+```
+
+### 充值状态
+
+| 状态 | 描述 |
+|--------|-------------|
+| `pending` | 已检测到交易，等待确认 |
+| `confirmed` | 已入账到您的余额 |
+| `expired` | 充值地址已过期 |
+
+<Info>
+  充值自动到账。TRX 充值按 1:1 入账。USDT 充值按当前市场汇率转换为 TRX。
+</Info>

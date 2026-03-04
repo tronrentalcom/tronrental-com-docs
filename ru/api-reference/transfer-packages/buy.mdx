@@ -1,0 +1,58 @@
+---
+title: Купить пакет
+api: POST /api/v1/transfer-packages/buy
+description: "Покупка пакета переводов с баланса аккаунта"
+---
+
+## Купить пакет переводов
+
+Покупает пакет переводов с использованием баланса вашего аккаунта.
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Адрес TRON для мониторинга
+</ParamField>
+
+<ParamField body="size" type="number" required>
+  Количество переводов (1 – 10 000)
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  Включить BW Guarantee
+</ParamField>
+
+### Ответ
+
+Возвращает созданный объект пакета с `id`, `address`, `remaining_transfers`, `status` и `price_trx`.
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "size": 500,
+    "bw_guarantee": true
+  }'
+```
+
+```json Response
+{
+  "id": 101,
+  "address": "TYourAddress...",
+  "total_transfers": 500,
+  "remaining_transfers": 500,
+  "bw_guarantee": true,
+  "price_trx": "1350.00",
+  "status": "active",
+  "created_at": "2026-03-05T12:00:00Z"
+}
+```
+
+<Info>
+  Вы также можете оплатить через инвойс с помощью `POST /api/v1/transfer-packages/buy-invoice` —
+  это сгенерирует адрес для оплаты в TRX/USDT.
+</Info>

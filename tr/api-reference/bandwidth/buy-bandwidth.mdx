@@ -1,0 +1,57 @@
+---
+title: Bant Genisligi Satin Al
+api: POST /api/v1/bandwidth/buy
+description: "Bir TRON adresi icin bant genisligi satin alin"
+---
+
+## Bant Genisligi Satin Al
+
+Belirtilen TRON adresine bant genisligi devredilir.
+
+### Istek govdesi
+
+<ParamField body="address" type="string" required>
+  Hedef TRON adresi
+</ParamField>
+
+<ParamField body="bandwidth_amount" type="number" required>
+  Bant genisligi miktari (min 350, maks 100.000)
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Kiralama suresi saat cinsinden
+</ParamField>
+
+### Yanit
+
+`order_id`, `status` ve `price_trx` iceren bir siparis nesnesi dondurur.
+
+### Fiyatlandirma
+
+Bant genisligi fiyati: `(miktar / 1000) × 9.6 / 24 + 0,2 TRX`
+
+0,2 TRX sabit ucret tum bant genisligi siparislerine uygulanir.
+
+### Ornek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TTargetAddress...",
+    "bandwidth_amount": 1000,
+    "duration_hours": 24
+  }'
+```
+
+```json Response
+{
+  "order_id": 5678,
+  "address": "TTargetAddress...",
+  "bandwidth_amount": 1000,
+  "duration_hours": 24,
+  "price_trx": "9.80",
+  "status": "pending"
+}
+```

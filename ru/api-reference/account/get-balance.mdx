@@ -1,0 +1,28 @@
+---
+title: Получить баланс
+api: GET /api/v1/account/balance
+description: "Получить баланс вашего аккаунта"
+---
+
+## Получить баланс
+
+Возвращает ваш текущий баланс в TRX.
+
+### Ответ
+
+<ResponseField name="balance_trx" type="string">
+  Баланс аккаунта в TRX (десятичная строка)
+</ResponseField>
+
+### Пример
+
+```bash
+curl https://api.tronrental.com/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "balance_trx": "156.50"
+}
+```

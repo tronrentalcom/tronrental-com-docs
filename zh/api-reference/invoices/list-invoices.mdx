@@ -1,0 +1,51 @@
+---
+title: 账单列表
+api: GET /api/v1/invoices/my
+description: "列出您的账单，支持可选筛选"
+---
+
+## 账单列表
+
+返回您的账单分页列表。
+
+### 查询参数
+
+<ParamField query="page" type="number" default="1">
+  页码
+</ParamField>
+
+<ParamField query="status" type="string">
+  按状态筛选：`pending`、`paid`、`delegated`、`expired`、`failed`
+</ParamField>
+
+### 响应
+
+返回包含 `invoices` 数组和 `total` 计数的分页对象。
+
+### 示例
+
+```bash
+curl "https://api.tronrental.com/v1/invoices/my?page=1&status=delegated" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "invoices": [
+    {
+      "invoice_id": 789,
+      "payment_address": "TPaymentAddress...",
+      "address": "TRecipientAddress...",
+      "energy_amount": 65000,
+      "duration_hours": 1,
+      "price_trx": "2.75",
+      "price_usdt": "0.64",
+      "status": "delegated",
+      "created_at": "2026-03-05T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pages": 1
+}
+```
