@@ -1,0 +1,26 @@
+---
+title: Configure Webhook
+api: POST /api/v1/webhooks/configure
+description: "Set your webhook URL"
+---
+
+## Configure Webhook
+
+Sets or updates your webhook URL. Only one URL per account.
+
+### Request body
+
+<ParamField body="url" type="string" required>
+  HTTPS webhook URL
+</ParamField>
+
+### Example
+
+```bash
+curl -X POST https://tronrental.com/api/v1/webhooks/configure \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
+```
+
+To remove webhook, send an empty URL or delete via dashboard.

@@ -1,0 +1,71 @@
+---
+title: Errors
+description: "API error codes and handling"
+---
+
+## Error format
+
+All errors return a JSON response with a `detail` field:
+
+```json
+{
+  "detail": "Insufficient balance"
+}
+```
+
+Some errors include a structured `code` for programmatic handling:
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Not enough TRX balance"
+    }
+  }
+}
+```
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `400` | Bad request — invalid parameters |
+| `401` | Unauthorized — missing or invalid API key |
+| `403` | Forbidden — key disabled or action not allowed |
+| `404` | Not found |
+| `409` | Conflict — duplicate request or resource conflict |
+| `422` | Validation error — check request body |
+| `429` | Rate limit exceeded |
+| `500` | Server error |
+
+## Common error codes
+
+| Code | Description |
+|------|-------------|
+| `INSUFFICIENT_BALANCE` | Account balance too low for this operation |
+| `ADDRESS_ALREADY_ACTIVE` | Smart Mode already active for this address |
+| `ORDER_NOT_FOUND` | Order ID does not exist |
+| `INVALID_ADDRESS` | Not a valid TRON address |
+| `RATE_LIMITED` | Too many requests, retry after cooldown |
+| `PASSKEY_REQUIRED` | Withdrawal requires passkey verification |
+| `2FA_REQUIRED` | Withdrawal requires 2FA code |
+
+## Retry strategy
+
+For `429` and `5xx` errors, implement exponential backoff:
+
+```python
+import time
+import requests
+
+def api_call_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.get(url, **kwargs)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            time.sleep(2 ** attempt)
+            continue
+        return resp
+    raise Exception("Max retries exceeded")
+```

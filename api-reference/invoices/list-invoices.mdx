@@ -1,0 +1,30 @@
+---
+title: List Invoices
+api: GET /api/v1/invoices/my
+description: "List your invoices with optional filtering"
+---
+
+## List Invoices
+
+Returns a paginated list of your invoices.
+
+### Query parameters
+
+<ParamField query="page" type="number" default="1">
+  Page number
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ParamField>
+
+### Response
+
+Returns a paginated object with `invoices` array and `total` count.
+
+### Example
+
+```bash
+curl "https://tronrental.com/api/v1/invoices/my?page=1&status=delegated" \
+  -H "X-API-Key: your_api_key"
+```

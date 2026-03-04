@@ -1,0 +1,28 @@
+---
+title: Get Balance
+api: GET /api/v1/account/balance
+description: "Get your account balance"
+---
+
+## Get Balance
+
+Returns your current TRX balance.
+
+### Response
+
+<ResponseField name="balance_trx" type="string">
+  Account balance in TRX (decimal string)
+</ResponseField>
+
+### Example
+
+```bash
+curl https://tronrental.com/api/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "balance_trx": "156.50"
+}
+```

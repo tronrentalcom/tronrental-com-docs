@@ -1,0 +1,52 @@
+---
+title: Authentication
+description: "How to authenticate with the TronRental API"
+---
+
+## API Key Authentication
+
+All API requests require an API key passed in the `X-API-Key` header.
+
+```bash
+curl https://tronrental.com/api/v1/account/balance \
+  -H "X-API-Key: your_api_key"
+```
+
+### Getting an API key
+
+1. Sign up at [tronrental.com](https://tronrental.com/auth/register)
+2. Go to [Dashboard → API Keys](https://tronrental.com/dashboard/api)
+3. Click **Create API Key**
+4. Copy and securely store your key — it's shown only once
+
+### IP Whitelist (optional)
+
+You can restrict your API key to specific IP addresses for additional security. Configure this in the dashboard when creating or editing a key.
+
+### Key permissions
+
+Each API key has full access to your account's API operations:
+- Buy energy and bandwidth
+- Manage Smart Mode subscriptions
+- Create invoices
+- Check balance and transaction history
+
+<Warning>
+  Keep your API key secret. Do not expose it in client-side code, public repositories, or URLs.
+</Warning>
+
+## Rate Limits
+
+API keys are rate-limited per endpoint. See [Rate Limits](/resources/rate-limits) for details.
+
+## Errors
+
+Authentication errors return HTTP `401`:
+
+```json
+{
+  "detail": "Invalid or missing API key"
+}
+```
+
+If your key is disabled or blocked, you'll receive HTTP `403`.

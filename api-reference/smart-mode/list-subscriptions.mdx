@@ -1,0 +1,44 @@
+---
+title: List Subscriptions
+api: GET /api/v1/smart-mode/subscriptions
+description: "List your active Smart Mode subscriptions"
+---
+
+## List Subscriptions
+
+Returns all active and paused Smart Mode subscriptions. Deactivated subscriptions are not included.
+
+### Response
+
+Array of subscription objects:
+
+<ResponseField name="id" type="number">
+  Subscription ID
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Monitored TRON address
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  Optional label
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` or `paused`
+</ResponseField>
+
+<ResponseField name="bw_guarantee" type="boolean">
+  Whether BW Guarantee is enabled
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp
+</ResponseField>
+
+### Example
+
+```bash
+curl https://tronrental.com/api/v1/smart-mode/subscriptions \
+  -H "X-API-Key: your_api_key"
+```

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "TronRental API",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#0ea5e9",
+    "light": "#38bdf8",
+    "dark": "#0284c7"
+  },
+  "topbarLinks": [
+    {
+      "name": "Dashboard",
+      "url": "https://tronrental.com/dashboard"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get API Key",
+    "url": "https://tronrental.com/dashboard/api"
+  },
+  "navigation": {
+    "anchors": [
+      {
+        "anchor": "API Status",
+        "icon": "signal",
+        "url": "https://status.tronrental.com"
+      },
+      {
+        "anchor": "Website",
+        "icon": "globe",
+        "url": "https://tronrental.com"
+      }
+    ],
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "authentication",
+          "quickstart",
+          "errors"
+        ]
+      },
+      {
+        "group": "Core API",
+        "pages": [
+          "api-reference/energy/get-prices",
+          "api-reference/energy/buy-energy",
+          "api-reference/energy/activate-address",
+          "api-reference/bandwidth/buy-bandwidth"
+        ]
+      },
+      {
+        "group": "Invoices",
+        "pages": [
+          "api-reference/invoices/create-invoice",
+          "api-reference/invoices/get-invoice",
+          "api-reference/invoices/list-invoices"
+        ]
+      },
+      {
+        "group": "Smart Mode",
+        "pages": [
+          "api-reference/smart-mode/overview",
+          "api-reference/smart-mode/get-fees",
+          "api-reference/smart-mode/activate",
+          "api-reference/smart-mode/list-subscriptions",
+          "api-reference/smart-mode/toggle",
+          "api-reference/smart-mode/deactivate"
+        ]
+      },
+      {
+        "group": "Transfer Packages",
+        "pages": [
+          "api-reference/transfer-packages/overview",
+          "api-reference/transfer-packages/get-tiers",
+          "api-reference/transfer-packages/buy",
+          "api-reference/transfer-packages/list"
+        ]
+      },
+      {
+        "group": "Account",
+        "pages": [
+          "api-reference/account/get-balance",
+          "api-reference/account/get-profile",
+          "api-reference/account/deposits",
+          "api-reference/account/withdrawals"
+        ]
+      },
+      {
+        "group": "Webhooks",
+        "pages": [
+          "api-reference/webhooks/overview",
+          "api-reference/webhooks/configure",
+          "api-reference/webhooks/events"
+        ]
+      },
+      {
+        "group": "Resources",
+        "pages": [
+          "resources/tron-energy",
+          "resources/rate-limits",
+          "resources/changelog"
+        ]
+      }
+    ]
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/introduction"
+    }
+  ],
+  "footerSocials": {
+    "telegram": "https://t.me/TronRentalcom_bot",
+    "x": "https://x.com/TronRental"
+  }
+}

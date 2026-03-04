@@ -1,0 +1,38 @@
+---
+title: Get Tiers
+api: GET /api/v1/transfer-packages/tiers
+description: "Get available package sizes and pricing"
+---
+
+## Get Package Tiers
+
+Returns available preset package sizes, pricing, and limits.
+
+### Response
+
+<ResponseField name="tiers" type="array">
+  Array of preset package options with size and total price
+</ResponseField>
+
+<ResponseField name="single_transfer_price" type="string">
+  Price for a single transfer in TRX
+</ResponseField>
+
+<ResponseField name="bw_fee_per_transfer" type="string">
+  BW Guarantee fee per transfer in TRX
+</ResponseField>
+
+<ResponseField name="min_custom_size" type="number">
+  Minimum custom package size (1)
+</ResponseField>
+
+<ResponseField name="max_custom_size" type="number">
+  Maximum custom package size (10,000)
+</ResponseField>
+
+### Example
+
+```bash
+curl https://tronrental.com/api/v1/transfer-packages/tiers \
+  -H "X-API-Key: your_api_key"
+```

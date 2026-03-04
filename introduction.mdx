@@ -1,0 +1,60 @@
+---
+title: Introduction
+description: "TronRental API — programmatic access to TRON energy and bandwidth rental"
+---
+
+## Welcome to TronRental API
+
+TronRental provides a REST API for renting TRON energy and bandwidth. Reduce your USDT transfer costs by up to 80% compared to burning TRX.
+
+### What you can do
+
+<CardGroup cols={2}>
+  <Card title="Buy Energy" icon="bolt" href="/api-reference/energy/buy-energy">
+    Purchase energy for any TRON address. Pay per transaction or in bulk.
+  </Card>
+  <Card title="Smart Mode" icon="wand-magic-sparkles" href="/api-reference/smart-mode/overview">
+    Automatic energy delivery for every outgoing USDT transfer.
+  </Card>
+  <Card title="Transfer Packages" icon="box" href="/api-reference/transfer-packages/overview">
+    Prepaid packages of USDT transfers with guaranteed energy.
+  </Card>
+  <Card title="Invoices" icon="file-invoice" href="/api-reference/invoices/create-invoice">
+    Create payment invoices for energy — no account required for your users.
+  </Card>
+</CardGroup>
+
+### Base URL
+
+All API requests use the following base URL:
+
+```
+https://tronrental.com/api/v1
+```
+
+### Quick example
+
+```bash
+curl -X POST https://tronrental.com/api/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourTronAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+## Next steps
+
+<Steps>
+  <Step title="Get your API key">
+    Sign up at [tronrental.com](https://tronrental.com/auth/register) and create an API key in the [dashboard](https://tronrental.com/dashboard/api).
+  </Step>
+  <Step title="Check current prices">
+    Call `GET /api/v1/prices` to see current energy and bandwidth prices.
+  </Step>
+  <Step title="Make your first purchase">
+    Use `POST /api/v1/energy/buy` to buy energy for a TRON address.
+  </Step>
+</Steps>

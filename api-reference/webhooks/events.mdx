@@ -1,0 +1,44 @@
+---
+title: Webhook Logs
+api: GET /api/v1/webhooks/logs
+description: "View recent webhook delivery logs"
+---
+
+## Webhook Logs
+
+Returns recent webhook delivery attempts for debugging.
+
+### Response
+
+Array of log entries:
+
+<ResponseField name="id" type="number">
+  Log entry ID
+</ResponseField>
+
+<ResponseField name="event_type" type="string">
+  Event that triggered the webhook
+</ResponseField>
+
+<ResponseField name="payload" type="object">
+  The payload that was sent
+</ResponseField>
+
+<ResponseField name="response_status" type="number">
+  HTTP status code from your server
+</ResponseField>
+
+<ResponseField name="attempts" type="number">
+  Number of delivery attempts
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Timestamp
+</ResponseField>
+
+### Example
+
+```bash
+curl https://tronrental.com/api/v1/webhooks/logs \
+  -H "X-API-Key: your_api_key"
+```

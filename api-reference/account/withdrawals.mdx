@@ -1,0 +1,59 @@
+---
+title: Withdrawals
+description: "Withdraw TRX from your account"
+---
+
+## Create Withdrawal
+
+<div>
+  `POST /api/v1/account/withdrawal`
+</div>
+
+Withdraws TRX to any TRON address. Fee: 1 TRX.
+
+### Request body
+
+<ParamField body="to_address" type="string" required>
+  Destination TRON address
+</ParamField>
+
+<ParamField body="amount_trx" type="string" required>
+  Amount to withdraw in TRX
+</ParamField>
+
+<ParamField body="totp_code" type="string">
+  2FA code (if 2FA is enabled)
+</ParamField>
+
+### Example
+
+```bash
+curl -X POST https://tronrental.com/api/v1/account/withdrawal \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to_address": "TDestinationAddress...",
+    "amount_trx": "100"
+  }'
+```
+
+## List Withdrawals
+
+<div>
+  `GET /api/v1/account/withdrawals`
+</div>
+
+Returns your withdrawal history.
+
+```bash
+curl https://tronrental.com/api/v1/account/withdrawals \
+  -H "X-API-Key: your_api_key"
+```
+
+### Withdrawal statuses
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Queued for processing |
+| `completed` | TRX sent, tx_hash available |
+| `failed` | Failed, amount refunded |

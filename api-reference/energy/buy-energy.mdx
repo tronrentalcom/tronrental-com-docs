@@ -1,0 +1,100 @@
+---
+title: Buy Energy
+api: POST /api/v1/energy/buy
+description: "Purchase energy for a TRON address"
+---
+
+## Buy Energy
+
+Delegates energy to the specified TRON address. The cost is deducted from your account balance.
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  Target TRON address (T... format, 34 characters)
+</ParamField>
+
+<ParamField body="energy_amount" type="number" required>
+  Amount of energy to delegate (min 32,000, max 5,000,000)
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Rental duration in hours (1 or 24)
+</ParamField>
+
+### Response
+
+<ResponseField name="order_id" type="number">
+  Unique order identifier
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Target address
+</ResponseField>
+
+<ResponseField name="energy_amount" type="number">
+  Energy delegated
+</ResponseField>
+
+<ResponseField name="duration_hours" type="number">
+  Rental duration
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Total cost in TRX
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Order status: `pending`, `filled`, `failed`
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://tronrental.com/api/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourRecipientAddress1234567890abc",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://tronrental.com/api/v1/energy/buy",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourRecipientAddress1234567890abc",
+        "energy_amount": 65000,
+        "duration_hours": 1,
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://tronrental.com/api/v1/energy/buy", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "your_api_key",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    address: "TYourRecipientAddress1234567890abc",
+    energy_amount: 65000,
+    duration_hours: 1,
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+<Tip>
+  **65,000 energy** covers one USDT transfer to an address that already holds USDT.
+  Use **131,000** for first-time USDT recipients (new storage slot creation).
+</Tip>

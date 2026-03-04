@@ -1,0 +1,114 @@
+---
+title: Quickstart
+description: "Buy TRON energy in under 5 minutes"
+---
+
+## 1. Get your API key
+
+Sign up and create an API key at [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api).
+
+## 2. Check prices
+
+```bash
+curl https://tronrental.com/api/v1/prices
+```
+
+```json
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100
+}
+```
+
+## 3. Deposit TRX
+
+Check your deposit address:
+
+```bash
+curl https://tronrental.com/api/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+Send TRX or USDT to the returned `deposit_address`. Deposits are credited automatically.
+
+## 4. Buy energy
+
+```bash
+curl -X POST https://tronrental.com/api/v1/energy/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1
+  }'
+```
+
+```json
+{
+  "order_id": 1234,
+  "address": "TRecipientAddress...",
+  "energy_amount": 65000,
+  "duration_hours": 1,
+  "price_trx": "2.75",
+  "status": "pending"
+}
+```
+
+The energy will be delegated to the target address within seconds.
+
+## 5. Verify
+
+Check your order status:
+
+```bash
+curl https://tronrental.com/api/v1/orders \
+  -H "X-API-Key: your_api_key"
+```
+
+<Tip>
+  **65,000 energy** is enough for one USDT transfer to an address that already holds USDT.
+  For first-time USDT recipients, use **131,000 energy**.
+</Tip>
+
+## Code examples
+
+<CodeGroup>
+```python Python
+import requests
+
+API_KEY = "your_api_key"
+BASE = "https://tronrental.com/api/v1"
+headers = {"X-API-Key": API_KEY}
+
+# Buy energy
+resp = requests.post(f"{BASE}/energy/buy", headers=headers, json={
+    "address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration_hours": 1,
+})
+print(resp.json())
+```
+
+```javascript JavaScript
+const API_KEY = "your_api_key";
+const BASE = "https://tronrental.com/api/v1";
+
+const res = await fetch(`${BASE}/energy/buy`, {
+  method: "POST",
+  headers: {
+    "X-API-Key": API_KEY,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    address: "TRecipientAddress...",
+    energy_amount: 65000,
+    duration_hours: 1,
+  }),
+});
+console.log(await res.json());
+```
+</CodeGroup>

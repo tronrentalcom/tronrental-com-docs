@@ -1,0 +1,45 @@
+---
+title: Webhooks Overview
+description: "Receive real-time notifications for account events"
+---
+
+## Webhooks
+
+Configure a webhook URL to receive real-time HTTP POST notifications when events occur on your account.
+
+### Supported events
+
+| Event | Description |
+|-------|-------------|
+| `order.filled` | Energy order completed |
+| `order.failed` | Energy order failed |
+| `deposit.confirmed` | Deposit credited to balance |
+| `invoice.paid` | Invoice payment received |
+| `invoice.delegated` | Invoice energy delegated |
+| `smart_mode.transfer` | Smart Mode transfer processed |
+| `withdrawal.completed` | Withdrawal sent |
+
+### Webhook payload
+
+```json
+{
+  "event": "order.filled",
+  "data": {
+    "order_id": 1234,
+    "address": "TAddress...",
+    "energy_amount": 65000,
+    "price_trx": "2.75"
+  },
+  "timestamp": "2026-03-04T12:00:00Z"
+}
+```
+
+### Requirements
+
+- URL must use **HTTPS**
+- Must respond with `2xx` status within 10 seconds
+- Failed deliveries are retried up to 3 times with exponential backoff
+
+<Warning>
+  Webhook URLs cannot point to `localhost`, `127.0.0.1`, or other private addresses.
+</Warning>

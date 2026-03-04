@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40">
+  <rect x="0" y="4" width="32" height="32" rx="6" fill="#0ea5e9"/>
+  <text x="16" y="27" font-family="monospace" font-size="20" font-weight="bold" fill="white" text-anchor="middle">T</text>
+  <text x="44" y="28" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#0f172a">TronRental</text>
+</svg>

@@ -1,0 +1,45 @@
+---
+title: Buy Package
+api: POST /api/v1/transfer-packages/buy
+description: "Buy a transfer package with account balance"
+---
+
+## Buy Transfer Package
+
+Purchases a transfer package using your account balance.
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  TRON address to monitor
+</ParamField>
+
+<ParamField body="size" type="number" required>
+  Number of transfers (1 – 10,000)
+</ParamField>
+
+<ParamField body="bw_guarantee" type="boolean" default="true">
+  Enable BW Guarantee
+</ParamField>
+
+### Response
+
+Returns the created package object with `id`, `address`, `remaining_transfers`, `status`, and `price_trx`.
+
+### Example
+
+```bash
+curl -X POST https://tronrental.com/api/v1/transfer-packages/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "size": 500,
+    "bw_guarantee": true
+  }'
+```
+
+<Info>
+  You can also pay via invoice using `POST /api/v1/transfer-packages/buy-invoice` —
+  this generates a payment address for TRX/USDT.
+</Info>

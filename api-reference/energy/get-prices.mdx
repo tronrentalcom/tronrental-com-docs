@@ -1,0 +1,73 @@
+---
+title: Get Prices
+api: GET /api/v1/prices
+description: "Get current energy and bandwidth prices"
+---
+
+## Get Prices
+
+Returns current market prices for energy and bandwidth.
+
+**This endpoint is public — no authentication required.**
+
+### Response
+
+<ResponseField name="energy_price_sun" type="number">
+  Current energy price in SUN per unit
+</ResponseField>
+
+<ResponseField name="energy_price_1k_trx" type="string">
+  Price for 1,000 energy units in TRX
+</ResponseField>
+
+<ResponseField name="bw_price_1k_trx" type="string">
+  Price for 1,000 bandwidth units in TRX
+</ResponseField>
+
+<ResponseField name="trx_usd_rate" type="string">
+  Current TRX/USD exchange rate
+</ResponseField>
+
+<ResponseField name="burn_sun_per_energy" type="number">
+  Network burn rate — SUN per energy unit (currently 100)
+</ResponseField>
+
+<ResponseField name="min_energy" type="number">
+  Minimum energy amount per order
+</ResponseField>
+
+<ResponseField name="max_energy" type="number">
+  Maximum energy amount per order
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl https://tronrental.com/api/v1/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://tronrental.com/api/v1/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://tronrental.com/api/v1/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+```json Response
+{
+  "energy_price_sun": 42,
+  "energy_price_1k_trx": "2.75",
+  "bw_price_1k_trx": "9.60",
+  "trx_usd_rate": "0.234",
+  "burn_sun_per_energy": 100,
+  "min_energy": 32000,
+  "max_energy": 5000000
+}
+```

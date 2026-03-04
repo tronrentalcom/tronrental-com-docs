@@ -1,0 +1,73 @@
+---
+title: Create Invoice
+api: POST /api/v1/invoices
+description: "Create a payment invoice for energy delegation"
+---
+
+## Create Invoice
+
+Creates a payment invoice that generates a unique deposit address. When payment (TRX or USDT) is received, energy is automatically delegated to the target address.
+
+**Useful for integrations where end-users pay directly** — no account balance needed.
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  Target TRON address to receive energy
+</ParamField>
+
+<ParamField body="energy_amount" type="number">
+  Energy amount (32,000 – 5,000,000). Use this OR `transfer_count`.
+</ParamField>
+
+<ParamField body="transfer_count" type="number">
+  Number of USDT transfers (1 – 100). Each transfer = 65,000 energy.
+</ParamField>
+
+<ParamField body="duration_hours" type="number" required>
+  Rental duration (1 or 24 hours)
+</ParamField>
+
+### Response
+
+<ResponseField name="invoice_id" type="number">
+  Unique invoice identifier
+</ResponseField>
+
+<ResponseField name="payment_address" type="string">
+  Unique deposit address — send TRX or USDT here
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Price in TRX
+</ResponseField>
+
+<ResponseField name="price_usdt" type="string">
+  Price in USDT
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Invoice status: `pending`, `paid`, `delegated`, `expired`, `failed`
+</ResponseField>
+
+<ResponseField name="expires_at" type="string">
+  ISO 8601 expiration timestamp
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST https://tronrental.com/api/v1/invoices \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TRecipientAddress...",
+    "transfer_count": 1,
+    "duration_hours": 1
+  }'
+```
+
+<Info>
+  Invoices expire after 30 minutes if no payment is received.
+  Both TRX and USDT payments are accepted at the generated address.
+</Info>

@@ -1,0 +1,26 @@
+---
+title: Toggle Subscription
+api: POST /api/v1/smart-mode/{subscription_id}/toggle
+description: "Pause or resume a Smart Mode subscription"
+---
+
+## Toggle Subscription
+
+Pauses an active subscription or resumes a paused one. While paused, no fees are charged and transfers are not monitored.
+
+### Path parameters
+
+<ParamField path="subscription_id" type="number" required>
+  Subscription ID
+</ParamField>
+
+### Response
+
+Returns the updated subscription object with new `status`.
+
+### Example
+
+```bash
+curl -X POST https://tronrental.com/api/v1/smart-mode/42/toggle \
+  -H "X-API-Key: your_api_key"
+```

@@ -1,0 +1,39 @@
+---
+title: TRON Energy Explained
+description: "Understanding TRON energy and why renting saves money"
+---
+
+## What is TRON Energy?
+
+Energy is a resource on the TRON blockchain required to execute smart contracts. Every TRC-20 token transfer (like USDT) consumes energy.
+
+### Energy consumption for USDT transfers
+
+| Scenario | Energy needed |
+|----------|--------------|
+| Recipient **has** USDT | **64,285** |
+| Recipient **does not have** USDT | **130,285** |
+
+The difference is due to storage slot creation — sending USDT to a new holder requires creating a new entry in the token contract.
+
+### Without energy: TRX is burned
+
+If you don't have energy, the network burns TRX from your account to cover the cost:
+
+```
+64,285 energy × 100 SUN/energy = 6,428,500 SUN = 6.43 TRX
+```
+
+At current rates, that's approximately **$1.50 per USDT transfer**.
+
+### With rented energy: 60-80% savings
+
+Renting energy costs approximately **2.5-3.0 TRX per transfer** — saving you 50-60% compared to burning.
+
+### How renting works
+
+Energy is provided through **resource delegation** — a TRON network feature where one account temporarily shares its staked resources with another. The energy appears on the target address and is consumed during the next transaction.
+
+<Tip>
+  Use the [Energy Calculator](https://tronrental.com/energy-calculator) to check if a recipient address needs 65K or 131K energy.
+</Tip>

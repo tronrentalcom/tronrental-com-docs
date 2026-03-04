@@ -1,0 +1,35 @@
+---
+title: Smart Mode Overview
+description: "Automatic energy for every USDT transfer"
+---
+
+## Smart Mode
+
+Smart Mode automatically provides energy for every outgoing USDT transfer from a monitored address. No manual API calls needed — just activate and transfer.
+
+### How it works
+
+1. **Activate** Smart Mode for a TRON address
+2. Every time that address sends USDT, energy is **automatically delegated**
+3. Daily subscription fee + per-transfer fee deducted from your balance
+4. If balance runs out, the subscription is paused (not deleted)
+
+### Pricing
+
+| Fee | Amount |
+|-----|--------|
+| Daily subscription | 3.0 TRX/day |
+| Per USDT transfer | 2.7 TRX × multiplier |
+| BW Guarantee (optional) | +0.3 TRX/transfer |
+
+The transfer multiplier is `1` for addresses that already hold USDT (65K energy) and `2` for first-time recipients (131K energy).
+
+<Tip>
+  **BW Guarantee** (enabled by default) delegates 350 bandwidth to cover the transaction's bandwidth cost.
+  Without it, the sender needs ~0.35 TRX worth of bandwidth or frozen TRX.
+</Tip>
+
+### Limits
+
+- Maximum 5 active subscriptions per account
+- Custom pricing available for high-volume users (contact support)

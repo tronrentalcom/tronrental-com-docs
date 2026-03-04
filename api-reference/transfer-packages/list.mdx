@@ -1,0 +1,29 @@
+---
+title: List Packages
+api: GET /api/v1/transfer-packages/my
+description: "List your transfer packages"
+---
+
+## List My Packages
+
+Returns all your transfer packages.
+
+### Response
+
+Array of package objects with `id`, `address`, `total_transfers`, `remaining_transfers`, `status`, and `created_at`.
+
+### Package statuses
+
+| Status | Description |
+|--------|-------------|
+| `pending_payment` | Awaiting invoice payment |
+| `active` | Monitoring address, transfers available |
+| `completed` | All transfers used |
+| `cancelled` | Cancelled by user |
+
+### Example
+
+```bash
+curl https://tronrental.com/api/v1/transfer-packages/my \
+  -H "X-API-Key: your_api_key"
+```

@@ -1,0 +1,36 @@
+---
+title: Get Invoice
+api: GET /api/v1/invoices/{invoice_id}
+description: "Get invoice details by ID"
+---
+
+## Get Invoice
+
+Returns details and current status of an invoice.
+
+### Path parameters
+
+<ParamField path="invoice_id" type="number" required>
+  Invoice ID
+</ParamField>
+
+### Response
+
+Returns the full invoice object including `status`, `payment_address`, `price_trx`, `price_usdt`, `tx_hash`, and timestamps.
+
+### Invoice statuses
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Waiting for payment |
+| `paid` | Payment received, delegation in progress |
+| `delegated` | Energy successfully delegated |
+| `expired` | No payment received before expiration |
+| `failed` | Delegation failed (payment refunded) |
+
+### Example
+
+```bash
+curl https://tronrental.com/api/v1/invoices/12345 \
+  -H "X-API-Key: your_api_key"
+```

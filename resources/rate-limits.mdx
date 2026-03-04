@@ -1,0 +1,46 @@
+---
+title: Rate Limits
+description: "API rate limiting policy"
+---
+
+## Rate Limits
+
+API endpoints are rate-limited to ensure fair usage and service stability.
+
+### Limits by endpoint
+
+| Endpoint | Limit |
+|----------|-------|
+| `GET /prices` | 60 requests/minute |
+| `POST /energy/buy` | 30 requests/minute |
+| `POST /bandwidth/buy` | 30 requests/minute |
+| `POST /invoices` | 20 requests/minute |
+| `POST /smart-mode/activate` | 10 requests/minute |
+| `POST /account/withdrawal` | 1 request/minute |
+| Other endpoints | 60 requests/minute |
+
+### Rate limit headers
+
+Responses include rate limit information in headers:
+
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 58
+X-RateLimit-Reset: 1709568000
+```
+
+### Exceeding limits
+
+When rate limited, you'll receive HTTP `429`:
+
+```json
+{
+  "detail": "Rate limit exceeded. Try again in 30 seconds."
+}
+```
+
+Implement exponential backoff for retries. Do not retry immediately.
+
+### Need higher limits?
+
+Contact us via [Telegram](https://t.me/TronRentalcom_bot) for custom rate limits for high-volume integrations.
