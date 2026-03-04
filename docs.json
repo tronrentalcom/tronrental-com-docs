@@ -129,6 +129,9 @@
       }
     ]
   },
+  "contextual": {
+    "options": ["copy", "chatgpt", "claude", "add-mcp", "cursor", "vscode"]
+  },
   "redirects": [
     {
       "source": "/",
