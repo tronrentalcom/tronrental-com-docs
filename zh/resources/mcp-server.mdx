@@ -1,0 +1,101 @@
+---
+title: "MCP 服务器"
+description: "通过 Model Context Protocol (MCP) 使用 AI 代理访问 TronRental"
+---
+
+## 什么是 MCP？
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) 是一个开放标准，允许 AI 代理（Claude Code、Cursor、Windsurf 等）通过统一接口与外部服务交互。
+
+TronRental 提供官方 MCP 服务器，使 AI 代理能够完整访问能量购买 API — 从查询价格到完成购买。
+
+## 快速开始
+
+添加到您的 AI 代理：
+
+```bash
+npx -y @tronrental-com/mcp-server
+```
+
+### Claude Code
+
+```bash
+# 无需 API 密钥（代理将自动注册）
+claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
+
+# 使用 API 密钥
+claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-com/mcp-server
+```
+
+### Cursor / Windsurf
+
+添加到您的 MCP 配置：
+
+```json
+{
+  "mcpServers": {
+    "tronrental": {
+      "command": "npx",
+      "args": ["-y", "@tronrental-com/mcp-server"],
+      "env": {
+        "TRONRENTAL_API_KEY": "your_key"  // pragma: allowlist secret
+      }
+    }
+  }
+}
+```
+
+`TRONRENTAL_API_KEY` 环境变量是可选的。如果未提供，代理可以通过 MCP 工具注册新账户并创建 API 密钥。
+
+## 可用工具
+
+MCP 服务器提供 10 个工具：
+
+| 工具 | 认证 | 描述 |
+|------|------|------|
+| `get_prices` | 无需 | 当前能量和带宽价格 |
+| `calculate_savings` | 无需 | 计算节省：燃烧成本与租赁成本对比 |
+| `register` | 无需 | 注册新账户 |
+| `login` | 无需 | 登录现有账户 |
+| `create_api_key` | 令牌 | 创建 API 密钥 |
+| `get_deposit_address` | API 密钥 | 获取 TRX 充值地址 |
+| `get_balance` | API 密钥 | 查询账户余额 |
+| `buy_energy` | API 密钥 | 为 TRON 地址购买能量 |
+| `get_order` | API 密钥 | 查询订单状态 |
+| `regenerate_deposit_address` | API 密钥 | 生成新的充值地址 |
+
+## 典型流程
+
+### 新用户（无 API 密钥）
+
+1. `get_prices` — 查看当前价格
+2. `calculate_savings` — 根据用户的转账量计算节省
+3. `register` — 创建账户
+4. `create_api_key` — 生成 API 密钥
+5. `get_deposit_address` — 获取充值地址，用户发送 TRX
+6. `get_balance` — 确认充值到账
+7. `buy_energy` — 购买能量
+8. `get_order` — 确认委托
+
+### 现有用户（已设置 API 密钥）
+
+1. `get_balance` — 查询余额
+2. `buy_energy` — 购买能量
+3. `get_order` — 确认委托
+
+## 能量数量
+
+| 场景 | 能量 |
+|------|------|
+| 接收方已持有 USDT | 65,000 |
+| 接收方从未持有 USDT | 131,000 |
+| 最小订单 | 60,000 |
+| 最大订单 | 5,000,000 |
+
+时长始终为 `1h` — 能量在几秒内即被使用，1 小时是租赁窗口。
+
+## 链接
+
+- **npm:** [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)
+- **GitHub:** [tronrentalcom/tronrental-com-mcp](https://github.com/tronrentalcom/tronrental-com-mcp)
+- **MCP Registry:** `io.github.tronrental-com/tronrental`

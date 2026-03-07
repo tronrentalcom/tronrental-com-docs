@@ -1,0 +1,101 @@
+---
+title: "MCP Server"
+description: "Use TronRental via AI agents with Model Context Protocol (MCP)"
+---
+
+## What is MCP?
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard that lets AI agents (Claude Code, Cursor, Windsurf, and others) interact with external services through a unified interface.
+
+TronRental provides an official MCP server that gives AI agents full access to the energy purchasing API — from checking prices to completing purchases.
+
+## Quick Start
+
+Add to your AI agent:
+
+```bash
+npx -y @tronrental-com/mcp-server
+```
+
+### Claude Code
+
+```bash
+# Without API key (agent will register automatically)
+claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
+
+# With API key
+claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-com/mcp-server
+```
+
+### Cursor / Windsurf
+
+Add to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "tronrental": {
+      "command": "npx",
+      "args": ["-y", "@tronrental-com/mcp-server"],
+      "env": {
+        "TRONRENTAL_API_KEY": "your_key"  // pragma: allowlist secret
+      }
+    }
+  }
+}
+```
+
+The `TRONRENTAL_API_KEY` environment variable is optional. If not provided, the agent can register a new account and create an API key through the MCP tools.
+
+## Available Tools
+
+The MCP server provides 10 tools:
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `get_prices` | None | Current energy and bandwidth prices |
+| `calculate_savings` | None | Calculate savings: burn cost vs rental cost |
+| `register` | None | Register a new account |
+| `login` | None | Log in to existing account |
+| `create_api_key` | Token | Create an API key |
+| `get_deposit_address` | API key | Get TRX deposit address |
+| `get_balance` | API key | Check account balance |
+| `buy_energy` | API key | Buy energy for a TRON address |
+| `get_order` | API key | Check order status |
+| `regenerate_deposit_address` | API key | Generate a new deposit address |
+
+## Typical Flow
+
+### New user (no API key)
+
+1. `get_prices` — show current pricing
+2. `calculate_savings` — calculate savings for user's transfer volume
+3. `register` — create account
+4. `create_api_key` — generate API key
+5. `get_deposit_address` — get deposit address, user sends TRX
+6. `get_balance` — verify deposit arrived
+7. `buy_energy` — purchase energy
+8. `get_order` — confirm delegation
+
+### Existing user (API key set)
+
+1. `get_balance` — check balance
+2. `buy_energy` — purchase energy
+3. `get_order` — confirm delegation
+
+## Energy Amounts
+
+| Scenario | Energy |
+|----------|--------|
+| Recipient already has USDT | 65,000 |
+| Recipient never held USDT | 131,000 |
+| Minimum order | 60,000 |
+| Maximum order | 5,000,000 |
+
+Duration is always `1h` — energy is used within seconds, 1 hour is the rental window.
+
+## Links
+
+- **npm:** [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)
+- **GitHub:** [tronrentalcom/tronrental-com-mcp](https://github.com/tronrentalcom/tronrental-com-mcp)
+- **MCP Registry:** `io.github.tronrental-com/tronrental`

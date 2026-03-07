@@ -1,0 +1,101 @@
+---
+title: "Servidor MCP"
+description: "Use o TronRental por meio de agentes de IA com o Model Context Protocol (MCP)"
+---
+
+## O que é MCP?
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) é um padrão aberto que permite que agentes de IA (Claude Code, Cursor, Windsurf e outros) interajam com serviços externos por meio de uma interface unificada.
+
+O TronRental fornece um servidor MCP oficial que dá aos agentes de IA acesso completo à API de compra de energia — desde a verificação de preços até a conclusão de compras.
+
+## Início Rápido
+
+Adicione ao seu agente de IA:
+
+```bash
+npx -y @tronrental-com/mcp-server
+```
+
+### Claude Code
+
+```bash
+# Sem chave API (o agente se registrará automaticamente)
+claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
+
+# Com chave API
+claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-com/mcp-server
+```
+
+### Cursor / Windsurf
+
+Adicione à sua configuração MCP:
+
+```json
+{
+  "mcpServers": {
+    "tronrental": {
+      "command": "npx",
+      "args": ["-y", "@tronrental-com/mcp-server"],
+      "env": {
+        "TRONRENTAL_API_KEY": "your_key"  // pragma: allowlist secret
+      }
+    }
+  }
+}
+```
+
+A variável de ambiente `TRONRENTAL_API_KEY` é opcional. Se não for fornecida, o agente pode registrar uma nova conta e criar uma chave API através das ferramentas MCP.
+
+## Ferramentas Disponíveis
+
+O servidor MCP fornece 10 ferramentas:
+
+| Ferramenta | Autenticação | Descrição |
+|------------|--------------|-----------|
+| `get_prices` | Nenhuma | Preços atuais de energia e bandwidth |
+| `calculate_savings` | Nenhuma | Calcular economia: custo de queima vs custo de aluguel |
+| `register` | Nenhuma | Registrar uma nova conta |
+| `login` | Nenhuma | Fazer login em uma conta existente |
+| `create_api_key` | Token | Criar uma chave API |
+| `get_deposit_address` | Chave API | Obter endereço de depósito de TRX |
+| `get_balance` | Chave API | Verificar saldo da conta |
+| `buy_energy` | Chave API | Comprar energia para um endereço TRON |
+| `get_order` | Chave API | Verificar status do pedido |
+| `regenerate_deposit_address` | Chave API | Gerar um novo endereço de depósito |
+
+## Fluxo Típico
+
+### Novo usuário (sem chave API)
+
+1. `get_prices` — mostrar preços atuais
+2. `calculate_savings` — calcular economia para o volume de transferências do usuário
+3. `register` — criar conta
+4. `create_api_key` — gerar chave API
+5. `get_deposit_address` — obter endereço de depósito, usuário envia TRX
+6. `get_balance` — verificar se o depósito chegou
+7. `buy_energy` — comprar energia
+8. `get_order` — confirmar delegação
+
+### Usuário existente (chave API configurada)
+
+1. `get_balance` — verificar saldo
+2. `buy_energy` — comprar energia
+3. `get_order` — confirmar delegação
+
+## Quantidades de Energia
+
+| Cenário | Energia |
+|---------|---------|
+| Destinatário já possui USDT | 65,000 |
+| Destinatário nunca possuiu USDT | 131,000 |
+| Pedido mínimo | 60,000 |
+| Pedido máximo | 5,000,000 |
+
+A duração é sempre `1h` — a energia é usada em segundos, 1 hora é a janela de aluguel.
+
+## Links
+
+- **npm:** [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)
+- **GitHub:** [tronrentalcom/tronrental-com-mcp](https://github.com/tronrentalcom/tronrental-com-mcp)
+- **MCP Registry:** `io.github.tronrental-com/tronrental`

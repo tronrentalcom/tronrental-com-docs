@@ -1,0 +1,101 @@
+---
+title: "MCP सर्वर"
+description: "Model Context Protocol (MCP) के माध्यम से AI एजेंटों द्वारा TronRental का उपयोग करें"
+---
+
+## MCP क्या है?
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) एक ओपन स्टैंडर्ड है जो AI एजेंटों (Claude Code, Cursor, Windsurf और अन्य) को एक एकीकृत इंटरफ़ेस के माध्यम से बाहरी सेवाओं के साथ इंटरैक्ट करने की अनुमति देता है।
+
+TronRental एक आधिकारिक MCP सर्वर प्रदान करता है जो AI एजेंटों को एनर्जी खरीद API तक पूर्ण पहुँच देता है — कीमतें जाँचने से लेकर खरीदारी पूरी करने तक।
+
+## त्वरित शुरुआत
+
+अपने AI एजेंट में जोड़ें:
+
+```bash
+npx -y @tronrental-com/mcp-server
+```
+
+### Claude Code
+
+```bash
+# API कुंजी के बिना (एजेंट स्वचालित रूप से पंजीकरण करेगा)
+claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
+
+# API कुंजी के साथ
+claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-com/mcp-server
+```
+
+### Cursor / Windsurf
+
+अपनी MCP कॉन्फ़िगरेशन में जोड़ें:
+
+```json
+{
+  "mcpServers": {
+    "tronrental": {
+      "command": "npx",
+      "args": ["-y", "@tronrental-com/mcp-server"],
+      "env": {
+        "TRONRENTAL_API_KEY": "your_key"  // pragma: allowlist secret
+      }
+    }
+  }
+}
+```
+
+`TRONRENTAL_API_KEY` एनवायरनमेंट वेरिएबल वैकल्पिक है। यदि प्रदान नहीं किया गया है, तो एजेंट MCP टूल्स के माध्यम से एक नया खाता पंजीकृत कर सकता है और API कुंजी बना सकता है।
+
+## उपलब्ध टूल्स
+
+MCP सर्वर 10 टूल्स प्रदान करता है:
+
+| टूल | प्रमाणीकरण | विवरण |
+|------|------------|--------|
+| `get_prices` | कोई नहीं | वर्तमान एनर्जी और bandwidth कीमतें |
+| `calculate_savings` | कोई नहीं | बचत की गणना: बर्न लागत बनाम किराये की लागत |
+| `register` | कोई नहीं | नया खाता पंजीकृत करें |
+| `login` | कोई नहीं | मौजूदा खाते में लॉग इन करें |
+| `create_api_key` | टोकन | API कुंजी बनाएँ |
+| `get_deposit_address` | API कुंजी | TRX जमा पता प्राप्त करें |
+| `get_balance` | API कुंजी | खाता शेष जाँचें |
+| `buy_energy` | API कुंजी | TRON पते के लिए एनर्जी खरीदें |
+| `get_order` | API कुंजी | ऑर्डर स्थिति जाँचें |
+| `regenerate_deposit_address` | API कुंजी | नया जमा पता जनरेट करें |
+
+## सामान्य प्रवाह
+
+### नया उपयोगकर्ता (API कुंजी नहीं है)
+
+1. `get_prices` — वर्तमान कीमतें दिखाएँ
+2. `calculate_savings` — उपयोगकर्ता के ट्रांसफर वॉल्यूम के लिए बचत की गणना करें
+3. `register` — खाता बनाएँ
+4. `create_api_key` — API कुंजी जनरेट करें
+5. `get_deposit_address` — जमा पता प्राप्त करें, उपयोगकर्ता TRX भेजता है
+6. `get_balance` — सत्यापित करें कि जमा राशि आ गई है
+7. `buy_energy` — एनर्जी खरीदें
+8. `get_order` — डेलिगेशन की पुष्टि करें
+
+### मौजूदा उपयोगकर्ता (API कुंजी सेट है)
+
+1. `get_balance` — शेष जाँचें
+2. `buy_energy` — एनर्जी खरीदें
+3. `get_order` — डेलिगेशन की पुष्टि करें
+
+## एनर्जी मात्रा
+
+| परिदृश्य | एनर्जी |
+|-----------|---------|
+| प्राप्तकर्ता के पास पहले से USDT है | 65,000 |
+| प्राप्तकर्ता ने कभी USDT नहीं रखा | 131,000 |
+| न्यूनतम ऑर्डर | 60,000 |
+| अधिकतम ऑर्डर | 5,000,000 |
+
+अवधि हमेशा `1h` है — एनर्जी सेकंडों में उपयोग हो जाती है, 1 घंटा किराये की विंडो है।
+
+## लिंक
+
+- **npm:** [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)
+- **GitHub:** [tronrentalcom/tronrental-com-mcp](https://github.com/tronrentalcom/tronrental-com-mcp)
+- **MCP Registry:** `io.github.tronrental-com/tronrental`

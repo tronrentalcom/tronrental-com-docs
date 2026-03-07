@@ -1,0 +1,101 @@
+---
+title: "MCP Sunucusu"
+description: "Model Context Protocol (MCP) ile AI ajanları aracılığıyla TronRental kullanın"
+---
+
+## MCP Nedir?
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io), AI ajanlarının (Claude Code, Cursor, Windsurf ve diğerleri) birleşik bir arayüz üzerinden harici hizmetlerle etkileşim kurmasını sağlayan açık bir standarttır.
+
+TronRental, AI ajanlarına enerji satın alma API'sine tam erişim sağlayan resmi bir MCP sunucusu sunar — fiyat kontrolünden satın alma işleminin tamamlanmasına kadar.
+
+## Hızlı Başlangıç
+
+AI ajanınıza ekleyin:
+
+```bash
+npx -y @tronrental-com/mcp-server
+```
+
+### Claude Code
+
+```bash
+# API anahtarı olmadan (ajan otomatik olarak kayıt olacaktır)
+claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
+
+# API anahtarı ile
+claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-com/mcp-server
+```
+
+### Cursor / Windsurf
+
+MCP yapılandırmanıza ekleyin:
+
+```json
+{
+  "mcpServers": {
+    "tronrental": {
+      "command": "npx",
+      "args": ["-y", "@tronrental-com/mcp-server"],
+      "env": {
+        "TRONRENTAL_API_KEY": "your_key"  // pragma: allowlist secret
+      }
+    }
+  }
+}
+```
+
+`TRONRENTAL_API_KEY` ortam değişkeni isteğe bağlıdır. Sağlanmazsa, ajan MCP araçları aracılığıyla yeni bir hesap kaydedebilir ve API anahtarı oluşturabilir.
+
+## Mevcut Araçlar
+
+MCP sunucusu 10 araç sunar:
+
+| Araç | Kimlik Doğrulama | Açıklama |
+|------|-------------------|----------|
+| `get_prices` | Yok | Güncel enerji ve bandwidth fiyatları |
+| `calculate_savings` | Yok | Tasarruf hesaplama: yakma maliyeti ve kiralama maliyeti karşılaştırması |
+| `register` | Yok | Yeni hesap kaydı |
+| `login` | Yok | Mevcut hesaba giriş |
+| `create_api_key` | Token | API anahtarı oluşturma |
+| `get_deposit_address` | API anahtarı | TRX yatırma adresi alma |
+| `get_balance` | API anahtarı | Hesap bakiyesi sorgulama |
+| `buy_energy` | API anahtarı | Bir TRON adresi için enerji satın alma |
+| `get_order` | API anahtarı | Sipariş durumu sorgulama |
+| `regenerate_deposit_address` | API anahtarı | Yeni yatırma adresi oluşturma |
+
+## Tipik Akış
+
+### Yeni kullanıcı (API anahtarı yok)
+
+1. `get_prices` — güncel fiyatları göster
+2. `calculate_savings` — kullanıcının transfer hacmi için tasarrufu hesapla
+3. `register` — hesap oluştur
+4. `create_api_key` — API anahtarı oluştur
+5. `get_deposit_address` — yatırma adresi al, kullanıcı TRX gönderir
+6. `get_balance` — yatırımın ulaştığını doğrula
+7. `buy_energy` — enerji satın al
+8. `get_order` — delegasyonu onayla
+
+### Mevcut kullanıcı (API anahtarı ayarlanmış)
+
+1. `get_balance` — bakiye kontrol et
+2. `buy_energy` — enerji satın al
+3. `get_order` — delegasyonu onayla
+
+## Enerji Miktarları
+
+| Senaryo | Enerji |
+|---------|--------|
+| Alıcının zaten USDT'si var | 65,000 |
+| Alıcı hiç USDT tutmadı | 131,000 |
+| Minimum sipariş | 60,000 |
+| Maksimum sipariş | 5,000,000 |
+
+Süre her zaman `1h` — enerji saniyeler içinde kullanılır, 1 saat kiralama penceresidir.
+
+## Bağlantılar
+
+- **npm:** [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)
+- **GitHub:** [tronrentalcom/tronrental-com-mcp](https://github.com/tronrentalcom/tronrental-com-mcp)
+- **MCP Registry:** `io.github.tronrental-com/tronrental`

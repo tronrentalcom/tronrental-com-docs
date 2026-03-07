@@ -124,6 +124,7 @@
               {
                 "group": "Resources",
                 "pages": [
+                  "resources/mcp-server",
                   "resources/rate-limits",
                   "resources/changelog"
                 ]
@@ -220,6 +221,7 @@
               {
                 "group": "Ресурсы",
                 "pages": [
+                  "ru/resources/mcp-server",
                   "ru/resources/rate-limits",
                   "ru/resources/changelog"
                 ]
@@ -316,6 +318,7 @@
               {
                 "group": "资源",
                 "pages": [
+                  "zh/resources/mcp-server",
                   "zh/resources/rate-limits",
                   "zh/resources/changelog"
                 ]
@@ -412,6 +415,7 @@
               {
                 "group": "Recursos",
                 "pages": [
+                  "es/resources/mcp-server",
                   "es/resources/rate-limits",
                   "es/resources/changelog"
                 ]
@@ -508,6 +512,7 @@
               {
                 "group": "Kaynaklar",
                 "pages": [
+                  "tr/resources/mcp-server",
                   "tr/resources/rate-limits",
                   "tr/resources/changelog"
                 ]
@@ -604,6 +609,7 @@
               {
                 "group": "Recursos",
                 "pages": [
+                  "pt/resources/mcp-server",
                   "pt/resources/rate-limits",
                   "pt/resources/changelog"
                 ]
@@ -700,6 +706,7 @@
               {
                 "group": "संसाधन",
                 "pages": [
+                  "hi/resources/mcp-server",
                   "hi/resources/rate-limits",
                   "hi/resources/changelog"
                 ]
