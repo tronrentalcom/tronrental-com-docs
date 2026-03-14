@@ -4,40 +4,60 @@ api: GET /api/v1/prices
 description: "Obter preços atuais de energia e largura de banda"
 ---
 
-## Consultar Preços
+## Consultar Precos
 
-Retorna os preços de mercado atuais para energia e largura de banda.
+Retorna os precos de mercado atuais para energia e largura de banda.
 
-**Este endpoint é público — nenhuma autenticação necessária.**
+**Este endpoint e publico — nenhuma autenticacao necessaria.**
 
 ### Resposta
 
-<ResponseField name="energy_price_sun" type="number">
-  Preço atual da energia em SUN por unidade
+<ResponseField name="energy_trx" type="object">
+  Preco de energia em TRX para 65.000 unidades, por duracao (`1h`)
 </ResponseField>
 
-<ResponseField name="energy_price_1k_trx" type="string">
-  Preço para 1.000 unidades de energia em TRX
+<ResponseField name="energy_sun" type="object">
+  Preco de energia em SUN por 1 unidade, por duracao (`1h`)
 </ResponseField>
 
-<ResponseField name="bw_price_1k_trx" type="string">
-  Preço para 1.000 unidades de largura de banda em TRX
+<ResponseField name="energy_usd" type="object">
+  Preco de energia em USD para 65.000 unidades, por duracao (`1h`)
+</ResponseField>
+
+<ResponseField name="energy_volume" type="number">
+  Volume utilizado para calculo do preco de energia (65.000)
+</ResponseField>
+
+<ResponseField name="bandwidth_trx" type="object">
+  Preco de largura de banda em TRX para 350 unidades, por duracao (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_sun" type="object">
+  Preco de largura de banda em SUN por 1 unidade, por duracao (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_usd" type="object">
+  Preco de largura de banda em USD para 350 unidades, por duracao (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_volume" type="number">
+  Volume utilizado para calculo do preco de largura de banda (350)
 </ResponseField>
 
 <ResponseField name="trx_usd_rate" type="string">
-  Taxa de câmbio atual TRX/USD
+  Taxa de cambio atual TRX/USD
 </ResponseField>
 
-<ResponseField name="burn_sun_per_energy" type="number">
-  Taxa de queima da rede — SUN por unidade de energia (atualmente 100)
+<ResponseField name="burn_cost_trx" type="string">
+  Custo de queimar TRX para 65.000 de energia (sem aluguel)
 </ResponseField>
 
-<ResponseField name="min_energy" type="number">
-  Quantidade mínima de energia por pedido
+<ResponseField name="burn_cost_usd" type="string">
+  Mesmo custo de queima em USD
 </ResponseField>
 
-<ResponseField name="max_energy" type="number">
-  Quantidade máxima de energia por pedido
+<ResponseField name="savings_percent" type="string">
+  Porcentagem de economia ao alugar vs queimar
 </ResponseField>
 
 ### Exemplo
@@ -61,17 +81,23 @@ console.log(data);
 </CodeGroup>
 
 <Info>
-  Os valores de resposta abaixo são exemplos. Os preços reais são atualizados em tempo real com base nas condições do mercado.
+  Os valores de resposta abaixo sao exemplos. Os precos reais sao atualizados em tempo real com base nas condicoes do mercado.
 </Info>
 
 ```json Response
 {
-  "energy_price_sun": 42,
-  "energy_price_1k_trx": "2.75",
-  "bw_price_1k_trx": "9.60",
-  "trx_usd_rate": "0.234",
-  "burn_sun_per_energy": 100,
-  "min_energy": 32000,
-  "max_energy": 5000000
+  "energy_trx": {"1h": "2.32"},
+  "energy_sun": {"1h": "35.68"},
+  "energy_usd": {"1h": "0.69"},
+  "energy_volume": 65000,
+  "bandwidth_trx": {"1h": "0.14"},
+  "bandwidth_sun": {"1h": "400.00"},
+  "bandwidth_usd": {"1h": "0.04"},
+  "bandwidth_volume": 350,
+  "trx_usd_rate": "0.297",
+  "burn_cost_trx": "6.5",
+  "burn_cost_usd": "1.93",
+  "savings_percent": "64.3",
+  "note": "Energy price is for 65,000 units in TRX"
 }
 ```

@@ -12,32 +12,52 @@ description: "वर्तमान एनर्जी और बैंडवि
 
 ### रिस्पॉन्स
 
-<ResponseField name="energy_price_sun" type="number">
-  प्रति यूनिट SUN में वर्तमान एनर्जी मूल्य
+<ResponseField name="energy_trx" type="object">
+  65,000 यूनिट के लिए TRX में एनर्जी मूल्य, अवधि कुंजी द्वारा (`1h`)
 </ResponseField>
 
-<ResponseField name="energy_price_1k_trx" type="string">
-  TRX में 1,000 एनर्जी यूनिट की कीमत
+<ResponseField name="energy_sun" type="object">
+  प्रति 1 यूनिट SUN में एनर्जी मूल्य, अवधि कुंजी द्वारा (`1h`)
 </ResponseField>
 
-<ResponseField name="bw_price_1k_trx" type="string">
-  TRX में 1,000 बैंडविड्थ यूनिट की कीमत
+<ResponseField name="energy_usd" type="object">
+  65,000 यूनिट के लिए USD में एनर्जी मूल्य, अवधि कुंजी द्वारा (`1h`)
+</ResponseField>
+
+<ResponseField name="energy_volume" type="number">
+  एनर्जी मूल्य गणना के लिए उपयोग किया गया वॉल्यूम (65,000)
+</ResponseField>
+
+<ResponseField name="bandwidth_trx" type="object">
+  350 यूनिट के लिए TRX में बैंडविड्थ मूल्य, अवधि कुंजी द्वारा (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_sun" type="object">
+  प्रति 1 यूनिट SUN में बैंडविड्थ मूल्य, अवधि कुंजी द्वारा (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_usd" type="object">
+  350 यूनिट के लिए USD में बैंडविड्थ मूल्य, अवधि कुंजी द्वारा (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_volume" type="number">
+  बैंडविड्थ मूल्य गणना के लिए उपयोग किया गया वॉल्यूम (350)
 </ResponseField>
 
 <ResponseField name="trx_usd_rate" type="string">
   वर्तमान TRX/USD विनिमय दर
 </ResponseField>
 
-<ResponseField name="burn_sun_per_energy" type="number">
-  नेटवर्क बर्न दर — प्रति एनर्जी यूनिट SUN (वर्तमान में 100)
+<ResponseField name="burn_cost_trx" type="string">
+  65,000 एनर्जी के लिए TRX बर्न करने की लागत (बिना किराए के)
 </ResponseField>
 
-<ResponseField name="min_energy" type="number">
-  प्रति ऑर्डर न्यूनतम एनर्जी मात्रा
+<ResponseField name="burn_cost_usd" type="string">
+  वही बर्न लागत USD में
 </ResponseField>
 
-<ResponseField name="max_energy" type="number">
-  प्रति ऑर्डर अधिकतम एनर्जी मात्रा
+<ResponseField name="savings_percent" type="string">
+  किराए बनाम बर्न करने से बचत का प्रतिशत
 </ResponseField>
 
 ### उदाहरण
@@ -66,12 +86,18 @@ console.log(data);
 
 ```json Response
 {
-  "energy_price_sun": 42,
-  "energy_price_1k_trx": "2.75",
-  "bw_price_1k_trx": "9.60",
-  "trx_usd_rate": "0.234",
-  "burn_sun_per_energy": 100,
-  "min_energy": 32000,
-  "max_energy": 5000000
+  "energy_trx": {"1h": "2.32"},
+  "energy_sun": {"1h": "35.68"},
+  "energy_usd": {"1h": "0.69"},
+  "energy_volume": 65000,
+  "bandwidth_trx": {"1h": "0.14"},
+  "bandwidth_sun": {"1h": "400.00"},
+  "bandwidth_usd": {"1h": "0.04"},
+  "bandwidth_volume": 350,
+  "trx_usd_rate": "0.297",
+  "burn_cost_trx": "6.5",
+  "burn_cost_usd": "1.93",
+  "savings_percent": "64.3",
+  "note": "Energy price is for 65,000 units in TRX"
 }
 ```

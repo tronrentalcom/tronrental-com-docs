@@ -12,32 +12,52 @@ Enerji ve bant genisligi icin guncel piyasa fiyatlarini dondurur.
 
 ### Yanit
 
-<ResponseField name="energy_price_sun" type="number">
-  Birim basina SUN cinsinden guncel enerji fiyati
+<ResponseField name="energy_trx" type="object">
+  65.000 birim icin TRX cinsinden enerji fiyati, sure anahtarina gore (`1h`)
 </ResponseField>
 
-<ResponseField name="energy_price_1k_trx" type="string">
-  1.000 enerji birimi icin TRX cinsinden fiyat
+<ResponseField name="energy_sun" type="object">
+  1 birim basina SUN cinsinden enerji fiyati, sure anahtarina gore (`1h`)
 </ResponseField>
 
-<ResponseField name="bw_price_1k_trx" type="string">
-  1.000 bant genisligi birimi icin TRX cinsinden fiyat
+<ResponseField name="energy_usd" type="object">
+  65.000 birim icin USD cinsinden enerji fiyati, sure anahtarina gore (`1h`)
+</ResponseField>
+
+<ResponseField name="energy_volume" type="number">
+  Enerji fiyati hesaplamasi icin kullanilan hacim (65.000)
+</ResponseField>
+
+<ResponseField name="bandwidth_trx" type="object">
+  350 birim icin TRX cinsinden bant genisligi fiyati, sure anahtarina gore (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_sun" type="object">
+  1 birim basina SUN cinsinden bant genisligi fiyati, sure anahtarina gore (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_usd" type="object">
+  350 birim icin USD cinsinden bant genisligi fiyati, sure anahtarina gore (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_volume" type="number">
+  Bant genisligi fiyati hesaplamasi icin kullanilan hacim (350)
 </ResponseField>
 
 <ResponseField name="trx_usd_rate" type="string">
   Guncel TRX/USD doviz kuru
 </ResponseField>
 
-<ResponseField name="burn_sun_per_energy" type="number">
-  Ag yakma orani — enerji birimi basina SUN (su anda 100)
+<ResponseField name="burn_cost_trx" type="string">
+  65.000 enerji icin TRX yakma maliyeti (kiralama olmadan)
 </ResponseField>
 
-<ResponseField name="min_energy" type="number">
-  Siparis basina minimum enerji miktari
+<ResponseField name="burn_cost_usd" type="string">
+  Ayni yakma maliyeti USD cinsinden
 </ResponseField>
 
-<ResponseField name="max_energy" type="number">
-  Siparis basina maksimum enerji miktari
+<ResponseField name="savings_percent" type="string">
+  Kiralama ile yakma arasindaki tasarruf yuzdesi
 </ResponseField>
 
 ### Ornek
@@ -66,12 +86,18 @@ console.log(data);
 
 ```json Response
 {
-  "energy_price_sun": 42,
-  "energy_price_1k_trx": "2.75",
-  "bw_price_1k_trx": "9.60",
-  "trx_usd_rate": "0.234",
-  "burn_sun_per_energy": 100,
-  "min_energy": 32000,
-  "max_energy": 5000000
+  "energy_trx": {"1h": "2.32"},
+  "energy_sun": {"1h": "35.68"},
+  "energy_usd": {"1h": "0.69"},
+  "energy_volume": 65000,
+  "bandwidth_trx": {"1h": "0.14"},
+  "bandwidth_sun": {"1h": "400.00"},
+  "bandwidth_usd": {"1h": "0.04"},
+  "bandwidth_volume": 350,
+  "trx_usd_rate": "0.297",
+  "burn_cost_trx": "6.5",
+  "burn_cost_usd": "1.93",
+  "savings_percent": "64.3",
+  "note": "Energy price is for 65,000 units in TRX"
 }
 ```

@@ -12,32 +12,52 @@ Devuelve los precios de mercado actuales para energia y ancho de banda.
 
 ### Respuesta
 
-<ResponseField name="energy_price_sun" type="number">
-  Precio actual de energia en SUN por unidad
+<ResponseField name="energy_trx" type="object">
+  Precio de energia en TRX para 65,000 unidades, por duracion (`1h`)
 </ResponseField>
 
-<ResponseField name="energy_price_1k_trx" type="string">
-  Precio por 1,000 unidades de energia en TRX
+<ResponseField name="energy_sun" type="object">
+  Precio de energia en SUN por 1 unidad, por duracion (`1h`)
 </ResponseField>
 
-<ResponseField name="bw_price_1k_trx" type="string">
-  Precio por 1,000 unidades de ancho de banda en TRX
+<ResponseField name="energy_usd" type="object">
+  Precio de energia en USD para 65,000 unidades, por duracion (`1h`)
+</ResponseField>
+
+<ResponseField name="energy_volume" type="number">
+  Volumen utilizado para el calculo del precio de energia (65,000)
+</ResponseField>
+
+<ResponseField name="bandwidth_trx" type="object">
+  Precio de ancho de banda en TRX para 350 unidades, por duracion (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_sun" type="object">
+  Precio de ancho de banda en SUN por 1 unidad, por duracion (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_usd" type="object">
+  Precio de ancho de banda en USD para 350 unidades, por duracion (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_volume" type="number">
+  Volumen utilizado para el calculo del precio de ancho de banda (350)
 </ResponseField>
 
 <ResponseField name="trx_usd_rate" type="string">
   Tasa de cambio actual TRX/USD
 </ResponseField>
 
-<ResponseField name="burn_sun_per_energy" type="number">
-  Tasa de quema de la red — SUN por unidad de energia (actualmente 100)
+<ResponseField name="burn_cost_trx" type="string">
+  Costo de quemar TRX para 65,000 de energia (sin alquiler)
 </ResponseField>
 
-<ResponseField name="min_energy" type="number">
-  Cantidad minima de energia por orden
+<ResponseField name="burn_cost_usd" type="string">
+  Mismo costo de quema en USD
 </ResponseField>
 
-<ResponseField name="max_energy" type="number">
-  Cantidad maxima de energia por orden
+<ResponseField name="savings_percent" type="string">
+  Porcentaje de ahorro al alquilar vs quemar
 </ResponseField>
 
 ### Ejemplo
@@ -66,12 +86,18 @@ console.log(data);
 
 ```json Response
 {
-  "energy_price_sun": 42,
-  "energy_price_1k_trx": "2.75",
-  "bw_price_1k_trx": "9.60",
-  "trx_usd_rate": "0.234",
-  "burn_sun_per_energy": 100,
-  "min_energy": 32000,
-  "max_energy": 5000000
+  "energy_trx": {"1h": "2.32"},
+  "energy_sun": {"1h": "35.68"},
+  "energy_usd": {"1h": "0.69"},
+  "energy_volume": 65000,
+  "bandwidth_trx": {"1h": "0.14"},
+  "bandwidth_sun": {"1h": "400.00"},
+  "bandwidth_usd": {"1h": "0.04"},
+  "bandwidth_volume": 350,
+  "trx_usd_rate": "0.297",
+  "burn_cost_trx": "6.5",
+  "burn_cost_usd": "1.93",
+  "savings_percent": "64.3",
+  "note": "Energy price is for 65,000 units in TRX"
 }
 ```

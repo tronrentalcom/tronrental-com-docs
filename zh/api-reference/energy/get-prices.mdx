@@ -12,32 +12,52 @@ description: "获取当前能量和带宽价格"
 
 ### 响应
 
-<ResponseField name="energy_price_sun" type="number">
-  当前能量价格，以 SUN 为单位
+<ResponseField name="energy_trx" type="object">
+  65,000 单位能量的 TRX 价格，按时长键名（`1h`）
 </ResponseField>
 
-<ResponseField name="energy_price_1k_trx" type="string">
-  1,000 单位能量的价格，以 TRX 计
+<ResponseField name="energy_sun" type="object">
+  每 1 单位能量的 SUN 价格，按时长键名（`1h`）
 </ResponseField>
 
-<ResponseField name="bw_price_1k_trx" type="string">
-  1,000 单位带宽的价格，以 TRX 计
+<ResponseField name="energy_usd" type="object">
+  65,000 单位能量的 USD 价格，按时长键名（`1h`）
+</ResponseField>
+
+<ResponseField name="energy_volume" type="number">
+  用于能量价格计算的数量（65,000）
+</ResponseField>
+
+<ResponseField name="bandwidth_trx" type="object">
+  350 单位带宽的 TRX 价格，按时长键名（`1h`）
+</ResponseField>
+
+<ResponseField name="bandwidth_sun" type="object">
+  每 1 单位带宽的 SUN 价格，按时长键名（`1h`）
+</ResponseField>
+
+<ResponseField name="bandwidth_usd" type="object">
+  350 单位带宽的 USD 价格，按时长键名（`1h`）
+</ResponseField>
+
+<ResponseField name="bandwidth_volume" type="number">
+  用于带宽价格计算的数量（350）
 </ResponseField>
 
 <ResponseField name="trx_usd_rate" type="string">
   当前 TRX/USD 汇率
 </ResponseField>
 
-<ResponseField name="burn_sun_per_energy" type="number">
-  网络燃烧率 — 每单位能量的 SUN 数（当前为 100）
+<ResponseField name="burn_cost_trx" type="string">
+  燃烧 65,000 能量所需的 TRX 成本（不租赁的情况下）
 </ResponseField>
 
-<ResponseField name="min_energy" type="number">
-  每笔订单的最小能量数
+<ResponseField name="burn_cost_usd" type="string">
+  相同的燃烧成本，以 USD 计
 </ResponseField>
 
-<ResponseField name="max_energy" type="number">
-  每笔订单的最大能量数
+<ResponseField name="savings_percent" type="string">
+  租赁与燃烧相比的节省百分比
 </ResponseField>
 
 ### 示例
@@ -66,12 +86,18 @@ console.log(data);
 
 ```json Response
 {
-  "energy_price_sun": 42,
-  "energy_price_1k_trx": "2.75",
-  "bw_price_1k_trx": "9.60",
-  "trx_usd_rate": "0.234",
-  "burn_sun_per_energy": 100,
-  "min_energy": 32000,
-  "max_energy": 5000000
+  "energy_trx": {"1h": "2.32"},
+  "energy_sun": {"1h": "35.68"},
+  "energy_usd": {"1h": "0.69"},
+  "energy_volume": 65000,
+  "bandwidth_trx": {"1h": "0.14"},
+  "bandwidth_sun": {"1h": "400.00"},
+  "bandwidth_usd": {"1h": "0.04"},
+  "bandwidth_volume": 350,
+  "trx_usd_rate": "0.297",
+  "burn_cost_trx": "6.5",
+  "burn_cost_usd": "1.93",
+  "savings_percent": "64.3",
+  "note": "Energy price is for 65,000 units in TRX"
 }
 ```

@@ -15,11 +15,14 @@ curl https://api.tronrental.com/v1/prices
 
 ```json
 {
-  "energy_price_sun": 42,
-  "energy_price_1k_trx": "2.75",
-  "bw_price_1k_trx": "9.60",
+  "energy_trx": { "1h": "1.79", "1d": "..." },
+  "energy_sun": { "1h": "27.54", "1d": "..." },
+  "energy_volume": 65000,
+  "bandwidth_trx": { "1h": "1.54", "1d": "..." },
+  "bandwidth_volume": 350,
   "trx_usd_rate": "0.234",
-  "burn_sun_per_energy": 100
+  "burn_cost_trx": "6.5",
+  "savings_percent": "72.5"
 }
 ```
 

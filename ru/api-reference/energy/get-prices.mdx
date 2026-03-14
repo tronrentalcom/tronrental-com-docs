@@ -12,32 +12,52 @@ description: "Получить текущие цены на энергию и ba
 
 ### Ответ
 
-<ResponseField name="energy_price_sun" type="number">
-  Текущая цена энергии в SUN за единицу
+<ResponseField name="energy_trx" type="object">
+  Цена энергии в TRX за 65 000 единиц, с ключом по длительности (`1h`)
 </ResponseField>
 
-<ResponseField name="energy_price_1k_trx" type="string">
-  Цена за 1 000 единиц энергии в TRX
+<ResponseField name="energy_sun" type="object">
+  Цена энергии в SUN за 1 единицу, с ключом по длительности (`1h`)
 </ResponseField>
 
-<ResponseField name="bw_price_1k_trx" type="string">
-  Цена за 1 000 единиц bandwidth в TRX
+<ResponseField name="energy_usd" type="object">
+  Цена энергии в USD за 65 000 единиц, с ключом по длительности (`1h`)
+</ResponseField>
+
+<ResponseField name="energy_volume" type="number">
+  Объём, используемый для расчёта цены энергии (65 000)
+</ResponseField>
+
+<ResponseField name="bandwidth_trx" type="object">
+  Цена bandwidth в TRX за 350 единиц, с ключом по длительности (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_sun" type="object">
+  Цена bandwidth в SUN за 1 единицу, с ключом по длительности (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_usd" type="object">
+  Цена bandwidth в USD за 350 единиц, с ключом по длительности (`1h`)
+</ResponseField>
+
+<ResponseField name="bandwidth_volume" type="number">
+  Объём, используемый для расчёта цены bandwidth (350)
 </ResponseField>
 
 <ResponseField name="trx_usd_rate" type="string">
   Текущий курс TRX/USD
 </ResponseField>
 
-<ResponseField name="burn_sun_per_energy" type="number">
-  Сетевая стоимость сжигания — SUN за единицу энергии (в настоящее время 100)
+<ResponseField name="burn_cost_trx" type="string">
+  Стоимость сжигания TRX за 65 000 энергии (без аренды)
 </ResponseField>
 
-<ResponseField name="min_energy" type="number">
-  Минимальное количество энергии за заказ
+<ResponseField name="burn_cost_usd" type="string">
+  Та же стоимость сжигания в USD
 </ResponseField>
 
-<ResponseField name="max_energy" type="number">
-  Максимальное количество энергии за заказ
+<ResponseField name="savings_percent" type="string">
+  Процент экономии при аренде по сравнению со сжиганием
 </ResponseField>
 
 ### Пример
@@ -66,12 +86,18 @@ console.log(data);
 
 ```json Response
 {
-  "energy_price_sun": 42,
-  "energy_price_1k_trx": "2.75",
-  "bw_price_1k_trx": "9.60",
-  "trx_usd_rate": "0.234",
-  "burn_sun_per_energy": 100,
-  "min_energy": 32000,
-  "max_energy": 5000000
+  "energy_trx": {"1h": "2.32"},
+  "energy_sun": {"1h": "35.68"},
+  "energy_usd": {"1h": "0.69"},
+  "energy_volume": 65000,
+  "bandwidth_trx": {"1h": "0.14"},
+  "bandwidth_sun": {"1h": "400.00"},
+  "bandwidth_usd": {"1h": "0.04"},
+  "bandwidth_volume": 350,
+  "trx_usd_rate": "0.297",
+  "burn_cost_trx": "6.5",
+  "burn_cost_usd": "1.93",
+  "savings_percent": "64.3",
+  "note": "Energy price is for 65,000 units in TRX"
 }
 ```
