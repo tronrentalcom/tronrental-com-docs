@@ -10,42 +10,42 @@ description: "TRON एड्रेस के लिए एनर्जी खर
 
 ### अनुरोध बॉडी
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   लक्ष्य TRON एड्रेस (T... प्रारूप, 34 अक्षर)
 </ParamField>
 
-<ParamField body="energy_amount" type="number" required>
+<ParamField body="volume" type="number" required>
   डेलिगेट करने के लिए एनर्जी की मात्रा (न्यूनतम 32,000, अधिकतम 5,000,000)
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  किराए की अवधि घंटों में (1 या 24)
+<ParamField body="duration" type="string" required>
+  किराये की अवधि: `"1h"` (1 घंटा) या `"1d"` (1 दिन, केवल bandwidth)
 </ParamField>
 
 ### रिस्पॉन्स
 
-<ResponseField name="order_id" type="number">
-  विशिष्ट ऑर्डर पहचानकर्ता
-</ResponseField>
-
-<ResponseField name="address" type="string">
-  लक्ष्य एड्रेस
-</ResponseField>
-
-<ResponseField name="energy_amount" type="number">
-  डेलिगेट की गई एनर्जी
-</ResponseField>
-
-<ResponseField name="duration_hours" type="number">
-  किराए की अवधि
-</ResponseField>
-
-<ResponseField name="price_trx" type="string">
-  TRX में कुल लागत
+<ResponseField name="id" type="number">
+  Unique order identifier
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  ऑर्डर स्टेटस: `pending`, `filled`, `failed`
+  Order status: `pending`, `filled`, `failed`
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  On-chain transaction id once the delegation is broadcast (null while `pending`)
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Total cost charged from your balance, in TRX
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  ISO 8601 timestamp when the bandwidth rental is reclaimed (energy is reclaimed automatically by the provider)
+</ResponseField>
+
+<ResponseField name="activation_cost_trx" type="string">
+  Address activation cost in TRX (`"0"` if the recipient is already activated)
 </ResponseField>
 
 ### उदाहरण
@@ -56,9 +56,9 @@ curl -X POST https://api.tronrental.com/v1/energy/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TYourRecipientAddress1234567890abc",
-    "energy_amount": 65000,
-    "duration_hours": 1
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 65000,
+    "duration": "1h"
   }'
 ```
 
@@ -69,9 +69,9 @@ resp = requests.post(
     "https://api.tronrental.com/v1/energy/buy",
     headers={"X-API-Key": "your_api_key"},
     json={
-        "address": "TYourRecipientAddress1234567890abc",
-        "energy_amount": 65000,
-        "duration_hours": 1,
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "volume": 65000,
+        "duration": "1h",
     },
 )
 print(resp.json())
@@ -85,9 +85,9 @@ const resp = await fetch("https://api.tronrental.com/v1/energy/buy", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    address: "TYourRecipientAddress1234567890abc",
-    energy_amount: 65000,
-    duration_hours: 1,
+    target_address: "TYourRecipientAddress1234567890abc",
+    volume: 65000,
+    duration: "1h",
   }),
 });
 console.log(await resp.json());
@@ -96,10 +96,7 @@ console.log(await resp.json());
 
 ```json Response
 {
-  "order_id": 12345,
-  "address": "TYourRecipientAddress1234567890abc",
-  "energy_amount": 65000,
-  "duration_hours": 1,
+  "id": 12345,
   "price_trx": "2.75",
   "status": "pending"
 }
