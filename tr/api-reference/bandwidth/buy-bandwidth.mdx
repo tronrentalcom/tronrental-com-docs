@@ -1,57 +1,109 @@
 ---
-title: Bant Genisligi Satin Al
+title: Bandwidth satın al
 api: POST /api/v1/bandwidth/buy
-description: "Bir TRON adresi icin bant genisligi satin alin"
+description: "TRON adresi için bandwidth satın alın"
 ---
 
-## Bant Genisligi Satin Al
+## Bandwidth satın al
 
-Belirtilen TRON adresine bant genisligi devredilir.
+Belirtilen TRON adresine bandwidth devreder. Maliyet hesap bakiyenizden düşülür.
 
-### Istek govdesi
+### İstek gövdesi
 
-<ParamField body="address" type="string" required>
-  Hedef TRON adresi
+<ParamField body="target_address" type="string" required>
+  Hedef TRON adresi (T... formatı, 34 karakter)
 </ParamField>
 
-<ParamField body="bandwidth_amount" type="number" required>
-  Bant genisligi miktari (min 350, maks 100.000)
+<ParamField body="volume" type="number" required>
+  Devredilecek bandwidth miktarı (min 350, maks 100.000)
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  Kiralama suresi saat cinsinden
+<ParamField body="duration" type="string" required>
+  Kiralama süresi: `"1h"` (1 saat) veya `"1d"` (24 saat). `"24h"` veya sayısal saat değerleri kullanmayın; `"1d"` kullanın.
 </ParamField>
 
-### Yanit
+### Yanıt
 
-`order_id`, `status` ve `price_trx` iceren bir siparis nesnesi dondurur.
+<ResponseField name="id" type="number">
+  Benzersiz sipariş kimliği
+</ResponseField>
 
-### Fiyatlandirma
+<ResponseField name="status" type="string">
+  Sipariş durumu: `pending`, `filled`, `failed`
+</ResponseField>
 
-Bant genisligi fiyati: `(miktar / 1000) × 9.6 / 24 + 0,2 TRX`
+<ResponseField name="txid" type="string | null">
+  Delegasyon yayınlandıktan sonraki on-chain işlem kimliği (`pending` iken null)
+</ResponseField>
 
-0,2 TRX sabit ucret tum bant genisligi siparislerine uygulanir.
+<ResponseField name="price_trx" type="string">
+  Bakiyeden düşülen toplam maliyet (TRX)
+</ResponseField>
 
-### Ornek
+<ResponseField name="reclaim_at" type="string | null">
+  Kiralanan bandwidth geri alındığında ISO 8601 zaman damgası
+</ResponseField>
 
-```bash
+### Fiyatlandırma
+
+Fiyat = `(volume × price_sun) / 1.000.000 + 0.2 TRX` sabit ücret. Güncel `price_sun_1h`, `price_sun_1d` ve `fixed_fee_trx` için `GET /v1/bandwidth/prices` kullanın.
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
 curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TTargetAddress...",
-    "bandwidth_amount": 1000,
-    "duration_hours": 24
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 16000,
+    "duration": "1d"
   }'
 ```
 
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/buy",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "volume": 16000,
+        "duration": "1d",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/buy", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "your_api_key",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    volume: 16000,
+    duration: "1d",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
 ```json Response
 {
-  "order_id": 5678,
-  "address": "TTargetAddress...",
-  "bandwidth_amount": 1000,
-  "duration_hours": 24,
-  "price_trx": "9.80",
-  "status": "pending"
+  "id": 5678,
+  "price_trx": "10.28",
+  "status": "filled",
+  "txid": "abc123...",
+  "reclaim_at": "2026-06-10T21:00:00+00:00"
 }
 ```
+
+<Tip>
+  Ücretsiz günlük bandwidth tükendiğinde **350 bandwidth** bir USDT TRC-20 transferini karşılar.
+</Tip>

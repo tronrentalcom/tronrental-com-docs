@@ -1,57 +1,109 @@
 ---
-title: बैंडविड्थ खरीदें
+title: Bandwidth खरीदें
 api: POST /api/v1/bandwidth/buy
-description: "TRON एड्रेस के लिए बैंडविड्थ खरीदें"
+description: "TRON पते के लिए bandwidth खरीदें"
 ---
 
-## बैंडविड्थ खरीदें
+## Bandwidth खरीदें
 
-निर्दिष्ट TRON एड्रेस को बैंडविड्थ डेलिगेट करता है।
+निर्दिष्ट TRON पते पर bandwidth delegate करता है। लागत आपके खाते की शेष राशि से काटी जाती है।
 
-### अनुरोध बॉडी
+### अनुरोध body
 
-<ParamField body="address" type="string" required>
-  लक्ष्य TRON एड्रेस
+<ParamField body="target_address" type="string" required>
+  लक्ष्य TRON पता (T... प्रारूप, 34 वर्ण)
 </ParamField>
 
-<ParamField body="bandwidth_amount" type="number" required>
-  बैंडविड्थ की मात्रा (न्यूनतम 350, अधिकतम 100,000)
+<ParamField body="volume" type="number" required>
+  Delegate करने के लिए bandwidth की मात्रा (न्यूनतम 350, अधिकतम 100,000)
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  किराए की अवधि घंटों में
+<ParamField body="duration" type="string" required>
+  किराये की अवधि: `"1h"` (1 घंटा) या `"1d"` (24 घंटे)। `"24h"` या संख्यात्मक घंटे का उपयोग न करें — `"1d"` उपयोग करें।
 </ParamField>
 
-### रिस्पॉन्स
+### प्रतिक्रिया
 
-`order_id`, `status`, और `price_trx` के साथ ऑर्डर ऑब्जेक्ट लौटाता है।
+<ResponseField name="id" type="number">
+  अद्वितीय ऑर्डर पहचानकर्ता
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  ऑर्डर स्थिति: `pending`, `filled`, `failed`
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  Delegation broadcast के बाद on-chain transaction id (`pending` पर null)
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  शेष राशि से काटी गई कुल लागत, TRX में
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  ISO 8601 timestamp जब किराए का bandwidth reclaim होता है
+</ResponseField>
 
 ### मूल्य निर्धारण
 
-बैंडविड्थ मूल्य: `(volume / 1000) × 9.6 / 24 + 0.2 TRX`
-
-0.2 TRX का निश्चित शुल्क सभी बैंडविड्थ ऑर्डर पर लागू होता है।
+मूल्य = `(volume × price_sun) / 1,000,000 + 0.2 TRX` निश्चित शुल्क। वर्तमान `price_sun_1h`, `price_sun_1d` और `fixed_fee_trx` के लिए `GET /v1/bandwidth/prices` देखें।
 
 ### उदाहरण
 
-```bash
+<CodeGroup>
+```bash cURL
 curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TTargetAddress...",
-    "bandwidth_amount": 1000,
-    "duration_hours": 24
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 16000,
+    "duration": "1d"
   }'
 ```
 
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/buy",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "volume": 16000,
+        "duration": "1d",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/buy", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "your_api_key",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    volume: 16000,
+    duration: "1d",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
 ```json Response
 {
-  "order_id": 5678,
-  "address": "TTargetAddress...",
-  "bandwidth_amount": 1000,
-  "duration_hours": 24,
-  "price_trx": "9.80",
-  "status": "pending"
+  "id": 5678,
+  "price_trx": "10.28",
+  "status": "filled",
+  "txid": "abc123...",
+  "reclaim_at": "2026-06-10T21:00:00+00:00"
 }
 ```
+
+<Tip>
+  मुफ्त दैनिक bandwidth समाप्त होने पर **350 bandwidth** एक USDT TRC-20 transfer को कवर करता है।
+</Tip>

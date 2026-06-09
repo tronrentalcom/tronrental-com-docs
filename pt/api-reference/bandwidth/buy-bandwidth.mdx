@@ -1,57 +1,109 @@
 ---
-title: Comprar Largura de Banda
+title: Comprar bandwidth
 api: POST /api/v1/bandwidth/buy
-description: "Comprar largura de banda para um endereço TRON"
+description: "Comprar bandwidth para um endereço TRON"
 ---
 
-## Comprar Largura de Banda
+## Comprar bandwidth
 
-Delega largura de banda ao endereço TRON especificado.
+Delega bandwidth para o endereço TRON especificado. O custo é deduzido do saldo da sua conta.
 
-### Corpo da requisição
+### Corpo da solicitação
 
-<ParamField body="address" type="string" required>
-  Endereço TRON de destino
+<ParamField body="target_address" type="string" required>
+  Endereço TRON de destino (formato T..., 34 caracteres)
 </ParamField>
 
-<ParamField body="bandwidth_amount" type="number" required>
-  Quantidade de largura de banda (mín. 350, máx. 100.000)
+<ParamField body="volume" type="number" required>
+  Quantidade de bandwidth a delegar (mín. 350, máx. 100.000)
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  Duração do aluguel em horas
+<ParamField body="duration" type="string" required>
+  Duração do aluguel: `"1h"` (1 hora) ou `"1d"` (24 horas). Use `"1d"`, não `"24h"` ou valores numéricos de horas.
 </ParamField>
 
 ### Resposta
 
-Retorna um objeto de pedido com `order_id`, `status` e `price_trx`.
+<ResponseField name="id" type="number">
+  Identificador único do pedido
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status do pedido: `pending`, `filled`, `failed`
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  ID da transação on-chain após o broadcast da delegação (null enquanto `pending`)
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Custo total debitado do saldo, em TRX
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  Timestamp ISO 8601 quando o bandwidth alugado é recuperado
+</ResponseField>
 
 ### Preços
 
-Preço da largura de banda: `(volume / 1000) × 9.6 / 24 + 0.2 TRX`
-
-A taxa fixa de 0,2 TRX se aplica a todos os pedidos de largura de banda.
+Preço = `(volume × price_sun) / 1.000.000 + 0.2 TRX` taxa fixa. Obtenha `price_sun_1h`, `price_sun_1d` e `fixed_fee_trx` atuais em `GET /v1/bandwidth/prices`.
 
 ### Exemplo
 
-```bash
+<CodeGroup>
+```bash cURL
 curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TTargetAddress...",
-    "bandwidth_amount": 1000,
-    "duration_hours": 24
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 16000,
+    "duration": "1d"
   }'
 ```
 
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/buy",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "volume": 16000,
+        "duration": "1d",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/buy", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "your_api_key",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    volume: 16000,
+    duration: "1d",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
 ```json Response
 {
-  "order_id": 5678,
-  "address": "TTargetAddress...",
-  "bandwidth_amount": 1000,
-  "duration_hours": 24,
-  "price_trx": "9.80",
-  "status": "pending"
+  "id": 5678,
+  "price_trx": "10.28",
+  "status": "filled",
+  "txid": "abc123...",
+  "reclaim_at": "2026-06-10T21:00:00+00:00"
 }
 ```
+
+<Tip>
+  **350 bandwidth** cobre uma transferência USDT TRC-20 quando a cota diária gratuita acaba.
+</Tip>
