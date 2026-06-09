@@ -1,6 +1,6 @@
 ---
-title: क्विकस्टार्ट
-description: "5 मिनट से कम में TRON एनर्जी खरीदें"
+title: त्वरित प्रारंभ
+description: "5 मिनट से कम में TRON ऊर्जा खरीदें"
 ---
 
 ## 1. अपनी API कुंजी प्राप्त करें
@@ -15,10 +15,12 @@ curl https://api.tronrental.com/v1/prices
 
 ```json
 {
-  "energy_trx": { "1h": "1.79", "1d": "..." },
-  "energy_sun": { "1h": "27.54", "1d": "..." },
+  "energy_trx": { "1h": "1.79" },
+  "energy_sun": { "1h": "27.54" },
   "energy_volume": 65000,
-  "bandwidth_trx": { "1h": "1.54", "1d": "..." },
+  "energy_fixed_fee_trx": "0.2",
+  "bandwidth_trx": { "1h": "0.34", "1d": "0.42" },
+  "bandwidth_sun": { "1h": "400", "1d": "630" },
   "bandwidth_volume": 350,
   "trx_usd_rate": "0.234",
   "burn_cost_trx": "6.5",
@@ -26,55 +28,80 @@ curl https://api.tronrental.com/v1/prices
 }
 ```
 
+ऊर्जा किराया **केवल 1 घंटा** (`"1h"`)। Bandwidth `"1h"` या `"1d"`। `energy_trx` केवल rental है; चेकआउट पर `energy_fixed_fee_trx` (0.2 TRX) जुड़ता है।
+
 ## 3. TRX जमा करें
 
-अपना डिपॉज़िट एड्रेस देखें:
+अपना जमा पता प्राप्त करें:
 
 ```bash
 curl https://api.tronrental.com/v1/account/deposit \
   -H "X-API-Key: your_api_key"
 ```
 
-दिए गए `deposit_address` पर TRX या USDT भेजें। डिपॉज़िट स्वचालित रूप से क्रेडिट किए जाते हैं।
+वापस मिले `deposit_address` पर TRX या USDT भेजें। जमा स्वचालित रूप से क्रेडिट हो जाती है।
 
-## 4. एनर्जी खरीदें
+## 4. ऊर्जा खरीदें
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/energy/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
-    "energy_amount": 65000,
-    "duration_hours": 1
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 65000,
+    "duration": "1h"
   }'
 ```
 
 ```json
 {
-  "order_id": 1234,
-  "address": "TRecipientAddress...",
-  "energy_amount": 65000,
-  "duration_hours": 1,
+  "id": 12345,
   "price_trx": "2.75",
-  "status": "pending"
+  "status": "pending",
+  "txid": null,
+  "reclaim_at": null,
+  "activation_cost_trx": "0"
 }
 ```
 
-एनर्जी कुछ ही सेकंड में लक्ष्य एड्रेस को डेलिगेट कर दी जाएगी।
+ऊर्जा कुछ सेकंड में लक्ष्य पते पर delegate हो जाएगी।
 
-## 5. सत्यापन करें
+## 5. सत्यापित करें
 
-अपने ऑर्डर की स्थिति जांचें:
+ऑर्डर स्थिति देखें:
 
 ```bash
 curl https://api.tronrental.com/v1/orders \
   -H "X-API-Key: your_api_key"
 ```
 
+```json
+{
+  "orders": [
+    {
+      "id": 12345,
+      "type": "energy",
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "volume": 65000,
+      "duration": "1h",
+      "price_trx": "2.75",
+      "status": "filled",
+      "delegate_txid": "abc123...",
+      "reclaim_at": null,
+      "source": "api",
+      "created_at": "2026-06-09T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 50
+}
+```
+
 <Tip>
-  **65,000 एनर्जी** उस एड्रेस पर एक USDT ट्रांसफर के लिए पर्याप्त है जिसके पास पहले से USDT है।
-  पहली बार USDT प्राप्त करने वालों के लिए **131,000 एनर्जी** का उपयोग करें।
+  **65,000 ऊर्जा** उस पते पर एक USDT ट्रांसफर के लिए पर्याप्त है जिस पर पहले से USDT है।
+  पहली बार USDT प्राप्त करने वाले पते के लिए **131,000 ऊर्जा** उपयोग करें।
 </Tip>
 
 ## कोड उदाहरण
@@ -87,12 +114,15 @@ API_KEY = "your_api_key"
 BASE = "https://api.tronrental.com/v1"
 headers = {"X-API-Key": API_KEY}
 
-# Buy energy
-resp = requests.post(f"{BASE}/energy/buy", headers=headers, json={
-    "address": "TRecipientAddress...",
-    "energy_amount": 65000,
-    "duration_hours": 1,
-})
+resp = requests.post(
+    f"{BASE}/energy/buy",
+    headers=headers,
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "volume": 65000,
+        "duration": "1h",
+    },
+)
 print(resp.json())
 ```
 
@@ -107,9 +137,9 @@ const res = await fetch(`${BASE}/energy/buy`, {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    address: "TRecipientAddress...",
-    energy_amount: 65000,
-    duration_hours: 1,
+    target_address: "TYourRecipientAddress1234567890abc",
+    volume: 65000,
+    duration: "1h",
   }),
 });
 console.log(await res.json());

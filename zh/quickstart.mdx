@@ -7,7 +7,7 @@ description: "5 分钟内购买 TRON 能量"
 
 注册并在 [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) 创建 API 密钥。
 
-## 2. 查询价格
+## 2. 查看价格
 
 ```bash
 curl https://api.tronrental.com/v1/prices
@@ -15,10 +15,12 @@ curl https://api.tronrental.com/v1/prices
 
 ```json
 {
-  "energy_trx": { "1h": "1.79", "1d": "..." },
-  "energy_sun": { "1h": "27.54", "1d": "..." },
+  "energy_trx": { "1h": "1.79" },
+  "energy_sun": { "1h": "27.54" },
   "energy_volume": 65000,
-  "bandwidth_trx": { "1h": "1.54", "1d": "..." },
+  "energy_fixed_fee_trx": "0.2",
+  "bandwidth_trx": { "1h": "0.34", "1d": "0.42" },
+  "bandwidth_sun": { "1h": "400", "1d": "630" },
   "bandwidth_volume": 350,
   "trx_usd_rate": "0.234",
   "burn_cost_trx": "6.5",
@@ -26,16 +28,18 @@ curl https://api.tronrental.com/v1/prices
 }
 ```
 
+能量租赁**仅 1 小时**（`"1h"`）。带宽支持 `"1h"` 或 `"1d"`。`energy_trx` 仅为租赁价，结算时需加上 `energy_fixed_fee_trx`（0.2 TRX）。
+
 ## 3. 充值 TRX
 
-查看您的充值地址：
+获取您的充值地址：
 
 ```bash
 curl https://api.tronrental.com/v1/account/deposit \
   -H "X-API-Key: your_api_key"
 ```
 
-将 TRX 或 USDT 发送到返回的 `deposit_address`。充值将自动到账。
+向返回的 `deposit_address` 发送 TRX 或 USDT，充值将自动到账。
 
 ## 4. 购买能量
 
@@ -44,37 +48,60 @@ curl -X POST https://api.tronrental.com/v1/energy/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
-    "energy_amount": 65000,
-    "duration_hours": 1
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 65000,
+    "duration": "1h"
   }'
 ```
 
 ```json
 {
-  "order_id": 1234,
-  "address": "TRecipientAddress...",
-  "energy_amount": 65000,
-  "duration_hours": 1,
+  "id": 12345,
   "price_trx": "2.75",
-  "status": "pending"
+  "status": "pending",
+  "txid": null,
+  "reclaim_at": null,
+  "activation_cost_trx": "0"
 }
 ```
 
-能量将在几秒内委托到目标地址。
+能量将在数秒内委托到目标地址。
 
 ## 5. 验证
 
-查看您的订单状态：
+查看订单状态：
 
 ```bash
 curl https://api.tronrental.com/v1/orders \
   -H "X-API-Key: your_api_key"
 ```
 
+```json
+{
+  "orders": [
+    {
+      "id": 12345,
+      "type": "energy",
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "volume": 65000,
+      "duration": "1h",
+      "price_trx": "2.75",
+      "status": "filled",
+      "delegate_txid": "abc123...",
+      "reclaim_at": null,
+      "source": "api",
+      "created_at": "2026-06-09T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 50
+}
+```
+
 <Tip>
-  **65,000 能量**足以完成一笔向已持有 USDT 地址的转账。
-  对于首次接收 USDT 的地址，请使用 **131,000 能量**。
+  **65,000 能量**足够向已持有 USDT 的地址发起一次 USDT 转账。
+  首次接收 USDT 请使用 **131,000 能量**。
 </Tip>
 
 ## 代码示例
@@ -87,12 +114,15 @@ API_KEY = "your_api_key"
 BASE = "https://api.tronrental.com/v1"
 headers = {"X-API-Key": API_KEY}
 
-# Buy energy
-resp = requests.post(f"{BASE}/energy/buy", headers=headers, json={
-    "address": "TRecipientAddress...",
-    "energy_amount": 65000,
-    "duration_hours": 1,
-})
+resp = requests.post(
+    f"{BASE}/energy/buy",
+    headers=headers,
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "volume": 65000,
+        "duration": "1h",
+    },
+)
 print(resp.json())
 ```
 
@@ -107,9 +137,9 @@ const res = await fetch(`${BASE}/energy/buy`, {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    address: "TRecipientAddress...",
-    energy_amount: 65000,
-    duration_hours: 1,
+    target_address: "TYourRecipientAddress1234567890abc",
+    volume: 65000,
+    duration: "1h",
   }),
 });
 console.log(await res.json());

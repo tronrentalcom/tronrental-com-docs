@@ -15,16 +15,20 @@ curl https://api.tronrental.com/v1/prices
 
 ```json
 {
-  "energy_trx": { "1h": "1.79", "1d": "..." },
-  "energy_sun": { "1h": "27.54", "1d": "..." },
+  "energy_trx": { "1h": "1.79" },
+  "energy_sun": { "1h": "27.54" },
   "energy_volume": 65000,
-  "bandwidth_trx": { "1h": "1.54", "1d": "..." },
+  "energy_fixed_fee_trx": "0.2",
+  "bandwidth_trx": { "1h": "0.34", "1d": "0.42" },
+  "bandwidth_sun": { "1h": "400", "1d": "630" },
   "bandwidth_volume": 350,
   "trx_usd_rate": "0.234",
   "burn_cost_trx": "6.5",
   "savings_percent": "72.5"
 }
 ```
+
+Аренда энергии — **только 1 час** (`"1h"`). Bandwidth — `"1h"` или `"1d"`. `energy_trx` — только rental; при оплате добавляется `energy_fixed_fee_trx` (0.2 TRX).
 
 ## 3. Пополните баланс TRX
 
@@ -44,20 +48,20 @@ curl -X POST https://api.tronrental.com/v1/energy/buy \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
-    "energy_amount": 65000,
-    "duration_hours": 1
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 65000,
+    "duration": "1h"
   }'
 ```
 
 ```json
 {
-  "order_id": 1234,
-  "address": "TRecipientAddress...",
-  "energy_amount": 65000,
-  "duration_hours": 1,
+  "id": 12345,
   "price_trx": "2.75",
-  "status": "pending"
+  "status": "pending",
+  "txid": null,
+  "reclaim_at": null,
+  "activation_cost_trx": "0"
 }
 ```
 
@@ -70,6 +74,29 @@ curl -X POST https://api.tronrental.com/v1/energy/buy \
 ```bash
 curl https://api.tronrental.com/v1/orders \
   -H "X-API-Key: your_api_key"
+```
+
+```json
+{
+  "orders": [
+    {
+      "id": 12345,
+      "type": "energy",
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "volume": 65000,
+      "duration": "1h",
+      "price_trx": "2.75",
+      "status": "filled",
+      "delegate_txid": "abc123...",
+      "reclaim_at": null,
+      "source": "api",
+      "created_at": "2026-06-09T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 50
+}
 ```
 
 <Tip>
@@ -87,12 +114,15 @@ API_KEY = "your_api_key"
 BASE = "https://api.tronrental.com/v1"
 headers = {"X-API-Key": API_KEY}
 
-# Buy energy
-resp = requests.post(f"{BASE}/energy/buy", headers=headers, json={
-    "address": "TRecipientAddress...",
-    "energy_amount": 65000,
-    "duration_hours": 1,
-})
+resp = requests.post(
+    f"{BASE}/energy/buy",
+    headers=headers,
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "volume": 65000,
+        "duration": "1h",
+    },
+)
 print(resp.json())
 ```
 
@@ -107,9 +137,9 @@ const res = await fetch(`${BASE}/energy/buy`, {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    address: "TRecipientAddress...",
-    energy_amount: 65000,
-    duration_hours: 1,
+    target_address: "TYourRecipientAddress1234567890abc",
+    volume: 65000,
+    duration: "1h",
   }),
 });
 console.log(await res.json());
