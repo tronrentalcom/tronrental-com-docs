@@ -72,6 +72,13 @@
                 ]
               },
               {
+                "group": "Orders",
+                "pages": [
+                  "api-reference/orders/get-order",
+                  "api-reference/orders/list-orders"
+                ]
+              },
+              {
                 "group": "Invoices",
                 "pages": [
                   "api-reference/invoices/create-invoice",
@@ -166,6 +173,13 @@
                   "ru/api-reference/energy/buy-energy",
                   "ru/api-reference/energy/activate-address",
                   "ru/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Заказы",
+                "pages": [
+                  "ru/api-reference/orders/get-order",
+                  "ru/api-reference/orders/list-orders"
                 ]
               },
               {
@@ -266,6 +280,13 @@
                 ]
               },
               {
+                "group": "订单",
+                "pages": [
+                  "zh/api-reference/orders/get-order",
+                  "zh/api-reference/orders/list-orders"
+                ]
+              },
+              {
                 "group": "发票",
                 "pages": [
                   "zh/api-reference/invoices/create-invoice",
@@ -360,6 +381,13 @@
                   "es/api-reference/energy/buy-energy",
                   "es/api-reference/energy/activate-address",
                   "es/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Órdenes",
+                "pages": [
+                  "es/api-reference/orders/get-order",
+                  "es/api-reference/orders/list-orders"
                 ]
               },
               {
@@ -460,6 +488,13 @@
                 ]
               },
               {
+                "group": "Siparişler",
+                "pages": [
+                  "tr/api-reference/orders/get-order",
+                  "tr/api-reference/orders/list-orders"
+                ]
+              },
+              {
                 "group": "Faturalar",
                 "pages": [
                   "tr/api-reference/invoices/create-invoice",
@@ -554,6 +589,13 @@
                   "pt/api-reference/energy/buy-energy",
                   "pt/api-reference/energy/activate-address",
                   "pt/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Pedidos",
+                "pages": [
+                  "pt/api-reference/orders/get-order",
+                  "pt/api-reference/orders/list-orders"
                 ]
               },
               {
@@ -654,6 +696,13 @@
                 ]
               },
               {
+                "group": "ऑर्डर",
+                "pages": [
+                  "hi/api-reference/orders/get-order",
+                  "hi/api-reference/orders/list-orders"
+                ]
+              },
+              {
                 "group": "इनवॉइस",
                 "pages": [
                   "hi/api-reference/invoices/create-invoice",
@@ -718,7 +767,14 @@
     ]
   },
   "contextual": {
-    "options": ["copy", "chatgpt", "claude", "add-mcp", "cursor", "vscode"]
+    "options": [
+      "copy",
+      "chatgpt",
+      "claude",
+      "add-mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "redirects": [
     {

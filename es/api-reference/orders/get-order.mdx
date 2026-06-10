@@ -1,0 +1,52 @@
+---
+title: Obtener orden
+api: GET /api/v1/orders/{order_id}
+description: "Consulta el estado de una orden de energía o ancho de banda por ID"
+---
+
+## Obtener orden
+
+Devuelve el estado actual y los detalles completos de una orden de energía o ancho de banda.
+
+### Parámetros de ruta
+
+<ParamField path="order_id" type="number" required>
+  ID de la orden — el `id` devuelto por Buy Energy o Buy Bandwidth.
+</ParamField>
+
+### Respuesta
+
+Devuelve el objeto completo de la orden, incluyendo `status`, `type`, `volume`, `price_trx`, `delegate_txid` y marcas de tiempo.
+
+### Estados de la orden
+
+| Estado | Descripción |
+|--------|-------------|
+| `pending` | Orden recibida, delegación en curso |
+| `filled` | Energía o ancho de banda delegados correctamente |
+| `failed` | La delegación falló |
+| `reclaimed` | Ancho de banda devuelto tras el período de alquiler (solo órdenes de ancho de banda) |
+
+### Ejemplo
+
+```bash
+curl https://api.tronrental.com/v1/orders/12345 \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 12345,
+  "type": "energy",
+  "target_address": "TRecipientAddress...",
+  "volume": 65000,
+  "duration": "1h",
+  "price_trx": "1.79",
+  "status": "filled",
+  "delegate_txid": "a1b2c3d4e5f6...",
+  "undelegate_txid": null,
+  "reclaim_at": null,
+  "source": "api",
+  "created_at": "2026-06-10T04:30:00Z"
+}
+```
