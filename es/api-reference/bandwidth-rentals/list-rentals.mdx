@@ -1,0 +1,56 @@
+---
+title: Listar alquileres con renovación automática
+api: GET /api/v1/bandwidth/rentals
+description: "Lista tus alquileres de ancho de banda continuos"
+---
+
+## Listar alquileres con renovación automática
+
+Devuelve tus alquileres con renovación automática, los más recientes primero.
+
+### Parámetros de consulta
+
+<ParamField query="status" type="string">
+  Filtrar por estado: `active`, `cancelled` o `ended_insufficient_balance`
+</ParamField>
+
+### Respuesta
+
+Devuelve `rentals` — un array de objetos de alquiler con `status`, `volume`, `daily_trx`, `total_charged_trx`, `next_billing_at` y marcas de tiempo.
+
+### Estados del alquiler
+
+| Estado | Descripción |
+|--------|-------------|
+| `active` | Delegado y cobrando a diario |
+| `cancelled` | Cancelado por el usuario (o admin) |
+| `ended_insufficient_balance` | Terminado automáticamente — el saldo no cubrió el día siguiente |
+
+### Ejemplo
+
+```bash
+curl "https://api.tronrental.com/v1/bandwidth/rentals?status=active" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "rentals": [
+    {
+      "id": 4321,
+      "address": "TYourRecipientAddress1234567890abc",
+      "volume": 350,
+      "status": "active",
+      "daily_trx": "0.4205",
+      "total_charged_trx": "1.2615",
+      "billing_count": 3,
+      "next_billing_at": "2026-06-11T04:30:00+00:00",
+      "last_billed_at": "2026-06-10T04:30:00+00:00",
+      "delegate_txid": "abc123...",
+      "undelegate_txid": null,
+      "ended_at": null,
+      "created_at": "2026-06-08T04:30:00+00:00"
+    }
+  ]
+}
+```

@@ -72,6 +72,14 @@
                 ]
               },
               {
+                "group": "Bandwidth Rentals",
+                "pages": [
+                  "api-reference/bandwidth-rentals/create-rental",
+                  "api-reference/bandwidth-rentals/list-rentals",
+                  "api-reference/bandwidth-rentals/cancel-rental"
+                ]
+              },
+              {
                 "group": "Orders",
                 "pages": [
                   "api-reference/orders/get-order",
@@ -173,6 +181,14 @@
                   "ru/api-reference/energy/buy-energy",
                   "ru/api-reference/energy/activate-address",
                   "ru/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Аренды BW (автопродление)",
+                "pages": [
+                  "ru/api-reference/bandwidth-rentals/create-rental",
+                  "ru/api-reference/bandwidth-rentals/list-rentals",
+                  "ru/api-reference/bandwidth-rentals/cancel-rental"
                 ]
               },
               {
@@ -280,6 +296,14 @@
                 ]
               },
               {
+                "group": "带宽租赁（自动续费）",
+                "pages": [
+                  "zh/api-reference/bandwidth-rentals/create-rental",
+                  "zh/api-reference/bandwidth-rentals/list-rentals",
+                  "zh/api-reference/bandwidth-rentals/cancel-rental"
+                ]
+              },
+              {
                 "group": "订单",
                 "pages": [
                   "zh/api-reference/orders/get-order",
@@ -381,6 +405,14 @@
                   "es/api-reference/energy/buy-energy",
                   "es/api-reference/energy/activate-address",
                   "es/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "Alquileres de ancho de banda",
+                "pages": [
+                  "es/api-reference/bandwidth-rentals/create-rental",
+                  "es/api-reference/bandwidth-rentals/list-rentals",
+                  "es/api-reference/bandwidth-rentals/cancel-rental"
                 ]
               },
               {
@@ -488,6 +520,14 @@
                 ]
               },
               {
+                "group": "Bant Genişliği Kiralamaları",
+                "pages": [
+                  "tr/api-reference/bandwidth-rentals/create-rental",
+                  "tr/api-reference/bandwidth-rentals/list-rentals",
+                  "tr/api-reference/bandwidth-rentals/cancel-rental"
+                ]
+              },
+              {
                 "group": "Siparişler",
                 "pages": [
                   "tr/api-reference/orders/get-order",
@@ -592,6 +632,14 @@
                 ]
               },
               {
+                "group": "Aluguéis de largura de banda",
+                "pages": [
+                  "pt/api-reference/bandwidth-rentals/create-rental",
+                  "pt/api-reference/bandwidth-rentals/list-rentals",
+                  "pt/api-reference/bandwidth-rentals/cancel-rental"
+                ]
+              },
+              {
                 "group": "Pedidos",
                 "pages": [
                   "pt/api-reference/orders/get-order",
@@ -693,6 +741,14 @@
                   "hi/api-reference/energy/buy-energy",
                   "hi/api-reference/energy/activate-address",
                   "hi/api-reference/bandwidth/buy-bandwidth"
+                ]
+              },
+              {
+                "group": "बैंडविड्थ रेंटल (ऑटो-रिन्यू)",
+                "pages": [
+                  "hi/api-reference/bandwidth-rentals/create-rental",
+                  "hi/api-reference/bandwidth-rentals/list-rentals",
+                  "hi/api-reference/bandwidth-rentals/cancel-rental"
                 ]
               },
               {

@@ -1,0 +1,44 @@
+---
+title: Cancelar aluguel com renovação automática
+api: POST /api/v1/bandwidth/rentals/{rental_id}/cancel
+description: "Cancela um aluguel de largura de banda contínuo e o des-delega"
+---
+
+## Cancelar aluguel com renovação automática
+
+Para a cobrança e des-delega a largura de banda imediatamente.
+
+### Parâmetros de caminho
+
+<ParamField path="rental_id" type="number" required>
+  Id do aluguel — o `id` retornado por Iniciar aluguel com renovação automática
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="number">
+  Identificador único do aluguel
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status do aluguel — `cancelled` em caso de sucesso
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string">
+  Id da transação de des-delegação on-chain
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals/4321/cancel \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 4321,
+  "status": "cancelled",
+  "undelegate_txid": "def456..."
+}
+```

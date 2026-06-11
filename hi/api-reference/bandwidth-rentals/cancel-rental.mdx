@@ -1,0 +1,44 @@
+---
+title: ऑटो-रिन्यू रेंटल रद्द करें
+api: POST /api/v1/bandwidth/rentals/{rental_id}/cancel
+description: "निरंतर बैंडविड्थ रेंटल रद्द करें और अन-डेलिगेट करें"
+---
+
+## ऑटो-रिन्यू रेंटल रद्द करें
+
+बिलिंग रोकता है और बैंडविड्थ तुरंत अन-डेलिगेट करता है।
+
+### पाथ पैरामीटर
+
+<ParamField path="rental_id" type="number" required>
+  रेंटल id — ऑटो-रिन्यू रेंटल शुरू करें द्वारा लौटाया गया `id`
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="id" type="number">
+  विशिष्ट रेंटल पहचानकर्ता
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  रेंटल स्थिति — सफल होने पर `cancelled`
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string">
+  ऑन-चेन अन-डेलिगेशन ट्रांज़ैक्शन id
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals/4321/cancel \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 4321,
+  "status": "cancelled",
+  "undelegate_txid": "def456..."
+}
+```

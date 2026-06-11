@@ -1,0 +1,56 @@
+---
+title: List Auto-renew Rentals
+api: GET /api/v1/bandwidth/rentals
+description: "List your ongoing bandwidth rentals"
+---
+
+## List Auto-renew Rentals
+
+Returns your auto-renew bandwidth rentals, newest first.
+
+### Query parameters
+
+<ParamField query="status" type="string">
+  Filter by status: `active`, `cancelled`, or `ended_insufficient_balance`
+</ParamField>
+
+### Response
+
+Returns `rentals` — an array of rental objects with `status`, `volume`, `daily_trx`, `total_charged_trx`, `next_billing_at`, and timestamps.
+
+### Rental statuses
+
+| Status | Description |
+|--------|-------------|
+| `active` | Delegated and billing daily |
+| `cancelled` | Cancelled by the user (or admin) |
+| `ended_insufficient_balance` | Ended automatically — balance couldn't cover the next day |
+
+### Example
+
+```bash
+curl "https://api.tronrental.com/v1/bandwidth/rentals?status=active" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "rentals": [
+    {
+      "id": 4321,
+      "address": "TYourRecipientAddress1234567890abc",
+      "volume": 350,
+      "status": "active",
+      "daily_trx": "0.4205",
+      "total_charged_trx": "1.2615",
+      "billing_count": 3,
+      "next_billing_at": "2026-06-11T04:30:00+00:00",
+      "last_billed_at": "2026-06-10T04:30:00+00:00",
+      "delegate_txid": "abc123...",
+      "undelegate_txid": null,
+      "ended_at": null,
+      "created_at": "2026-06-08T04:30:00+00:00"
+    }
+  ]
+}
+```

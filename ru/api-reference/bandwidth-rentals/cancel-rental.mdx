@@ -1,0 +1,44 @@
+---
+title: Отменить аренду с автопродлением
+api: POST /api/v1/bandwidth/rentals/{rental_id}/cancel
+description: "Отмена бессрочной аренды bandwidth с отзывом делегирования"
+---
+
+## Отменить аренду с автопродлением
+
+Останавливает списания и сразу отзывает делегированный bandwidth.
+
+### Параметры пути
+
+<ParamField path="rental_id" type="number" required>
+  ID аренды — значение `id` из «Запустить аренду с автопродлением»
+</ParamField>
+
+### Ответ
+
+<ResponseField name="id" type="number">
+  Уникальный идентификатор аренды
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Статус аренды — `cancelled` при успехе
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string">
+  Хеш on-chain транзакции отзыва делегирования
+</ResponseField>
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals/4321/cancel \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 4321,
+  "status": "cancelled",
+  "undelegate_txid": "def456..."
+}
+```

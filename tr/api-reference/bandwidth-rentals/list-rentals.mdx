@@ -1,0 +1,56 @@
+---
+title: Otomatik Yenilenen Kiralamaları Listele
+api: GET /api/v1/bandwidth/rentals
+description: "Sürekli bant genişliği kiralamalarınızı listeleyin"
+---
+
+## Otomatik Yenilenen Kiralamaları Listele
+
+Otomatik yenilenen kiralamalarınızı en yeniden başlayarak döndürür.
+
+### Sorgu parametreleri
+
+<ParamField query="status" type="string">
+  Duruma göre filtrele: `active`, `cancelled` veya `ended_insufficient_balance`
+</ParamField>
+
+### Yanıt
+
+`rentals` döndürür — `status`, `volume`, `daily_trx`, `total_charged_trx`, `next_billing_at` ve zaman damgaları içeren kiralama nesneleri dizisi.
+
+### Kiralama durumları
+
+| Durum | Açıklama |
+|--------|-------------|
+| `active` | Delege edildi ve günlük ücretlendiriliyor |
+| `cancelled` | Kullanıcı (veya admin) tarafından iptal edildi |
+| `ended_insufficient_balance` | Otomatik sona erdi — bakiye ertesi günü karşılamadı |
+
+### Örnek
+
+```bash
+curl "https://api.tronrental.com/v1/bandwidth/rentals?status=active" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "rentals": [
+    {
+      "id": 4321,
+      "address": "TYourRecipientAddress1234567890abc",
+      "volume": 350,
+      "status": "active",
+      "daily_trx": "0.4205",
+      "total_charged_trx": "1.2615",
+      "billing_count": 3,
+      "next_billing_at": "2026-06-11T04:30:00+00:00",
+      "last_billed_at": "2026-06-10T04:30:00+00:00",
+      "delegate_txid": "abc123...",
+      "undelegate_txid": null,
+      "ended_at": null,
+      "created_at": "2026-06-08T04:30:00+00:00"
+    }
+  ]
+}
+```

@@ -1,0 +1,94 @@
+---
+title: 启动自动续费租赁
+api: POST /api/v1/bandwidth/rentals
+description: "启动持续的带宽租赁，每日扣费直到取消"
+---
+
+## 启动自动续费租赁
+
+将带宽委托给 TRON 地址并保持委托，按日（`1d`）费率每 24 小时从余额扣费一次，直到您取消或余额不足以支付下一天。
+
+### 请求体
+
+<ParamField body="target_address" type="string" required>
+  目标 TRON 地址（T... 格式，34 个字符）
+</ParamField>
+
+<ParamField body="volume" type="number" required>
+  保持委托的带宽数量（最小 350，最大 100,000）
+</ParamField>
+
+### 响应
+
+<ResponseField name="id" type="number">
+  唯一租赁标识符
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  租赁状态 —— 成功时为 `active`
+</ResponseField>
+
+<ResponseField name="txid" type="string">
+  链上委托交易 id
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  每日扣费金额（TRX）
+</ResponseField>
+
+<ResponseField name="amount_sun" type="number">
+  已委托带宽（SUN）
+</ResponseField>
+
+<ResponseField name="next_billing_at" type="string">
+  下一次每日扣费的 ISO 8601 时间戳
+</ResponseField>
+
+### 扣费方式
+
+首日立即扣费。之后每 24 小时再次扣除每日金额。若余额不足以支付下一天，租赁结束并自动取消委托——充值后会自动恢复。可随时通过取消接口取消。
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 350
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/rentals",
+    headers={"X-API-Key": "your_api_key"},
+    json={"target_address": "TYourRecipientAddress1234567890abc", "volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/rentals", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ target_address: "TYourRecipientAddress1234567890abc", volume: 350 }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 4321,
+  "status": "active",
+  "txid": "abc123...",
+  "daily_trx": "0.4205",
+  "amount_sun": 1000000,
+  "next_billing_at": "2026-06-11T04:30:00+00:00"
+}
+```

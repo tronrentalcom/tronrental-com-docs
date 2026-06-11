@@ -1,0 +1,56 @@
+---
+title: 列出自动续费租赁
+api: GET /api/v1/bandwidth/rentals
+description: "列出您持续的带宽租赁"
+---
+
+## 列出自动续费租赁
+
+返回您的自动续费带宽租赁，最新的在前。
+
+### 查询参数
+
+<ParamField query="status" type="string">
+  按状态筛选：`active`、`cancelled` 或 `ended_insufficient_balance`
+</ParamField>
+
+### 响应
+
+返回 `rentals` —— 租赁对象数组，包含 `status`、`volume`、`daily_trx`、`total_charged_trx`、`next_billing_at` 和时间戳。
+
+### 租赁状态
+
+| 状态 | 说明 |
+|--------|-------------|
+| `active` | 已委托，按日扣费 |
+| `cancelled` | 由用户（或管理员）取消 |
+| `ended_insufficient_balance` | 自动结束 —— 余额不足以支付下一天 |
+
+### 示例
+
+```bash
+curl "https://api.tronrental.com/v1/bandwidth/rentals?status=active" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "rentals": [
+    {
+      "id": 4321,
+      "address": "TYourRecipientAddress1234567890abc",
+      "volume": 350,
+      "status": "active",
+      "daily_trx": "0.4205",
+      "total_charged_trx": "1.2615",
+      "billing_count": 3,
+      "next_billing_at": "2026-06-11T04:30:00+00:00",
+      "last_billed_at": "2026-06-10T04:30:00+00:00",
+      "delegate_txid": "abc123...",
+      "undelegate_txid": null,
+      "ended_at": null,
+      "created_at": "2026-06-08T04:30:00+00:00"
+    }
+  ]
+}
+```

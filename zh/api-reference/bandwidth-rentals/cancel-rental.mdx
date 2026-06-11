@@ -1,0 +1,44 @@
+---
+title: 取消自动续费租赁
+api: POST /api/v1/bandwidth/rentals/{rental_id}/cancel
+description: "取消持续的带宽租赁并取消委托"
+---
+
+## 取消自动续费租赁
+
+立即停止扣费并取消委托带宽。
+
+### 路径参数
+
+<ParamField path="rental_id" type="number" required>
+  租赁 id —— 由“启动自动续费租赁”返回的 `id`
+</ParamField>
+
+### 响应
+
+<ResponseField name="id" type="number">
+  唯一租赁标识符
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  租赁状态 —— 成功时为 `cancelled`
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string">
+  链上取消委托交易 id
+</ResponseField>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals/4321/cancel \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 4321,
+  "status": "cancelled",
+  "undelegate_txid": "def456..."
+}
+```

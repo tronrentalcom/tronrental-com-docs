@@ -1,0 +1,94 @@
+---
+title: Iniciar alquiler con renovación automática
+api: POST /api/v1/bandwidth/rentals
+description: "Inicia un alquiler de ancho de banda continuo, con cargo diario hasta cancelar"
+---
+
+## Iniciar alquiler con renovación automática
+
+Delega ancho de banda a una dirección TRON y lo mantiene delegado, cobrando de tu saldo una vez cada 24 horas a la tarifa diaria (`1d`) hasta que canceles o tu saldo no cubra el día siguiente.
+
+### Cuerpo de la solicitud
+
+<ParamField body="target_address" type="string" required>
+  Dirección TRON de destino (formato T..., 34 caracteres)
+</ParamField>
+
+<ParamField body="volume" type="number" required>
+  Cantidad de ancho de banda a mantener delegada (mín 350, máx 100,000)
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="id" type="number">
+  Identificador único del alquiler
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Estado del alquiler — `active` si tiene éxito
+</ResponseField>
+
+<ResponseField name="txid" type="string">
+  Id de la transacción de delegación on-chain
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  Importe cobrado por día, en TRX
+</ResponseField>
+
+<ResponseField name="amount_sun" type="number">
+  Ancho de banda delegado en SUN
+</ResponseField>
+
+<ResponseField name="next_billing_at" type="string">
+  Marca de tiempo ISO 8601 del próximo cargo diario
+</ResponseField>
+
+### Cómo funciona el cobro
+
+El primer día se cobra de inmediato. Cada 24h se vuelve a cobrar el importe diario. Si tu saldo no cubre el día siguiente, el alquiler termina y el ancho de banda se des-delega automáticamente — y se reanuda solo cuando recargas. Cancela en cualquier momento con el endpoint de cancelación.
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 350
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/rentals",
+    headers={"X-API-Key": "your_api_key"},
+    json={"target_address": "TYourRecipientAddress1234567890abc", "volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/rentals", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ target_address: "TYourRecipientAddress1234567890abc", volume: 350 }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 4321,
+  "status": "active",
+  "txid": "abc123...",
+  "daily_trx": "0.4205",
+  "amount_sun": 1000000,
+  "next_billing_at": "2026-06-11T04:30:00+00:00"
+}
+```

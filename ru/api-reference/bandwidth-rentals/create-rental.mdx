@@ -1,0 +1,94 @@
+---
+title: Запустить аренду с автопродлением
+api: POST /api/v1/bandwidth/rentals
+description: "Запуск бессрочной аренды bandwidth со списанием раз в сутки до отмены"
+---
+
+## Запустить аренду с автопродлением
+
+Делегирует bandwidth на TRON-адрес и держит делегирование, списывая с баланса раз в 24 часа по суточному тарифу (`1d`), пока вы не отмените или баланса не хватит на следующий день.
+
+### Тело запроса
+
+<ParamField body="target_address" type="string" required>
+  Целевой TRON-адрес (формат T..., 34 символа)
+</ParamField>
+
+<ParamField body="volume" type="number" required>
+  Объём bandwidth для удержания (мин 350, макс 100 000)
+</ParamField>
+
+### Ответ
+
+<ResponseField name="id" type="number">
+  Уникальный идентификатор аренды
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Статус аренды — `active` при успехе
+</ResponseField>
+
+<ResponseField name="txid" type="string">
+  Хеш on-chain транзакции делегирования
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  Сумма списания в сутки, в TRX
+</ResponseField>
+
+<ResponseField name="amount_sun" type="number">
+  Делегированный bandwidth в SUN
+</ResponseField>
+
+<ResponseField name="next_billing_at" type="string">
+  Метка ISO 8601 следующего суточного списания
+</ResponseField>
+
+### Как работает биллинг
+
+Первый день списывается сразу. Каждые 24ч списывается суточная сумма. Если баланса не хватает на следующий день, аренда завершается, а bandwidth автоматически отзывается — и возобновляется сама после пополнения баланса. Отменить можно в любой момент через endpoint отмены.
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 350
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/rentals",
+    headers={"X-API-Key": "your_api_key"},
+    json={"target_address": "TYourRecipientAddress1234567890abc", "volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/rentals", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ target_address: "TYourRecipientAddress1234567890abc", volume: 350 }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 4321,
+  "status": "active",
+  "txid": "abc123...",
+  "daily_trx": "0.4205",
+  "amount_sun": 1000000,
+  "next_billing_at": "2026-06-11T04:30:00+00:00"
+}
+```

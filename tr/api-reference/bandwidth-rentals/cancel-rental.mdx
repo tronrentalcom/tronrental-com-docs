@@ -1,0 +1,44 @@
+---
+title: Otomatik Yenilenen Kiralamayı İptal Et
+api: POST /api/v1/bandwidth/rentals/{rental_id}/cancel
+description: "Sürekli bant genişliği kiralamasını iptal eder ve geri alır"
+---
+
+## Otomatik Yenilenen Kiralamayı İptal Et
+
+Ücretlendirmeyi durdurur ve bant genişliğini hemen geri alır.
+
+### Yol parametreleri
+
+<ParamField path="rental_id" type="number" required>
+  Kiralama id'si — Otomatik Yenilenen Kiralama Başlat tarafından döndürülen `id`
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="id" type="number">
+  Benzersiz kiralama tanımlayıcısı
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Kiralama durumu — başarıda `cancelled`
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string">
+  Zincir üstü geri alma işlem id'si
+</ResponseField>
+
+### Örnek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals/4321/cancel \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 4321,
+  "status": "cancelled",
+  "undelegate_txid": "def456..."
+}
+```

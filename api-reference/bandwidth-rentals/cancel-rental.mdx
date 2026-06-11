@@ -1,0 +1,44 @@
+---
+title: Cancel Auto-renew Rental
+api: POST /api/v1/bandwidth/rentals/{rental_id}/cancel
+description: "Cancel an ongoing bandwidth rental and undelegate it"
+---
+
+## Cancel Auto-renew Rental
+
+Stops billing and undelegates the bandwidth immediately.
+
+### Path parameters
+
+<ParamField path="rental_id" type="number" required>
+  Rental id — the `id` returned by Start Auto-renew Rental
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="number">
+  Unique rental identifier
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Rental status — `cancelled` on success
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string">
+  On-chain undelegation transaction id
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST https://api.tronrental.com/v1/bandwidth/rentals/4321/cancel \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 4321,
+  "status": "cancelled",
+  "undelegate_txid": "def456..."
+}
+```
