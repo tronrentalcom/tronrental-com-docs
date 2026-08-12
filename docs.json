@@ -118,6 +118,7 @@
                 "group": "Account",
                 "pages": [
                   "api-reference/account/get-balance",
+                  "api-reference/account/history",
                   "api-reference/account/get-profile",
                   "api-reference/account/deposits",
                   "api-reference/account/withdrawals"
@@ -230,6 +231,7 @@
                 "group": "Аккаунт",
                 "pages": [
                   "ru/api-reference/account/get-balance",
+                  "ru/api-reference/account/history",
                   "ru/api-reference/account/get-profile",
                   "ru/api-reference/account/deposits",
                   "ru/api-reference/account/withdrawals"
@@ -342,6 +344,7 @@
                 "group": "账户",
                 "pages": [
                   "zh/api-reference/account/get-balance",
+                  "zh/api-reference/account/history",
                   "zh/api-reference/account/get-profile",
                   "zh/api-reference/account/deposits",
                   "zh/api-reference/account/withdrawals"
@@ -454,6 +457,7 @@
                 "group": "Cuenta",
                 "pages": [
                   "es/api-reference/account/get-balance",
+                  "es/api-reference/account/history",
                   "es/api-reference/account/get-profile",
                   "es/api-reference/account/deposits",
                   "es/api-reference/account/withdrawals"
@@ -566,6 +570,7 @@
                 "group": "Hesap",
                 "pages": [
                   "tr/api-reference/account/get-balance",
+                  "tr/api-reference/account/history",
                   "tr/api-reference/account/get-profile",
                   "tr/api-reference/account/deposits",
                   "tr/api-reference/account/withdrawals"
@@ -678,6 +683,7 @@
                 "group": "Conta",
                 "pages": [
                   "pt/api-reference/account/get-balance",
+                  "pt/api-reference/account/history",
                   "pt/api-reference/account/get-profile",
                   "pt/api-reference/account/deposits",
                   "pt/api-reference/account/withdrawals"
@@ -790,6 +796,7 @@
                 "group": "खाता",
                 "pages": [
                   "hi/api-reference/account/get-balance",
+                  "hi/api-reference/account/history",
                   "hi/api-reference/account/get-profile",
                   "hi/api-reference/account/deposits",
                   "hi/api-reference/account/withdrawals"

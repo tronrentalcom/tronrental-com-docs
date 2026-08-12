@@ -1,0 +1,119 @@
+---
+title: बैलेंस इतिहास
+api: GET /api/v1/account/history
+description: "आपके खाते के बैलेंस की सभी गतिविधियाँ"
+---
+
+## बैलेंस इतिहास
+
+आपके खाते के बैलेंस की सभी गतिविधियाँ लौटाता है, नवीनतम पहले — खरीद, जमा, रिफंड और शुल्क एक ही सूची में। ऑर्डर, इनवॉइस और सक्रियण प्रत्येक केवल अपना हिस्सा दिखाते हैं, इसलिए यही एकमात्र एंडपॉइंट है जहाँ गणित पूरा बैठता है: किसी अवधि में `delta_trx` का योग उसी अवधि में बैलेंस के परिवर्तन के बराबर होता है।
+
+<Note>
+**स्कोप के बारे में।** `view` स्कोप खरीद, रिफंड और शुल्क लौटाता है। जमा गतिविधियों के लिए अतिरिक्त रूप से `deposit_view` स्कोप और निकासी के लिए `withdraw` आवश्यक है; इनके बिना वे पंक्तियाँ सूची और `total` दोनों में नहीं आतीं, और ऐसे कारण से फ़िल्टर करने पर त्रुटि नहीं, बल्कि खाली पृष्ठ मिलता है।
+</Note>
+
+### क्वेरी पैरामीटर
+
+<ParamField query="page" type="number" default="1">
+  पृष्ठ संख्या, 1 से शुरू।
+</ParamField>
+
+<ParamField query="page_size" type="number" default="50">
+  प्रति पृष्ठ आइटम (अधिकतम 100)।
+</ParamField>
+
+<ParamField query="reason" type="string">
+  केवल इस कारण वाली गतिविधियाँ लौटाएँ, जैसे `energy_order`।
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="items" type="array">
+  <Expandable title="item">
+    <ResponseField name="id" type="number">
+      गतिविधि ID। यही क्रम की कुंजी भी है — सूची इसके अवरोही क्रम में आती है।
+    </ResponseField>
+    <ResponseField name="delta_trx" type="string">
+      TRX में राशि, चिह्न सहित: ऋणात्मक शुल्क है, धनात्मक जमा है।
+    </ResponseField>
+    <ResponseField name="balance_after" type="string">
+      इस गतिविधि के तुरंत बाद आपका बैलेंस।
+    </ResponseField>
+    <ResponseField name="reason" type="string">
+      गतिविधि किसलिए थी (नीचे देखें)। समय के साथ नए कारण आ सकते हैं — अज्ञात मान पर विफल होने के बजाय उसे वैसे ही दिखाएँ।
+    </ResponseField>
+    <ResponseField name="ref_type" type="string | null">
+      वह इकाई जिसके लिए भुगतान हुआ: `order`, `invoice`, `activation`, `deposit` आदि। कुछ भी संदर्भित न होने पर `null`।
+    </ResponseField>
+    <ResponseField name="ref_id" type="string | null">
+      उस इकाई की ID, स्ट्रिंग के रूप में।
+    </ResponseField>
+    <ResponseField name="ref_address" type="string | null">
+      उस इकाई का प्राप्तकर्ता पता, यदि हो — ताकि शुल्क का कारण जानने के लिए दूसरा अनुरोध न करना पड़े। अन्यथा `null`।
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      गतिविधि कब हुई (UTC)।
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  फ़िल्टर से मेल खाती कुल गतिविधियाँ।
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  पृष्ठ संख्या, 1 से शुरू।
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  प्रति पृष्ठ आइटम (अधिकतम 100)।
+</ResponseField>
+
+### सामान्य कारण
+
+| कारण | अर्थ |
+|------|------|
+| `energy_order` | एनर्जी की खरीद |
+| `bw_order` | बैंडविड्थ की खरीद |
+| `energy_order_refund` | एनर्जी ऑर्डर का रिफंड |
+| `bw_order_refund` | बैंडविड्थ ऑर्डर का रिफंड |
+| `activation` | प्राप्तकर्ता खाते का चेन पर निर्माण |
+| `activation_refund` | न हुई सक्रियता का रिफंड |
+| `deposit` | आने वाली जमा |
+
+### उदाहरण
+
+```bash
+curl "https://api.tronrental.com/v1/account/history?page=1&page_size=50" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "items": [
+    {
+      "id": 97213,
+      "delta_trx": "-1.79",
+      "balance_after": "154.71",
+      "reason": "energy_order",
+      "ref_type": "order",
+      "ref_id": "12345",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:30:00Z"
+    },
+    {
+      "id": 97212,
+      "delta_trx": "-1.20",
+      "balance_after": "156.50",
+      "reason": "activation",
+      "ref_type": "activation",
+      "ref_id": "8891",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:29:53Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 50
+}
+```

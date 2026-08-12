@@ -18,6 +18,18 @@ Devuelve el estado actual y los detalles completos de una orden de energía o an
 
 Devuelve el objeto completo de la orden, incluyendo `status`, `type`, `volume`, `price_trx`, `delegate_txid` y marcas de tiempo.
 
+<ResponseField name="activation_id" type="number | null">
+  ID de la activacion de direccion que pago este pedido, o `null` si no pago ninguna.
+</ResponseField>
+
+<ResponseField name="activation_cost_trx" type="string | null">
+  Cuanto costo esa activacion, en TRX, **por encima** de `price_trx`: es la diferencia entre el precio del pedido y el importe que salio de tu saldo.
+</ResponseField>
+
+<Note>
+**`null`, no `"0"`.** Ambos campos son `null` cuando el pedido no pago ninguna activacion: la cuenta destinataria ya existia o la creo la transaccion de otra persona. Ojo con la diferencia respecto a `activation_cost_trx` en la respuesta de Buy Energy, que en ese caso es la cadena `"0"`: comparar con `"0"` aqui no coincidiria nunca.
+</Note>
+
 ### Estados de la orden
 
 | Estado | Descripción |
@@ -47,6 +59,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "undelegate_txid": null,
   "reclaim_at": null,
   "source": "api",
+  "activation_id": 8891,
+  "activation_cost_trx": "1.20",
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```

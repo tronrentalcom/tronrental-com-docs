@@ -1,0 +1,119 @@
+---
+title: Balance History
+api: GET /api/v1/account/history
+description: "Every movement of your account balance"
+---
+
+## Balance History
+
+Returns every movement of your account balance, newest first — purchases, deposits, refunds and fees in one list. Orders, invoices and activations each show only their own slice, so this is the only endpoint where the arithmetic closes: the sum of `delta_trx` over a period equals the balance change over that period.
+
+<Note>
+**Scope note.** The `view` scope returns purchases, refunds and fees. Deposit movements additionally require the `deposit_view` scope and withdrawals require `withdraw`; without them those rows are simply absent from the list and from `total`, and filtering by such a reason returns an empty page rather than an error.
+</Note>
+
+### Query parameters
+
+<ParamField query="page" type="number" default="1">
+  Page number, starting at 1.
+</ParamField>
+
+<ParamField query="page_size" type="number" default="50">
+  Items per page (max 100).
+</ParamField>
+
+<ParamField query="reason" type="string">
+  Return only movements with this exact reason, e.g. `energy_order`.
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="array">
+  <Expandable title="item">
+    <ResponseField name="id" type="number">
+      Movement ID. Also the sort key — the list is ordered by it, descending.
+    </ResponseField>
+    <ResponseField name="delta_trx" type="string">
+      Amount in TRX, signed: negative is a charge, positive is money in.
+    </ResponseField>
+    <ResponseField name="balance_after" type="string">
+      Your balance immediately after this movement.
+    </ResponseField>
+    <ResponseField name="reason" type="string">
+      What the movement was for (see below). New reasons may appear over time — treat an unknown value as opaque rather than failing.
+    </ResponseField>
+    <ResponseField name="ref_type" type="string | null">
+      Entity the movement paid for: `order`, `invoice`, `activation`, `deposit` and so on. `null` for movements that reference nothing.
+    </ResponseField>
+    <ResponseField name="ref_id" type="string | null">
+      ID of that entity, as a string.
+    </ResponseField>
+    <ResponseField name="ref_address" type="string | null">
+      Recipient address of that entity, when it has one — so you do not need a second request to learn what a charge was for. `null` otherwise.
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      When the movement happened (UTC).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Total number of movements matching the filter.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  Page number, starting at 1.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  Items per page (max 100).
+</ResponseField>
+
+### Common reasons
+
+| Reason | Meaning |
+|------|------|
+| `energy_order` | Energy purchase |
+| `bw_order` | Bandwidth purchase |
+| `energy_order_refund` | Refund for an energy order |
+| `bw_order_refund` | Refund for a bandwidth order |
+| `activation` | Creating the recipient account on-chain |
+| `activation_refund` | Refund of an activation that did not happen |
+| `deposit` | Incoming deposit |
+
+### Example
+
+```bash
+curl "https://api.tronrental.com/v1/account/history?page=1&page_size=50" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "items": [
+    {
+      "id": 97213,
+      "delta_trx": "-1.79",
+      "balance_after": "154.71",
+      "reason": "energy_order",
+      "ref_type": "order",
+      "ref_id": "12345",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:30:00Z"
+    },
+    {
+      "id": 97212,
+      "delta_trx": "-1.20",
+      "balance_after": "156.50",
+      "reason": "activation",
+      "ref_type": "activation",
+      "ref_id": "8891",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:29:53Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 50
+}
+```

@@ -18,6 +18,18 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
 
 `status`, `type`, `volume`, `price_trx`, `delegate_txid` ve zaman damgaları dahil tüm sipariş nesnesini döndürür.
 
+<ResponseField name="activation_id" type="number | null">
+  Bu siparisin odedigi adres aktivasyonunun ID'si; hicbirini odemediyse `null`.
+</ResponseField>
+
+<ResponseField name="activation_cost_trx" type="string | null">
+  Bu aktivasyonun TRX cinsinden maliyeti, `price_trx` **uzerine** — siparis fiyati ile bakiyenizden cikan tutar arasindaki fark tam olarak budur.
+</ResponseField>
+
+<Note>
+**`"0"` degil, `null`.** Siparis herhangi bir aktivasyon odemediginde (alici hesap zaten vardi ya da baskasinin islemi olusturdu) her iki alan da `null` olur. Buy Energy yanitindaki `activation_cost_trx` ile farkina dikkat edin: orada bu durumda `"0"` metnidir. Burada `"0"` ile karsilastirmak hicbir zaman eslesmez.
+</Note>
+
 ### Sipariş durumları
 
 | Durum | Açıklama |
@@ -47,6 +59,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "undelegate_txid": null,
   "reclaim_at": null,
   "source": "api",
+  "activation_id": 8891,
+  "activation_cost_trx": "1.20",
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```

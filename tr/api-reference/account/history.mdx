@@ -1,0 +1,119 @@
+---
+title: Bakiye Gecmisi
+api: GET /api/v1/account/history
+description: "Hesap bakiyenizdeki tum hareketler"
+---
+
+## Bakiye Gecmisi
+
+Hesap bakiyenizdeki tum hareketleri en yeniden eskiye dogru dondurur: alimlar, yatirmalar, iadeler ve ucretler tek bir listede. Siparisler, faturalar ve aktivasyonlar yalnizca kendi bolumlerini gosterir; bu nedenle aritmetigin kapandigi tek uc nokta budur: bir donemdeki `delta_trx` toplami, ayni donemdeki bakiye degisimine esittir.
+
+<Note>
+**Kapsam notu.** `view` kapsami alimlari, iadeleri ve ucretleri dondurur. Yatirma hareketleri ayrica `deposit_view`, cekimler ise `withdraw` kapsamini gerektirir; bunlar olmadan ilgili satirlar listede ve `total` icinde hic yer almaz, boyle bir nedene gore filtreleme ise hata degil bos sayfa dondurur.
+</Note>
+
+### Sorgu parametreleri
+
+<ParamField query="page" type="number" default="1">
+  Sayfa numarasi, 1'den baslar.
+</ParamField>
+
+<ParamField query="page_size" type="number" default="50">
+  Sayfa basina kayit (en fazla 100).
+</ParamField>
+
+<ParamField query="reason" type="string">
+  Yalnizca bu nedene sahip hareketleri dondurur, ornegin `energy_order`.
+</ParamField>
+
+### Yanit
+
+<ResponseField name="items" type="array">
+  <Expandable title="item">
+    <ResponseField name="id" type="number">
+      Hareket ID'si. Ayni zamanda siralama anahtaridir; liste buna gore azalan sirada gelir.
+    </ResponseField>
+    <ResponseField name="delta_trx" type="string">
+      Isaretli TRX tutari: eksi tahsilat, arti giristir.
+    </ResponseField>
+    <ResponseField name="balance_after" type="string">
+      Bu hareketten hemen sonraki bakiyeniz.
+    </ResponseField>
+    <ResponseField name="reason" type="string">
+      Hareketin nedeni (asagiya bakin). Zamanla yeni nedenler eklenebilir; bilinmeyen bir degeri hata vermek yerine oldugu gibi gosterin.
+    </ResponseField>
+    <ResponseField name="ref_type" type="string | null">
+      Odenen varlik: `order`, `invoice`, `activation`, `deposit` vb. Hicbir seye referans vermiyorsa `null`.
+    </ResponseField>
+    <ResponseField name="ref_id" type="string | null">
+      Bu varligin ID'si, metin olarak.
+    </ResponseField>
+    <ResponseField name="ref_address" type="string | null">
+      Varsa bu varligin alici adresi; boylece tahsilatin nedenini ogrenmek icin ikinci bir istek gerekmez. Aksi halde `null`.
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Hareketin gerceklestigi an (UTC).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Filtreye uyan toplam hareket sayisi.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  Sayfa numarasi, 1'den baslar.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  Sayfa basina kayit (en fazla 100).
+</ResponseField>
+
+### Sik gorulen nedenler
+
+| Neden | Anlami |
+|------|------|
+| `energy_order` | Enerji alimi |
+| `bw_order` | Bandwidth alimi |
+| `energy_order_refund` | Enerji siparisi iadesi |
+| `bw_order_refund` | Bandwidth siparisi iadesi |
+| `activation` | Alici hesabin zincirde olusturulmasi |
+| `activation_refund` | Gerceklesmeyen aktivasyonun iadesi |
+| `deposit` | Gelen yatirma |
+
+### Ornek
+
+```bash
+curl "https://api.tronrental.com/v1/account/history?page=1&page_size=50" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "items": [
+    {
+      "id": 97213,
+      "delta_trx": "-1.79",
+      "balance_after": "154.71",
+      "reason": "energy_order",
+      "ref_type": "order",
+      "ref_id": "12345",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:30:00Z"
+    },
+    {
+      "id": 97212,
+      "delta_trx": "-1.20",
+      "balance_after": "156.50",
+      "reason": "activation",
+      "ref_type": "activation",
+      "ref_id": "8891",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:29:53Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 50
+}
+```

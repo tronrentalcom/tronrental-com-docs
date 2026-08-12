@@ -18,6 +18,18 @@ description: "ID द्वारा एनर्जी या बैंडवि
 
 `status`, `type`, `volume`, `price_trx`, `delegate_txid` और टाइमस्टैम्प सहित पूरा ऑर्डर ऑब्जेक्ट लौटाता है।
 
+<ResponseField name="activation_id" type="number | null">
+  इस ऑर्डर ने जिस पते की सक्रियता का भुगतान किया उसकी ID, या `null` यदि किसी का नहीं किया।
+</ResponseField>
+
+<ResponseField name="activation_cost_trx" type="string | null">
+  उस सक्रियता की लागत TRX में, `price_trx` से **अतिरिक्त** — यही ऑर्डर की कीमत और आपके बैलेंस से गई राशि के बीच का अंतर है।
+</ResponseField>
+
+<Note>
+**`null`, न कि `"0"`।** जब ऑर्डर ने कोई सक्रियता नहीं चुकाई (प्राप्तकर्ता खाता पहले से मौजूद था, या किसी और के लेनदेन ने बनाया), तब दोनों फ़ील्ड `null` होते हैं। Buy Energy के रिस्पॉन्स में `activation_cost_trx` से अंतर पर ध्यान दें — वहाँ उस स्थिति में स्ट्रिंग `"0"` होती है। यहाँ `"0"` से तुलना कभी मेल नहीं खाएगी।
+</Note>
+
 ### ऑर्डर स्थितियाँ
 
 | स्थिति | विवरण |
@@ -47,6 +59,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "undelegate_txid": null,
   "reclaim_at": null,
   "source": "api",
+  "activation_id": 8891,
+  "activation_cost_trx": "1.20",
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```
