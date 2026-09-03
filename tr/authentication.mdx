@@ -35,6 +35,10 @@ Her API anahtari, hesabinizin API islemlerine tam erisime sahiptir:
   API anahtarinizi gizli tutun. Istemci tarafli kodda, herkese acik depolarda veya URL'lerde ifsa etmeyin.
 </Warning>
 
+## Anahtar kullanimi ve istek gunlugu
+
+API anahtarıyla doğrulanan her istek 7 gün boyunca kaydedilir: yöntem, yol, durum kodu, gecikme ve istemci IP'si. Sorgu parametreleri bu görünümde gösterilmez. [Dashboard → API Keys](https://tronrental.com/dashboard/api) sayfasını açıp bir anahtarı genişleterek son isteklerini görebilirsiniz; **Last Used** sütunu en son çağrıyı gösterir (doğrulama işareti en fazla 5 dakikada bir güncellenir, istek günlüğü ise kesindir). Günlük yalnızca panelden erişilebilir — bir API anahtarı kendi günlüğünü okuyamaz.
+
 ## Hiz Sinirlari
 
 API anahtarlari uç nokta basina hiz sinirlidir. Ayrintilar icin [Hiz Sinirlari](/resources/rate-limits) sayfasina bakin.

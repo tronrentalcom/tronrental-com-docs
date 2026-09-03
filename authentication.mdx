@@ -35,6 +35,10 @@ Each API key has full access to your account's API operations:
   Keep your API key secret. Do not expose it in client-side code, public repositories, or URLs.
 </Warning>
 
+## Key usage & request log
+
+Every request authenticated with an API key is recorded for 7 days: method, path, status code, latency and client IP. Query strings are not stored in this view. Open [Dashboard → API Keys](https://tronrental.com/dashboard/api) and expand a key to see its recent requests; the **Last Used** column shows the most recent call (the auth-time mark is updated at most once per 5 minutes, the request log is exact). The log is available from the dashboard only — an API key cannot read its own log.
+
 ## Rate Limits
 
 API keys are rate-limited per endpoint. See [Rate Limits](/resources/rate-limits) for details.
