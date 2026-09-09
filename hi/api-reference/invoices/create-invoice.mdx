@@ -12,7 +12,7 @@ description: "एनर्जी डेलिगेशन के लिए प�
 
 ### अनुरोध बॉडी
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   एनर्जी प्राप्त करने वाला लक्ष्य TRON एड्रेस
 </ParamField>
 
@@ -24,13 +24,17 @@ description: "एनर्जी डेलिगेशन के लिए प�
   USDT ट्रांसफर की संख्या (1 – 100)। प्रत्येक ट्रांसफर = 65,000 एनर्जी।
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  किराए की अवधि (1 या 24 घंटे)
+<ParamField body="bandwidth_amount" type="number">
+  कितनी बैंडविड्थ किराये पर लेनी है। वैकल्पिक: एनर्जी और बैंडविड्थ एक ही इनवॉइस में जोड़े जा सकते हैं।
+</ParamField>
+
+<ParamField body="duration" type="string">
+  बैंडविड्थ किराये की अवधि: `1h` या `1d`। एनर्जी हमेशा प्रति घंटा होती है।
 </ParamField>
 
 ### रिस्पॉन्स
 
-<ResponseField name="invoice_id" type="number">
+<ResponseField name="invoice_id" type="string">
   विशिष्ट इनवॉइस पहचानकर्ता
 </ResponseField>
 
@@ -61,9 +65,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
+    "target_address": "TRecipientAddress...",
     "transfer_count": 1,
-    "duration_hours": 1
+    "duration": "1h"
   }'
 ```
 
@@ -71,9 +75,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
 {
   "invoice_id": 789,
   "payment_address": "TPaymentAddress...",
-  "address": "TRecipientAddress...",
+  "target_address": "TRecipientAddress...",
   "energy_amount": 65000,
-  "duration_hours": 1,
+  "duration": "1h",
   "price_trx": "2.75",
   "price_usdt": "0.64",
   "status": "pending",

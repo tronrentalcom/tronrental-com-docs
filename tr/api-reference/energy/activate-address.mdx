@@ -8,22 +8,34 @@ description: "Blok zincirinde etkin olmayan bir TRON adresini etkinlestirin"
 
 Daha once hicbir islem almamis bir TRON adresini etkinlestirir. Adresin token alabilmesi icin gereklidir.
 
-**Maliyet: 1,1 TRX** (bakiyenizden dusulur)
+**Maliyet: 1,2 TRX** (bakiyenizden dusulur)
 
 ### Istek govdesi
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   Etkinlestirilecek TRON adresi (T... formati)
 </ParamField>
 
 ### Yanit
 
 <ResponseField name="success" type="boolean">
-  Etkinlestirmenin basarili olup olmadigi
+  Aktivasyonun başarılı olup olmadığı
 </ResponseField>
 
-<ResponseField name="tx_hash" type="string">
-  Etkinlestirme islem hash'i
+<ResponseField name="status" type="string">
+  `completed` — aktivasyonu yayınladık; `already_activated` — adres zincirde zaten aktifti
+</ResponseField>
+
+<ResponseField name="txid" type="string">
+  Aktivasyon işlem hash’i
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  Aktivasyon için tahsil edilen TRX (adres zaten aktifse 0)
+</ResponseField>
+
+<ResponseField name="id" type="number">
+  Aktivasyon kaydı kimliği
 </ResponseField>
 
 ### Ornek
@@ -32,12 +44,15 @@ Daha once hicbir islem almamis bir TRON adresini etkinlestirir. Adresin token al
 curl -X POST https://api.tronrental.com/v1/energy/activate \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
-  -d '{"address": "TNewInactiveAddress..."}'
+  -d '{"target_address": "TNewInactiveAddress..."}'
 ```
 
 ```json Response
 {
   "success": true,
-  "tx_hash": "a1b2c3d4e5f6..."
+  "status": "completed",
+  "txid": "a1b2c3d4e5f6...",
+  "cost_trx": "1.2",
+  "id": 12345
 }
 ```

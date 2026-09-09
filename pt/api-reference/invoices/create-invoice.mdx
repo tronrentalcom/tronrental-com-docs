@@ -12,7 +12,7 @@ Cria uma fatura de pagamento que gera um endereço de depósito único. Quando o
 
 ### Corpo da requisição
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   Endereço TRON de destino para receber energia
 </ParamField>
 
@@ -24,13 +24,17 @@ Cria uma fatura de pagamento que gera um endereço de depósito único. Quando o
   Número de transferências USDT (1 – 100). Cada transferência = 65.000 energia.
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  Duração do aluguel (1 ou 24 horas)
+<ParamField body="bandwidth_amount" type="number">
+  Quantidade de bandwidth a alugar. Complemento opcional: energia e bandwidth podem ser combinados em uma fatura.
+</ParamField>
+
+<ParamField body="duration" type="string">
+  Duração do aluguel de bandwidth: `1h` ou `1d`. A energia é sempre por hora.
 </ParamField>
 
 ### Resposta
 
-<ResponseField name="invoice_id" type="number">
+<ResponseField name="invoice_id" type="string">
   Identificador único da fatura
 </ResponseField>
 
@@ -61,9 +65,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
+    "target_address": "TRecipientAddress...",
     "transfer_count": 1,
-    "duration_hours": 1
+    "duration": "1h"
   }'
 ```
 
@@ -71,9 +75,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
 {
   "invoice_id": 789,
   "payment_address": "TPaymentAddress...",
-  "address": "TRecipientAddress...",
+  "target_address": "TRecipientAddress...",
   "energy_amount": 65000,
-  "duration_hours": 1,
+  "duration": "1h",
   "price_trx": "2.75",
   "price_usdt": "0.64",
   "status": "pending",
