@@ -1,6 +1,6 @@
 ---
 title: Alternar Assinatura
-api: POST /api/v1/smart-mode/{subscription_id}/toggle
+api: POST /api/v1/smart-mode/{sub_id}/toggle
 description: "Pausar ou retomar uma assinatura do Smart Mode"
 ---
 
@@ -10,7 +10,7 @@ Pausa uma assinatura ativa ou retoma uma pausada. Enquanto pausada, nenhuma taxa
 
 ### Parâmetros de caminho
 
-<ParamField path="subscription_id" type="number" required>
+<ParamField path="sub_id" type="number" required>
   ID da assinatura
 </ParamField>
 

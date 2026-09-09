@@ -1,6 +1,6 @@
 ---
 title: Alternar suscripcion
-api: POST /api/v1/smart-mode/{subscription_id}/toggle
+api: POST /api/v1/smart-mode/{sub_id}/toggle
 description: "Pausar o reanudar una suscripcion de Smart Mode"
 ---
 
@@ -10,7 +10,7 @@ Pausa una suscripcion activa o reanuda una pausada. Mientras esta pausada, no se
 
 ### Parametros de ruta
 
-<ParamField path="subscription_id" type="number" required>
+<ParamField path="sub_id" type="number" required>
   ID de la suscripcion
 </ParamField>
 
