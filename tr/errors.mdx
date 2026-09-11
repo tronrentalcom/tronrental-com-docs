@@ -35,13 +35,15 @@ istek uç noktaya ulaşmadan önce üretilir:
 {"detail":"Passkey verification required","code":"PASSKEY_REQUIRED"}
 ```
 
-Bazı yanıtlarda hiç kod bulunmaz — istek doğrulaması (`422`) ve birkaç dahili kontrol, düz bir mesajla
-`{"detail": "..."}` döndürür.
+Her yanıtta kod bulunmaz. İstek doğrulama hataları çerçevenin kendi biçiminde gelir; orada `detail` bir
+dize değil, alan hatalarından oluşan bir **dizidir**. Birkaç dahili kontrol ise düz bir mesajla
+`{"detail": "..."}` döndürür. Bazı `422` yanıtları ise standart biçimde kod taşır — örneğin yeniden
+kullanılmış bir idempotency anahtarı.
 
 <Tip>
 Kodu, bunlardan mevcut olan ilkinden okuyun: `detail.error.code`, sonra `error.code`, sonra `code`.
-Hiçbiri yoksa HTTP durum koduna bakın ve `detail` alanının bir dize olduğunu asla varsaymayın —
-standart biçimde o bir nesnedir.
+Hiçbiri yoksa HTTP durum koduna bakın ve `detail` alanının bir dize olduğunu asla varsaymayın: standart
+biçimde o bir nesne, doğrulama hatasında ise bir dizidir.
 </Tip>
 
 ## HTTP Durum Kodları
@@ -52,7 +54,7 @@ standart biçimde o bir nesnedir.
 | `400` | Hatalı istek — geçersiz parametreler |
 | `401` | Yetkisiz — eksik veya geçersiz API anahtarı |
 | `402` | Ödeme gerekli — hesap bakiyesi yetersiz |
-| `403` | Yasaklı — anahtar devre dışı, IP izin listesinde değil veya doğrulama gerekli |
+| `403` | Yasaklı — anahtarda gereken kapsam yok, IP izin listesinde değil veya doğrulama gerekli |
 | `404` | Bulunamadı |
 | `409` | Çatışma — tekrarlanan istek veya kaynak çatışması |
 | `422` | Doğrulama hatası — istek gövdesini kontrol edin |
@@ -68,7 +70,7 @@ Standart biçimde, `detail.error.code` altında döndürülür:
 |------|--------|-------------|
 | `INVALID_TOKEN` | `401` | API anahtarı eksik, bilinmiyor veya devre dışı |
 | `ACCOUNT_BLOCKED` | `403` | Bu hesap için API erişimi engellendi |
-| `FORBIDDEN` | `403` | İsteğin IP'si anahtarın izin listesinde değil |
+| `FORBIDDEN` | `403` | Anahtarda bu uç noktanın gerektirdiği kapsam yok ya da isteğin IP'si anahtarın izin listesinde değil |
 | `INSUFFICIENT_BALANCE` | `402` | Bu işlem için hesap bakiyesi yetersiz |
 | `INVALID_ADDRESS` | `400` | Geçerli bir TRON adresi değil |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Hedef bir akıllı sözleşme — TRON ona kaynak devretmeyi yasaklar |
@@ -77,10 +79,17 @@ Standart biçimde, `detail.error.code` altında döndürülür:
 | `ORDER_NOT_FOUND` | `404` | Sipariş kimliği mevcut değil |
 | `RATE_LIMIT_EXCEEDED` | `429` | Çok fazla istek — bkz. [Hız Sınırları](/resources/rate-limits) |
 
+<Warning>
+`INSUFFICIENT_BALANCE` her yerde kullanılmaz. `POST /api/v1/smart-mode/activate` ve
+`POST /api/v1/transfer-packages/buy` aynı durumu `400` olarak, mesajla ve **kodsuz** bildirir:
+`{"detail":{"error":{"message":"Insufficient balance"}}}`. Bu iki uç noktada bakiye sorununu yalnızca
+koda bakarak tespit etmeyin.
+</Warning>
+
 ## Para çekme doğrulama kodları
 
-`POST /api/v1/account/withdrawal` bunları düz biçimde, `code` ile `detail` yan yana olacak şekilde
-döndürür:
+`POST /api/v1/account/withdrawal` bu doğrulama kodlarını düz biçimde, `code` ile `detail` yan yana
+olacak şekilde döndürür; aynı uç noktanın diğer hataları standart biçimi kullanır:
 
 | Kod | Durum | Açıklama |
 |------|--------|-------------|

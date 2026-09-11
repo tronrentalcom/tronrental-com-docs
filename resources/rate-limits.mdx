@@ -5,8 +5,8 @@ description: "API rate limiting policy"
 
 ## Rate Limits
 
-Two limits apply to every request: an **account-level limit** that covers the whole API, and, on a few
-endpoints, a **stricter per-endpoint limit**. Whichever is lower is the one you will hit.
+Two limits apply to every request: an **account-level limit** that covers nearly every endpoint, and, on a
+few endpoints, a **stricter per-endpoint limit**. Whichever is lower is the one you will hit.
 
 ### Account-level limit
 
@@ -15,7 +15,7 @@ single budget — creating more keys does not raise your limit.
 
 | Who you are | Default limit |
 |---|---|
-| Account with a completed purchase, or a balance of 10 TRX or more | 1000 requests/minute |
+| Account with a past purchase or subscription, or a balance of 10 TRX or more | 1000 requests/minute |
 | Any other signed-in account | 300 requests/minute |
 | Unauthenticated requests | 60 requests/minute per IP address |
 | Unauthenticated polling of `GET /api/v1/invoices/{invoice_id}` | 180 requests/minute per IP address |
@@ -28,10 +28,12 @@ These are defaults. If your integration needs a higher ceiling, we raise it for 
 on [Telegram](https://t.me/TronRentalcom_bot).
 
 <Note>
-The window is fixed, not sliding: the counter resets at the start of each minute. A client that spends
-its whole budget at the end of one minute and again at the start of the next will briefly pass twice
-the limit without being blocked. Treat that as an artefact of the window, not as an allowance — the
-same traffic pattern shifted by a few seconds is rejected.
+The window is fixed, not sliding: the counter resets at the start of each minute. Do not build a
+burst around that boundary. Two separate mechanisms make it a bad bet. An edge limit of about 50
+requests per second per IP address sits in front of the API and answers `503` with an HTML body, not
+a JSON error. And an account that stays over its limit for three minutes in a row has its limit
+halved for the next ten minutes; three more such minutes block it entirely for thirty, with
+`Retry-After: 1800`. Accounts on the 1000/minute tier are exempt from that escalation.
 </Note>
 
 ### Endpoints with a stricter limit of their own
@@ -44,7 +46,14 @@ same traffic pattern shifted by a few seconds is rejected.
 Note that `POST /api/v1/invoices` is counted per **IP address**, not per account: if several of your
 clients send requests from the same egress IP, they share one budget of 10 per minute.
 
-Every other documented endpoint has no stricter limit of its own — only the account-level limit above
+The purchase endpoints — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
+`POST /api/v1/bandwidth/buy` and `POST /api/v1/bandwidth/rentals` — carry an older budget of 1000
+requests per minute counted **per IP address** (the two bandwidth endpoints share one budget). For a
+single account it is never the binding limit, but clients behind one egress IP share it with each
+other.
+
+The webhook management endpoints (`/api/v1/webhooks/...`) are not covered by the account-level limit.
+Every other documented endpoint has no limit of its own — the account-level limit is the only one that
 applies to it.
 
 ### What a 429 looks like
@@ -88,6 +97,9 @@ too, so it is usually the one you reach first:
 
 This is a cap on open invoices, not a rate limit, and waiting does not clear it by itself. Pay one of
 the pending invoices, or let it expire, before creating another.
+
+The same endpoint also reports unrelated transient failures as `429` — for example
+`{"detail":"Energy price unavailable"}`. Read the message before deciding how to react.
 
 ### Retrying
 

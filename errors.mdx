@@ -35,13 +35,15 @@ message itself:
 {"detail":"Passkey verification required","code":"PASSKEY_REQUIRED"}
 ```
 
-Some responses carry no code at all — request validation (`422`) and a few internal checks return
-`{"detail": "..."}` with a plain message.
+Not every response carries a code. Request validation failures come back in the framework's own
+format, where `detail` is an **array** of field errors rather than a string, and a few internal checks
+return `{"detail": "..."}` with a plain message. Some `422` responses do carry a code in the standard
+shape — a reused idempotency key, for example.
 
 <Tip>
 Read the code from the first of these that is present: `detail.error.code`, then `error.code`, then
-`code`. Fall back to the HTTP status when none of them is there, and never assume `detail` is a string —
-in the standard shape it is an object.
+`code`. Fall back to the HTTP status when none of them is there, and never assume `detail` is a string:
+it is an object in the standard shape and an array in a validation error.
 </Tip>
 
 ## HTTP status codes
@@ -52,7 +54,7 @@ in the standard shape it is an object.
 | `400` | Bad request — invalid parameters |
 | `401` | Unauthorized — missing or invalid API key |
 | `402` | Payment required — account balance too low |
-| `403` | Forbidden — key disabled, IP not whitelisted, or verification required |
+| `403` | Forbidden — key lacks the required scope, IP not whitelisted, or verification required |
 | `404` | Not found |
 | `409` | Conflict — duplicate request or resource conflict |
 | `422` | Validation error — check request body |
@@ -68,7 +70,7 @@ Returned in the standard shape, under `detail.error.code`:
 |------|--------|-------------|
 | `INVALID_TOKEN` | `401` | API key missing, unknown, or disabled |
 | `ACCOUNT_BLOCKED` | `403` | API access blocked for this account |
-| `FORBIDDEN` | `403` | Request IP is not on the key's IP whitelist |
+| `FORBIDDEN` | `403` | The key lacks the scope this endpoint requires, or the request IP is not on the key's whitelist |
 | `INSUFFICIENT_BALANCE` | `402` | Account balance too low for this operation |
 | `INVALID_ADDRESS` | `400` | Not a valid TRON address |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Target is a smart contract — TRON forbids delegating resources to it |
@@ -77,9 +79,17 @@ Returned in the standard shape, under `detail.error.code`:
 | `ORDER_NOT_FOUND` | `404` | Order ID does not exist |
 | `RATE_LIMIT_EXCEEDED` | `429` | Too many requests — see [Rate Limits](/resources/rate-limits) |
 
+<Warning>
+`INSUFFICIENT_BALANCE` is not used everywhere. `POST /api/v1/smart-mode/activate` and
+`POST /api/v1/transfer-packages/buy` report the same condition as `400` with a message and **no code**:
+`{"detail":{"error":{"message":"Insufficient balance"}}}`. On those two endpoints, do not detect a
+funding problem by the code alone.
+</Warning>
+
 ## Withdrawal verification codes
 
-`POST /api/v1/account/withdrawal` returns these in the flat shape, with `code` next to `detail`:
+`POST /api/v1/account/withdrawal` returns these verification codes in the flat shape, with `code` next
+to `detail`. Other errors on the same endpoint use the standard shape:
 
 | Code | Status | Description |
 |------|--------|-------------|

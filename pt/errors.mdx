@@ -36,13 +36,15 @@ própria mensagem:
 {"detail":"Passkey verification required","code":"PASSKEY_REQUIRED"}
 ```
 
-Algumas respostas não trazem código algum — a validação da requisição (`422`) e algumas verificações
-internas retornam `{"detail": "..."}` com uma mensagem simples.
+Nem toda resposta traz um código. Falhas de validação da requisição voltam no formato próprio do
+framework, em que `detail` é um **array** de erros de campo, não uma string, e algumas verificações
+internas retornam `{"detail": "..."}` com uma mensagem simples. Algumas respostas `422` trazem sim um
+código, no formato padrão — uma chave de idempotência reutilizada, por exemplo.
 
 <Tip>
 Leia o código do primeiro campo presente: `detail.error.code`, depois `error.code`, depois `code`.
-Recorra ao status HTTP quando nenhum deles existir, e nunca presuma que `detail` é uma string — no
-formato padrão ele é um objeto.
+Recorra ao status HTTP quando nenhum deles existir, e nunca presuma que `detail` é uma string: no
+formato padrão ele é um objeto e, num erro de validação, um array.
 </Tip>
 
 ## Códigos de status HTTP
@@ -53,7 +55,7 @@ formato padrão ele é um objeto.
 | `400` | Requisição inválida — parâmetros incorretos |
 | `401` | Não autorizado — chave de API ausente ou inválida |
 | `402` | Pagamento necessário — saldo da conta insuficiente |
-| `403` | Proibido — chave desativada, IP fora da lista permitida ou verificação necessária |
+| `403` | Proibido — a chave não tem o escopo exigido, IP fora da lista permitida ou verificação necessária |
 | `404` | Não encontrado |
 | `409` | Conflito — requisição duplicada ou conflito de recurso |
 | `422` | Erro de validação — verifique o corpo da requisição |
@@ -69,7 +71,7 @@ Retornados no formato padrão, em `detail.error.code`:
 |--------|--------|-------------|
 | `INVALID_TOKEN` | `401` | Chave de API ausente, desconhecida ou desativada |
 | `ACCOUNT_BLOCKED` | `403` | Acesso à API bloqueado para esta conta |
-| `FORBIDDEN` | `403` | O IP da requisição não está na lista permitida da chave |
+| `FORBIDDEN` | `403` | A chave não tem o escopo exigido por este endpoint, ou o IP da requisição não está na lista permitida da chave |
 | `INSUFFICIENT_BALANCE` | `402` | Saldo da conta insuficiente para esta operação |
 | `INVALID_ADDRESS` | `400` | Endereço TRON inválido |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | O destino é um contrato inteligente — a TRON proíbe delegar recursos a ele |
@@ -78,9 +80,17 @@ Retornados no formato padrão, em `detail.error.code`:
 | `ORDER_NOT_FOUND` | `404` | O ID do pedido não existe |
 | `RATE_LIMIT_EXCEEDED` | `429` | Requisições em excesso — veja [Limites de Taxa](/resources/rate-limits) |
 
+<Warning>
+`INSUFFICIENT_BALANCE` não é usado em todos os lugares. `POST /api/v1/smart-mode/activate` e
+`POST /api/v1/transfer-packages/buy` relatam a mesma condição como `400`, com mensagem e **sem código**:
+`{"detail":{"error":{"message":"Insufficient balance"}}}`. Nesses dois endpoints, não detecte um
+problema de saldo apenas pelo código.
+</Warning>
+
 ## Códigos de verificação de saque
 
-`POST /api/v1/account/withdrawal` retorna estes no formato plano, com `code` ao lado de `detail`:
+`POST /api/v1/account/withdrawal` retorna estes códigos de verificação no formato plano, com `code` ao
+lado de `detail`. Os demais erros do mesmo endpoint usam o formato padrão:
 
 | Código | Status | Descrição |
 |--------|--------|-------------|

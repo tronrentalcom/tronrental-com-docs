@@ -5,8 +5,8 @@ description: "Política de limitação de taxa da API"
 
 ## Limites de Taxa
 
-Dois limites se aplicam a cada requisição: um **limite no nível da conta**, que cobre toda a API, e,
-em alguns endpoints, um **limite próprio mais restrito**. Você atingirá aquele que for menor.
+Dois limites se aplicam a cada requisição: um **limite no nível da conta**, que cobre quase todos os endpoints, e,
+em alguns deles, um **limite próprio mais restrito**. Você atingirá aquele que for menor.
 
 ### Limite no nível da conta
 
@@ -15,7 +15,7 @@ compartilham um único orçamento — criar mais chaves não aumenta o seu limit
 
 | Quem você é | Limite padrão |
 |---|---|
-| Conta com uma compra concluída, ou saldo de 10 TRX ou mais | 1000 requisições/minuto |
+| Conta com uma compra ou assinatura anterior, ou saldo de 10 TRX ou mais | 1000 requisições/minuto |
 | Qualquer outra conta autenticada | 300 requisições/minuto |
 | Requisições sem autenticação | 60 requisições/minuto por endereço IP |
 | Consulta de `GET /api/v1/invoices/{invoice_id}` sem autenticação | 180 requisições/minuto por endereço IP |
@@ -28,10 +28,12 @@ Estes são os valores padrão. Se a sua integração precisa de um teto maior, n
 conta: fale conosco no [Telegram](https://t.me/TronRentalcom_bot).
 
 <Note>
-A janela é fixa, não deslizante: o contador zera no início de cada minuto. Um cliente que gasta todo
-o seu orçamento no fim de um minuto e novamente no início do seguinte passará brevemente do dobro do
-limite sem ser bloqueado. Trate isso como um artefato da janela, não como uma permissão — o mesmo
-padrão de tráfego deslocado em alguns segundos é rejeitado.
+A janela é fixa, não deslizante: o contador zera no início de cada minuto. Não construa uma rajada em
+torno dessa fronteira. Dois mecanismos independentes tornam isso uma má aposta. Um limite de borda de
+cerca de 50 requisições por segundo por endereço IP fica à frente da API e responde `503` com corpo
+HTML, não um erro JSON. E uma conta que permanece acima do seu limite por três minutos seguidos tem o
+limite reduzido à metade pelos dez minutos seguintes; mais três minutos assim a bloqueiam por completo
+por trinta, com `Retry-After: 1800`. Contas no nível de 1000/minuto estão isentas dessa escalada.
 </Note>
 
 ### Endpoints com um limite próprio mais restrito
@@ -45,8 +47,15 @@ Observe que `POST /api/v1/invoices` é contado por **endereço IP**, não por co
 clientes enviam requisições a partir do mesmo IP de saída, eles compartilham um único orçamento de 10
 por minuto.
 
-Todos os demais endpoints documentados não possuem limite próprio mais restrito — apenas o limite no
-nível da conta acima se aplica a eles.
+Os endpoints de compra — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
+`POST /api/v1/bandwidth/buy` e `POST /api/v1/bandwidth/rentals` — carregam um orçamento mais antigo de
+1000 requisições por minuto contado **por endereço IP** (os dois endpoints de bandwidth compartilham um
+único orçamento). Para uma única conta ele nunca é o limite determinante, mas clientes atrás de um mesmo
+IP de saída o compartilham entre si.
+
+Os endpoints de gerenciamento de webhook (`/api/v1/webhooks/...`) não são cobertos pelo limite no nível
+da conta. Todos os demais endpoints documentados não têm limite próprio — apenas o limite no nível da
+conta se aplica a eles.
 
 ### Como é uma resposta 429
 
@@ -91,6 +100,9 @@ autenticadas, por isso normalmente é nele que você esbarra primeiro:
 
 Isto é um teto de faturas em aberto, não um limite de taxa, e esperar não o libera por si só. Pague
 uma das faturas pendentes, ou deixe-a expirar, antes de criar outra.
+
+O mesmo endpoint também relata falhas transitórias não relacionadas como `429` — por exemplo
+`{"detail":"Energy price unavailable"}`. Leia a mensagem antes de decidir como reagir.
 
 ### Novas tentativas
 

@@ -5,7 +5,7 @@ description: "API hız sınırlandırma politikası"
 
 ## Hız Sınırları
 
-Her isteğe iki sınır uygulanır: tüm API'yi kapsayan **hesap düzeyinde sınır** ve birkaç uç noktada
+Her isteğe iki sınır uygulanır: neredeyse her uç noktayı kapsayan **hesap düzeyinde sınır** ve birkaç uç noktada
 bunların **kendi daha sıkı sınırı**. Bunlardan hangisi düşükse ona takılırsınız.
 
 ### Hesap düzeyinde sınır
@@ -15,7 +15,7 @@ bütçeyi paylaşır — daha fazla anahtar oluşturmak sınırınızı yükselt
 
 | Kim olduğunuz | Varsayılan sınır |
 |---|---|
-| Tamamlanmış alımı olan, ya da 10 TRX ve üzeri bakiyesi olan hesap | 1000 istek/dakika |
+| Geçmişte alımı veya aboneliği olan, ya da 10 TRX ve üzeri bakiyesi olan hesap | 1000 istek/dakika |
 | Diğer tüm oturum açmış hesaplar | 300 istek/dakika |
 | Kimlik doğrulamasız istekler | IP adresi başına 60 istek/dakika |
 | Kimlik doğrulamasız `GET /api/v1/invoices/{invoice_id}` sorgulaması | IP adresi başına 180 istek/dakika |
@@ -28,10 +28,12 @@ Bunlar varsayılan değerlerdir. Entegrasyonunuzun daha yüksek bir tavana ihtiy
 için yükseltiriz: bize [Telegram](https://t.me/TronRentalcom_bot) üzerinden yazın.
 
 <Note>
-Pencere sabittir, kayan değil: sayaç her dakikanın başında sıfırlanır. Bütün bütçesini bir dakikanın
-sonunda ve yeniden bir sonraki dakikanın başında harcayan bir istemci, engellenmeden kısa süreliğine
-sınırın iki katını geçer. Bunu pencerenin bir yan ürünü olarak görün, bir izin olarak değil — birkaç
-saniye kaydırılmış aynı trafik reddedilir.
+Pencere sabittir, kayan değil: sayaç her dakikanın başında sıfırlanır. Ancak bu sınırın çevresine bir
+patlama kurgulamayın. İki ayrı mekanizma bunu kötü bir bahis yapar. API'nin önünde IP adresi başına
+saniyede yaklaşık 50 istek olan bir kenar siniri durur ve aşıldığında JSON hata değil, HTML gövdeli
+`503` döner. Ayrıca üst üste üç dakika sınırının üzerinde kalan bir hesabın sınırı sonraki on dakika
+boyunca yarıya iner; böyle üç dakika daha olursa hesap otuz dakika tamamen engellenir ve
+`Retry-After: 1800` döner. 1000/dakika kademesindeki hesaplar bu tırmanmadan muaftır.
 </Note>
 
 ### Kendi daha sıkı sınırı olan uç noktalar
@@ -44,8 +46,15 @@ saniye kaydırılmış aynı trafik reddedilir.
 Dikkat: `POST /api/v1/invoices` hesaba göre değil, **IP adresine** göre sayılır. Birden fazla
 istemciniz aynı çıkış IP'sinden istek gönderiyorsa, dakikada 10'luk tek bir bütçeyi paylaşırlar.
 
-Belgelenmiş diğer tüm uç noktaların kendine ait daha sıkı bir sınırı yoktur — onlara yalnızca
-yukarıdaki hesap düzeyindeki sınır uygulanır.
+Satın alma uç noktaları — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
+`POST /api/v1/bandwidth/buy` ve `POST /api/v1/bandwidth/rentals` — **IP adresi** başına sayılan, dakikada
+1000 isteklik daha eski bir bütçe taşır (iki bandwidth uç noktası tek bir bütçeyi paylaşır). Tek bir
+hesap için bu asla belirleyici sınır olmaz, ancak aynı çıkış IP'sinin ardındaki istemciler onu birbiriyle
+paylaşır.
+
+Webhook yönetim uç noktaları (`/api/v1/webhooks/...`) hesap düzeyindeki sınırın kapsamında değildir.
+Belgelenmiş diğer tüm uç noktaların kendi sınırı yoktur — onlara yalnızca hesap düzeyindeki sınır
+uygulanır.
 
 ### 429 yanıtı nasıl görünür
 
@@ -89,6 +98,9 @@ yüzden genellikle önce ona takılırsınız:
 Bu, açık fatura sayısına konmuş bir üst sınırdır, hız sınırı değil; beklemek onu kendiliğinden
 kaldırmaz. Yenisini oluşturmadan önce bekleyen faturalardan birini ödeyin ya da süresinin dolmasını
 bekleyin.
+
+Aynı uç nokta, ilgisiz geçici hataları da `429` olarak bildirir — örneğin
+`{"detail":"Energy price unavailable"}`. Nasıl tepki vereceğinize karar vermeden önce mesajı okuyun.
 
 ### Yeniden deneme
 
