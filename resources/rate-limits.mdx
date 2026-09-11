@@ -5,42 +5,116 @@ description: "API rate limiting policy"
 
 ## Rate Limits
 
-API endpoints are rate-limited to ensure fair usage and service stability.
+Two limits apply to every request: an **account-level limit** that covers the whole API, and, on a few
+endpoints, a **stricter per-endpoint limit**. Whichever is lower is the one you will hit.
 
-### Limits by endpoint
+### Account-level limit
 
-| Endpoint | Limit |
-|----------|-------|
-| `GET /prices` | 60 requests/minute |
-| `POST /energy/buy` | 30 requests/minute |
-| `POST /bandwidth/buy` | 30 requests/minute |
-| `POST /invoices` | 20 requests/minute |
-| `POST /smart-mode/activate` | 10 requests/minute |
-| `POST /account/withdrawal` | 1 request/minute |
-| Other endpoints | 60 requests/minute |
+Counted per **account** in a fixed one-minute window. All API keys belonging to one account share a
+single budget — creating more keys does not raise your limit.
 
-### Rate limit headers
+| Who you are | Default limit |
+|---|---|
+| Account with a completed purchase, or a balance of 10 TRX or more | 1000 requests/minute |
+| Any other signed-in account | 300 requests/minute |
+| Unauthenticated requests | 60 requests/minute per IP address |
+| Unauthenticated polling of `GET /api/v1/invoices/{invoice_id}` | 180 requests/minute per IP address |
 
-Responses include rate limit information in headers:
+Unauthenticated budgets are counted separately for each group of endpoints — prices, invoice status,
+address lookups, authentication, and everything else — so polling prices never eats into your budget
+for anything else.
+
+These are defaults. If your integration needs a higher ceiling, we raise it for your account: ask us
+on [Telegram](https://t.me/TronRentalcom_bot).
+
+<Note>
+The window is fixed, not sliding: the counter resets at the start of each minute. A client that spends
+its whole budget at the end of one minute and again at the start of the next will briefly pass twice
+the limit without being blocked. Treat that as an artefact of the window, not as an allowance — the
+same traffic pattern shifted by a few seconds is rejected.
+</Note>
+
+### Endpoints with a stricter limit of their own
+
+| Endpoint | Limit | Counted per |
+|---|---|---|
+| `POST /api/v1/invoices` | 10 requests/minute | IP address |
+| `POST /api/v1/account/withdrawal` | 1 request/minute | account |
+
+Note that `POST /api/v1/invoices` is counted per **IP address**, not per account: if several of your
+clients send requests from the same egress IP, they share one budget of 10 per minute.
+
+Every other documented endpoint has no stricter limit of its own — only the account-level limit above
+applies to it.
+
+### What a 429 looks like
+
+The body depends on which limit you hit. Three shapes exist, so parse defensively rather than
+assuming one of them.
+
+**Account-level limit.** The response carries a `Retry-After` header with the number of seconds to wait:
 
 ```
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 58
-X-RateLimit-Reset: 1709568000
+HTTP/1.1 429 Too Many Requests
+Retry-After: 37
 ```
-
-### Exceeding limits
-
-When rate limited, you'll receive HTTP `429`:
 
 ```json
-{
-  "detail": "Rate limit exceeded. Try again in 30 seconds."
-}
+{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}
 ```
 
-Implement exponential backoff for retries. Do not retry immediately.
+**Per-endpoint limit**, for example on `POST /api/v1/invoices`. There is no `Retry-After` header; the
+window is one minute:
+
+```json
+{"detail":{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}}
+```
+
+**`POST /api/v1/account/withdrawal`.** A plain-text detail with the seconds remaining, and no error code:
+
+```json
+{"detail":"Rate limit: try again in 42s"}
+```
+
+### A 429 that retrying will not fix
+
+`POST /api/v1/invoices` also answers `429` when you are already holding too many unpaid invoices — at
+most **3 per IP address** and at most **5 per account**. The per-IP cap applies to signed-in requests
+too, so it is usually the one you reach first:
+
+```json
+{"detail":"Too many pending invoices (max 3)"}
+```
+
+This is a cap on open invoices, not a rate limit, and waiting does not clear it by itself. Pay one of
+the pending invoices, or let it expire, before creating another.
+
+### Retrying
+
+- If the response carries a `Retry-After` header, wait exactly that many seconds.
+- Otherwise back off exponentially, starting at one second.
+- Never retry immediately.
+- Read the body before retrying: `Too many pending invoices` needs a different action, not a longer wait.
+
+```python
+import time
+import requests
+
+def post_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.post(url, **kwargs)
+        if resp.status_code == 429:
+            body = resp.text
+            if "pending invoices" in body:
+                raise RuntimeError(body)  # backing off will not help
+            delay = int(resp.headers.get("Retry-After", 2 ** attempt))
+            time.sleep(delay)
+            continue
+        return resp
+    raise RuntimeError("Max retries exceeded")
+```
 
 ### Need higher limits?
 
-Contact us via [Telegram](https://t.me/TronRentalcom_bot) for custom rate limits for high-volume integrations.
+Contact us via [Telegram](https://t.me/TronRentalcom_bot) for custom rate limits for high-volume
+integrations.
