@@ -26,6 +26,22 @@ description: "分页和筛选列出您的订单"
   按订单类型筛选 —— `energy` 或 `bandwidth`
 </ParamField>
 
+<ParamField query="from" type="string">
+  周期的第一天，`YYYY-MM-DD`，含当天。两个日期都不传则返回完整列表。
+</ParamField>
+
+<ParamField query="to" type="string">
+  周期的最后一天，`YYYY-MM-DD`，**含当天** —— 按您的时区计到 23:59:59.999。
+</ParamField>
+
+<ParamField query="tz" type="string">
+  解析这两个日期所用的 IANA 时区，例如 `Europe/Berlin`。不传则按 UTC。
+</ParamField>
+
+<Info>
+  与报表不同，列表没有一年的上限——它是分页的。两个日期都可选：只传 `from` 表示「从该日起」，只传 `to` 表示「截至该日（含）」。
+</Info>
+
 ### 响应
 
 返回 `orders`（订单对象数组）、`total`、`page` 和 `page_size`。

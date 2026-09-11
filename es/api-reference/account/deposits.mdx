@@ -38,6 +38,24 @@ curl https://api.tronrental.com/v1/account/deposits \
   -H "X-API-Key: your_api_key"
 ```
 
+### Parámetros de consulta
+
+<ParamField query="from" type="string">
+  Primer día del período, `YYYY-MM-DD`, inclusive. Sin ninguna de las dos fechas, la lista completa.
+</ParamField>
+
+<ParamField query="to" type="string">
+  Último día del período, `YYYY-MM-DD`, **inclusive**: cuenta el día entero, hasta las 23:59:59.999 en tu zona horaria.
+</ParamField>
+
+<ParamField query="tz" type="string">
+  Zona horaria IANA en la que se leen ambas fechas, por ejemplo `Europe/Berlin`. Si se omite, UTC.
+</ParamField>
+
+<Info>
+  A diferencia de un informe, la lista no tiene un límite de un año: está paginada. Ambas fechas son opcionales: solo `from` significa «desde ese día en adelante»; solo `to`, «hasta ese día incluido».
+</Info>
+
 ### Estados del deposito
 
 | Estado | Descripcion |

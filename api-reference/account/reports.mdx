@@ -10,7 +10,7 @@ description: "Export your full account history as one XLSX or PDF file"
 </div>
 
 Returns the whole account history for a period as a single file — not a page
-of it. The list endpoints (`/account/orders`, `/account/history`, …) page
+of it. The list endpoints (`/orders`, `/account/history`, …) page
 through records; this one builds the finished spreadsheet or document.
 
 ```bash
@@ -47,6 +47,13 @@ it (`tronrental_purchases_2026-08-01_2026-08-31.xlsx`).
 <Info>
   `to` is inclusive: `to=2026-08-31` covers that whole day up to 23:59:59.999
   in your time zone, and nothing from 1 September.
+</Info>
+
+<Info>
+  The same `from`, `to` and `tz` narrow the list endpoints — `/orders`,
+  `/invoices/my`, `/account/activations`, `/account/history` and
+  `/account/deposits` — so a list and a report over the same period hold the
+  same records. A list has no one-year cap, because it is paginated.
 </Info>
 
 ### Sections
