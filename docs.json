@@ -120,7 +120,8 @@
                   "api-reference/account/get-balance",
                   "api-reference/account/get-profile",
                   "api-reference/account/deposits",
-                  "api-reference/account/withdrawals"
+                  "api-reference/account/withdrawals",
+                  "api-reference/account/reports"
                 ]
               },
               {
