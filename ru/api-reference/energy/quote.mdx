@@ -1,0 +1,129 @@
+---
+title: Рассчитать цену
+api: GET /api/v1/energy/quote
+description: "Итоговая цена за нужный объём энергии, с учётом фикс-комиссии"
+---
+
+## Рассчитать цену
+
+Возвращает точную сумму, которая будет списана за указанный объём энергии — аренда и фиксированная комиссия вместе, по **вашей** ставке.
+
+**Эндпоинт публичный — аутентификация не обязательна.** Передайте свой API-ключ, чтобы получить свою цену; без него вернётся публичная рыночная.
+
+<Info>
+  Используйте этот эндпоинт, когда нужна цена под конкретный объём. `GET /api/v1/prices` всегда считает на 65 000 единиц и параметров не принимает, а `POST /api/v1/energy/estimate` возвращает только аренду по рыночной цене, игнорируя ваш ключ.
+</Info>
+
+### Параметры запроса
+
+<ParamField query="volume" type="integer" required>
+  Объём энергии для расчёта. От 60 000 до 5 000 000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Срок аренды. Для энергии поддерживается только `1h`.
+</ParamField>
+
+### Заголовки
+
+<ParamField header="X-API-Key" type="string">
+  Необязательный. С действующим ключом ответ отражает вашу согласованную ставку и вашу комиссию. Отсутствующий, неверный или отозванный ключ — не ошибка: вы просто получите публичную рыночную цену.
+</ParamField>
+
+### Ответ
+
+<ResponseField name="volume" type="number">
+  Объём энергии, для которого рассчитана котировка
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Срок аренды (`1h`)
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Ставка в SUN за 1 единицу энергии. По ней можно посчитать любой другой объём самостоятельно: `аренда = объём × price_sun / 1 000 000`
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Стоимость аренды для этого объёма, без фиксированной комиссии
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Фиксированная комиссия, берётся **один раз за заказ** независимо от объёма. Отражает вашу комиссию, если для аккаунта настроена индивидуальная ставка, скидка или её снятие.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **Сумма, которая будет списана**: `rental_trx + fixed_fee_trx`
+</ResponseField>
+
+<ResponseField name="total_usd" type="string | null">
+  Та же сумма в USD. `null`, если курс TRX/USD временно недоступен — значения в TRX при этом остаются верными.
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true`, если применилась ваша согласованная ставка, `false` — если котировка по публичной рыночной цене. Проверяйте это поле: забытый заголовок `X-API-Key` иначе выглядит как обычный ответ, и вы будете показывать клиентам публичную цену, а списываться будет ваша.
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/quote",
+    params={"volume": 131000, "duration": "1h"},
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Значения ниже — пример. У энергии есть рыночная цена, и она меняется в течение суток.
+</Info>
+
+```json Response
+{
+  "volume": 131000,
+  "duration": "1h",
+  "price_sun": "20.99",
+  "rental_trx": "2.749690",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "2.949690",
+  "total_usd": "1.02",
+  "personal_price": true
+}
+```
+
+### Типовые объёмы
+
+| Объём | Когда нужен |
+|---|---|
+| 65,000 | Перевод USDT получателю, у которого USDT уже есть |
+| 131,000 | Перевод USDT получателю, который никогда не держал USDT (создаётся новый слот хранения) |
+
+Каталога пакетов нет — подходит любой объём от 60 000 до 5 000 000, и фиксированная комиссия в любом случае берётся один раз за заказ. Два перевода одному получателю дешевле оформить одним заказом на 131 000, чем двумя по 65 000: комиссия платится один раз вместо двух.
+
+### Ошибки
+
+| Код | Значение |
+|------|---------|
+| `400 INVALID_VOLUME` | Объём вне диапазона 60 000–5 000 000 |
+| `400 INVALID_DURATION` | Срок, отличный от `1h` |
+
+Неверный или отозванный `X-API-Key` здесь **не** ошибка: котировка вернётся по публичной рыночной цене с `personal_price: false`.
