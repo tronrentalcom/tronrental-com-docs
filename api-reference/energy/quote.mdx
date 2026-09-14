@@ -1,0 +1,145 @@
+---
+title: Quote Price
+api: GET /api/v1/energy/quote
+description: "Final price for a specific energy volume, fixed fee included"
+---
+
+## Quote Price
+
+Returns the exact amount that will be charged for a given energy volume — rental
+and fixed fee together, at **your** rate.
+
+**This endpoint is public — authentication is optional.** Send your API key to be
+quoted your own price; without it you get the public market price.
+
+<Info>
+  Use this endpoint when you need a price for a specific volume. `GET /api/v1/prices`
+  always quotes 65,000 units and takes no parameters, and `POST /api/v1/energy/estimate`
+  returns the rental only, at market price, ignoring your key.
+</Info>
+
+### Query parameters
+
+<ParamField query="volume" type="integer" required>
+  Energy units to price. Between 60,000 and 5,000,000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Rental period. Energy supports `1h` only.
+</ParamField>
+
+### Headers
+
+<ParamField header="X-API-Key" type="string">
+  Optional. With a valid key the response reflects your negotiated rate and your
+  fixed fee. An absent, invalid or revoked key is not an error — you simply get
+  the public market price.
+</ParamField>
+
+### Response
+
+<ResponseField name="volume" type="number">
+  Energy units the quote was calculated for
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Rental period (`1h`)
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Rate in SUN per 1 energy unit. Use it to price other volumes yourself:
+  `rental = volume × price_sun / 1,000,000`
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Rental cost for this volume, without the fixed fee
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Fixed fee, charged **once per order** regardless of volume. Reflects your own
+  fee if a custom fee, discount or waiver applies to your account.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **What you will be charged**: `rental_trx + fixed_fee_trx`
+</ResponseField>
+
+<ResponseField name="total_usd" type="string | null">
+  The same total in USD. `null` when the TRX/USD rate is momentarily unavailable —
+  the TRX figures stay valid.
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true` when your negotiated rate was applied, `false` when the quote is at the
+  public market price. Check it: a forgotten `X-API-Key` header otherwise looks
+  like a normal response, and you would quote your customers the public price
+  while being charged your own.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/quote",
+    params={"volume": 131000, "duration": "1h"},
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Values below are an example. Energy has a market price and it moves during the day.
+</Info>
+
+```json Response
+{
+  "volume": 131000,
+  "duration": "1h",
+  "price_sun": "20.99",
+  "rental_trx": "2.749690",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "2.949690",
+  "total_usd": "1.02",
+  "personal_price": true
+}
+```
+
+### Common volumes
+
+| Volume | When |
+|---|---|
+| 65,000 | USDT transfer to a recipient that already holds USDT |
+| 131,000 | USDT transfer to a recipient that has never held USDT (a new storage slot is created) |
+
+There is no catalogue of packages — any volume between 60,000 and 5,000,000 is
+valid, and the fixed fee is charged once per order either way. Two transfers to
+the same recipient are cheaper as one 131,000 order than as two 65,000 orders,
+because the fee is paid once instead of twice.
+
+### Errors
+
+| Code | Meaning |
+|------|---------|
+| `400 INVALID_VOLUME` | Volume outside 60,000–5,000,000 |
+| `400 INVALID_DURATION` | Duration other than `1h` |
+
+An invalid or revoked `X-API-Key` is **not** an error here: the quote is returned
+at the public market price with `personal_price: false`.

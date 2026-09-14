@@ -1,0 +1,129 @@
+---
+title: Calcular preço
+api: GET /api/v1/energy/quote
+description: "Preço final para um volume específico de energia, taxa fixa incluída"
+---
+
+## Calcular preço
+
+Retorna o valor exato que será cobrado por um volume de energia informado — aluguel e taxa fixa juntos, pela **sua** tarifa.
+
+**Este endpoint é público — a autenticação é opcional.** Envie sua chave de API para receber o seu preço; sem ela você obtém o preço público de mercado.
+
+<Info>
+  Use este endpoint quando precisar do preço de um volume específico. `GET /api/v1/prices` sempre cota 65.000 unidades e não aceita parâmetros, e `POST /api/v1/energy/estimate` retorna apenas o aluguel a preço de mercado, ignorando sua chave.
+</Info>
+
+### Parâmetros de consulta
+
+<ParamField query="volume" type="integer" required>
+  Unidades de energia a cotar. Entre 60.000 e 5.000.000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Período de aluguel. Energia aceita apenas `1h`.
+</ParamField>
+
+### Cabeçalhos
+
+<ParamField header="X-API-Key" type="string">
+  Opcional. Com uma chave válida a resposta reflete sua tarifa negociada e sua taxa. Chave ausente, inválida ou revogada não é erro — você simplesmente recebe o preço público de mercado.
+</ParamField>
+
+### Resposta
+
+<ResponseField name="volume" type="number">
+  Unidades de energia para as quais a cotação foi calculada
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Período de aluguel (`1h`)
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Tarifa em SUN por 1 unidade de energia. Use-a para calcular outros volumes por conta própria: `aluguel = volume × price_sun / 1.000.000`
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Custo de aluguel para este volume, sem a taxa fixa
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Taxa fixa, cobrada **uma vez por pedido**, independentemente do volume. Reflete a sua taxa caso haja taxa personalizada, desconto ou isenção na sua conta.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **O que será cobrado**: `rental_trx + fixed_fee_trx`
+</ResponseField>
+
+<ResponseField name="total_usd" type="string | null">
+  O mesmo total em USD. `null` quando a cotação TRX/USD está momentaneamente indisponível — os valores em TRX continuam válidos.
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true` quando sua tarifa negociada foi aplicada, `false` quando a cotação usa o preço público de mercado. Verifique este campo: um cabeçalho `X-API-Key` esquecido parece uma resposta normal, e você estaria cotando o preço público aos seus clientes enquanto é cobrado pelo seu.
+</ResponseField>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/quote",
+    params={"volume": 131000, "duration": "1h"},
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Os valores abaixo são um exemplo. A energia tem preço de mercado e ele varia ao longo do dia.
+</Info>
+
+```json Response
+{
+  "volume": 131000,
+  "duration": "1h",
+  "price_sun": "20.99",
+  "rental_trx": "2.749690",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "2.949690",
+  "total_usd": "1.02",
+  "personal_price": true
+}
+```
+
+### Volumes comuns
+
+| Volume | Quando |
+|---|---|
+| 65,000 | Transferência de USDT para um destinatário que já possui USDT |
+| 131,000 | Transferência de USDT para um destinatário que nunca teve USDT (um novo slot de armazenamento é criado) |
+
+Não há catálogo de pacotes — qualquer volume entre 60.000 e 5.000.000 é válido, e a taxa fixa é cobrada uma vez por pedido em qualquer caso. Duas transferências para o mesmo destinatário saem mais baratas como um pedido de 131.000 do que como dois de 65.000: a taxa é paga uma vez em vez de duas.
+
+### Erros
+
+| Código | Significado |
+|------|---------|
+| `400 INVALID_VOLUME` | Volume fora de 60.000–5.000.000 |
+| `400 INVALID_DURATION` | Duração diferente de `1h` |
+
+Uma `X-API-Key` inválida ou revogada **não** é erro aqui: a cotação é retornada ao preço público de mercado com `personal_price: false`.

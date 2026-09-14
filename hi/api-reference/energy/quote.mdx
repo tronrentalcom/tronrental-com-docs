@@ -1,0 +1,129 @@
+---
+title: मूल्य अनुमान
+api: GET /api/v1/energy/quote
+description: "किसी निर्दिष्ट एनर्जी मात्रा की अंतिम कीमत, फिक्स्ड शुल्क सहित"
+---
+
+## मूल्य अनुमान
+
+दी गई एनर्जी मात्रा के लिए ठीक वही राशि लौटाता है जो काटी जाएगी — किराया और फिक्स्ड शुल्क मिलाकर, **आपकी** दर पर।
+
+**यह एंडपॉइंट सार्वजनिक है — प्रमाणीकरण वैकल्पिक है।** अपनी API कुंजी भेजें और अपनी कीमत पाएं; इसके बिना सार्वजनिक बाज़ार कीमत मिलेगी।
+
+<Info>
+  जब किसी विशिष्ट मात्रा की कीमत चाहिए तब इस एंडपॉइंट का उपयोग करें। `GET /api/v1/prices` हमेशा 65,000 यूनिट पर कीमत देता है और कोई पैरामीटर नहीं लेता, जबकि `POST /api/v1/energy/estimate` केवल बाज़ार दर पर किराया लौटाता है और आपकी कुंजी को अनदेखा करता है।
+</Info>
+
+### क्वेरी पैरामीटर
+
+<ParamField query="volume" type="integer" required>
+  कीमत निकालने के लिए एनर्जी यूनिट। 60,000 से 5,000,000 के बीच।
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  किराये की अवधि। एनर्जी केवल `1h` का समर्थन करती है।
+</ParamField>
+
+### हेडर
+
+<ParamField header="X-API-Key" type="string">
+  वैकल्पिक। वैध कुंजी के साथ प्रतिक्रिया आपकी तय दर और आपका शुल्क दिखाती है। कुंजी न होना, गलत या रद्द होना त्रुटि नहीं है — आपको बस सार्वजनिक बाज़ार कीमत मिलेगी।
+</ParamField>
+
+### प्रतिक्रिया
+
+<ResponseField name="volume" type="number">
+  जिस मात्रा के लिए अनुमान लगाया गया
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  किराये की अवधि (`1h`)
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  प्रति 1 एनर्जी यूनिट दर, SUN में। इससे कोई भी दूसरी मात्रा खुद निकालें: `किराया = मात्रा × price_sun / 1,000,000`
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  इस मात्रा का किराया, फिक्स्ड शुल्क के बिना
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  फिक्स्ड शुल्क, मात्रा चाहे जो हो, **प्रति ऑर्डर एक बार** लिया जाता है। यदि आपके खाते पर अलग शुल्क, छूट या माफी लागू है तो यहाँ वही दिखेगा।
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **जो राशि काटी जाएगी**: `rental_trx + fixed_fee_trx`
+</ResponseField>
+
+<ResponseField name="total_usd" type="string | null">
+  वही राशि USD में। जब TRX/USD दर क्षण भर के लिए उपलब्ध न हो तो `null` — TRX के आंकड़े तब भी सही रहते हैं।
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  आपकी तय दर लागू होने पर `true`, सार्वजनिक बाज़ार कीमत पर `false`। इसे जाँचें: `X-API-Key` हेडर भूल जाना सामान्य प्रतिक्रिया जैसा दिखता है, और आप ग्राहकों को सार्वजनिक कीमत बताते रहेंगे जबकि कटौती आपकी दर से होगी।
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/quote",
+    params={"volume": 131000, "duration": "1h"},
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  नीचे दिए मान उदाहरण हैं। एनर्जी की बाज़ार कीमत होती है और वह दिन भर बदलती रहती है।
+</Info>
+
+```json Response
+{
+  "volume": 131000,
+  "duration": "1h",
+  "price_sun": "20.99",
+  "rental_trx": "2.749690",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "2.949690",
+  "total_usd": "1.02",
+  "personal_price": true
+}
+```
+
+### सामान्य मात्राएँ
+
+| मात्रा | कब |
+|---|---|
+| 65,000 | ऐसे प्राप्तकर्ता को USDT भेजना जिसके पास पहले से USDT है |
+| 131,000 | ऐसे प्राप्तकर्ता को USDT भेजना जिसने कभी USDT नहीं रखा (नया स्टोरेज स्लॉट बनता है) |
+
+पैकेज की कोई सूची नहीं है — 60,000 से 5,000,000 तक कोई भी मात्रा मान्य है, और फिक्स्ड शुल्क हर हाल में प्रति ऑर्डर एक बार लगता है। एक ही प्राप्तकर्ता को दो ट्रांसफर के लिए 131,000 का एक ऑर्डर 65,000 के दो ऑर्डर से सस्ता पड़ता है: शुल्क दो बार के बजाय एक बार लगता है।
+
+### त्रुटियाँ
+
+| कोड | अर्थ |
+|------|---------|
+| `400 INVALID_VOLUME` | मात्रा 60,000–5,000,000 से बाहर |
+| `400 INVALID_DURATION` | `1h` के अलावा कोई अवधि |
+
+गलत या रद्द `X-API-Key` यहाँ त्रुटि **नहीं** है: अनुमान सार्वजनिक बाज़ार कीमत पर `personal_price: false` के साथ लौटता है।

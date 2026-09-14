@@ -1,0 +1,129 @@
+---
+title: Fiyat hesapla
+api: GET /api/v1/energy/quote
+description: "Belirli bir enerji miktarı için sabit ücret dahil nihai fiyat"
+---
+
+## Fiyat hesapla
+
+Belirtilen enerji miktarı için tam olarak tahsil edilecek tutarı döner — kiralama ve sabit ücret birlikte, **sizin** tarifenizle.
+
+**Bu uç nokta herkese açıktır — kimlik doğrulama isteğe bağlıdır.** Kendi fiyatınızı almak için API anahtarınızı gönderin; anahtarsız genel piyasa fiyatı döner.
+
+<Info>
+  Belirli bir miktarın fiyatı gerektiğinde bu uç noktayı kullanın. `GET /api/v1/prices` her zaman 65.000 birim üzerinden fiyat verir ve parametre almaz; `POST /api/v1/energy/estimate` ise yalnızca piyasa fiyatıyla kiralama tutarını döner ve anahtarınızı yok sayar.
+</Info>
+
+### Sorgu parametreleri
+
+<ParamField query="volume" type="integer" required>
+  Fiyatlandırılacak enerji birimi. 60.000 ile 5.000.000 arasında.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Kiralama süresi. Enerji yalnızca `1h` destekler.
+</ParamField>
+
+### Başlıklar
+
+<ParamField header="X-API-Key" type="string">
+  İsteğe bağlı. Geçerli bir anahtarla yanıt, anlaşmalı tarifenizi ve ücretinizi yansıtır. Anahtarın olmaması, geçersiz veya iptal edilmiş olması hata değildir — yalnızca genel piyasa fiyatını alırsınız.
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="volume" type="number">
+  Fiyatın hesaplandığı enerji miktarı
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Kiralama süresi (`1h`)
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  1 enerji birimi başına SUN cinsinden tarife. Diğer miktarları kendiniz hesaplamak için kullanın: `kiralama = miktar × price_sun / 1.000.000`
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Bu miktar için kiralama bedeli, sabit ücret hariç
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Sabit ücret; miktardan bağımsız olarak **sipariş başına bir kez** alınır. Hesabınızda özel ücret, indirim veya muafiyet varsa burada kendi ücretiniz görünür.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **Tahsil edilecek tutar**: `rental_trx + fixed_fee_trx`
+</ResponseField>
+
+<ResponseField name="total_usd" type="string | null">
+  Aynı tutarın USD karşılığı. TRX/USD kuru anlık olarak alınamadığında `null` — TRX değerleri yine geçerlidir.
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  Anlaşmalı tarifeniz uygulandıysa `true`, fiyat genel piyasa fiyatıysa `false`. Bu alanı kontrol edin: unutulmuş bir `X-API-Key` başlığı normal bir yanıt gibi görünür ve müşterilerinize genel fiyatı verirken sizden kendi fiyatınız tahsil edilir.
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/quote",
+    params={"volume": 131000, "duration": "1h"},
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Aşağıdaki değerler örnektir. Enerjinin piyasa fiyatı vardır ve gün içinde değişir.
+</Info>
+
+```json Response
+{
+  "volume": 131000,
+  "duration": "1h",
+  "price_sun": "20.99",
+  "rental_trx": "2.749690",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "2.949690",
+  "total_usd": "1.02",
+  "personal_price": true
+}
+```
+
+### Yaygın miktarlar
+
+| Miktar | Ne zaman |
+|---|---|
+| 65,000 | Halihazırda USDT bulunduran bir adrese USDT transferi |
+| 131,000 | Hiç USDT tutmamış bir adrese USDT transferi (yeni bir depolama alanı oluşturulur) |
+
+Paket kataloğu yoktur — 60.000 ile 5.000.000 arasındaki her miktar geçerlidir ve sabit ücret her durumda sipariş başına bir kez alınır. Aynı alıcıya iki transfer, iki adet 65.000 yerine tek bir 131.000 siparişi olarak daha ucuza gelir: ücret iki kez yerine bir kez ödenir.
+
+### Hatalar
+
+| Kod | Anlamı |
+|------|---------|
+| `400 INVALID_VOLUME` | Miktar 60.000–5.000.000 aralığının dışında |
+| `400 INVALID_DURATION` | `1h` dışında bir süre |
+
+Geçersiz veya iptal edilmiş `X-API-Key` burada hata **değildir**: fiyat genel piyasa fiyatıyla ve `personal_price: false` ile döner.
