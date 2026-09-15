@@ -26,6 +26,22 @@ Returns a paginated list of your orders, newest first.
   Filter by order type — `energy` or `bandwidth`
 </ParamField>
 
+<ParamField query="from" type="string">
+  First day of the period, `YYYY-MM-DD`, inclusive. Omit both dates for the full list.
+</ParamField>
+
+<ParamField query="to" type="string">
+  Last day of the period, `YYYY-MM-DD`, **inclusive** — the whole day counts, down to 23:59:59.999 in your time zone.
+</ParamField>
+
+<ParamField query="tz" type="string">
+  IANA time zone the two dates are read in, e.g. `Europe/Berlin`. Omitted means UTC.
+</ParamField>
+
+<Info>
+  Unlike a report, a list has no one-year cap — it is paginated. Both dates are optional: `from` alone means "from that day on", `to` alone "up to and including that day".
+</Info>
+
 ### Response
 
 Returns `orders` (array of order objects), `total`, `page`, and `page_size`.

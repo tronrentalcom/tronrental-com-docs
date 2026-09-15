@@ -38,6 +38,24 @@ curl https://api.tronrental.com/v1/account/deposits \
   -H "X-API-Key: your_api_key"
 ```
 
+### Параметры запроса
+
+<ParamField query="from" type="string">
+  Первый день периода, `YYYY-MM-DD`, включительно. Без обеих дат — весь список.
+</ParamField>
+
+<ParamField query="to" type="string">
+  Последний день периода, `YYYY-MM-DD`, **включительно** — учитываются все сутки, до 23:59:59.999 в вашей таймзоне.
+</ParamField>
+
+<ParamField query="tz" type="string">
+  Таймзона IANA, в которой читаются обе даты, например `Europe/Berlin`. Без неё — UTC.
+</ParamField>
+
+<Info>
+  В отличие от отчёта, у списка нет ограничения в один год — он постраничный. Обе даты необязательны: только `from` означает «с этого дня и дальше», только `to` — «по этот день включительно».
+</Info>
+
 ### Статусы депозитов
 
 | Статус | Описание |

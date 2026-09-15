@@ -38,6 +38,24 @@ curl https://api.tronrental.com/v1/account/deposits \
   -H "X-API-Key: your_api_key"
 ```
 
+### क्वेरी पैरामीटर
+
+<ParamField query="from" type="string">
+  अवधि का पहला दिन, `YYYY-MM-DD`, सहित। दोनों तिथियाँ न देने पर पूरी सूची।
+</ParamField>
+
+<ParamField query="to" type="string">
+  अवधि का अंतिम दिन, `YYYY-MM-DD`, **सहित** — आपके टाइम ज़ोन में 23:59:59.999 तक पूरा दिन गिना जाता है।
+</ParamField>
+
+<ParamField query="tz" type="string">
+  IANA टाइम ज़ोन जिसमें दोनों तिथियाँ पढ़ी जाती हैं, जैसे `Europe/Berlin`। न देने पर UTC।
+</ParamField>
+
+<Info>
+  रिपोर्ट के विपरीत, सूची पर एक साल की सीमा नहीं है — वह पेज-दर-पेज आती है। दोनों तिथियाँ वैकल्पिक हैं: केवल `from` का अर्थ «उस दिन से आगे», केवल `to` का «उस दिन तक, सहित»।
+</Info>
+
 ### डिपॉज़िट स्टेटस
 
 | स्टेटस | विवरण |

@@ -18,6 +18,22 @@ description: "列出您的账单，支持可选筛选"
   按状态筛选：`pending`、`paid`、`delegated`、`expired`、`failed`
 </ParamField>
 
+<ParamField query="from" type="string">
+  周期的第一天，`YYYY-MM-DD`，含当天。两个日期都不传则返回完整列表。
+</ParamField>
+
+<ParamField query="to" type="string">
+  周期的最后一天，`YYYY-MM-DD`，**含当天** —— 按您的时区计到 23:59:59.999。
+</ParamField>
+
+<ParamField query="tz" type="string">
+  解析这两个日期所用的 IANA 时区，例如 `Europe/Berlin`。不传则按 UTC。
+</ParamField>
+
+<Info>
+  与报表不同，列表没有一年的上限——它是分页的。两个日期都可选：只传 `from` 表示「从该日起」，只传 `to` 表示「截至该日（含）」。
+</Info>
+
 ### 响应
 
 返回包含 `invoices` 数组和 `total` 计数的分页对象。
@@ -33,19 +49,24 @@ curl "https://api.tronrental.com/v1/invoices/my?page=1&status=delegated" \
 {
   "invoices": [
     {
-      "invoice_id": 789,
+      "invoice_id": "265ba22d-6c76-4ec5-820c-d2ad153be42f",
       "payment_address": "TPaymentAddress...",
       "target_address": "TRecipientAddress...",
+      "resource": "energy",
       "energy_amount": 65000,
-      "duration": "1h",
-      "price_trx": "2.75",
-      "price_usdt": "0.64",
+      "transfer_count": 1,
+      "duration": null,
+      "price_trx": "2.150000",
+      "price_usdt": "0.740000",
       "status": "delegated",
-      "created_at": "2026-03-05T12:00:00Z"
+      "expires_at": "2026-03-05T12:30:00Z",
+      "created_at": "2026-03-05T12:00:00Z",
+      "paid_at": null,
+      "completed_at": null
     }
   ],
   "total": 1,
   "page": 1,
-  "pages": 1
+  "page_size": 20
 }
 ```

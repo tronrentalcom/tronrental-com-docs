@@ -18,6 +18,22 @@ Sayfalandirilmis fatura listenizi dondurur.
   Duruma gore filtrele: `pending`, `paid`, `delegated`, `expired`, `failed`
 </ParamField>
 
+<ParamField query="from" type="string">
+  Dönemin ilk günü, `YYYY-MM-DD`, dahil. İki tarih de verilmezse tüm liste döner.
+</ParamField>
+
+<ParamField query="to" type="string">
+  Dönemin son günü, `YYYY-MM-DD`, **dahil** — kendi saat diliminizde 23:59:59.999'a kadar günün tamamı sayılır.
+</ParamField>
+
+<ParamField query="tz" type="string">
+  İki tarihin okunduğu IANA saat dilimi, örn. `Europe/Berlin`. Verilmezse UTC.
+</ParamField>
+
+<Info>
+  Rapordan farklı olarak listede bir yıl sınırı yoktur — liste sayfalanır. Her iki tarih de isteğe bağlıdır: yalnızca `from` «o günden itibaren», yalnızca `to` «o gün dahil olmak üzere» demektir.
+</Info>
+
 ### Yanit
 
 `invoices` dizisi ve `total` sayisini iceren sayfalandirilmis bir nesne dondurur.
@@ -33,19 +49,24 @@ curl "https://api.tronrental.com/v1/invoices/my?page=1&status=delegated" \
 {
   "invoices": [
     {
-      "invoice_id": 789,
+      "invoice_id": "265ba22d-6c76-4ec5-820c-d2ad153be42f",
       "payment_address": "TPaymentAddress...",
       "target_address": "TRecipientAddress...",
+      "resource": "energy",
       "energy_amount": 65000,
-      "duration": "1h",
-      "price_trx": "2.75",
-      "price_usdt": "0.64",
+      "transfer_count": 1,
+      "duration": null,
+      "price_trx": "2.150000",
+      "price_usdt": "0.740000",
       "status": "delegated",
-      "created_at": "2026-03-05T12:00:00Z"
+      "expires_at": "2026-03-05T12:30:00Z",
+      "created_at": "2026-03-05T12:00:00Z",
+      "paid_at": null,
+      "completed_at": null
     }
   ],
   "total": 1,
   "page": 1,
-  "pages": 1
+  "page_size": 20
 }
 ```

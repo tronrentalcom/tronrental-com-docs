@@ -26,6 +26,22 @@ Siparişlerinizin sayfalanmış listesini, en yeniden başlayarak döndürür.
   Sipariş türüne göre filtrele — `energy` veya `bandwidth`
 </ParamField>
 
+<ParamField query="from" type="string">
+  Dönemin ilk günü, `YYYY-MM-DD`, dahil. İki tarih de verilmezse tüm liste döner.
+</ParamField>
+
+<ParamField query="to" type="string">
+  Dönemin son günü, `YYYY-MM-DD`, **dahil** — kendi saat diliminizde 23:59:59.999'a kadar günün tamamı sayılır.
+</ParamField>
+
+<ParamField query="tz" type="string">
+  İki tarihin okunduğu IANA saat dilimi, örn. `Europe/Berlin`. Verilmezse UTC.
+</ParamField>
+
+<Info>
+  Rapordan farklı olarak listede bir yıl sınırı yoktur — liste sayfalanır. Her iki tarih de isteğe bağlıdır: yalnızca `from` «o günden itibaren», yalnızca `to` «o gün dahil olmak üzere» demektir.
+</Info>
+
 ### Yanıt
 
 `orders` (sipariş nesneleri dizisi), `total`, `page` ve `page_size` döndürür.

@@ -1,0 +1,128 @@
+---
+title: Reports
+description: "Export your full account history as one XLSX or PDF file"
+---
+
+## Download a report
+
+<div>
+  `GET /api/v1/account/reports/{report}`
+</div>
+
+Returns the whole account history for a period as a single file — not a page
+of it. The list endpoints (`/orders`, `/account/history`, …) page
+through records; this one builds the finished spreadsheet or document.
+
+```bash
+curl "https://api.tronrental.com/v1/account/reports/purchases?from=2026-08-01&to=2026-08-31&format=xlsx&tz=Europe/Berlin" \
+  -H "X-API-Key: your_api_key" \
+  -o report.xlsx
+```
+
+The response is the file itself, with `Content-Disposition: attachment` naming
+it (`tronrental_purchases_2026-08-01_2026-08-31.xlsx`).
+
+### Reports
+
+| `report` | Contents |
+|----------|----------|
+| `everything` | Purchases, activations, deposits and the balance ledger in one file |
+| `purchases` | Energy and bandwidth orders together |
+| `energy` | Energy orders only |
+| `bandwidth` | Bandwidth orders only |
+| `invoices` | InstantBuy invoices (paid by transfer, not from balance) |
+| `activations` | Address activations |
+| `deposits` | Incoming deposits — requires the `deposit_view` scope |
+| `history` | Every balance movement, the one report whose deltas sum to the balance change |
+
+### Query parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `from` | yes | First day of the period, `YYYY-MM-DD`, inclusive |
+| `to` | yes | Last day of the period, `YYYY-MM-DD`, **inclusive** |
+| `format` | no | `xlsx` (default) or `pdf` |
+| `tz` | no | IANA time zone, e.g. `Europe/Berlin`. Dates and the period are interpreted and printed in it. Omitted means UTC |
+
+<Info>
+  `to` is inclusive: `to=2026-08-31` covers that whole day up to 23:59:59.999
+  in your time zone, and nothing from 1 September.
+</Info>
+
+<Info>
+  The same `from`, `to` and `tz` narrow the list endpoints — `/orders`,
+  `/invoices/my`, `/account/activations`, `/account/history` and
+  `/account/deposits` — so a list and a report over the same period hold the
+  same records. A list has no one-year cap, because it is paginated.
+</Info>
+
+### Sections
+
+A report can hold more than one table. `purchases`, `energy` and `bandwidth`
+carry the address activations they paid for as a second table; `everything`
+carries four. In XLSX each section is its own sheet; in PDF they follow one
+after another, each starting a new page.
+
+A section you have no right to read is absent rather than empty — with a
+`view`-only key, `everything` simply has no Deposits sheet.
+
+<Info>
+  `everything` does not include invoices. Invoices are scoped to the
+  authenticated user, while every other section is scoped to the account named
+  by `X-Account-Id`, and one file should not mix the two. Request `invoices`
+  separately.
+</Info>
+
+### Totals
+
+Every report ends with a `TOTAL` row, and purchases add a reference line
+beneath it:
+
+- **TOTAL** sums what was actually charged — orders whose status is `failed`
+  are excluded, and any partial refund is already subtracted.
+- **of which failed** counts those excluded orders and their price, so the
+  difference is never silent. The refund for them appears in the `history`
+  report.
+- **Activation** covers every row including failed ones: the recipient address
+  was created and paid for whether or not the energy arrived.
+
+<Info>
+  The invoice total counts only invoices that were actually paid; unpaid and
+  expired ones stay in the file and are summed separately under **of which
+  never paid**.
+</Info>
+
+### Limits
+
+| Limit | Value |
+|-------|-------|
+| Period per file | 1 year |
+| Rows per PDF | 50 000 |
+| Rows per XLSX | no limit |
+| Requests | 5 per minute, per account |
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | `deposits` without the `deposit_view` scope |
+| `404` | `NOT_FOUND` | unknown `report` |
+| `413` | `REPORT_TOO_LARGE` | more rows than a PDF can carry — request `format=xlsx` or a shorter period |
+| `422` | `INVALID_REPORT_PERIOD` | period longer than a year, `from` after `to`, unknown `tz`, or a `format` other than `xlsx`/`pdf` |
+| `429` | `RATE_LIMIT_EXCEEDED` | more than 5 reports a minute |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "REPORT_TOO_LARGE",
+      "message": "This period holds more than the 50 000 rows a PDF can carry — choose XLSX, which has no row limit, or narrow the period."
+    }
+  }
+}
+```
+
+<Info>
+  Reports are written in English regardless of your account language, and
+  amounts are in TRX.
+</Info>
