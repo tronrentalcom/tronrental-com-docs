@@ -1,100 +1,226 @@
 ---
-title: Webhooks अवलोकन
-description: "अकाउंट इवेंट के लिए रियल-टाइम नोटिफिकेशन प्राप्त करें"
+title: वेबहुक — परिचय
+description: "अपने खाते की घटनाओं की सूचनाएँ वास्तविक समय में पाएँ"
 ---
 
-## Webhooks
+## वेबहुक
 
-अपने अकाउंट पर इवेंट होने पर रियल-टाइम HTTP POST नोटिफिकेशन प्राप्त करने के लिए webhook URL कॉन्फ़िगर करें।
+आपके खाते का **एक ही वेबहुक URL** होता है और सभी घटनाएँ वहीं भेजी जाती हैं। इसे [Dashboard → API](https://tronrental.com/dashboard/api) में या [वेबहुक कॉन्फ़िगर करें](/api-reference/webhooks/configure) से सेट करें।
 
-### समर्थित इवेंट
+### घटनाएँ
 
-| इवेंट | विवरण |
-|-------|-------------|
-| `order.filled` | एनर्जी ऑर्डर पूरा हुआ |
-| `order.failed` | एनर्जी ऑर्डर विफल |
-| `deposit.confirmed` | डिपॉज़िट बैलेंस में क्रेडिट हुआ |
-| `invoice.paid` | इनवॉइस भुगतान प्राप्त |
-| `invoice.delegated` | इनवॉइस एनर्जी डेलिगेट की गई |
-| `smart_mode.transfer` | Smart Mode ट्रांसफर प्रोसेस हुआ |
-| `withdrawal.completed` | निकासी भेजी गई |
+आज दो घटनाएँ मौजूद हैं।
 
-### Webhook पेलोड
+| घटना | कब भेजी जाती है |
+|-------|-----------|
+| `order.updated` | एनर्जी या बैंडविड्थ ऑर्डर की स्थिति बदलने पर — **केवल API से बनाए गए ऑर्डर के लिए** |
+| `subscription.transfer` | Smart Mode ने किसी निगरानी वाले पते से हुए ट्रांसफ़र का भुगतान किया |
 
-```json
+<Warning>
+  `order.updated` केवल उन ऑर्डर के लिए भेजी जाती है जो API कुंजी से बनाए गए हों। वेबसाइट या टेलीग्राम बॉट से की गई खरीद पर कोई वेबहुक नहीं जाता — भले ही वही खाता Smart Mode की घटनाएँ सामान्य रूप से पाता रहे।
+</Warning>
+
+### लिफ़ाफ़ा
+
+हर डिलीवरी में वही तीन शीर्ष-स्तरीय कुंजियाँ होती हैं। `timestamp` वह क्षण है जब हमने घटना बनाई — ISO-8601, UTC में।
+
+```json Response
 {
-  "event": "order.filled",
-  "data": {
-    "order_id": 1234,
-    "address": "TAddress...",
-    "energy_amount": 65000,
-    "price_trx": "2.75"
-  },
-  "timestamp": "2026-03-04T12:00:00Z"
+  "event": "order.updated",
+  "data": { },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }
 ```
 
-### आवश्यकताएं
+हेडर:
 
-- URL को **HTTPS** का उपयोग करना चाहिए
-- 10 सेकंड के भीतर `2xx` स्टेटस के साथ रिस्पॉन्ड करना चाहिए
-- विफल डिलीवरी एक्सपोनेंशियल बैकऑफ़ के साथ 3 बार तक पुनः प्रयास की जाती हैं
+| हेडर | मान |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `X-Webhook-Signature` | `sha256=<hex>` — नीचे «हस्ताक्षर की जाँच» देखें |
+| `Host` | आपके URL का होस्ट |
 
-### Webhook सिग्नेचर सत्यापित करना
+### `order.updated`
 
-प्रत्येक webhook अनुरोध में HMAC-SHA256 सिग्नेचर वाला `X-Webhook-Signature` हेडर शामिल होता है। इसका उपयोग यह सत्यापित करने के लिए करें कि अनुरोध TronRental से है।
+<ResponseField name="id" type="number">
+  ऑर्डर ID।
+</ResponseField>
 
-सिग्नेचर आपके webhook सीक्रेट (जब आप [अपना webhook कॉन्फ़िगर](/api-reference/webhooks/configure) करते हैं तब लौटाया जाता है) का उपयोग करके रॉ अनुरोध बॉडी पर कंप्यूट किया जाता है।
+<ResponseField name="type" type="string">
+  `energy` या `bandwidth`।
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `processing`, `filled`, `partial`, `failed`, `reclaimed` या `reclaim_failed`। **यही फ़ील्ड सत्य का स्रोत है** — नीचे दी चेतावनी देखें।
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  वह पता जिसे संसाधन डेलिगेट किया गया।
+</ResponseField>
+
+<ResponseField name="volume" type="number">
+  ऑर्डर की गई मात्रा — एनर्जी यूनिट या बैंडविड्थ पॉइंट।
+</ResponseField>
+
+<ResponseField name="expected_volume" type="number">
+  `volume` जैसा ही। यह इसलिए है कि अपेक्षित और वितरित की तुलना बिना यह जाने की जा सके कि कौन-सा फ़ील्ड क्या दर्शाता है।
+</ResponseField>
+
+<ResponseField name="delivered_volume" type="number">
+  अब तक वास्तव में कितना डेलिगेट हुआ। ऑर्डर `filled` होने पर `volume` के बराबर; `processing` और `partial` में अब तक दिए गए हिस्सों का योग; विफलता पर `0`।
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  ऑर्डर की कीमत TRX में, दशमलव स्ट्रिंग के रूप में।
+</ResponseField>
+
+<ResponseField name="delegate_txid" type="string | null">
+  वह लेनदेन जिसने संसाधन डेलिगेट किया।
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string | null">
+  वह लेनदेन जिसने किराया समाप्त होने पर उसे वापस लिया।
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  संसाधन कब वापस लिया जाना है, ISO-8601; टाइमर से वापस न लिए जाने वाले ऑर्डर में `null`।
+</ResponseField>
+
+```json Response
+{
+  "event": "order.updated",
+  "data": {
+    "id": 247033,
+    "type": "energy",
+    "status": "filled",
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "volume": 65000,
+    "expected_volume": 65000,
+    "delivered_volume": 65000,
+    "price_trx": "2.75",
+    "delegate_txid": "a1b2c3d4e5f6...",
+    "undelegate_txid": null,
+    "reclaim_at": "2026-09-15T07:44:56+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+**परिणाम `status` से आँकें, `delegate_txid` की मौजूदगी से नहीं।** विफल ऑर्डर में भी लेनदेन ID हो सकता है — हम उसे जानबूझकर रखते हैं ताकि विफलता की जाँच हो सके। संसाधन मिला या नहीं, यह केवल `status` बताता है।
+</Warning>
+
+बड़े ऑर्डर को हम भीतर हिस्सों में बाँटते हैं, पर वह हमारा काम है: आपको **प्रति ऑर्डर एक ही वेबहुक** मिलता है, प्रति हिस्सा नहीं।
+
+### `subscription.transfer`
+
+<ResponseField name="subscription_id" type="number">
+  वह Smart Mode सब्सक्रिप्शन जिससे यह ट्रांसफ़र जुड़ा है।
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  वह निगरानी वाला पता जहाँ से ट्रांसफ़र गया।
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  आपने सब्सक्रिप्शन को जो लेबल दिया।
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string">
+  चेन पर ट्रांसफ़र का लेनदेन।
+</ResponseField>
+
+<ResponseField name="transfer_count" type="number">
+  इस डेलिगेशन ने कितने ट्रांसफ़र कवर किए।
+</ResponseField>
+
+<ResponseField name="energy_delegated" type="number">
+  उनके लिए डेलिगेट की गई एनर्जी।
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  एनर्जी के लिए काटी गई राशि, TRX में।
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string | null">
+  ऊपर से काटा गया बैंडविड्थ, या न काटे जाने पर `null`।
+</ResponseField>
+
+<ResponseField name="balance_after_trx" type="string">
+  कटौती के बाद आपके खाते का बैलेंस।
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  ट्रांसफ़र कब संसाधित हुआ। ध्यान दें कि यह **`data` के भीतर** है और लिफ़ाफ़े के अपने `timestamp` से अलग है।
+</ResponseField>
+
+```json Response
+{
+  "event": "subscription.transfer",
+  "data": {
+    "subscription_id": 412,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "label": "payouts",
+    "tx_hash": "9f8e7d6c5b4a...",
+    "transfer_count": 1,
+    "energy_delegated": 65000,
+    "fee_trx": "2.75",
+    "bw_fee_trx": null,
+    "balance_after_trx": "376.63",
+    "timestamp": "2026-09-14T14:51:16.512033+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+### डिलीवरी
+
+- अधिकतम **3 प्रयास**, बीच में **1 सेकंड** और फिर **4 सेकंड** का ठहराव। सफलता के बाद और अंतिम प्रयास के बाद कोई ठहराव नहीं।
+- प्रति प्रयास **10 सेकंड** का टाइमआउट।
+- हम कोई भी **`2xx`** स्वीकार करते हैं। बाकी सब विफल प्रयास गिना जाता है।
+- **रीडायरेक्ट का पालन नहीं किया जाता।** `301`/`302` एक विफल प्रयास है, छलाँग नहीं।
+- छूटी हुई घटनाएँ बाद में **दोबारा नहीं भेजी जातीं**। तीनों प्रयास विफल हुए तो वह घटना चली गई; दोबारा भेजे जाने की प्रतीक्षा के बजाय [ऑर्डर देखें](/api-reference/orders/get-order) से मिलान करें।
+
+आपका URL किसी **सार्वजनिक** पते पर रिज़ॉल्व होना चाहिए। लूपबैक, निजी और लिंक-लोकल रेंज अस्वीकार की जाती हैं, और वह होस्ट भी जो रिज़ॉल्व ही न हो — दोनों स्थितियों में कुछ नहीं भेजा जाता और लॉग में कोई पंक्ति नहीं लिखी जाती।
+
+### हस्ताक्षर की जाँच
+
+हर अनुरोध में `X-Webhook-Signature: sha256=<hex>` होता है — आपके वेबहुक सीक्रेट से, **कच्चे अनुरोध बॉडी** पर निकाला गया HMAC-SHA256।
+
+आपकी जाँच चलेगी या नहीं, यह दो बातों पर निर्भर है:
+
+1. तुलना से पहले **`sha256=` उपसर्ग हटाएँ**। हेडर केवल हेक्स डाइजेस्ट नहीं है।
+2. **प्राप्त बाइट्स का हैश लें**, दोबारा सीरियलाइज़ किए गए ऑब्जेक्ट का नहीं। JSON को पार्स करके फिर से लिखने पर कुंजियों का क्रम और स्पेस बदल जाते हैं, और हस्ताक्षर कभी नहीं मिलेगा।
+
+आपका साइनिंग सीक्रेट [Dashboard → API](https://tronrental.com/dashboard/api) में वेबहुक URL के बगल में दिखता है। API कुंजी वाले अनुरोधों को यह नहीं लौटाया जाता — पढ़ने के लिए वेबसाइट पर साइन इन करना होगा।
 
 <CodeGroup>
 ```python Python
-import hmac
 import hashlib
+import hmac
 
-def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(
-        secret.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
-
-# In your webhook handler:
-# payload = request.body  (raw bytes)
-# signature = request.headers["X-Webhook-Signature"]
-# secret = "whsec_abc123..."  (from configure response)
-# if not verify_webhook(payload, signature, secret):
-#     return Response(status_code=401)
+def verify_webhook(raw_body: bytes, signature_header: str, secret: str) -> bool:
+    prefix, _, received = signature_header.partition("=")
+    if prefix != "sha256" or not received:
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, received)
 ```
 
 ```javascript JavaScript
 const crypto = require("crypto");
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature)
-  );
+function verifyWebhook(rawBody, signatureHeader, secret) {
+  const [prefix, received] = String(signatureHeader).split("=");
+  if (prefix !== "sha256" || !received) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(expected);
+  const b = Buffer.from(received);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
-
-// In your webhook handler:
-// const payload = req.rawBody;  // raw request body string
-// const signature = req.headers["x-webhook-signature"];
-// const secret = "whsec_abc123...";
-// if (!verifyWebhook(payload, signature, secret)) {
-//   return res.status(401).send("Invalid signature");
-// }
 ```
 </CodeGroup>
 
 <Warning>
-  Webhook डेटा प्रोसेस करने से पहले हमेशा सिग्नेचर सत्यापित करें। टाइमिंग अटैक को रोकने के लिए कॉन्स्टेंट-टाइम कम्पैरिज़न (`hmac.compare_digest` / `crypto.timingSafeEqual`) का उपयोग करें।
-</Warning>
-
-<Warning>
-  Webhook URL `localhost`, `127.0.0.1`, या अन्य प्राइवेट एड्रेस की ओर पॉइंट नहीं कर सकते।
+  सामग्री पर कार्रवाई करने से पहले हस्ताक्षर जाँचें, और स्थिर समय में तुलना करें (`hmac.compare_digest` / `crypto.timingSafeEqual`)। `==` से तुलना समय के ज़रिए जानकारी लीक करती है।
 </Warning>

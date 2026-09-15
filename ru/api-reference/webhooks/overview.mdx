@@ -1,100 +1,226 @@
 ---
-title: Обзор вебхуков
-description: "Получайте уведомления в реальном времени о событиях аккаунта"
+title: Вебхуки — обзор
+description: "Получайте уведомления о событиях аккаунта в реальном времени"
 ---
 
 ## Вебхуки
 
-Настройте URL вебхука для получения HTTP POST уведомлений в реальном времени при возникновении событий на вашем аккаунте.
+У аккаунта **один URL вебхука**, и все события уходят на него. Задайте его в [Dashboard → API](https://tronrental.com/dashboard/api) или через [Настройку вебхука](/api-reference/webhooks/configure).
 
-### Поддерживаемые события
+### События
 
-| Событие | Описание |
-|---------|----------|
-| `order.filled` | Заказ на энергию выполнен |
-| `order.failed` | Заказ на энергию не удался |
-| `deposit.confirmed` | Депозит зачислен на баланс |
-| `invoice.paid` | Оплата инвойса получена |
-| `invoice.delegated` | Энергия по инвойсу делегирована |
-| `smart_mode.transfer` | Перевод Smart Mode обработан |
-| `withdrawal.completed` | Вывод отправлен |
+Сегодня существует два события.
 
-### Формат данных вебхука
+| Событие | Когда отправляется |
+|-------|-----------|
+| `order.updated` | Заказ энергии или bandwidth сменил состояние — **только для заказов, созданных через API** |
+| `subscription.transfer` | Smart Mode оплатил перевод с отслеживаемого адреса |
 
-```json
+<Warning>
+  `order.updated` отправляется только для заказов, созданных с API-ключом. Покупки на сайте и через Telegram-бота вебхук не порождают — при том что события Smart Mode тот же аккаунт получает как обычно.
+</Warning>
+
+### Конверт
+
+У каждой доставки три одинаковых ключа верхнего уровня. `timestamp` — момент, когда мы собрали событие, ISO-8601 в UTC.
+
+```json Response
 {
-  "event": "order.filled",
-  "data": {
-    "order_id": 1234,
-    "address": "TAddress...",
-    "energy_amount": 65000,
-    "price_trx": "2.75"
-  },
-  "timestamp": "2026-03-04T12:00:00Z"
+  "event": "order.updated",
+  "data": { },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }
 ```
 
-### Требования
+Заголовки:
 
-- URL должен использовать **HTTPS**
-- Должен ответить статусом `2xx` в течение 10 секунд
-- Неудачные доставки повторяются до 3 раз с экспоненциальной задержкой
+| Заголовок | Значение |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `X-Webhook-Signature` | `sha256=<hex>` — см. раздел «Проверка подписи» ниже |
+| `Host` | хост вашего URL |
 
-### Проверка подписи вебхука
+### `order.updated`
 
-Каждый запрос вебхука содержит заголовок `X-Webhook-Signature` с подписью HMAC-SHA256. Используйте его для проверки того, что запрос отправлен TronRental.
+<ResponseField name="id" type="number">
+  ID заказа.
+</ResponseField>
 
-Подпись вычисляется по необработанному телу запроса с использованием секрета вебхука (возвращается при [настройке вебхука](/api-reference/webhooks/configure)).
+<ResponseField name="type" type="string">
+  `energy` или `bandwidth`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `processing`, `filled`, `partial`, `failed`, `reclaimed` или `reclaim_failed`. **Это поле — источник истины**, см. предупреждение ниже.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  Адрес, которому делегирован ресурс.
+</ResponseField>
+
+<ResponseField name="volume" type="number">
+  Заказанный объём — единицы энергии или пункты bandwidth.
+</ResponseField>
+
+<ResponseField name="expected_volume" type="number">
+  То же, что `volume`. Присутствует, чтобы сравнивать ожидаемое с доставленным, не выясняя, какое поле что означает.
+</ResponseField>
+
+<ResponseField name="delivered_volume" type="number">
+  Сколько фактически делегировано на данный момент. Равно `volume`, когда заказ `filled`; на `processing` и `partial` — сумма уже выданных частей; `0` при отказе.
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Цена заказа в TRX, десятичной строкой.
+</ResponseField>
+
+<ResponseField name="delegate_txid" type="string | null">
+  Транзакция, которой ресурс делегирован.
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string | null">
+  Транзакция, которой его забрали обратно по окончании аренды.
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  Когда ресурс запланировано отозвать, ISO-8601, либо `null` для заказов без таймера отзыва.
+</ResponseField>
+
+```json Response
+{
+  "event": "order.updated",
+  "data": {
+    "id": 247033,
+    "type": "energy",
+    "status": "filled",
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "volume": 65000,
+    "expected_volume": 65000,
+    "delivered_volume": 65000,
+    "price_trx": "2.75",
+    "delegate_txid": "a1b2c3d4e5f6...",
+    "undelegate_txid": null,
+    "reclaim_at": "2026-09-15T07:44:56+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+**Судите об исходе по `status`, а не по наличию `delegate_txid`.** У неуспешного заказа идентификатор транзакции тоже может быть заполнен — мы оставляем его намеренно, чтобы отказ можно было расследовать. Получен ли ресурс, говорит только `status`.
+</Warning>
+
+Крупный заказ мы внутри делим на части, но это наша кухня: вы получаете **один вебхук на заказ**, а не по одному на часть.
+
+### `subscription.transfer`
+
+<ResponseField name="subscription_id" type="number">
+  Подписка Smart Mode, к которой относится перевод.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Отслеживаемый адрес, с которого ушёл перевод.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  Метка, которую вы дали подписке.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string">
+  Транзакция перевода в сети.
+</ResponseField>
+
+<ResponseField name="transfer_count" type="number">
+  Сколько переводов покрыла эта делегация.
+</ResponseField>
+
+<ResponseField name="energy_delegated" type="number">
+  Сколько энергии под них делегировано.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  Сколько списано за энергию, в TRX.
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string | null">
+  Сколько списано за bandwidth сверху, либо `null`, если не списывалось.
+</ResponseField>
+
+<ResponseField name="balance_after_trx" type="string">
+  Баланс аккаунта после списания.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Когда перевод обработан. Обратите внимание: это поле **внутри `data`** и отличается от `timestamp` самого конверта.
+</ResponseField>
+
+```json Response
+{
+  "event": "subscription.transfer",
+  "data": {
+    "subscription_id": 412,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "label": "payouts",
+    "tx_hash": "9f8e7d6c5b4a...",
+    "transfer_count": 1,
+    "energy_delegated": 65000,
+    "fee_trx": "2.75",
+    "bw_fee_trx": null,
+    "balance_after_trx": "376.63",
+    "timestamp": "2026-09-14T14:51:16.512033+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+### Доставка
+
+- До **3 попыток**, с паузами **1 секунда** и затем **4 секунды** между ними. После успеха и после последней попытки пауз нет.
+- Таймаут **10 секунд** на попытку.
+- Мы ждём любой **`2xx`**. Всё остальное считается неудачной попыткой.
+- **Редиректы не следуются.** `301`/`302` — это неудачная попытка, а не переход.
+- Пропущенные события **не досылаются**. Если все три попытки не удались, событие потеряно; сверяйтесь через [Получение заказа](/api-reference/orders/get-order), а не ждите повтора.
+
+Ваш URL обязан резолвиться в **публичный** адрес. Loopback, приватные и link-local диапазоны отвергаются, как и хост, который вообще не резолвится — в обоих случаях ничего не отправляется и строка в журнале не пишется.
+
+### Проверка подписи
+
+Каждый запрос несёт `X-Webhook-Signature: sha256=<hex>` — HMAC-SHA256 по **сырому телу запроса** с вашим секретом вебхука.
+
+Работоспособность вашей проверки решают две детали:
+
+1. **Отрежьте префикс `sha256=`** перед сравнением. В заголовке не голый hex-дайджест.
+2. **Хешируйте полученные байты**, а не пересобранный объект. Разбор JSON и повторная сериализация меняют порядок ключей и пробелы — подпись не сойдётся никогда.
+
+Секрет подписи показан в [Dashboard → API](https://tronrental.com/dashboard/api) рядом с URL вебхука. По API-ключу он не отдаётся — чтобы его прочитать, нужно войти на сайте.
 
 <CodeGroup>
 ```python Python
-import hmac
 import hashlib
+import hmac
 
-def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(
-        secret.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
-
-# In your webhook handler:
-# payload = request.body  (raw bytes)
-# signature = request.headers["X-Webhook-Signature"]
-# secret = "whsec_abc123..."  (from configure response)
-# if not verify_webhook(payload, signature, secret):
-#     return Response(status_code=401)
+def verify_webhook(raw_body: bytes, signature_header: str, secret: str) -> bool:
+    prefix, _, received = signature_header.partition("=")
+    if prefix != "sha256" or not received:
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, received)
 ```
 
 ```javascript JavaScript
 const crypto = require("crypto");
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature)
-  );
+function verifyWebhook(rawBody, signatureHeader, secret) {
+  const [prefix, received] = String(signatureHeader).split("=");
+  if (prefix !== "sha256" || !received) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(expected);
+  const b = Buffer.from(received);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
-
-// In your webhook handler:
-// const payload = req.rawBody;  // raw request body string
-// const signature = req.headers["x-webhook-signature"];
-// const secret = "whsec_abc123...";
-// if (!verifyWebhook(payload, signature, secret)) {
-//   return res.status(401).send("Invalid signature");
-// }
 ```
 </CodeGroup>
 
 <Warning>
-  Всегда проверяйте подпись перед обработкой данных вебхука. Используйте сравнение с постоянным временем (`hmac.compare_digest` / `crypto.timingSafeEqual`) для предотвращения атак по времени.
-</Warning>
-
-<Warning>
-  URL вебхуков не могут указывать на `localhost`, `127.0.0.1` или другие приватные адреса.
+  Проверяйте подпись до того, как действовать по содержимому, и сравнивайте за постоянное время (`hmac.compare_digest` / `crypto.timingSafeEqual`). Сравнение через `==` утекает по таймингу.
 </Warning>

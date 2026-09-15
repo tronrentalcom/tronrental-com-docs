@@ -1,35 +1,57 @@
 ---
-title: Configurar Webhook
+title: Configurar webhook
 api: POST /api/v1/webhooks/configure
-description: "Definir sua URL de webhook"
+description: "Definir a URL do seu webhook"
 ---
 
-## Configurar Webhook
+## Configurar webhook
 
-Define ou atualiza sua URL de webhook. Apenas uma URL por conta.
+Define a URL de webhook da conta. Há uma URL por conta, e ambos os eventos vão para ela.
+
+<Warning>
+**Uma chave de API não pode chamar este endpoint.** Mudar a URL do webhook — ou ler o segredo de assinatura — exige uma sessão aberta por você mesmo no site. Com uma chave de API a requisição é recusada:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "FORBIDDEN_SESSION_TYPE",
+      "message": "This action is not available for this session type"
+    }
+  }
+}
+```
+
+Caso contrário, uma chave roubada bastaria para apontar os seus eventos para o servidor de outra pessoa. Defina a URL em [Dashboard → API](https://tronrental.com/dashboard/api); a mesma página mostra o segredo de assinatura.
+</Warning>
 
 ### Corpo da requisição
 
 <ParamField body="url" type="string" required>
-  URL de webhook HTTPS
+  URL do webhook. Neste endpoint **somente HTTPS**, e ela não pode apontar para `localhost`, `127.0.0.1`, `0.0.0.0` ou `::1`. Além disso, a entrega é recusada no momento do envio para qualquer host que resolva para um endereço privado, loopback ou link-local.
 </ParamField>
 
-### Exemplo
+### Resposta
 
-```bash
-curl -X POST https://api.tronrental.com/v1/webhooks/configure \
-  -H "X-API-Key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
-```
+<ResponseField name="webhook_url" type="string">
+  A URL agora configurada.
+</ResponseField>
+
+<ResponseField name="webhook_secret" type="string">
+  O segredo de assinatura para `X-Webhook-Signature`. Gerado na primeira vez que uma URL é definida na conta e estável depois disso.
+</ResponseField>
 
 ```json Response
 {
-  "url": "https://yourserver.com/webhook/tronrental",
-  "secret": "whsec_abc123...",
-  "active": true,
-  "created_at": "2026-03-05T12:00:00Z"
+  "webhook_url": "https://yourserver.com/webhook/tronrental",
+  "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
 
-Para remover o webhook, envie uma URL vazia ou exclua pelo painel.
+### A porta do painel
+
+O painel usa um segundo par de endpoints sobre os mesmos campos da conta — `GET /api/v1/account/webhook` para ler a URL e o segredo, e `PATCH /api/v1/account/webhook` para defini-los ou limpá-los. Aceitam os mesmos valores, com duas diferenças: o `PATCH` também aceita uma URL `http://`, e enviar `{"webhook_url": null}` limpa o webhook.
+
+Limpar a URL **mantém** o segredo, de modo que reativar o webhook mais tarde não invalida o código de verificação que você já publicou.
+
+Ambos os endpoints também exigem uma sessão do site.

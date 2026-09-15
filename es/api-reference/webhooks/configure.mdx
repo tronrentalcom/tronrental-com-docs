@@ -1,35 +1,57 @@
 ---
 title: Configurar webhook
 api: POST /api/v1/webhooks/configure
-description: "Configurar tu URL de webhook"
+description: "Establecer la URL de su webhook"
 ---
 
 ## Configurar webhook
 
-Establece o actualiza tu URL de webhook. Solo una URL por cuenta.
+Establece la URL de webhook de la cuenta. Hay una sola URL por cuenta y ambos eventos van a ella.
 
-### Cuerpo de la solicitud
-
-<ParamField body="url" type="string" required>
-  URL de webhook HTTPS
-</ParamField>
-
-### Ejemplo
-
-```bash
-curl -X POST https://api.tronrental.com/v1/webhooks/configure \
-  -H "X-API-Key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
-```
+<Warning>
+**Una clave API no puede llamar a este endpoint.** Cambiar la URL del webhook —o leer el secreto de firma— requiere una sesión abierta por usted mismo en el sitio web. Con una clave API la petición se rechaza:
 
 ```json Response
 {
-  "url": "https://yourserver.com/webhook/tronrental",
-  "secret": "whsec_abc123...",
-  "active": true,
-  "created_at": "2026-03-05T12:00:00Z"
+  "detail": {
+    "error": {
+      "code": "FORBIDDEN_SESSION_TYPE",
+      "message": "This action is not available for this session type"
+    }
+  }
 }
 ```
 
-Para eliminar el webhook, envia una URL vacia o eliminalo desde el panel de control.
+De lo contrario, una clave robada bastaría para dirigir sus eventos al servidor de otra persona. Configure la URL en [Dashboard → API](https://tronrental.com/dashboard/api); en esa misma página se muestra el secreto de firma.
+</Warning>
+
+### Cuerpo de la petición
+
+<ParamField body="url" type="string" required>
+  URL del webhook. En este endpoint **solo HTTPS**, y no debe apuntar a `localhost`, `127.0.0.1`, `0.0.0.0` ni `::1`. Además, la entrega se rechaza en el momento del envío hacia cualquier host que resuelva a una dirección privada, loopback o link-local.
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="webhook_url" type="string">
+  La URL ahora configurada.
+</ResponseField>
+
+<ResponseField name="webhook_secret" type="string">
+  El secreto de firma para `X-Webhook-Signature`. Se genera la primera vez que se establece una URL en la cuenta y no cambia después.
+</ResponseField>
+
+```json Response
+{
+  "webhook_url": "https://yourserver.com/webhook/tronrental",
+  "webhook_secret": "3f2a9c...64 hex characters..."
+}
+```
+
+### La puerta del panel
+
+El panel usa un segundo par de endpoints sobre los mismos campos de la cuenta: `GET /api/v1/account/webhook` para leer la URL y el secreto, y `PATCH /api/v1/account/webhook` para establecerlos o borrarlos. Aceptan los mismos valores con dos diferencias: `PATCH` admite también una URL `http://`, y enviar `{"webhook_url": null}` borra el webhook.
+
+Borrar la URL **conserva** el secreto, de modo que volver a activar el webhook más adelante no invalida el código de verificación que ya tenga desplegado.
+
+Ambos endpoints requieren también una sesión del sitio web.

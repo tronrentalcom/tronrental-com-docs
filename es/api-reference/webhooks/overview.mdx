@@ -1,100 +1,226 @@
 ---
-title: Vision general de Webhooks
-description: "Recibir notificaciones en tiempo real de eventos de la cuenta"
+title: Webhooks: descripción general
+description: "Reciba notificaciones en tiempo real de los eventos de su cuenta"
 ---
 
 ## Webhooks
 
-Configura una URL de webhook para recibir notificaciones HTTP POST en tiempo real cuando ocurran eventos en tu cuenta.
+Su cuenta tiene **una sola URL de webhook** y todos los eventos se envían a ella. Configúrela en [Dashboard → API](https://tronrental.com/dashboard/api) o mediante [Configurar webhook](/api-reference/webhooks/configure).
 
-### Eventos soportados
+### Eventos
 
-| Evento | Descripcion |
-|--------|-------------|
-| `order.filled` | Orden de energia completada |
-| `order.failed` | Orden de energia fallida |
-| `deposit.confirmed` | Deposito acreditado al saldo |
-| `invoice.paid` | Pago de factura recibido |
-| `invoice.delegated` | Energia de factura delegada |
-| `smart_mode.transfer` | Transferencia de Smart Mode procesada |
-| `withdrawal.completed` | Retiro enviado |
+Hoy existen dos eventos.
 
-### Carga del webhook
+| Evento | Cuándo se envía |
+|-------|-----------|
+| `order.updated` | Un pedido de energía o de bandwidth cambia de estado — **solo para pedidos creados a través de la API** |
+| `subscription.transfer` | Smart Mode pagó una transferencia de una dirección vigilada |
 
-```json
+<Warning>
+  `order.updated` se envía únicamente para pedidos creados con una clave API. Las compras hechas en el sitio web o mediante el bot de Telegram no generan webhook, aunque la misma cuenta sí reciba con normalidad los eventos de Smart Mode.
+</Warning>
+
+### Sobre del mensaje
+
+Cada entrega tiene las mismas tres claves de nivel superior. `timestamp` es el momento en que compusimos el evento, ISO-8601 en UTC.
+
+```json Response
 {
-  "event": "order.filled",
-  "data": {
-    "order_id": 1234,
-    "address": "TAddress...",
-    "energy_amount": 65000,
-    "price_trx": "2.75"
-  },
-  "timestamp": "2026-03-04T12:00:00Z"
+  "event": "order.updated",
+  "data": { },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }
 ```
 
-### Requisitos
+Cabeceras:
 
-- La URL debe usar **HTTPS**
-- Debe responder con estado `2xx` en 10 segundos
-- Las entregas fallidas se reintentan hasta 3 veces con retroceso exponencial
+| Cabecera | Valor |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `X-Webhook-Signature` | `sha256=<hex>` — vea la sección «Verificación de la firma» más abajo |
+| `Host` | el host de su URL |
 
-### Verificacion de firmas de webhook
+### `order.updated`
 
-Cada solicitud de webhook incluye un encabezado `X-Webhook-Signature` que contiene una firma HMAC-SHA256. Utiliza esto para verificar que la solicitud proviene de TronRental.
+<ResponseField name="id" type="number">
+  ID del pedido.
+</ResponseField>
 
-La firma se calcula sobre el cuerpo crudo de la solicitud usando tu secreto de webhook (devuelto cuando [configuras tu webhook](/api-reference/webhooks/configure)).
+<ResponseField name="type" type="string">
+  `energy` o `bandwidth`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `processing`, `filled`, `partial`, `failed`, `reclaimed` o `reclaim_failed`. **Este campo es la fuente de verdad**; vea la advertencia siguiente.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  Dirección a la que se delegó el recurso.
+</ResponseField>
+
+<ResponseField name="volume" type="number">
+  Cantidad pedida: unidades de energía o puntos de bandwidth.
+</ResponseField>
+
+<ResponseField name="expected_volume" type="number">
+  Igual que `volume`. Está presente para poder comparar lo esperado con lo entregado sin averiguar qué significa cada campo.
+</ResponseField>
+
+<ResponseField name="delivered_volume" type="number">
+  Cuánto se ha delegado realmente hasta ahora. Igual a `volume` cuando el pedido está `filled`; en `processing` y `partial` es la suma de las partes ya entregadas, y `0` si falló.
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Precio del pedido en TRX, como cadena decimal.
+</ResponseField>
+
+<ResponseField name="delegate_txid" type="string | null">
+  Transacción que delegó el recurso.
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string | null">
+  Transacción que lo recuperó al terminar el alquiler.
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  Cuándo está previsto recuperar el recurso, ISO-8601, o `null` en los pedidos que no se recuperan por temporizador.
+</ResponseField>
+
+```json Response
+{
+  "event": "order.updated",
+  "data": {
+    "id": 247033,
+    "type": "energy",
+    "status": "filled",
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "volume": 65000,
+    "expected_volume": 65000,
+    "delivered_volume": 65000,
+    "price_trx": "2.75",
+    "delegate_txid": "a1b2c3d4e5f6...",
+    "undelegate_txid": null,
+    "reclaim_at": "2026-09-15T07:44:56+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+**Juzgue el resultado por `status`, nunca por la presencia de `delegate_txid`.** Un pedido fallido también puede llevar un identificador de transacción: lo conservamos a propósito para poder investigar el fallo. Solo `status` dice si recibió el recurso.
+</Warning>
+
+Internamente dividimos los pedidos grandes en partes, pero eso es asunto nuestro: usted recibe **un webhook por pedido**, nunca uno por parte.
+
+### `subscription.transfer`
+
+<ResponseField name="subscription_id" type="number">
+  Suscripción de Smart Mode a la que pertenece la transferencia.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Dirección vigilada desde la que salió la transferencia.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  La etiqueta que puso a la suscripción.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string">
+  La transacción de la transferencia en la cadena.
+</ResponseField>
+
+<ResponseField name="transfer_count" type="number">
+  Cuántas transferencias cubrió esta delegación.
+</ResponseField>
+
+<ResponseField name="energy_delegated" type="number">
+  Energía delegada para ellas.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  Lo cobrado por la energía, en TRX.
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string | null">
+  Bandwidth cobrado adicionalmente, o `null` si no se cobró.
+</ResponseField>
+
+<ResponseField name="balance_after_trx" type="string">
+  Saldo de su cuenta tras el cobro.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Cuándo se procesó la transferencia. Observe que está **dentro de `data`** y es distinto del `timestamp` del propio sobre.
+</ResponseField>
+
+```json Response
+{
+  "event": "subscription.transfer",
+  "data": {
+    "subscription_id": 412,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "label": "payouts",
+    "tx_hash": "9f8e7d6c5b4a...",
+    "transfer_count": 1,
+    "energy_delegated": 65000,
+    "fee_trx": "2.75",
+    "bw_fee_trx": null,
+    "balance_after_trx": "376.63",
+    "timestamp": "2026-09-14T14:51:16.512033+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+### Entrega
+
+- Hasta **3 intentos**, con pausas de **1 segundo** y luego **4 segundos** entre ellos. No hay pausa tras un éxito ni tras el último intento.
+- Tiempo de espera de **10 segundos** por intento.
+- Esperamos cualquier **`2xx`**. Cualquier otra cosa cuenta como intento fallido.
+- **No se siguen las redirecciones.** Un `301`/`302` es un intento fallido, no un salto.
+- Los eventos perdidos **no** se reenvían después. Si fallan los tres intentos, ese evento se pierde; concilie con [Consultar pedido](/api-reference/orders/get-order) en lugar de esperar una repetición.
+
+Su URL debe resolverse a una dirección **pública**. Se rechazan los rangos loopback, privados y link-local, y también un host que no resuelve: en ambos casos no se envía nada y no se escribe ninguna fila en el registro.
+
+### Verificación de la firma
+
+Cada petición lleva `X-Webhook-Signature: sha256=<hex>`, un HMAC-SHA256 sobre el **cuerpo bruto de la petición** con su secreto de webhook como clave.
+
+Dos detalles deciden si su comprobación funciona:
+
+1. **Quite el prefijo `sha256=`** antes de comparar. La cabecera no es un digest hexadecimal a secas.
+2. **Aplique el hash a los bytes recibidos**, no a un objeto vuelto a serializar. Analizar el JSON y volcarlo de nuevo cambia el orden de las claves y los espacios, y la firma no coincidirá nunca.
+
+Su secreto de firma aparece en [Dashboard → API](https://tronrental.com/dashboard/api) junto a la URL del webhook. No se devuelve a las peticiones con clave API: para leerlo hay que iniciar sesión en el sitio web.
 
 <CodeGroup>
 ```python Python
-import hmac
 import hashlib
+import hmac
 
-def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(
-        secret.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
-
-# In your webhook handler:
-# payload = request.body  (raw bytes)
-# signature = request.headers["X-Webhook-Signature"]
-# secret = "whsec_abc123..."  (from configure response)
-# if not verify_webhook(payload, signature, secret):
-#     return Response(status_code=401)
+def verify_webhook(raw_body: bytes, signature_header: str, secret: str) -> bool:
+    prefix, _, received = signature_header.partition("=")
+    if prefix != "sha256" or not received:
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, received)
 ```
 
 ```javascript JavaScript
 const crypto = require("crypto");
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature)
-  );
+function verifyWebhook(rawBody, signatureHeader, secret) {
+  const [prefix, received] = String(signatureHeader).split("=");
+  if (prefix !== "sha256" || !received) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(expected);
+  const b = Buffer.from(received);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
-
-// In your webhook handler:
-// const payload = req.rawBody;  // raw request body string
-// const signature = req.headers["x-webhook-signature"];
-// const secret = "whsec_abc123...";
-// if (!verifyWebhook(payload, signature, secret)) {
-//   return res.status(401).send("Invalid signature");
-// }
 ```
 </CodeGroup>
 
 <Warning>
-  Siempre verifica la firma antes de procesar los datos del webhook. Usa comparacion de tiempo constante (`hmac.compare_digest` / `crypto.timingSafeEqual`) para prevenir ataques de temporizado.
-</Warning>
-
-<Warning>
-  Las URLs de webhook no pueden apuntar a `localhost`, `127.0.0.1` u otras direcciones privadas.
+  Verifique la firma antes de actuar sobre el contenido y compare en tiempo constante (`hmac.compare_digest` / `crypto.timingSafeEqual`). Comparar con `==` filtra información por tiempo.
 </Warning>

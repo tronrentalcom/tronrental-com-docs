@@ -1,35 +1,57 @@
 ---
-title: Webhook कॉन्फ़िगर करें
+title: वेबहुक कॉन्फ़िगर करें
 api: POST /api/v1/webhooks/configure
-description: "अपना webhook URL सेट करें"
+description: "अपना वेबहुक URL सेट करें"
 ---
 
-## Webhook कॉन्फ़िगर करें
+## वेबहुक कॉन्फ़िगर करें
 
-आपका webhook URL सेट या अपडेट करता है। प्रति अकाउंट केवल एक URL।
+खाते का वेबहुक URL सेट करता है। प्रति खाता एक URL होता है और दोनों घटनाएँ वहीं जाती हैं।
+
+<Warning>
+**API कुंजी इसे नहीं बुला सकती।** वेबहुक URL बदलने — या साइनिंग सीक्रेट पढ़ने — के लिए वह सत्र चाहिए जो आपने स्वयं वेबसाइट पर खोला हो। API कुंजी के साथ अनुरोध अस्वीकार होता है:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "FORBIDDEN_SESSION_TYPE",
+      "message": "This action is not available for this session type"
+    }
+  }
+}
+```
+
+अन्यथा चोरी हुई एक कुंजी ही आपकी घटनाओं को किसी और के सर्वर पर मोड़ने के लिए काफ़ी होती। URL [Dashboard → API](https://tronrental.com/dashboard/api) में सेट करें; वहीं साइनिंग सीक्रेट भी दिखता है।
+</Warning>
 
 ### अनुरोध बॉडी
 
 <ParamField body="url" type="string" required>
-  HTTPS webhook URL
+  वेबहुक URL। इस एंडपॉइंट पर **केवल HTTPS**, और यह `localhost`, `127.0.0.1`, `0.0.0.0` या `::1` की ओर नहीं होना चाहिए। इसके अलावा भेजते समय भी ऐसे किसी होस्ट पर डिलीवरी अस्वीकार होती है जो निजी, लूपबैक या लिंक-लोकल पते पर रिज़ॉल्व हो।
 </ParamField>
 
-### उदाहरण
+### प्रतिक्रिया
 
-```bash
-curl -X POST https://api.tronrental.com/v1/webhooks/configure \
-  -H "X-API-Key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
-```
+<ResponseField name="webhook_url" type="string">
+  अब कॉन्फ़िगर किया गया URL।
+</ResponseField>
+
+<ResponseField name="webhook_secret" type="string">
+  `X-Webhook-Signature` के लिए साइनिंग सीक्रेट। खाते पर पहली बार URL सेट करते समय बनता है और उसके बाद स्थिर रहता है।
+</ResponseField>
 
 ```json Response
 {
-  "url": "https://yourserver.com/webhook/tronrental",
-  "secret": "whsec_abc123...",
-  "active": true,
-  "created_at": "2026-03-05T12:00:00Z"
+  "webhook_url": "https://yourserver.com/webhook/tronrental",
+  "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
 
-Webhook हटाने के लिए, खाली URL भेजें या डैशबोर्ड से हटाएं।
+### डैशबोर्ड वाला रास्ता
+
+डैशबोर्ड उन्हीं खाता-स्तरीय फ़ील्ड पर दूसरी जोड़ी एंडपॉइंट इस्तेमाल करता है — URL और सीक्रेट पढ़ने के लिए `GET /api/v1/account/webhook`, और सेट या साफ़ करने के लिए `PATCH /api/v1/account/webhook`। ये वही मान स्वीकार करते हैं, दो अंतरों के साथ: `PATCH` `http://` URL भी लेता है, और `{"webhook_url": null}` भेजने पर वेबहुक साफ़ हो जाता है।
+
+URL साफ़ करने पर सीक्रेट **बना रहता है**, इसलिए बाद में वेबहुक दोबारा चालू करने से आपका पहले से तैनात जाँच कोड बेकार नहीं होता।
+
+दोनों एंडपॉइंट के लिए भी वेबसाइट सत्र चाहिए।

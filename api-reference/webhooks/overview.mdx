@@ -5,96 +5,228 @@ description: "Receive real-time notifications for account events"
 
 ## Webhooks
 
-Configure a webhook URL to receive real-time HTTP POST notifications when events occur on your account.
+Your account has **one webhook URL**, and every event goes to it. Set it in [Dashboard → API](https://tronrental.com/dashboard/api), or with [Configure Webhook](/api-reference/webhooks/configure).
 
-### Supported events
+### Events
 
-| Event | Description |
-|-------|-------------|
-| `order.filled` | Energy order completed |
-| `order.failed` | Energy order failed |
-| `deposit.confirmed` | Deposit credited to balance |
-| `invoice.paid` | Invoice payment received |
-| `invoice.delegated` | Invoice energy delegated |
-| `smart_mode.transfer` | Smart Mode transfer processed |
-| `withdrawal.completed` | Withdrawal sent |
+Two events exist today.
 
-### Webhook payload
+| Event | Sent when |
+|-------|-----------|
+| `order.updated` | An energy or bandwidth order changes state — **only for orders created through the API** |
+| `subscription.transfer` | Smart Mode paid for a transfer on a watched address |
 
-```json
+<Warning>
+  `order.updated` is sent only for orders that were created with an API key. Orders placed on the website or through the Telegram bot produce no webhook, even though the same account receives Smart Mode events normally.
+</Warning>
+
+### Envelope
+
+Every delivery has the same three top-level keys. `timestamp` is the moment we built the event, ISO-8601 in UTC.
+
+```json Response
 {
-  "event": "order.filled",
-  "data": {
-    "order_id": 1234,
-    "address": "TAddress...",
-    "energy_amount": 65000,
-    "price_trx": "2.75"
-  },
-  "timestamp": "2026-03-04T12:00:00Z"
+  "event": "order.updated",
+  "data": { },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }
 ```
 
-### Requirements
+Headers:
 
-- URL must use **HTTPS**
-- Must respond with `2xx` status within 10 seconds
-- Failed deliveries are retried up to 3 times with exponential backoff
+| Header | Value |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `X-Webhook-Signature` | `sha256=<hex>` — see [Verifying the signature](#verifying-the-signature) |
+| `Host` | the host of your URL |
 
-### Verifying webhook signatures
+### `order.updated`
 
-Every webhook request includes an `X-Webhook-Signature` header containing an HMAC-SHA256 signature. Use this to verify that the request is from TronRental.
+<ResponseField name="id" type="number">
+  Order ID.
+</ResponseField>
 
-The signature is computed over the raw request body using your webhook secret (returned when you [configure your webhook](/api-reference/webhooks/configure)).
+<ResponseField name="type" type="string">
+  `energy` or `bandwidth`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `processing`, `filled`, `partial`, `failed`, `reclaimed` or `reclaim_failed`. **This field is the source of truth** — see the warning below.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  The address the resource was delegated to.
+</ResponseField>
+
+<ResponseField name="volume" type="number">
+  The ordered amount — energy units, or bandwidth points.
+</ResponseField>
+
+<ResponseField name="expected_volume" type="number">
+  Same as `volume`. Present so that expected and delivered can be compared without knowing which field means what.
+</ResponseField>
+
+<ResponseField name="delivered_volume" type="number">
+  How much has actually been delegated so far. Equals `volume` once the order is `filled`; on `processing` and `partial` it is the sum of the chunks delegated up to now, and `0` on failure.
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Order price in TRX, as a decimal string.
+</ResponseField>
+
+<ResponseField name="delegate_txid" type="string | null">
+  Transaction that delegated the resource.
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string | null">
+  Transaction that took it back, once the rental ends.
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  When the resource is scheduled to be reclaimed, ISO-8601, or `null` for orders that are not reclaimed on a timer.
+</ResponseField>
+
+```json Response
+{
+  "event": "order.updated",
+  "data": {
+    "id": 247033,
+    "type": "energy",
+    "status": "filled",
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "volume": 65000,
+    "expected_volume": 65000,
+    "delivered_volume": 65000,
+    "price_trx": "2.75",
+    "delegate_txid": "a1b2c3d4e5f6...",
+    "undelegate_txid": null,
+    "reclaim_at": "2026-09-15T07:44:56+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+**Judge the outcome by `status`, never by the presence of `delegate_txid`.** A failed order can carry a transaction id — we keep it deliberately so that a failure can be investigated. Only `status` says whether you got the resource.
+</Warning>
+
+A large order is split into chunks internally, but that is our business: you receive **one webhook per order**, never one per chunk.
+
+### `subscription.transfer`
+
+<ResponseField name="subscription_id" type="number">
+  Smart Mode subscription this transfer belongs to.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  The watched address that sent the transfer.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  The label you gave the subscription.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string">
+  The transfer transaction on chain.
+</ResponseField>
+
+<ResponseField name="transfer_count" type="number">
+  How many transfers this delegation covered.
+</ResponseField>
+
+<ResponseField name="energy_delegated" type="number">
+  Energy delegated for them.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  What was charged for the energy, in TRX.
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string | null">
+  Bandwidth charged on top, or `null` when none was.
+</ResponseField>
+
+<ResponseField name="balance_after_trx" type="string">
+  Your account balance after the charge.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  When the transfer was processed. Note this is **inside `data`** and is separate from the envelope's own `timestamp`.
+</ResponseField>
+
+```json Response
+{
+  "event": "subscription.transfer",
+  "data": {
+    "subscription_id": 412,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "label": "payouts",
+    "tx_hash": "9f8e7d6c5b4a...",
+    "transfer_count": 1,
+    "energy_delegated": 65000,
+    "fee_trx": "2.75",
+    "bw_fee_trx": null,
+    "balance_after_trx": "376.63",
+    "timestamp": "2026-09-14T14:51:16.512033+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+### Delivery
+
+- Up to **3 attempts**, with pauses of **1 second** and then **4 seconds** between them. There is no pause after a success and none after the last attempt.
+- **10 seconds** timeout per attempt.
+- We expect any **`2xx`**. Anything else counts as a failed attempt.
+- **Redirects are not followed.** A `301`/`302` is a failed attempt, not a hop.
+- Missed events are **not** backfilled. When all three attempts fail, that event is gone; reconcile with [Get Order](/api-reference/orders/get-order) rather than waiting for a replay.
+
+Your URL must resolve to a **public** address. Loopback, private and link-local ranges are rejected, and so is a host that does not resolve — in both cases nothing is sent and no log row is written.
+
+### Verifying the signature
+
+Every request carries `X-Webhook-Signature: sha256=<hex>`, an HMAC-SHA256 over the **raw request body** keyed with your webhook secret.
+
+Two details decide whether your check works:
+
+1. **Strip the `sha256=` prefix** before comparing. The header is not a bare hex digest.
+2. **Hash the bytes you received**, not a re-serialized object. Parsing the JSON and dumping it again changes key order and spacing, and the signature will never match.
+
+Your signing secret is shown in [Dashboard → API](https://tronrental.com/dashboard/api) next to the webhook URL. It is not returned to API-key requests — reading it requires signing in on the website.
 
 <CodeGroup>
 ```python Python
-import hmac
 import hashlib
+import hmac
 
-def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(
-        secret.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
+def verify_webhook(raw_body: bytes, signature_header: str, secret: str) -> bool:
+    prefix, _, received = signature_header.partition("=")
+    if prefix != "sha256" or not received:
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, received)
 
-# In your webhook handler:
-# payload = request.body  (raw bytes)
-# signature = request.headers["X-Webhook-Signature"]
-# secret = "whsec_abc123..."  (from configure response)
-# if not verify_webhook(payload, signature, secret):
-#     return Response(status_code=401)
+# In your handler — pass the RAW body, before any JSON parsing:
+#   verify_webhook(request.body, request.headers["X-Webhook-Signature"], secret)
 ```
 
 ```javascript JavaScript
 const crypto = require("crypto");
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature)
-  );
+function verifyWebhook(rawBody, signatureHeader, secret) {
+  const [prefix, received] = String(signatureHeader).split("=");
+  if (prefix !== "sha256" || !received) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(expected);
+  const b = Buffer.from(received);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// In your webhook handler:
-// const payload = req.rawBody;  // raw request body string
-// const signature = req.headers["x-webhook-signature"];
-// const secret = "whsec_abc123...";
-// if (!verifyWebhook(payload, signature, secret)) {
-//   return res.status(401).send("Invalid signature");
-// }
+// In Express, capture the raw body first:
+//   app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
 ```
 </CodeGroup>
 
 <Warning>
-  Always verify the signature before processing webhook data. Use constant-time comparison (`hmac.compare_digest` / `crypto.timingSafeEqual`) to prevent timing attacks.
-</Warning>
-
-<Warning>
-  Webhook URLs cannot point to `localhost`, `127.0.0.1`, or other private addresses.
+  Verify the signature before acting on the payload, and compare in constant time (`hmac.compare_digest` / `crypto.timingSafeEqual`). Comparing with `==` leaks timing.
 </Warning>

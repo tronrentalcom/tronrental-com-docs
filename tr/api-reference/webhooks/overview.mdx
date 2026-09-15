@@ -1,100 +1,226 @@
 ---
-title: Webhook'lar Genel Bakis
-description: "Hesap olaylari icin gercek zamanli bildirimler alin"
+title: Webhook'lara genel bakış
+description: "Hesap olaylarını gerçek zamanlı bildirimlerle alın"
 ---
 
 ## Webhook'lar
 
-Hesabinizda olaylar gerceklestiginde gercek zamanli HTTP POST bildirimleri almak icin bir webhook URL'si yapilandirin.
+Hesabınızın **tek bir webhook URL'si** vardır ve tüm olaylar oraya gider. [Dashboard → API](https://tronrental.com/dashboard/api) sayfasından veya [Webhook yapılandırma](/api-reference/webhooks/configure) ile ayarlayın.
 
-### Desteklenen olaylar
+### Olaylar
 
-| Olay | Aciklama |
-|-------|-------------|
-| `order.filled` | Enerji siparisi tamamlandi |
-| `order.failed` | Enerji siparisi basarisiz oldu |
-| `deposit.confirmed` | Yatirma bakiyeye eklendi |
-| `invoice.paid` | Fatura odemesi alindi |
-| `invoice.delegated` | Fatura enerjisi devredildi |
-| `smart_mode.transfer` | Akilli Mod transferi islendi |
-| `withdrawal.completed` | Cekim gonderildi |
+Bugün iki olay mevcut.
 
-### Webhook yuku
+| Olay | Ne zaman gönderilir |
+|-------|-----------|
+| `order.updated` | Bir enerji veya bandwidth siparişi durum değiştirdiğinde — **yalnızca API üzerinden oluşturulan siparişler için** |
+| `subscription.transfer` | Smart Mode, izlenen bir adresten yapılan transferin bedelini ödediğinde |
 
-```json
+<Warning>
+  `order.updated` yalnızca bir API anahtarıyla oluşturulan siparişler için gönderilir. Web sitesinden veya Telegram botundan yapılan alımlar webhook üretmez — aynı hesap Smart Mode olaylarını normal biçimde almaya devam etse bile.
+</Warning>
+
+### Zarf
+
+Her teslimatta aynı üç üst düzey anahtar bulunur. `timestamp`, olayı oluşturduğumuz andır; ISO-8601, UTC.
+
+```json Response
 {
-  "event": "order.filled",
-  "data": {
-    "order_id": 1234,
-    "address": "TAddress...",
-    "energy_amount": 65000,
-    "price_trx": "2.75"
-  },
-  "timestamp": "2026-03-04T12:00:00Z"
+  "event": "order.updated",
+  "data": { },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }
 ```
 
-### Gereksinimler
+Başlıklar:
 
-- URL **HTTPS** kullanmalidir
-- 10 saniye icinde `2xx` durum koduyla yanit vermeli
-- Basarisiz teslimler, ustel geri cekilme ile 3 kez yeniden denenir
+| Başlık | Değer |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `X-Webhook-Signature` | `sha256=<hex>` — aşağıdaki «İmzanın doğrulanması» bölümüne bakın |
+| `Host` | URL'nizin host'u |
 
-### Webhook imzalarini dogrulama
+### `order.updated`
 
-Her webhook istegi, HMAC-SHA256 imzasi iceren bir `X-Webhook-Signature` basligi icerir. Istegin TronRental'den geldigini dogrulamak icin bunu kullanin.
+<ResponseField name="id" type="number">
+  Sipariş kimliği.
+</ResponseField>
 
-Imza, webhook siriniz kullanilarak ham istek govdesi uzerinden hesaplanir ([webhook'unuzu yapilandirdiginizda](/api-reference/webhooks/configure) dondurulur).
+<ResponseField name="type" type="string">
+  `energy` veya `bandwidth`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `processing`, `filled`, `partial`, `failed`, `reclaimed` veya `reclaim_failed`. **Doğrunun kaynağı bu alandır** — aşağıdaki uyarıya bakın.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  Kaynağın devredildiği adres.
+</ResponseField>
+
+<ResponseField name="volume" type="number">
+  Sipariş edilen miktar — enerji birimi ya da bandwidth puanı.
+</ResponseField>
+
+<ResponseField name="expected_volume" type="number">
+  `volume` ile aynı. Hangi alanın ne anlama geldiğini araştırmadan beklenen ile teslim edileni karşılaştırabilmek için bulunur.
+</ResponseField>
+
+<ResponseField name="delivered_volume" type="number">
+  Şu ana kadar gerçekte ne kadarının devredildiği. Sipariş `filled` olduğunda `volume` ile eşittir; `processing` ve `partial` durumunda şimdiye kadar teslim edilen parçaların toplamı, başarısızlıkta `0`.
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  Siparişin TRX cinsinden fiyatı, ondalık metin olarak.
+</ResponseField>
+
+<ResponseField name="delegate_txid" type="string | null">
+  Kaynağı devreden işlem.
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string | null">
+  Kiralama bitince kaynağı geri alan işlem.
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  Kaynağın geri alınmasının planlandığı an, ISO-8601; zamanlayıcıyla geri alınmayan siparişlerde `null`.
+</ResponseField>
+
+```json Response
+{
+  "event": "order.updated",
+  "data": {
+    "id": 247033,
+    "type": "energy",
+    "status": "filled",
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "volume": 65000,
+    "expected_volume": 65000,
+    "delivered_volume": 65000,
+    "price_trx": "2.75",
+    "delegate_txid": "a1b2c3d4e5f6...",
+    "undelegate_txid": null,
+    "reclaim_at": "2026-09-15T07:44:56+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+**Sonucu `status` alanına göre değerlendirin, `delegate_txid` var diye değil.** Başarısız bir sipariş de işlem kimliği taşıyabilir — arızanın incelenebilmesi için bunu bilerek saklıyoruz. Kaynağı alıp almadığınızı yalnızca `status` söyler.
+</Warning>
+
+Büyük siparişleri içeride parçalara böleriz, ama bu bizim işimiz: siz **sipariş başına tek bir webhook** alırsınız, parça başına değil.
+
+### `subscription.transfer`
+
+<ResponseField name="subscription_id" type="number">
+  Transferin ait olduğu Smart Mode aboneliği.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Transferin çıktığı izlenen adres.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  Aboneliğe verdiğiniz etiket.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string">
+  Zincir üzerindeki transfer işlemi.
+</ResponseField>
+
+<ResponseField name="transfer_count" type="number">
+  Bu devrin kaç transferi kapsadığı.
+</ResponseField>
+
+<ResponseField name="energy_delegated" type="number">
+  Onlar için devredilen enerji.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  Enerji için tahsil edilen tutar, TRX cinsinden.
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string | null">
+  Ek olarak tahsil edilen bandwidth; tahsil edilmediyse `null`.
+</ResponseField>
+
+<ResponseField name="balance_after_trx" type="string">
+  Tahsilat sonrası hesap bakiyeniz.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Transferin işlendiği an. Dikkat: bu alan **`data` içindedir** ve zarfın kendi `timestamp` alanından farklıdır.
+</ResponseField>
+
+```json Response
+{
+  "event": "subscription.transfer",
+  "data": {
+    "subscription_id": 412,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "label": "payouts",
+    "tx_hash": "9f8e7d6c5b4a...",
+    "transfer_count": 1,
+    "energy_delegated": 65000,
+    "fee_trx": "2.75",
+    "bw_fee_trx": null,
+    "balance_after_trx": "376.63",
+    "timestamp": "2026-09-14T14:51:16.512033+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+### Teslimat
+
+- En çok **3 deneme**, aralarında **1 saniye** ve ardından **4 saniye** bekleme ile. Başarıdan sonra ve son denemeden sonra bekleme yoktur.
+- Deneme başına **10 saniye** zaman aşımı.
+- Herhangi bir **`2xx`** bekleriz. Bunun dışındaki her şey başarısız deneme sayılır.
+- **Yönlendirmeler izlenmez.** `301`/`302` bir sıçrama değil, başarısız bir denemedir.
+- Kaçan olaylar sonradan **yeniden gönderilmez**. Üç deneme de başarısız olursa o olay kaybolur; tekrar beklemek yerine [Sipariş sorgulama](/api-reference/orders/get-order) ile mutabakat yapın.
+
+URL'niz **genel** bir adrese çözümlenmelidir. Loopback, özel ve link-local aralıklar reddedilir; hiç çözümlenmeyen bir host da öyle — her iki durumda da hiçbir şey gönderilmez ve günlüğe satır yazılmaz.
+
+### İmzanın doğrulanması
+
+Her istek `X-Webhook-Signature: sha256=<hex>` taşır: webhook gizli anahtarınızla, **ham istek gövdesi** üzerinden hesaplanmış bir HMAC-SHA256.
+
+Kontrolünüzün çalışıp çalışmayacağını iki ayrıntı belirler:
+
+1. Karşılaştırmadan önce **`sha256=` önekini ayırın**. Başlık düz bir onaltılık özet değildir.
+2. **Aldığınız baytların** özetini alın, yeniden serileştirilmiş bir nesnenin değil. JSON'u ayrıştırıp yeniden yazmak anahtar sırasını ve boşlukları değiştirir; imza hiçbir zaman tutmaz.
+
+İmzalama anahtarınız [Dashboard → API](https://tronrental.com/dashboard/api) sayfasında, webhook URL'sinin yanında görünür. API anahtarlı isteklere döndürülmez — okumak için web sitesinde oturum açmanız gerekir.
 
 <CodeGroup>
 ```python Python
-import hmac
 import hashlib
+import hmac
 
-def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(
-        secret.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
-
-# In your webhook handler:
-# payload = request.body  (raw bytes)
-# signature = request.headers["X-Webhook-Signature"]
-# secret = "whsec_abc123..."  (from configure response)
-# if not verify_webhook(payload, signature, secret):
-#     return Response(status_code=401)
+def verify_webhook(raw_body: bytes, signature_header: str, secret: str) -> bool:
+    prefix, _, received = signature_header.partition("=")
+    if prefix != "sha256" or not received:
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, received)
 ```
 
 ```javascript JavaScript
 const crypto = require("crypto");
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature)
-  );
+function verifyWebhook(rawBody, signatureHeader, secret) {
+  const [prefix, received] = String(signatureHeader).split("=");
+  if (prefix !== "sha256" || !received) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(expected);
+  const b = Buffer.from(received);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
-
-// In your webhook handler:
-// const payload = req.rawBody;  // raw request body string
-// const signature = req.headers["x-webhook-signature"];
-// const secret = "whsec_abc123...";
-// if (!verifyWebhook(payload, signature, secret)) {
-//   return res.status(401).send("Invalid signature");
-// }
 ```
 </CodeGroup>
 
 <Warning>
-  Webhook verilerini islemeden once imzayi her zaman dogrulayin. Zamanlama saldirilarina karsi sabit zamanli karsilastirma (`hmac.compare_digest` / `crypto.timingSafeEqual`) kullanin.
-</Warning>
-
-<Warning>
-  Webhook URL'leri `localhost`, `127.0.0.1` veya diger ozel adreslere isaret edemez.
+  İçeriğe göre işlem yapmadan önce imzayı doğrulayın ve sabit zamanda karşılaştırın (`hmac.compare_digest` / `crypto.timingSafeEqual`). `==` ile karşılaştırmak zamanlama üzerinden bilgi sızdırır.
 </Warning>

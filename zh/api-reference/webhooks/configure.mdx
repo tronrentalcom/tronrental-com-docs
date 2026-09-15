@@ -6,30 +6,52 @@ description: "设置您的 Webhook URL"
 
 ## 配置 Webhook
 
-设置或更新您的 Webhook URL。每个账户仅支持一个 URL。
+设置账户的 Webhook URL。每个账户一个 URL，两种事件都发送到该地址。
+
+<Warning>
+**API 密钥无法调用此接口。** 修改 Webhook URL——以及读取签名密钥——都需要您本人在网站上开启的会话。使用 API 密钥时请求会被拒绝：
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "FORBIDDEN_SESSION_TYPE",
+      "message": "This action is not available for this session type"
+    }
+  }
+}
+```
+
+否则，一把被盗的密钥就足以把您的事件指向他人的服务器。请在 [Dashboard → API](https://tronrental.com/dashboard/api) 中设置 URL；同一页面也会显示签名密钥。
+</Warning>
 
 ### 请求体
 
 <ParamField body="url" type="string" required>
-  HTTPS Webhook URL
+  Webhook URL。此接口**仅接受 HTTPS**，且不得指向 `localhost`、`127.0.0.1`、`0.0.0.0` 或 `::1`。此外，发送时若主机解析到私有、回环或链路本地地址，投递同样会被拒绝。
 </ParamField>
 
-### 示例
+### 响应
 
-```bash
-curl -X POST https://api.tronrental.com/v1/webhooks/configure \
-  -H "X-API-Key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
-```
+<ResponseField name="webhook_url" type="string">
+  当前配置的 URL。
+</ResponseField>
+
+<ResponseField name="webhook_secret" type="string">
+  用于 `X-Webhook-Signature` 的签名密钥。在账户首次设置 URL 时生成，之后保持不变。
+</ResponseField>
 
 ```json Response
 {
-  "url": "https://yourserver.com/webhook/tronrental",
-  "secret": "whsec_abc123...",
-  "active": true,
-  "created_at": "2026-03-05T12:00:00Z"
+  "webhook_url": "https://yourserver.com/webhook/tronrental",
+  "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
 
-要删除 Webhook，请发送空 URL 或在控制面板中删除。
+### 后台入口
+
+后台使用另一对接口操作同样的账户级字段——`GET /api/v1/account/webhook` 读取 URL 和密钥，`PATCH /api/v1/account/webhook` 设置或清除。两者接受相同的值，但有两点不同：`PATCH` 还允许 `http://` 地址，发送 `{"webhook_url": null}` 可清除 Webhook。
+
+清除 URL 会**保留**密钥，因此日后重新启用 Webhook 不会使您已部署的校验代码失效。
+
+这两个接口同样需要网站会话。

@@ -6,30 +6,52 @@ description: "Set your webhook URL"
 
 ## Configure Webhook
 
-Sets or updates your webhook URL. Only one URL per account.
+Sets the account's webhook URL. There is one URL per account, and both events go to it.
+
+<Warning>
+**An API key cannot call this.** Changing the webhook URL — or reading the signing secret — requires a session you opened yourself on the website. With an API key the request is rejected:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "FORBIDDEN_SESSION_TYPE",
+      "message": "This action is not available for this session type"
+    }
+  }
+}
+```
+
+A stolen key would otherwise be enough to point your events at someone else's server. Set the URL in [Dashboard → API](https://tronrental.com/dashboard/api) instead; the same page shows the signing secret.
+</Warning>
 
 ### Request body
 
 <ParamField body="url" type="string" required>
-  HTTPS webhook URL
+  Webhook URL. **HTTPS only** on this endpoint, and it must not point at `localhost`, `127.0.0.1`, `0.0.0.0` or `::1`. Deliveries are additionally refused at send time to any host that resolves to a private, loopback or link-local address.
 </ParamField>
 
-### Example
+### Response
 
-```bash
-curl -X POST https://api.tronrental.com/v1/webhooks/configure \
-  -H "X-API-Key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
-```
+<ResponseField name="webhook_url" type="string">
+  The URL now configured.
+</ResponseField>
+
+<ResponseField name="webhook_secret" type="string">
+  The signing secret for `X-Webhook-Signature`. Generated the first time a URL is set on the account and stable afterwards.
+</ResponseField>
 
 ```json Response
 {
-  "url": "https://yourserver.com/webhook/tronrental",
-  "secret": "whsec_abc123...",
-  "active": true,
-  "created_at": "2026-03-05T12:00:00Z"
+  "webhook_url": "https://yourserver.com/webhook/tronrental",
+  "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
 
-To remove webhook, send an empty URL or delete via dashboard.
+### The dashboard door
+
+The dashboard uses a second pair of endpoints on the same account-level fields — `GET /api/v1/account/webhook` to read the URL and secret, and `PATCH /api/v1/account/webhook` to set or clear them. They accept the same values with two differences: `PATCH` also allows an `http://` URL, and sending `{"webhook_url": null}` clears the webhook.
+
+Clearing the URL **keeps** the secret, so re-enabling the webhook later does not invalidate the verification code you already deployed.
+
+Both endpoints require a website session as well.
