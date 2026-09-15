@@ -1,39 +1,49 @@
 ---
 title: Webhook 日志
 api: GET /api/v1/webhooks/logs
-description: "查看最近的 Webhook 投递日志"
+description: "查看最近的 Webhook 投递记录"
 ---
 
 ## Webhook 日志
 
-返回最近的 Webhook 投递记录，用于调试。
+最近的投递尝试，最新的排在最前——我们发送了什么，您的服务器回应了什么。
+
+### 查询参数
+
+<ParamField query="page" type="integer">
+  页码，从 `1` 开始。默认 `1`。
+</ParamField>
+
+<ParamField query="page_size" type="integer">
+  每页条数，`1`–`100`。默认 `50`。
+</ParamField>
 
 ### 响应
 
-日志条目数组：
+记录数组。
 
 <ResponseField name="id" type="number">
-  日志条目 ID
+  日志条目 ID。
 </ResponseField>
 
 <ResponseField name="event_type" type="string">
-  触发 Webhook 的事件
+  投递的事件，例如 `order.updated`。
 </ResponseField>
 
 <ResponseField name="payload" type="object">
-  已发送的负载
+  实际发送的完整信封，`event` / `data` / `timestamp`——与计算签名所用的字节完全一致。
 </ResponseField>
 
 <ResponseField name="response_status" type="number">
-  您服务器返回的 HTTP 状态码
+  您的服务器返回的 HTTP 状态码。**`0` 表示根本没有收到 HTTP 响应**——连接、TLS 握手或读取失败或超时。
 </ResponseField>
 
 <ResponseField name="attempts" type="number">
-  投递尝试次数
+  三次尝试中实际进行了几次。`1` 表示第一次就成功。
 </ResponseField>
 
 <ResponseField name="created_at" type="string">
-  时间戳
+  投递结束的时间，ISO-8601。
 </ResponseField>
 
 ### 示例
@@ -46,16 +56,35 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```json Response
 [
   {
-    "id": 1,
-    "event_type": "order.filled",
+    "id": 105,
+    "event_type": "order.updated",
     "payload": {
-      "order_id": 12345,
-      "address": "TAddress...",
-      "energy_amount": 65000
+      "event": "order.updated",
+      "data": {
+        "id": 247033,
+        "type": "energy",
+        "status": "filled",
+        "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "volume": 65000,
+        "expected_volume": 65000,
+        "delivered_volume": 65000,
+        "price_trx": "2.75",
+        "delegate_txid": "a1b2c3d4e5f6...",
+        "undelegate_txid": null,
+        "reclaim_at": "2026-09-15T07:44:56+00:00"
+      },
+      "timestamp": "2026-09-14T14:51:16.986341+00:00"
     },
     "response_status": 200,
     "attempts": 1,
-    "created_at": "2026-03-05T12:00:00Z"
+    "created_at": "2026-09-14T14:51:16.986341Z"
   }
 ]
 ```
+
+<Note>
+  在用这份日志排查之前，有两点需要知道：
+
+  - 日志列出的是归属于您**API 密钥**的投递，因此 `subscription.transfer` 的投递目前不会出现在这里，即使它们确实已经发送。
+  - 无法解析的 URL，或解析到私有地址的 URL，**完全不会产生记录**——空日志无法区分「没有事件」和「地址被拒绝」。如果您预期有流量却什么也看不到，请到 [Dashboard → API](https://tronrental.com/dashboard/api) 检查 URL。
+</Note>

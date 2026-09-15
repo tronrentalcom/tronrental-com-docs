@@ -1,35 +1,57 @@
 ---
 title: Настройка вебхука
 api: POST /api/v1/webhooks/configure
-description: "Установить URL вебхука"
+description: "Задать URL вебхука"
 ---
 
 ## Настройка вебхука
 
-Устанавливает или обновляет URL вебхука. Допускается только один URL на аккаунт.
+Задаёт URL вебхука для аккаунта. URL один на аккаунт, и оба события идут на него.
+
+<Warning>
+**API-ключом эту ручку вызвать нельзя.** Смена URL вебхука — как и чтение секрета подписи — требует сессии, которую вы открыли сами на сайте. С API-ключом запрос отклоняется:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "FORBIDDEN_SESSION_TYPE",
+      "message": "This action is not available for this session type"
+    }
+  }
+}
+```
+
+Иначе украденного ключа хватило бы, чтобы направить ваши события на чужой сервер. Задавайте URL в [Dashboard → API](https://tronrental.com/dashboard/api) — там же показан секрет подписи.
+</Warning>
 
 ### Тело запроса
 
 <ParamField body="url" type="string" required>
-  HTTPS URL вебхука
+  URL вебхука. На этой ручке **только HTTPS**, и он не должен указывать на `localhost`, `127.0.0.1`, `0.0.0.0` или `::1`. Дополнительно доставка отклоняется в момент отправки на любой хост, который резолвится в приватный, loopback или link-local адрес.
 </ParamField>
 
-### Пример
+### Ответ
 
-```bash
-curl -X POST https://api.tronrental.com/v1/webhooks/configure \
-  -H "X-API-Key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
-```
+<ResponseField name="webhook_url" type="string">
+  Настроенный теперь URL.
+</ResponseField>
+
+<ResponseField name="webhook_secret" type="string">
+  Секрет подписи для `X-Webhook-Signature`. Генерируется при первой установке URL на аккаунте и дальше не меняется.
+</ResponseField>
 
 ```json Response
 {
-  "url": "https://yourserver.com/webhook/tronrental",
-  "secret": "whsec_abc123...",
-  "active": true,
-  "created_at": "2026-03-05T12:00:00Z"
+  "webhook_url": "https://yourserver.com/webhook/tronrental",
+  "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
 
-Для удаления вебхука отправьте пустой URL или удалите через личный кабинет.
+### Дверь кабинета
+
+Кабинет пользуется второй парой ручек над теми же account-level полями — `GET /api/v1/account/webhook` для чтения URL и секрета и `PATCH /api/v1/account/webhook` для установки и очистки. Значения те же, с двумя отличиями: `PATCH` принимает и `http://`-адрес, а `{"webhook_url": null}` очищает вебхук.
+
+Очистка URL **сохраняет** секрет, поэтому повторное включение вебхука не обесценивает уже выкаченный у вас код проверки.
+
+Обе ручки тоже требуют сессии на сайте.

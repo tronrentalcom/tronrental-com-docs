@@ -1,35 +1,57 @@
 ---
-title: Webhook Yapilandir
+title: Webhook yapılandırma
 api: POST /api/v1/webhooks/configure
-description: "Webhook URL'nizi ayarlayin"
+description: "Webhook URL'nizi ayarlayın"
 ---
 
-## Webhook Yapilandir
+## Webhook yapılandırma
 
-Webhook URL'nizi ayarlar veya gunceller. Hesap basina yalnizca bir URL.
+Hesabın webhook URL'sini ayarlar. Hesap başına tek URL vardır ve her iki olay da oraya gider.
 
-### Istek govdesi
-
-<ParamField body="url" type="string" required>
-  HTTPS webhook URL'si
-</ParamField>
-
-### Ornek
-
-```bash
-curl -X POST https://api.tronrental.com/v1/webhooks/configure \
-  -H "X-API-Key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://yourserver.com/webhook/tronrental"}'
-```
+<Warning>
+**Bu uç noktayı bir API anahtarı çağıramaz.** Webhook URL'sini değiştirmek — ya da imzalama anahtarını okumak — web sitesinde kendinizin açtığı bir oturum gerektirir. API anahtarıyla istek reddedilir:
 
 ```json Response
 {
-  "url": "https://yourserver.com/webhook/tronrental",
-  "secret": "whsec_abc123...",
-  "active": true,
-  "created_at": "2026-03-05T12:00:00Z"
+  "detail": {
+    "error": {
+      "code": "FORBIDDEN_SESSION_TYPE",
+      "message": "This action is not available for this session type"
+    }
+  }
 }
 ```
 
-Webhook'u kaldirmak icin bos bir URL gonderin veya kontrol panelinden silin.
+Aksi hâlde çalınmış bir anahtar, olaylarınızı başkasının sunucusuna yönlendirmeye yeterdi. URL'yi [Dashboard → API](https://tronrental.com/dashboard/api) sayfasından ayarlayın; imzalama anahtarı da aynı sayfada gösterilir.
+</Warning>
+
+### İstek gövdesi
+
+<ParamField body="url" type="string" required>
+  Webhook URL'si. Bu uç noktada **yalnızca HTTPS** ve `localhost`, `127.0.0.1`, `0.0.0.0` ya da `::1` adreslerini göstermemelidir. Ayrıca gönderim anında, özel, loopback veya link-local bir adrese çözümlenen her host için teslimat reddedilir.
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="webhook_url" type="string">
+  Artık yapılandırılmış olan URL.
+</ResponseField>
+
+<ResponseField name="webhook_secret" type="string">
+  `X-Webhook-Signature` için imzalama anahtarı. Hesapta bir URL ilk kez ayarlandığında üretilir ve sonrasında değişmez.
+</ResponseField>
+
+```json Response
+{
+  "webhook_url": "https://yourserver.com/webhook/tronrental",
+  "webhook_secret": "3f2a9c...64 hex characters..."
+}
+```
+
+### Panel kapısı
+
+Panel, aynı hesap alanları üzerinde ikinci bir uç nokta çiftini kullanır: URL ve anahtarı okumak için `GET /api/v1/account/webhook`, ayarlamak veya temizlemek için `PATCH /api/v1/account/webhook`. Aynı değerleri iki farkla kabul ederler: `PATCH` ayrıca `http://` bir URL'ye izin verir ve `{"webhook_url": null}` göndermek webhook'u temizler.
+
+URL'yi temizlemek anahtarı **korur**; böylece webhook'u sonradan yeniden açmanız, zaten yayına aldığınız doğrulama kodunu geçersiz kılmaz.
+
+Her iki uç nokta da web sitesi oturumu ister.

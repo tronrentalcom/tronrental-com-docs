@@ -1,39 +1,49 @@
 ---
-title: Webhook लॉग
+title: वेबहुक लॉग
 api: GET /api/v1/webhooks/logs
-description: "हालिया webhook डिलीवरी लॉग देखें"
+description: "हाल की वेबहुक डिलीवरी देखें"
 ---
 
-## Webhook लॉग
+## वेबहुक लॉग
 
-डिबगिंग के लिए हालिया webhook डिलीवरी प्रयास लौटाता है।
+हाल के डिलीवरी प्रयास, नए सबसे ऊपर — हमने क्या भेजा और आपके सर्वर ने क्या उत्तर दिया।
 
-### रिस्पॉन्स
+### क्वेरी पैरामीटर
 
-लॉग एंट्री का ऐरे:
+<ParamField query="page" type="integer">
+  पेज संख्या, `1` से। डिफ़ॉल्ट `1`।
+</ParamField>
+
+<ParamField query="page_size" type="integer">
+  प्रति पेज प्रविष्टियाँ, `1`–`100`। डिफ़ॉल्ट `50`।
+</ParamField>
+
+### प्रतिक्रिया
+
+प्रविष्टियों की सूची।
 
 <ResponseField name="id" type="number">
-  लॉग एंट्री ID
+  लॉग प्रविष्टि ID।
 </ResponseField>
 
 <ResponseField name="event_type" type="string">
-  Webhook को ट्रिगर करने वाला इवेंट
+  कौन-सी घटना भेजी गई, जैसे `order.updated`।
 </ResponseField>
 
 <ResponseField name="payload" type="object">
-  भेजा गया पेलोड
+  ठीक वही लिफ़ाफ़ा जो भेजा गया — `event` / `data` / `timestamp`, वही बाइट्स जिन पर हस्ताक्षर गिना गया।
 </ResponseField>
 
 <ResponseField name="response_status" type="number">
-  आपके सर्वर से HTTP स्टेटस कोड
+  आपके सर्वर ने जो HTTP स्थिति लौटाई। **`0` का अर्थ है कि कोई HTTP उत्तर आया ही नहीं** — कनेक्शन, TLS हैंडशेक या रीड विफल हुआ या टाइमआउट हो गया।
 </ResponseField>
 
 <ResponseField name="attempts" type="number">
-  डिलीवरी प्रयासों की संख्या
+  तीन में से कितने प्रयास किए गए। `1` यानी पहली ही बार सफल।
 </ResponseField>
 
 <ResponseField name="created_at" type="string">
-  टाइमस्टैम्प
+  डिलीवरी कब पूरी हुई, ISO-8601।
 </ResponseField>
 
 ### उदाहरण
@@ -46,16 +56,35 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```json Response
 [
   {
-    "id": 1,
-    "event_type": "order.filled",
+    "id": 105,
+    "event_type": "order.updated",
     "payload": {
-      "order_id": 12345,
-      "address": "TAddress...",
-      "energy_amount": 65000
+      "event": "order.updated",
+      "data": {
+        "id": 247033,
+        "type": "energy",
+        "status": "filled",
+        "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "volume": 65000,
+        "expected_volume": 65000,
+        "delivered_volume": 65000,
+        "price_trx": "2.75",
+        "delegate_txid": "a1b2c3d4e5f6...",
+        "undelegate_txid": null,
+        "reclaim_at": "2026-09-15T07:44:56+00:00"
+      },
+      "timestamp": "2026-09-14T14:51:16.986341+00:00"
     },
     "response_status": 200,
     "attempts": 1,
-    "created_at": "2026-03-05T12:00:00Z"
+    "created_at": "2026-09-14T14:51:16.986341Z"
   }
 ]
 ```
+
+<Note>
+  इस लॉग से डिबग करने से पहले दो बातें जान लें:
+
+  - इसमें वे डिलीवरी दिखती हैं जो आपकी **API कुंजियों** से जुड़ी हैं, इसलिए `subscription.transfer` की डिलीवरी आज यहाँ नहीं दिखती, चाहे वे भेजी जा चुकी हों।
+  - जो URL रिज़ॉल्व न हो सका, या जो निजी पते पर रिज़ॉल्व होता है, उससे **कोई पंक्ति बनती ही नहीं** — खाली लॉग «कोई घटना नहीं हुई» और «पता अस्वीकार हुआ» में अंतर नहीं करता। यदि ट्रैफ़िक अपेक्षित था और कुछ नहीं दिखता, तो [Dashboard → API](https://tronrental.com/dashboard/api) में URL जाँचें।
+</Note>

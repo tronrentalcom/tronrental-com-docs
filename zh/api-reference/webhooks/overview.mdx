@@ -1,100 +1,226 @@
 ---
-title: Webhooks 概述
-description: "接收账户事件的实时通知"
+title: Webhook 概览
+description: "实时接收账户事件通知"
 ---
 
-## Webhooks
+## Webhook
 
-配置 Webhook URL，在您的账户发生事件时接收实时 HTTP POST 通知。
+每个账户只有**一个 Webhook URL**，所有事件都发送到该地址。可在 [Dashboard → API](https://tronrental.com/dashboard/api) 中设置，或使用[配置 Webhook](/api-reference/webhooks/configure)。
 
-### 支持的事件
+### 事件
 
-| 事件 | 描述 |
-|-------|-------------|
-| `order.filled` | 能量订单已完成 |
-| `order.failed` | 能量订单失败 |
-| `deposit.confirmed` | 充值已入账 |
-| `invoice.paid` | 账单已收到付款 |
-| `invoice.delegated` | 账单能量已委托 |
-| `smart_mode.transfer` | 智能模式转账已处理 |
-| `withdrawal.completed` | 提现已发送 |
+目前共有两个事件。
 
-### Webhook 负载
+| 事件 | 触发时机 |
+|-------|-----------|
+| `order.updated` | 能量或带宽订单状态变化时——**仅限通过 API 创建的订单** |
+| `subscription.transfer` | Smart Mode 为受监控地址的一笔转账付费时 |
 
-```json
+<Warning>
+  `order.updated` 仅针对使用 API 密钥创建的订单发送。在网站或 Telegram 机器人上完成的购买不会产生 Webhook，即便同一账户仍能正常收到 Smart Mode 事件。
+</Warning>
+
+### 消息信封
+
+每次投递都包含相同的三个顶层字段。`timestamp` 是我们生成该事件的时刻，ISO-8601，UTC 时区。
+
+```json Response
 {
-  "event": "order.filled",
-  "data": {
-    "order_id": 1234,
-    "address": "TAddress...",
-    "energy_amount": 65000,
-    "price_trx": "2.75"
-  },
-  "timestamp": "2026-03-04T12:00:00Z"
+  "event": "order.updated",
+  "data": { },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }
 ```
 
-### 要求
+请求头：
 
-- URL 必须使用 **HTTPS**
-- 必须在 10 秒内返回 `2xx` 状态码
-- 投递失败会以指数退避方式最多重试 3 次
+| 请求头 | 值 |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `X-Webhook-Signature` | `sha256=<hex>` — 参见下文「验证签名」 |
+| `Host` | 您 URL 的主机名 |
 
-### 验证 Webhook 签名
+### `order.updated`
 
-每个 Webhook 请求都包含一个 `X-Webhook-Signature` 请求头，内含 HMAC-SHA256 签名。使用此签名验证请求是否来自 TronRental。
+<ResponseField name="id" type="number">
+  订单 ID。
+</ResponseField>
 
-签名基于原始请求体，使用您的 Webhook 密钥（在[配置 Webhook](/api-reference/webhooks/configure) 时返回）计算。
+<ResponseField name="type" type="string">
+  `energy` 或 `bandwidth`。
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `processing`、`filled`、`partial`、`failed`、`reclaimed` 或 `reclaim_failed`。**该字段是判断依据**，请看下面的警告。
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  资源被委托到的地址。
+</ResponseField>
+
+<ResponseField name="volume" type="number">
+  下单数量——能量单位或带宽点数。
+</ResponseField>
+
+<ResponseField name="expected_volume" type="number">
+  与 `volume` 相同。之所以保留，是为了无需分辨字段含义即可比较「应交付」与「已交付」。
+</ResponseField>
+
+<ResponseField name="delivered_volume" type="number">
+  目前实际已委托的数量。订单为 `filled` 时等于 `volume`；`processing` 与 `partial` 时为已交付分片之和；失败时为 `0`。
+</ResponseField>
+
+<ResponseField name="price_trx" type="string">
+  订单价格，以 TRX 计，十进制字符串。
+</ResponseField>
+
+<ResponseField name="delegate_txid" type="string | null">
+  委托该资源的交易。
+</ResponseField>
+
+<ResponseField name="undelegate_txid" type="string | null">
+  租期结束后收回该资源的交易。
+</ResponseField>
+
+<ResponseField name="reclaim_at" type="string | null">
+  计划收回资源的时间，ISO-8601；不按计时器收回的订单为 `null`。
+</ResponseField>
+
+```json Response
+{
+  "event": "order.updated",
+  "data": {
+    "id": 247033,
+    "type": "energy",
+    "status": "filled",
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "volume": 65000,
+    "expected_volume": 65000,
+    "delivered_volume": 65000,
+    "price_trx": "2.75",
+    "delegate_txid": "a1b2c3d4e5f6...",
+    "undelegate_txid": null,
+    "reclaim_at": "2026-09-15T07:44:56+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+**请以 `status` 判断结果，而不是看有没有 `delegate_txid`。** 失败的订单同样可能带有交易 ID——我们特意保留它以便排查故障。您是否拿到资源，只有 `status` 说了算。
+</Warning>
+
+大额订单在内部会被拆分成多笔，但那是我们的事：您**每个订单只收到一个 Webhook**，而不是每个分片一个。
+
+### `subscription.transfer`
+
+<ResponseField name="subscription_id" type="number">
+  该转账所属的 Smart Mode 订阅。
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  发出转账的受监控地址。
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  您为该订阅设置的标签。
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string">
+  链上的转账交易。
+</ResponseField>
+
+<ResponseField name="transfer_count" type="number">
+  本次委托覆盖了多少笔转账。
+</ResponseField>
+
+<ResponseField name="energy_delegated" type="number">
+  为此委托的能量。
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  为能量扣除的金额，以 TRX 计。
+</ResponseField>
+
+<ResponseField name="bw_fee_trx" type="string | null">
+  额外扣除的带宽费用；未扣除时为 `null`。
+</ResponseField>
+
+<ResponseField name="balance_after_trx" type="string">
+  扣费后的账户余额。
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  转账的处理时间。请注意它位于 **`data` 内部**，与信封自身的 `timestamp` 不同。
+</ResponseField>
+
+```json Response
+{
+  "event": "subscription.transfer",
+  "data": {
+    "subscription_id": 412,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "label": "payouts",
+    "tx_hash": "9f8e7d6c5b4a...",
+    "transfer_count": 1,
+    "energy_delegated": 65000,
+    "fee_trx": "2.75",
+    "bw_fee_trx": null,
+    "balance_after_trx": "376.63",
+    "timestamp": "2026-09-14T14:51:16.512033+00:00"
+  },
+  "timestamp": "2026-09-14T14:51:16.986341+00:00"
+}
+```
+
+### 投递
+
+- 最多 **3 次尝试**，两次之间分别间隔 **1 秒**和 **4 秒**。成功之后以及最后一次尝试之后没有停顿。
+- 每次尝试超时 **10 秒**。
+- 我们接受任何 **`2xx`**。其他一律视为失败尝试。
+- **不跟随重定向。** `301`/`302` 是一次失败尝试，而不是跳转。
+- 错过的事件**不会**补发。三次尝试都失败，该事件就丢失了；请用[查询订单](/api-reference/orders/get-order)对账，而不是等待重发。
+
+您的 URL 必须解析到**公网**地址。回环、私有和链路本地地址段会被拒绝，无法解析的主机同样如此——这两种情况下都不会发送任何请求，也不会写入日志。
+
+### 验证签名
+
+每个请求都带有 `X-Webhook-Signature: sha256=<hex>`，即以您的 Webhook 密钥对**原始请求体**计算的 HMAC-SHA256。
+
+两个细节决定您的校验能否成功：
+
+1. 比较前请**去掉 `sha256=` 前缀**。该请求头不是纯十六进制摘要。
+2. **对收到的原始字节做哈希**，而不是对重新序列化后的对象。解析 JSON 再重新输出会改变键的顺序和空格，签名永远对不上。
+
+签名密钥显示在 [Dashboard → API](https://tronrental.com/dashboard/api) 中 Webhook URL 旁边。它不会返回给使用 API 密钥的请求——要查看必须在网站上登录。
 
 <CodeGroup>
 ```python Python
-import hmac
 import hashlib
+import hmac
 
-def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(
-        secret.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
-
-# In your webhook handler:
-# payload = request.body  (raw bytes)
-# signature = request.headers["X-Webhook-Signature"]
-# secret = "whsec_abc123..."  (from configure response)
-# if not verify_webhook(payload, signature, secret):
-#     return Response(status_code=401)
+def verify_webhook(raw_body: bytes, signature_header: str, secret: str) -> bool:
+    prefix, _, received = signature_header.partition("=")
+    if prefix != "sha256" or not received:
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, received)
 ```
 
 ```javascript JavaScript
 const crypto = require("crypto");
 
-function verifyWebhook(payload, signature, secret) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature)
-  );
+function verifyWebhook(rawBody, signatureHeader, secret) {
+  const [prefix, received] = String(signatureHeader).split("=");
+  if (prefix !== "sha256" || !received) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(expected);
+  const b = Buffer.from(received);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
-
-// In your webhook handler:
-// const payload = req.rawBody;  // raw request body string
-// const signature = req.headers["x-webhook-signature"];
-// const secret = "whsec_abc123...";
-// if (!verifyWebhook(payload, signature, secret)) {
-//   return res.status(401).send("Invalid signature");
-// }
 ```
 </CodeGroup>
 
 <Warning>
-  处理 Webhook 数据前务必验证签名。使用常量时间比较（`hmac.compare_digest` / `crypto.timingSafeEqual`）以防止计时攻击。
-</Warning>
-
-<Warning>
-  Webhook URL 不能指向 `localhost`、`127.0.0.1` 或其他私有地址。
+  在依据内容采取行动之前先验证签名，并使用恒定时间比较（`hmac.compare_digest` / `crypto.timingSafeEqual`）。用 `==` 比较会通过时间泄露信息。
 </Warning>

@@ -1,39 +1,49 @@
 ---
 title: Журнал вебхуков
 api: GET /api/v1/webhooks/logs
-description: "Просмотр журнала доставки вебхуков"
+description: "Последние попытки доставки вебхуков"
 ---
 
 ## Журнал вебхуков
 
-Возвращает последние попытки доставки вебхуков для отладки.
+Последние попытки доставки, новые сверху — что мы отправили и что ответил ваш сервер.
+
+### Параметры запроса
+
+<ParamField query="page" type="integer">
+  Номер страницы, от `1`. По умолчанию `1`.
+</ParamField>
+
+<ParamField query="page_size" type="integer">
+  Записей на страницу, `1`–`100`. По умолчанию `50`.
+</ParamField>
 
 ### Ответ
 
-Массив записей журнала:
+Массив записей.
 
 <ResponseField name="id" type="number">
-  ID записи журнала
+  ID записи журнала.
 </ResponseField>
 
 <ResponseField name="event_type" type="string">
-  Событие, вызвавшее вебхук
+  Какое событие доставлялось, например `order.updated`.
 </ResponseField>
 
 <ResponseField name="payload" type="object">
-  Отправленные данные
+  Ровно тот конверт, который был отправлен — `event` / `data` / `timestamp`, те самые байты, по которым считалась подпись.
 </ResponseField>
 
 <ResponseField name="response_status" type="number">
-  HTTP-код ответа вашего сервера
+  HTTP-статус, которым ответил ваш сервер. **`0` означает, что HTTP-ответа не было вовсе** — соединение, TLS-рукопожатие или чтение не удались либо истекли по таймауту.
 </ResponseField>
 
 <ResponseField name="attempts" type="number">
-  Количество попыток доставки
+  Сколько из трёх попыток было сделано. `1` — получилось с первого раза.
 </ResponseField>
 
 <ResponseField name="created_at" type="string">
-  Временная метка
+  Когда доставка завершилась, ISO-8601.
 </ResponseField>
 
 ### Пример
@@ -46,16 +56,35 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```json Response
 [
   {
-    "id": 1,
-    "event_type": "order.filled",
+    "id": 105,
+    "event_type": "order.updated",
     "payload": {
-      "order_id": 12345,
-      "address": "TAddress...",
-      "energy_amount": 65000
+      "event": "order.updated",
+      "data": {
+        "id": 247033,
+        "type": "energy",
+        "status": "filled",
+        "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "volume": 65000,
+        "expected_volume": 65000,
+        "delivered_volume": 65000,
+        "price_trx": "2.75",
+        "delegate_txid": "a1b2c3d4e5f6...",
+        "undelegate_txid": null,
+        "reclaim_at": "2026-09-15T07:44:56+00:00"
+      },
+      "timestamp": "2026-09-14T14:51:16.986341+00:00"
     },
     "response_status": 200,
     "attempts": 1,
-    "created_at": "2026-03-05T12:00:00Z"
+    "created_at": "2026-09-14T14:51:16.986341Z"
   }
 ]
 ```
+
+<Note>
+  Две особенности, о которых стоит знать, прежде чем отлаживаться по этому журналу:
+
+  - В нём перечислены доставки, отнесённые к вашим **API-ключам**, поэтому доставки `subscription.transfer` сегодня сюда не попадают, даже если были отправлены.
+  - URL, который не удалось зарезолвить, или адрес из приватного диапазона **не дают строки вовсе** — пустой журнал не отличает «событий не было» от «адрес отвергнут». Если трафик ожидался, а его нет, проверьте URL в [Dashboard → API](https://tronrental.com/dashboard/api).
+</Note>
