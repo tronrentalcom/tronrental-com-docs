@@ -1,0 +1,129 @@
+---
+title: 价格估算
+api: GET /api/v1/energy/quote
+description: "指定能量数量的最终价格，已包含固定手续费"
+---
+
+## 价格估算
+
+返回指定能量数量将实际扣除的金额 —— 租赁费与固定手续费合计，按**您的**费率计算。
+
+**此端点为公开接口 —— 身份验证为可选。** 传入您的 API 密钥可获得您的专属价格；不传则返回公开市场价格。
+
+<Info>
+  当您需要特定数量的价格时请使用此端点。`GET /api/v1/prices` 始终按 65,000 单位报价且不接受任何参数，而 `POST /api/v1/energy/estimate` 仅返回市场价的租赁费，并且会忽略您的密钥。
+</Info>
+
+### 查询参数
+
+<ParamField query="volume" type="integer" required>
+  需要估算的能量单位数。范围 60,000 至 5,000,000。
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  租赁时长。能量仅支持 `1h`。
+</ParamField>
+
+### 请求头
+
+<ParamField header="X-API-Key" type="string">
+  可选。使用有效密钥时，响应会反映您协商的费率和您的手续费。缺失、无效或已吊销的密钥不算错误 —— 您只会得到公开市场价格。
+</ParamField>
+
+### 响应
+
+<ResponseField name="volume" type="number">
+  本次估算所针对的能量数量
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  租赁时长（`1h`）
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  每 1 单位能量的费率（SUN）。可用它自行计算其他数量：`租赁费 = 数量 × price_sun / 1,000,000`
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  该数量的租赁费用，不含固定手续费
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  固定手续费，**每笔订单收取一次**，与数量无关。若您的账户设有专属手续费、折扣或豁免，此处会体现您的实际手续费。
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **将要扣除的金额**：`rental_trx + fixed_fee_trx`
+</ResponseField>
+
+<ResponseField name="total_usd" type="string | null">
+  同一金额的美元值。当 TRX/USD 汇率暂时不可用时为 `null` —— TRX 数值仍然有效。
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  应用了您协商的费率时为 `true`，按公开市场价报价时为 `false`。请检查该字段：否则遗漏 `X-API-Key` 请求头的响应看起来与正常响应无异，您会按公开价向客户报价，而实际按您自己的价格扣费。
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/quote",
+    params={"volume": 131000, "duration": "1h"},
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  以下数值仅为示例。能量存在市场价格，且在一天内会波动。
+</Info>
+
+```json Response
+{
+  "volume": 131000,
+  "duration": "1h",
+  "price_sun": "20.99",
+  "rental_trx": "2.749690",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "2.949690",
+  "total_usd": "1.02",
+  "personal_price": true
+}
+```
+
+### 常见数量
+
+| 数量 | 适用场景 |
+|---|---|
+| 65,000 | 向已持有 USDT 的地址转账 USDT |
+| 131,000 | 向从未持有过 USDT 的地址转账 USDT（需创建新的存储槽） |
+
+不存在套餐目录 —— 60,000 至 5,000,000 之间的任意数量均有效，且固定手续费在任何情况下都只按订单收取一次。向同一收款方进行两笔转账时，合并为一笔 131,000 的订单比拆成两笔 65,000 更划算：手续费只付一次而非两次。
+
+### 错误
+
+| 代码 | 含义 |
+|------|---------|
+| `400 INVALID_VOLUME` | 数量超出 60,000–5,000,000 范围 |
+| `400 INVALID_DURATION` | 时长不是 `1h` |
+
+无效或已吊销的 `X-API-Key` 在此**不是**错误：仍会按公开市场价返回估算，并将 `personal_price` 置为 `false`。

@@ -14,7 +14,7 @@ description: "使用账户余额购买转账套餐"
   要监控的 TRON 地址
 </ParamField>
 
-<ParamField body="size" type="number" required>
+<ParamField body="package_size" type="number" required>
   转账笔数（1 – 10,000）
 </ParamField>
 
@@ -34,7 +34,7 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
   -H "Content-Type: application/json" \
   -d '{
     "address": "TYourAddress...",
-    "size": 500,
+    "package_size": 500,
     "bw_guarantee": true
   }'
 ```

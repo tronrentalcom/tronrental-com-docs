@@ -12,7 +12,7 @@ Creates a payment invoice that generates a unique deposit address. When payment 
 
 ### Request body
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   Target TRON address to receive energy
 </ParamField>
 
@@ -24,13 +24,17 @@ Creates a payment invoice that generates a unique deposit address. When payment 
   Number of USDT transfers (1 – 100). Each transfer = 65,000 energy.
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  Rental duration (1 or 24 hours)
+<ParamField body="bandwidth_amount" type="number">
+  Bandwidth amount to rent. Optional add-on: energy and bandwidth can be combined in one invoice.
+</ParamField>
+
+<ParamField body="duration" type="string">
+  Bandwidth rental duration: `1h` or `1d`. Energy is always hourly.
 </ParamField>
 
 ### Response
 
-<ResponseField name="invoice_id" type="number">
+<ResponseField name="invoice_id" type="string">
   Unique invoice identifier
 </ResponseField>
 
@@ -61,9 +65,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
+    "target_address": "TRecipientAddress...",
     "transfer_count": 1,
-    "duration_hours": 1
+    "duration": "1h"
   }'
 ```
 
@@ -71,9 +75,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
 {
   "invoice_id": 789,
   "payment_address": "TPaymentAddress...",
-  "address": "TRecipientAddress...",
+  "target_address": "TRecipientAddress...",
   "energy_amount": 65000,
-  "duration_hours": 1,
+  "duration": "1h",
   "price_trx": "2.75",
   "price_usdt": "0.64",
   "status": "pending",

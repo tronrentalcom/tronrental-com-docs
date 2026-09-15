@@ -8,11 +8,11 @@ description: "Активация неактивного адреса TRON в б�
 
 Активирует адрес TRON, который ещё не получал транзакций. Требуется перед тем, как адрес сможет получать токены.
 
-**Стоимость: 1.1 TRX** (списывается с вашего баланса)
+**Стоимость: 1.2 TRX** (списывается с вашего баланса)
 
 ### Тело запроса
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   Адрес TRON для активации (формат T...)
 </ParamField>
 
@@ -22,8 +22,20 @@ description: "Активация неактивного адреса TRON в б�
   Успешна ли активация
 </ResponseField>
 
-<ResponseField name="tx_hash" type="string">
+<ResponseField name="status" type="string">
+  `completed` — мы отправили активацию; `already_activated` — адрес уже был активен в сети
+</ResponseField>
+
+<ResponseField name="txid" type="string">
   Хеш транзакции активации
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  Списано TRX за активацию (0, если адрес уже был активен)
+</ResponseField>
+
+<ResponseField name="id" type="number">
+  Идентификатор записи об активации
 </ResponseField>
 
 ### Пример
@@ -32,12 +44,15 @@ description: "Активация неактивного адреса TRON в б�
 curl -X POST https://api.tronrental.com/v1/energy/activate \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
-  -d '{"address": "TNewInactiveAddress..."}'
+  -d '{"target_address": "TNewInactiveAddress..."}'
 ```
 
 ```json Response
 {
   "success": true,
-  "tx_hash": "a1b2c3d4e5f6..."
+  "status": "completed",
+  "txid": "a1b2c3d4e5f6...",
+  "cost_trx": "1.2",
+  "id": 12345
 }
 ```

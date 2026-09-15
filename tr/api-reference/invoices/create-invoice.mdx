@@ -12,7 +12,7 @@ Benzersiz bir yatirma adresi olusturan bir odeme faturasi yaratir. Odeme (TRX ve
 
 ### Istek govdesi
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   Enerji alacak hedef TRON adresi
 </ParamField>
 
@@ -24,13 +24,17 @@ Benzersiz bir yatirma adresi olusturan bir odeme faturasi yaratir. Odeme (TRX ve
   USDT transfer sayisi (1 – 100). Her transfer = 65.000 enerji.
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  Kiralama suresi (1 veya 24 saat)
+<ParamField body="bandwidth_amount" type="number">
+  Kiralanacak bandwidth miktarı. İsteğe bağlı ek: enerji ve bandwidth tek faturada birleştirilebilir.
+</ParamField>
+
+<ParamField body="duration" type="string">
+  Bandwidth kiralama süresi: `1h` veya `1d`. Enerji her zaman saatliktir.
 </ParamField>
 
 ### Yanit
 
-<ResponseField name="invoice_id" type="number">
+<ResponseField name="invoice_id" type="string">
   Benzersiz fatura tanimlayicisi
 </ResponseField>
 
@@ -61,9 +65,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
+    "target_address": "TRecipientAddress...",
     "transfer_count": 1,
-    "duration_hours": 1
+    "duration": "1h"
   }'
 ```
 
@@ -71,9 +75,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
 {
   "invoice_id": 789,
   "payment_address": "TPaymentAddress...",
-  "address": "TRecipientAddress...",
+  "target_address": "TRecipientAddress...",
   "energy_amount": 65000,
-  "duration_hours": 1,
+  "duration": "1h",
   "price_trx": "2.75",
   "price_usdt": "0.64",
   "status": "pending",

@@ -14,7 +14,7 @@ Purchases a transfer package using your account balance.
   TRON address to monitor
 </ParamField>
 
-<ParamField body="size" type="number" required>
+<ParamField body="package_size" type="number" required>
   Number of transfers (1 – 10,000)
 </ParamField>
 
@@ -34,7 +34,7 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
   -H "Content-Type: application/json" \
   -d '{
     "address": "TYourAddress...",
-    "size": 500,
+    "package_size": 500,
     "bw_guarantee": true
   }'
 ```

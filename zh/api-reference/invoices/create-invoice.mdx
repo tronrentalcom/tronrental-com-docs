@@ -12,7 +12,7 @@ description: "为能量委托创建支付账单"
 
 ### 请求体
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   接收能量的目标 TRON 地址
 </ParamField>
 
@@ -24,13 +24,17 @@ description: "为能量委托创建支付账单"
   USDT 转账笔数（1 – 100）。每笔转账 = 65,000 能量。
 </ParamField>
 
-<ParamField body="duration_hours" type="number" required>
-  租赁时长（1 或 24 小时）
+<ParamField body="bandwidth_amount" type="number">
+  要租用的带宽数量。可选附加项：能量和带宽可合并在一张发票中。
+</ParamField>
+
+<ParamField body="duration" type="string">
+  带宽租用时长：`1h` 或 `1d`。能量始终按小时计。
 </ParamField>
 
 ### 响应
 
-<ResponseField name="invoice_id" type="number">
+<ResponseField name="invoice_id" type="string">
   唯一账单标识符
 </ResponseField>
 
@@ -61,9 +65,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "address": "TRecipientAddress...",
+    "target_address": "TRecipientAddress...",
     "transfer_count": 1,
-    "duration_hours": 1
+    "duration": "1h"
   }'
 ```
 
@@ -71,9 +75,9 @@ curl -X POST https://api.tronrental.com/v1/invoices \
 {
   "invoice_id": 789,
   "payment_address": "TPaymentAddress...",
-  "address": "TRecipientAddress...",
+  "target_address": "TRecipientAddress...",
   "energy_amount": 65000,
-  "duration_hours": 1,
+  "duration": "1h",
   "price_trx": "2.75",
   "price_usdt": "0.64",
   "status": "pending",

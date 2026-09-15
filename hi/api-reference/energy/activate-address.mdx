@@ -8,22 +8,34 @@ description: "ब्लॉकचेन पर निष्क्रिय TRON �
 
 उस TRON एड्रेस को सक्रिय करता है जिसने कभी कोई ट्रांज़ैक्शन प्राप्त नहीं किया है। एड्रेस द्वारा टोकन प्राप्त करने से पहले यह आवश्यक है।
 
-**लागत: 1.1 TRX** (आपके बैलेंस से काटा जाता है)
+**लागत: 1.2 TRX** (आपके बैलेंस से काटा जाता है)
 
 ### अनुरोध बॉडी
 
-<ParamField body="address" type="string" required>
+<ParamField body="target_address" type="string" required>
   सक्रिय करने के लिए TRON एड्रेस (T... प्रारूप)
 </ParamField>
 
 ### रिस्पॉन्स
 
 <ResponseField name="success" type="boolean">
-  सक्रियण सफल हुआ या नहीं
+  क्या सक्रियण सफल रहा
 </ResponseField>
 
-<ResponseField name="tx_hash" type="string">
-  सक्रियण ट्रांज़ैक्शन हैश
+<ResponseField name="status" type="string">
+  `completed` — हमने सक्रियण भेजा; `already_activated` — पता पहले से ही सक्रिय था
+</ResponseField>
+
+<ResponseField name="txid" type="string">
+  सक्रियण लेनदेन हैश
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  सक्रियण के लिए काटे गए TRX (पता पहले से सक्रिय हो तो 0)
+</ResponseField>
+
+<ResponseField name="id" type="number">
+  सक्रियण रिकॉर्ड आईडी
 </ResponseField>
 
 ### उदाहरण
@@ -32,12 +44,15 @@ description: "ब्लॉकचेन पर निष्क्रिय TRON �
 curl -X POST https://api.tronrental.com/v1/energy/activate \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
-  -d '{"address": "TNewInactiveAddress..."}'
+  -d '{"target_address": "TNewInactiveAddress..."}'
 ```
 
 ```json Response
 {
   "success": true,
-  "tx_hash": "a1b2c3d4e5f6..."
+  "status": "completed",
+  "txid": "a1b2c3d4e5f6...",
+  "cost_trx": "1.2",
+  "id": 12345
 }
 ```

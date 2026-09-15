@@ -1,6 +1,6 @@
 ---
 title: Toggle Subscription
-api: POST /api/v1/smart-mode/{subscription_id}/toggle
+api: POST /api/v1/smart-mode/{sub_id}/toggle
 description: "Pause or resume a Smart Mode subscription"
 ---
 
@@ -10,7 +10,7 @@ Pauses an active subscription or resumes a paused one. While paused, no fees are
 
 ### Path parameters
 
-<ParamField path="subscription_id" type="number" required>
+<ParamField path="sub_id" type="number" required>
   Subscription ID
 </ParamField>
 
