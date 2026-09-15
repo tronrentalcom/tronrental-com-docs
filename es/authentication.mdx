@@ -35,9 +35,13 @@ Cada clave API tiene acceso completo a las operaciones de la API de tu cuenta:
   Mantiene tu clave API en secreto. No la expongas en codigo del lado del cliente, repositorios publicos o URLs.
 </Warning>
 
+## Uso de la clave y registro de solicitudes
+
+Cada solicitud autenticada con una clave API se guarda durante 7 días: método, ruta, código de estado, latencia e IP del cliente. Los parámetros de consulta no se muestran en esta vista. Abra [Dashboard → API Keys](https://tronrental.com/dashboard/api) y despliegue una clave para ver sus solicitudes recientes; la columna **Last Used** muestra la llamada más reciente (la marca de autenticación se actualiza como máximo una vez cada 5 minutos; el registro es exacto). El registro solo está disponible desde el panel: una clave API no puede leer su propio registro.
+
 ## Limites de tasa
 
-Las claves API tienen limites de tasa por endpoint. Consulta [Limites de tasa](/resources/rate-limits) para mas detalles.
+El limite de tasa se cuenta por cuenta, no por clave: todas las claves de una cuenta comparten un unico presupuesto. Consulta [Limites de tasa](/resources/rate-limits) para mas detalles.
 
 ## Errores
 

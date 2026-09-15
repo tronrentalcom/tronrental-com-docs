@@ -18,6 +18,18 @@ description: "通过 ID 查询能量或带宽订单的状态"
 
 返回完整的订单对象，包括 `status`、`type`、`volume`、`price_trx`、`delegate_txid` 和时间戳。
 
+<ResponseField name="activation_id" type="number | null">
+  此订单支付的地址激活 ID；若未支付任何激活则为 `null`。
+</ResponseField>
+
+<ResponseField name="activation_cost_trx" type="string | null">
+  该激活的费用（TRX），**在 `price_trx` 之外**——这正是订单价格与实际从余额扣除金额之间的差额。
+</ResponseField>
+
+<Note>
+**是 `null`，不是 `"0"`。** 当订单未支付激活时（接收方账户已存在，或由他人的交易创建），两个字段均为 `null`。请注意与 Buy Energy 响应中 `activation_cost_trx` 的区别：那里此种情况为字符串 `"0"`。在此接口用 `"0"` 比较将永远不会匹配。
+</Note>
+
 ### 订单状态
 
 | 状态 | 说明 |
@@ -47,6 +59,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "undelegate_txid": null,
   "reclaim_at": null,
   "source": "api",
+  "activation_id": 8891,
+  "activation_cost_trx": "1.20",
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```

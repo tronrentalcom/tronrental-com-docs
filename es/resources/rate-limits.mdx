@@ -1,46 +1,136 @@
 ---
-title: Limites de tasa
-description: "Politica de limitacion de tasa de la API"
+title: Límites de tasa
+description: "Política de limitación de tasa de la API"
 ---
 
-## Limites de tasa
+## Límites de tasa
 
-Los endpoints de la API tienen limites de tasa para garantizar un uso justo y la estabilidad del servicio.
+Cada solicitud está sujeta a dos límites: un **límite a nivel de cuenta**, que cubre casi todos los endpoints, y,
+en unos pocos de ellos, un **límite propio más estricto**. El que alcanzarás es el menor de los dos.
 
-### Limites por endpoint
+### Límite a nivel de cuenta
 
-| Endpoint | Limite |
-|----------|--------|
-| `GET /prices` | 60 solicitudes/minuto |
-| `POST /energy/buy` | 30 solicitudes/minuto |
-| `POST /bandwidth/buy` | 30 solicitudes/minuto |
-| `POST /invoices` | 20 solicitudes/minuto |
-| `POST /smart-mode/activate` | 10 solicitudes/minuto |
-| `POST /account/withdrawal` | 1 solicitud/minuto |
-| Otros endpoints | 60 solicitudes/minuto |
+Se cuenta por **cuenta**, en una ventana fija de un minuto. Todas las claves API de una misma cuenta
+comparten un único presupuesto: crear más claves no eleva tu límite.
 
-### Encabezados de limite de tasa
+| Quién eres | Límite por defecto |
+|---|---|
+| Cuenta con una compra o suscripción previa, o con un saldo de 10 TRX o más | 1000 solicitudes/minuto |
+| Cualquier otra cuenta autenticada | 300 solicitudes/minuto |
+| Solicitudes sin autenticación | 60 solicitudes/minuto por dirección IP |
+| Consulta de `GET /api/v1/invoices/{invoice_id}` sin autenticación | 180 solicitudes/minuto por dirección IP |
 
-Las respuestas incluyen informacion sobre limites de tasa en los encabezados:
+Los presupuestos sin autenticación se cuentan por separado para cada grupo de endpoints — precios,
+estado de factura, consultas de dirección, autenticación y todo lo demás —, de modo que consultar
+precios nunca consume el presupuesto del resto.
+
+Estos son los valores por defecto. Si tu integración necesita un techo más alto, lo elevamos para tu
+cuenta: escríbenos por [Telegram](https://t.me/TronRentalcom_bot).
+
+<Note>
+La ventana es fija, no deslizante: el contador se reinicia al comienzo de cada minuto. Pero no montes
+una ráfaga alrededor de esa frontera. Dos mecanismos independientes hacen que sea mala apuesta. Delante
+de la API hay un límite de borde de unas 50 solicitudes por segundo y por dirección IP, que responde
+`503` con cuerpo HTML, no un error JSON. Y una cuenta que se mantiene por encima de su límite durante
+tres minutos seguidos ve su límite reducido a la mitad los diez minutos siguientes; tres minutos más así
+la bloquean por completo durante treinta, con `Retry-After: 1800`. Las cuentas del nivel de
+1000/minuto están exentas de esa escalada.
+</Note>
+
+### Endpoints con un límite propio más estricto
+
+| Endpoint | Límite | Se cuenta por |
+|---|---|---|
+| `POST /api/v1/invoices` | 10 solicitudes/minuto | dirección IP |
+| `POST /api/v1/account/withdrawal` | 1 solicitud/minuto | cuenta |
+
+Ten en cuenta que `POST /api/v1/invoices` se cuenta por **dirección IP**, no por cuenta: si varios de
+tus clientes envían solicitudes desde la misma IP de salida, comparten un único presupuesto de 10 por
+minuto.
+
+Los endpoints de compra — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
+`POST /api/v1/bandwidth/buy` y `POST /api/v1/bandwidth/rentals` — llevan un presupuesto más antiguo de
+1000 solicitudes por minuto contado **por dirección IP** (los dos endpoints de bandwidth comparten uno
+solo). Para una única cuenta nunca es el límite determinante, pero los clientes tras una misma IP de
+salida lo comparten entre sí.
+
+Los endpoints de gestión de webhooks (`/api/v1/webhooks/...`) no están cubiertos por el límite a nivel
+de cuenta. El resto de los endpoints documentados no tiene límite propio: solo se les aplica el límite
+a nivel de cuenta.
+
+### Cómo es una respuesta 429
+
+El cuerpo depende de qué límite hayas alcanzado. Existen tres formas, así que analiza el cuerpo de
+forma defensiva en lugar de dar por supuesta una de ellas.
+
+**Límite a nivel de cuenta.** La respuesta lleva una cabecera `Retry-After` con los segundos de espera:
 
 ```
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 58
-X-RateLimit-Reset: 1709568000
+HTTP/1.1 429 Too Many Requests
+Retry-After: 37
 ```
-
-### Exceder los limites
-
-Cuando se excede el limite de tasa, recibiras HTTP `429`:
 
 ```json
-{
-  "detail": "Rate limit exceeded. Try again in 30 seconds."
-}
+{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}
 ```
 
-Implementa retroceso exponencial para los reintentos. No reintentes inmediatamente.
+**Límite del endpoint**, por ejemplo en `POST /api/v1/invoices`. No hay cabecera `Retry-After`; la
+ventana es de un minuto:
 
-### Necesitas limites mas altos?
+```json
+{"detail":{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}}
+```
 
-Contactanos via [Telegram](https://t.me/TronRentalcom_bot) para limites de tasa personalizados para integraciones de alto volumen.
+**`POST /api/v1/account/withdrawal`.** Un `detail` de texto plano con los segundos restantes, sin
+código de error:
+
+```json
+{"detail":"Rate limit: try again in 42s"}
+```
+
+### Un 429 que reintentar no resuelve
+
+`POST /api/v1/invoices` también responde `429` cuando ya tienes demasiadas facturas sin pagar: como
+máximo **3 por dirección IP** y como máximo **5 por cuenta**. El límite por IP también se aplica a las
+solicitudes autenticadas, por lo que suele ser el primero que alcanzas:
+
+```json
+{"detail":"Too many pending invoices (max 3)"}
+```
+
+Es un tope sobre las facturas abiertas, no un límite de tasa, y esperar no lo libera por sí solo. Paga
+una de las facturas pendientes, o deja que expire, antes de crear otra.
+
+El mismo endpoint también reporta fallos transitorios ajenos como `429` — por ejemplo
+`{"detail":"Energy price unavailable"}`. Lee el mensaje antes de decidir cómo reaccionar.
+
+### Reintentos
+
+- Si la respuesta lleva la cabecera `Retry-After`, espera exactamente esos segundos.
+- En caso contrario, usa retroceso exponencial empezando en un segundo.
+- Nunca reintentes de inmediato.
+- Lee el cuerpo antes de reintentar: `Too many pending invoices` requiere otra acción, no una espera
+  más larga.
+
+```python
+import time
+import requests
+
+def post_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.post(url, **kwargs)
+        if resp.status_code == 429:
+            body = resp.text
+            if "pending invoices" in body:
+                raise RuntimeError(body)  # esperar no ayudara
+            delay = int(resp.headers.get("Retry-After", 2 ** attempt))
+            time.sleep(delay)
+            continue
+        return resp
+    raise RuntimeError("Max retries exceeded")
+```
+
+### ¿Necesitas límites más altos?
+
+Contáctanos por [Telegram](https://t.me/TronRentalcom_bot) para límites de tasa personalizados en
+integraciones de alto volumen.

@@ -1,0 +1,119 @@
+---
+title: 余额历史
+api: GET /api/v1/account/history
+description: "您账户余额的所有变动"
+---
+
+## 余额历史
+
+返回账户余额的所有变动，最新在前——购买、充值、退款和手续费都在一个列表中。订单、发票和激活各自只显示自己的部分，因此这是唯一算术闭合的接口：某段时间内 `delta_trx` 的总和等于该时间段内余额的变化。
+
+<Note>
+**关于权限范围。** `view` 范围返回购买、退款和手续费。充值变动还需要 `deposit_view` 范围，提现需要 `withdraw`；没有这些范围时，相应记录不会出现在列表和 `total` 中，按此类原因筛选将返回空页面而非错误。
+</Note>
+
+### 查询参数
+
+<ParamField query="page" type="number" default="1">
+  页码，从 1 开始。
+</ParamField>
+
+<ParamField query="page_size" type="number" default="50">
+  每页条数（最多 100）。
+</ParamField>
+
+<ParamField query="reason" type="string">
+  仅返回此原因的变动，例如 `energy_order`。
+</ParamField>
+
+### 响应
+
+<ResponseField name="items" type="array">
+  <Expandable title="item">
+    <ResponseField name="id" type="number">
+      变动 ID。也是排序键——列表按其降序排列。
+    </ResponseField>
+    <ResponseField name="delta_trx" type="string">
+      TRX 金额，带符号：负数为扣款，正数为入账。
+    </ResponseField>
+    <ResponseField name="balance_after" type="string">
+      此次变动后的余额。
+    </ResponseField>
+    <ResponseField name="reason" type="string">
+      变动的原因（见下）。今后可能出现新的原因——遇到未知值应原样显示，而不是报错。
+    </ResponseField>
+    <ResponseField name="ref_type" type="string | null">
+      所支付的实体：`order`、`invoice`、`activation`、`deposit` 等。若不引用任何实体则为 `null`。
+    </ResponseField>
+    <ResponseField name="ref_id" type="string | null">
+      该实体的 ID，字符串形式。
+    </ResponseField>
+    <ResponseField name="ref_address" type="string | null">
+      该实体的接收地址（如果有）——这样无需第二次请求即可知道扣款用途。否则为 `null`。
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      变动发生时间（UTC）。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  符合筛选条件的变动总数。
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  页码，从 1 开始。
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  每页条数（最多 100）。
+</ResponseField>
+
+### 常见原因
+
+| 原因 | 含义 |
+|------|------|
+| `energy_order` | 购买能量 |
+| `bw_order` | 购买带宽 |
+| `energy_order_refund` | 能量订单退款 |
+| `bw_order_refund` | 带宽订单退款 |
+| `activation` | 在链上创建接收方账户 |
+| `activation_refund` | 未发生的激活退款 |
+| `deposit` | 入账充值 |
+
+### 示例
+
+```bash
+curl "https://api.tronrental.com/v1/account/history?page=1&page_size=50" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "items": [
+    {
+      "id": 97213,
+      "delta_trx": "-1.79",
+      "balance_after": "154.71",
+      "reason": "energy_order",
+      "ref_type": "order",
+      "ref_id": "12345",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:30:00Z"
+    },
+    {
+      "id": 97212,
+      "delta_trx": "-1.20",
+      "balance_after": "156.50",
+      "reason": "activation",
+      "ref_type": "activation",
+      "ref_id": "8891",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:29:53Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 50
+}
+```

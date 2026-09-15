@@ -35,9 +35,13 @@ curl https://api.tronrental.com/v1/account/balance \
   请妥善保管您的 API 密钥。请勿在客户端代码、公开仓库或 URL 中暴露密钥。
 </Warning>
 
+## 密钥使用情况与请求日志
+
+每一次使用 API 密钥认证的请求都会保留 7 天：方法、路径、状态码、延迟和客户端 IP。此视图不显示查询参数。打开 [Dashboard → API Keys](https://tronrental.com/dashboard/api) 并展开密钥即可查看其最近的请求；**Last Used** 列显示最近一次调用（认证时的标记最多每 5 分钟更新一次，请求日志则是精确的）。日志仅在控制台中可用——API 密钥无法读取自己的日志。
+
 ## 速率限制
 
-API 密钥按端点进行速率限制。详情请参阅[速率限制](/resources/rate-limits)。
+速率限制按账户计算，而非按密钥：同一账户的所有密钥共用一份配额。详情请参阅[速率限制](/resources/rate-limits)。
 
 ## 错误
 

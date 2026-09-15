@@ -1,0 +1,119 @@
+---
+title: Historico de Saldo
+api: GET /api/v1/account/history
+description: "Todos os movimentos do saldo da sua conta"
+---
+
+## Historico de Saldo
+
+Retorna todos os movimentos do saldo da sua conta, do mais recente para o mais antigo: compras, depositos, reembolsos e taxas em uma unica lista. Pedidos, faturas e ativacoes mostram cada um apenas a sua parte, portanto este e o unico endpoint em que a aritmetica fecha: a soma de `delta_trx` em um periodo e igual a variacao do saldo nesse periodo.
+
+<Note>
+**Sobre os escopos.** O escopo `view` retorna compras, reembolsos e taxas. Movimentos de deposito exigem tambem o escopo `deposit_view` e saques exigem `withdraw`; sem eles essas linhas simplesmente nao aparecem na lista nem em `total`, e filtrar por esse motivo devolve uma pagina vazia, nao um erro.
+</Note>
+
+### Parametros de consulta
+
+<ParamField query="page" type="number" default="1">
+  Numero da pagina, a partir de 1.
+</ParamField>
+
+<ParamField query="page_size" type="number" default="50">
+  Itens por pagina (maximo 100).
+</ParamField>
+
+<ParamField query="reason" type="string">
+  Retorna apenas movimentos com este motivo exato, por exemplo `energy_order`.
+</ParamField>
+
+### Resposta
+
+<ResponseField name="items" type="array">
+  <Expandable title="item">
+    <ResponseField name="id" type="number">
+      ID do movimento. Tambem e a chave de ordenacao: a lista vem em ordem decrescente.
+    </ResponseField>
+    <ResponseField name="delta_trx" type="string">
+      Valor em TRX com sinal: negativo e cobranca, positivo e entrada.
+    </ResponseField>
+    <ResponseField name="balance_after" type="string">
+      Seu saldo imediatamente apos este movimento.
+    </ResponseField>
+    <ResponseField name="reason" type="string">
+      Para que foi o movimento (veja abaixo). Novos motivos podem surgir com o tempo: trate um valor desconhecido como opaco em vez de falhar.
+    </ResponseField>
+    <ResponseField name="ref_type" type="string | null">
+      Entidade paga: `order`, `invoice`, `activation`, `deposit` etc. `null` quando nao referencia nada.
+    </ResponseField>
+    <ResponseField name="ref_id" type="string | null">
+      ID dessa entidade, como string.
+    </ResponseField>
+    <ResponseField name="ref_address" type="string | null">
+      Endereco de destino dessa entidade, quando existe, para dispensar uma segunda requisicao. Caso contrario, `null`.
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Quando o movimento ocorreu (UTC).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Total de movimentos que atendem ao filtro.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  Numero da pagina, a partir de 1.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  Itens por pagina (maximo 100).
+</ResponseField>
+
+### Motivos comuns
+
+| Motivo | Significado |
+|------|------|
+| `energy_order` | Compra de energia |
+| `bw_order` | Compra de bandwidth |
+| `energy_order_refund` | Reembolso de um pedido de energia |
+| `bw_order_refund` | Reembolso de um pedido de bandwidth |
+| `activation` | Criacao da conta destinataria na rede |
+| `activation_refund` | Reembolso de uma ativacao que nao ocorreu |
+| `deposit` | Deposito recebido |
+
+### Exemplo
+
+```bash
+curl "https://api.tronrental.com/v1/account/history?page=1&page_size=50" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "items": [
+    {
+      "id": 97213,
+      "delta_trx": "-1.79",
+      "balance_after": "154.71",
+      "reason": "energy_order",
+      "ref_type": "order",
+      "ref_id": "12345",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:30:00Z"
+    },
+    {
+      "id": 97212,
+      "delta_trx": "-1.20",
+      "balance_after": "156.50",
+      "reason": "activation",
+      "ref_type": "activation",
+      "ref_id": "8891",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:29:53Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 50
+}
+```

@@ -5,42 +5,120 @@ description: "API 速率限制策略"
 
 ## 速率限制
 
-API 端点设有速率限制，以确保公平使用和服务稳定性。
+每个请求都受两种限制约束：覆盖几乎所有端点的**账户级限制**，以及少数端点上**更严格的端点自身限制**。
+两者之中较低的那个才是您会触发的限制。
 
-### 各端点限制
+### 账户级限制
 
-| 端点 | 限制 |
-|----------|-------|
-| `GET /prices` | 60 次请求/分钟 |
-| `POST /energy/buy` | 30 次请求/分钟 |
-| `POST /bandwidth/buy` | 30 次请求/分钟 |
-| `POST /invoices` | 20 次请求/分钟 |
-| `POST /smart-mode/activate` | 10 次请求/分钟 |
-| `POST /account/withdrawal` | 1 次请求/分钟 |
-| 其他端点 | 60 次请求/分钟 |
+按**账户**在固定的一分钟窗口内计数。同一账户的所有 API 密钥共用一份配额——创建更多密钥不会提高您的
+限制。
 
-### 速率限制响应头
+| 您的身份 | 默认限制 |
+|---|---|
+| 有过购买或订阅记录，或余额不低于 10 TRX 的账户 | 1000 次请求/分钟 |
+| 其他已登录账户 | 300 次请求/分钟 |
+| 未认证的请求 | 每个 IP 地址 60 次请求/分钟 |
+| 未认证地轮询 `GET /api/v1/invoices/{invoice_id}` | 每个 IP 地址 180 次请求/分钟 |
 
-响应中包含速率限制信息的请求头：
+未认证配额按端点分组分别计数——价格、账单状态、地址查询、身份认证以及其余全部——因此轮询价格不会占用
+其他请求的配额。
+
+以上为默认值。如果您的集成需要更高的上限，我们可以为您的账户上调：请通过
+[Telegram](https://t.me/TronRentalcom_bot) 联系我们。
+
+<Note>
+该窗口是固定窗口而非滑动窗口：计数器在每分钟开始时归零。但不要围绕这个边界设计突发流量，有两套独立机制
+会让这种做法得不偿失。API 前方有一道边缘限制，约为每个 IP 地址每秒 50 次请求，超出时返回的是带 HTML
+正文的 `503`，而不是 JSON 错误。另外，连续三分钟超出限制的账户，其限制会在接下来的十分钟内减半；再有
+三分钟如此，则被完全封禁三十分钟，并返回 `Retry-After: 1800`。1000 次/分钟档位的账户不受此升级机制
+影响。
+</Note>
+
+### 拥有更严格自身限制的端点
+
+| 端点 | 限制 | 计数维度 |
+|---|---|---|
+| `POST /api/v1/invoices` | 10 次请求/分钟 | IP 地址 |
+| `POST /api/v1/account/withdrawal` | 1 次请求/分钟 | 账户 |
+
+请注意，`POST /api/v1/invoices` 按 **IP 地址**计数，而非按账户：如果您的多个客户端从同一出口 IP 发送
+请求，它们将共用每分钟 10 次的同一份配额。
+
+购买类端点——`POST /api/v1/energy/buy`、`POST /api/v1/energy/activate`、
+`POST /api/v1/bandwidth/buy` 和 `POST /api/v1/bandwidth/rentals`——带有一份更早的配额：每分钟 1000 次
+请求，按 **IP 地址**计数（两个 bandwidth 端点共用一份配额）。对单个账户而言它从不是起约束作用的限制，
+但位于同一出口 IP 之后的客户端会彼此共享它。
+
+Webhook 管理端点（`/api/v1/webhooks/...`）不在账户级限制的覆盖范围内。其他所有已记录的端点都没有自身
+限制——只有账户级限制适用于它们。
+
+### 429 响应的样子
+
+响应体取决于您触发了哪一种限制。共存在三种形式，因此请做防御性解析，不要假定只有其中一种。
+
+**账户级限制。** 响应带有 `Retry-After` 头，给出需要等待的秒数：
 
 ```
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 58
-X-RateLimit-Reset: 1709568000
+HTTP/1.1 429 Too Many Requests
+Retry-After: 37
 ```
-
-### 超出限制
-
-当达到速率限制时，您将收到 HTTP `429`：
 
 ```json
-{
-  "detail": "Rate limit exceeded. Try again in 30 seconds."
-}
+{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}
 ```
 
-请实现指数退避重试。请勿立即重试。
+**端点自身限制**，例如 `POST /api/v1/invoices`。没有 `Retry-After` 头；窗口为一分钟：
+
+```json
+{"detail":{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}}
+```
+
+**`POST /api/v1/account/withdrawal`。** `detail` 为纯文本并包含剩余秒数，没有错误代码：
+
+```json
+{"detail":"Rate limit: try again in 42s"}
+```
+
+### 重试无法解决的 429
+
+当您手上未支付的账单过多时，`POST /api/v1/invoices` 同样返回 `429`——每个 IP 地址最多 **3 个**，每个
+账户最多 **5 个**。按 IP 计的上限对已认证请求同样生效，因此通常是它先被触发：
+
+```json
+{"detail":"Too many pending invoices (max 3)"}
+```
+
+这是对未结账单数量的上限，而不是速率限制，单纯等待并不会解除它。请先支付一个待付账单，或等其过期，
+然后再创建新的账单。
+
+同一端点也会把无关的临时故障报成 `429`——例如 `{"detail":"Energy price unavailable"}`。在决定如何处理
+之前，请先读取消息内容。
+
+### 重试
+
+- 如果响应带有 `Retry-After` 头，请严格等待该秒数。
+- 否则采用指数退避，从一秒开始。
+- 切勿立即重试。
+- 重试前请先读取响应体：`Too many pending invoices` 需要的是另一种处理，而不是更长的等待。
+
+```python
+import time
+import requests
+
+def post_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.post(url, **kwargs)
+        if resp.status_code == 429:
+            body = resp.text
+            if "pending invoices" in body:
+                raise RuntimeError(body)  # waiting will not help
+            delay = int(resp.headers.get("Retry-After", 2 ** attempt))
+            time.sleep(delay)
+            continue
+        return resp
+    raise RuntimeError("Max retries exceeded")
+```
 
 ### 需要更高的限制？
 
-通过 [Telegram](https://t.me/TronRentalcom_bot) 联系我们，为大流量集成获取自定义速率限制。
+如需为高并发集成设置自定义速率限制，请通过 [Telegram](https://t.me/TronRentalcom_bot) 联系我们。

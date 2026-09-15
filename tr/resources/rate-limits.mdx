@@ -1,46 +1,134 @@
 ---
-title: Hiz Sinirlari
-description: "API hiz sinirlandirma politikasi"
+title: Hız Sınırları
+description: "API hız sınırlandırma politikası"
 ---
 
-## Hiz Sinirlari
+## Hız Sınırları
 
-API uc noktalari, adil kullanim ve hizmet kararliligi saglamak icin hiz sinirlidir.
+Her isteğe iki sınır uygulanır: neredeyse her uç noktayı kapsayan **hesap düzeyinde sınır** ve birkaç uç noktada
+bunların **kendi daha sıkı sınırı**. Bunlardan hangisi düşükse ona takılırsınız.
 
-### Uc noktaya gore sinirlar
+### Hesap düzeyinde sınır
 
-| Uc Nokta | Sinir |
-|----------|-------|
-| `GET /prices` | 60 istek/dakika |
-| `POST /energy/buy` | 30 istek/dakika |
-| `POST /bandwidth/buy` | 30 istek/dakika |
-| `POST /invoices` | 20 istek/dakika |
-| `POST /smart-mode/activate` | 10 istek/dakika |
-| `POST /account/withdrawal` | 1 istek/dakika |
-| Diger uc noktalar | 60 istek/dakika |
+**Hesap** başına, sabit bir dakikalık pencerede sayılır. Bir hesabın tüm API anahtarları tek bir
+bütçeyi paylaşır — daha fazla anahtar oluşturmak sınırınızı yükseltmez.
 
-### Hiz siniri basliklari
+| Kim olduğunuz | Varsayılan sınır |
+|---|---|
+| Geçmişte alımı veya aboneliği olan, ya da 10 TRX ve üzeri bakiyesi olan hesap | 1000 istek/dakika |
+| Diğer tüm oturum açmış hesaplar | 300 istek/dakika |
+| Kimlik doğrulamasız istekler | IP adresi başına 60 istek/dakika |
+| Kimlik doğrulamasız `GET /api/v1/invoices/{invoice_id}` sorgulaması | IP adresi başına 180 istek/dakika |
 
-Yanitlar, basliklarda hiz siniri bilgisi icerir:
+Kimlik doğrulamasız bütçeler her uç nokta grubu için ayrı sayılır — fiyatlar, fatura durumu, adres
+sorguları, kimlik doğrulama ve geri kalan her şey — böylece fiyat sorgulamak diğer isteklerin
+bütçesini asla tüketmez.
+
+Bunlar varsayılan değerlerdir. Entegrasyonunuzun daha yüksek bir tavana ihtiyacı varsa, bunu hesabınız
+için yükseltiriz: bize [Telegram](https://t.me/TronRentalcom_bot) üzerinden yazın.
+
+<Note>
+Pencere sabittir, kayan değil: sayaç her dakikanın başında sıfırlanır. Ancak bu sınırın çevresine bir
+patlama kurgulamayın. İki ayrı mekanizma bunu kötü bir bahis yapar. API'nin önünde IP adresi başına
+saniyede yaklaşık 50 istek olan bir kenar siniri durur ve aşıldığında JSON hata değil, HTML gövdeli
+`503` döner. Ayrıca üst üste üç dakika sınırının üzerinde kalan bir hesabın sınırı sonraki on dakika
+boyunca yarıya iner; böyle üç dakika daha olursa hesap otuz dakika tamamen engellenir ve
+`Retry-After: 1800` döner. 1000/dakika kademesindeki hesaplar bu tırmanmadan muaftır.
+</Note>
+
+### Kendi daha sıkı sınırı olan uç noktalar
+
+| Uç nokta | Sınır | Neye göre sayılır |
+|---|---|---|
+| `POST /api/v1/invoices` | 10 istek/dakika | IP adresi |
+| `POST /api/v1/account/withdrawal` | 1 istek/dakika | hesap |
+
+Dikkat: `POST /api/v1/invoices` hesaba göre değil, **IP adresine** göre sayılır. Birden fazla
+istemciniz aynı çıkış IP'sinden istek gönderiyorsa, dakikada 10'luk tek bir bütçeyi paylaşırlar.
+
+Satın alma uç noktaları — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
+`POST /api/v1/bandwidth/buy` ve `POST /api/v1/bandwidth/rentals` — **IP adresi** başına sayılan, dakikada
+1000 isteklik daha eski bir bütçe taşır (iki bandwidth uç noktası tek bir bütçeyi paylaşır). Tek bir
+hesap için bu asla belirleyici sınır olmaz, ancak aynı çıkış IP'sinin ardındaki istemciler onu birbiriyle
+paylaşır.
+
+Webhook yönetim uç noktaları (`/api/v1/webhooks/...`) hesap düzeyindeki sınırın kapsamında değildir.
+Belgelenmiş diğer tüm uç noktaların kendi sınırı yoktur — onlara yalnızca hesap düzeyindeki sınır
+uygulanır.
+
+### 429 yanıtı nasıl görünür
+
+Gövde, hangi sınıra takıldığınıza bağlıdır. Üç biçim vardır; bu nedenle birini varsaymak yerine
+savunmacı biçimde ayrıştırın.
+
+**Hesap düzeyinde sınır.** Yanıt, beklenecek saniye sayısını içeren bir `Retry-After` başlığı taşır:
 
 ```
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 58
-X-RateLimit-Reset: 1709568000
+HTTP/1.1 429 Too Many Requests
+Retry-After: 37
 ```
-
-### Sinirlarin asilmasi
-
-Hiz siniri asildiginda HTTP `429` alirsiniz:
 
 ```json
-{
-  "detail": "Rate limit exceeded. Try again in 30 seconds."
-}
+{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}
 ```
 
-Yeniden denemeler icin ustel geri cekilme uygulayin. Hemen yeniden denemeyin.
+**Uç noktanın kendi sınırı**, örneğin `POST /api/v1/invoices` üzerinde. `Retry-After` başlığı yoktur;
+pencere bir dakikadır:
 
-### Daha yuksek sinirlar mi gerekiyor?
+```json
+{"detail":{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}}
+```
 
-Yuksek hacimli entegrasyonlar icin ozel hiz sinirlari almak uzere [Telegram](https://t.me/TronRentalcom_bot) uzerinden bizimle iletisime gecin.
+**`POST /api/v1/account/withdrawal`.** Kalan saniyeyi içeren düz metin bir `detail`, hata kodu yok:
+
+```json
+{"detail":"Rate limit: try again in 42s"}
+```
+
+### Yeniden denemenin çözmediği bir 429
+
+`POST /api/v1/invoices`, elinizde ödenmemiş çok sayıda fatura varken de `429` döner — IP adresi başına
+en fazla **3**, hesap başına en fazla **5**. IP başına sınır oturum açmış isteklere de uygulanır, bu
+yüzden genellikle önce ona takılırsınız:
+
+```json
+{"detail":"Too many pending invoices (max 3)"}
+```
+
+Bu, açık fatura sayısına konmuş bir üst sınırdır, hız sınırı değil; beklemek onu kendiliğinden
+kaldırmaz. Yenisini oluşturmadan önce bekleyen faturalardan birini ödeyin ya da süresinin dolmasını
+bekleyin.
+
+Aynı uç nokta, ilgisiz geçici hataları da `429` olarak bildirir — örneğin
+`{"detail":"Energy price unavailable"}`. Nasıl tepki vereceğinize karar vermeden önce mesajı okuyun.
+
+### Yeniden deneme
+
+- Yanıtta `Retry-After` başlığı varsa tam olarak o kadar saniye bekleyin.
+- Yoksa bir saniyeden başlayarak üstel geri çekilme kullanın.
+- Asla hemen yeniden denemeyin.
+- Yeniden denemeden önce gövdeyi okuyun: `Too many pending invoices` daha uzun bekleme değil, başka
+  bir eylem gerektirir.
+
+```python
+import time
+import requests
+
+def post_with_retry(url, **kwargs):
+    for attempt in range(3):
+        resp = requests.post(url, **kwargs)
+        if resp.status_code == 429:
+            body = resp.text
+            if "pending invoices" in body:
+                raise RuntimeError(body)  # beklemek yardimci olmaz
+            delay = int(resp.headers.get("Retry-After", 2 ** attempt))
+            time.sleep(delay)
+            continue
+        return resp
+    raise RuntimeError("Max retries exceeded")
+```
+
+### Daha yüksek sınırlar mı gerekiyor?
+
+Yüksek hacimli entegrasyonlar için özel hız sınırları konusunda bize
+[Telegram](https://t.me/TronRentalcom_bot) üzerinden ulaşın.

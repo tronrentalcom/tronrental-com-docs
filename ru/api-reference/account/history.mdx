@@ -1,0 +1,119 @@
+---
+title: История баланса
+api: GET /api/v1/account/history
+description: "Все движения баланса вашего аккаунта"
+---
+
+## История баланса
+
+Возвращает все движения баланса аккаунта, новые сверху — покупки, пополнения, возвраты и комиссии одним списком. Заказы, инвойсы и активации показывают каждый только свой срез, поэтому это единственный эндпоинт, где арифметика сходится: сумма `delta_trx` за период равна изменению баланса за тот же период.
+
+<Note>
+**О скоупах.** Скоуп `view` отдаёт покупки, возвраты и комиссии. Для движений пополнения дополнительно нужен скоуп `deposit_view`, для выводов — `withdraw`; без них такие строки просто отсутствуют в списке и в `total`, а фильтр по такой причине вернёт пустую страницу, а не ошибку.
+</Note>
+
+### Параметры запроса
+
+<ParamField query="page" type="number" default="1">
+  Номер страницы, начиная с 1.
+</ParamField>
+
+<ParamField query="page_size" type="number" default="50">
+  Записей на странице (максимум 100).
+</ParamField>
+
+<ParamField query="reason" type="string">
+  Вернуть только движения с этой причиной, например `energy_order`.
+</ParamField>
+
+### Ответ
+
+<ResponseField name="items" type="array">
+  <Expandable title="item">
+    <ResponseField name="id" type="number">
+      ID движения. Он же ключ сортировки — список идёт по нему по убыванию.
+    </ResponseField>
+    <ResponseField name="delta_trx" type="string">
+      Сумма в TRX со знаком: минус — списание, плюс — приход.
+    </ResponseField>
+    <ResponseField name="balance_after" type="string">
+      Баланс сразу после этого движения.
+    </ResponseField>
+    <ResponseField name="reason" type="string">
+      За что было движение (см. ниже). Со временем могут появляться новые причины — неизвестное значение стоит показывать как есть, а не падать.
+    </ResponseField>
+    <ResponseField name="ref_type" type="string | null">
+      Сущность, за которую заплачено: `order`, `invoice`, `activation`, `deposit` и т. д. `null`, если движение ни на что не ссылается.
+    </ResponseField>
+    <ResponseField name="ref_id" type="string | null">
+      ID этой сущности, строкой.
+    </ResponseField>
+    <ResponseField name="ref_address" type="string | null">
+      Адрес получателя этой сущности, если он есть — чтобы не делать второй запрос ради выяснения, за что списание. Иначе `null`.
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Когда произошло движение (UTC).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Всего движений, подходящих под фильтр.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  Номер страницы, начиная с 1.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  Записей на странице (максимум 100).
+</ResponseField>
+
+### Частые причины
+
+| Причина | Что это |
+|------|------|
+| `energy_order` | Покупка энергии |
+| `bw_order` | Покупка bandwidth |
+| `energy_order_refund` | Возврат за заказ энергии |
+| `bw_order_refund` | Возврат за заказ bandwidth |
+| `activation` | Создание аккаунта получателя в сети |
+| `activation_refund` | Возврат за несостоявшуюся активацию |
+| `deposit` | Входящее пополнение |
+
+### Пример
+
+```bash
+curl "https://api.tronrental.com/v1/account/history?page=1&page_size=50" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "items": [
+    {
+      "id": 97213,
+      "delta_trx": "-1.79",
+      "balance_after": "154.71",
+      "reason": "energy_order",
+      "ref_type": "order",
+      "ref_id": "12345",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:30:00Z"
+    },
+    {
+      "id": 97212,
+      "delta_trx": "-1.20",
+      "balance_after": "156.50",
+      "reason": "activation",
+      "ref_type": "activation",
+      "ref_id": "8891",
+      "ref_address": "TYourRecipientAddress...",
+      "created_at": "2026-06-10T04:29:53Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 50
+}
+```

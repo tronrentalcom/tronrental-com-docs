@@ -1,60 +1,111 @@
 ---
 title: Hatalar
-description: "API hata kodlari ve islenme yontemleri"
+description: "API hata kodları ve işlenme yöntemleri"
 ---
 
-## Hata formati
+## Hata formatı
 
-Tum hatalar, `detail` alani iceren bir JSON yaniti dondurur:
+Hatalar üç biçimden birinde gelir. Uç noktaların çoğu ilkini kullanır; diğer ikisi belirli yollarda
+bulunur ve istemcinizin aradığı bir hata kodunu kaçırmaması için burada listelenmiştir.
 
-```json
-{
-  "detail": "Insufficient balance"
-}
-```
-
-Bazi hatalar, programatik isleme icin yapilandirilmis bir `code` icermektedir:
+**Standart.** Programatik işleme için `detail.error` içine yerleştirilmiş bir `code`:
 
 ```json
 {
   "detail": {
     "error": {
       "code": "INSUFFICIENT_BALANCE",
-      "message": "Not enough TRX balance"
+      "message": "Insufficient balance. Required: 12.5 TRX, available: 3.1 TRX"
     }
   }
 }
 ```
 
-## HTTP Durum Kodlari
+**Hesap düzeyinde hız sınırı.** Aynı alanlar, ancak en üst düzeyde ve `detail` olmadan — bu yanıt,
+istek uç noktaya ulaşmadan önce üretilir:
+
+```json
+{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}
+```
+
+**Düz.** Para çekme doğrulama adımları `code` alanını `detail` ile yan yana koyar ve mesajın kendisi
+`detail` içinde bulunur:
+
+```json
+{"detail":"Passkey verification required","code":"PASSKEY_REQUIRED"}
+```
+
+Her yanıtta kod bulunmaz. İstek doğrulama hataları çerçevenin kendi biçiminde gelir; orada `detail` bir
+dize değil, alan hatalarından oluşan bir **dizidir**. Birkaç dahili kontrol ise düz bir mesajla
+`{"detail": "..."}` döndürür. Bazı `422` yanıtları ise standart biçimde kod taşır — örneğin yeniden
+kullanılmış bir idempotency anahtarı.
+
+<Tip>
+Kodu, bunlardan mevcut olan ilkinden okuyun: `detail.error.code`, sonra `error.code`, sonra `code`.
+Hiçbiri yoksa HTTP durum koduna bakın ve `detail` alanının bir dize olduğunu asla varsaymayın: standart
+biçimde o bir nesne, doğrulama hatasında ise bir dizidir.
+</Tip>
+
+## HTTP Durum Kodları
 
 | Kod | Anlam |
 |------|---------|
-| `200` | Basarili |
-| `400` | Hatali istek — gecersiz parametreler |
-| `401` | Yetkisiz — eksik veya gecersiz API anahtari |
-| `403` | Yasakli — anahtar devre disi veya islem izni yok |
-| `404` | Bulunamadi |
-| `409` | Catisma — tekrarlanan istek veya kaynak catismasi |
-| `422` | Dogrulama hatasi — istek govdesini kontrol edin |
-| `429` | Hiz siniri asildi |
-| `500` | Sunucu hatasi |
+| `200` | Başarılı |
+| `400` | Hatalı istek — geçersiz parametreler |
+| `401` | Yetkisiz — eksik veya geçersiz API anahtarı |
+| `402` | Ödeme gerekli — hesap bakiyesi yetersiz |
+| `403` | Yasaklı — anahtarda gereken kapsam yok, IP izin listesinde değil veya doğrulama gerekli |
+| `404` | Bulunamadı |
+| `409` | Çatışma — tekrarlanan istek veya kaynak çatışması |
+| `422` | Doğrulama hatası — istek gövdesini kontrol edin |
+| `429` | Hız sınırı aşıldı — bkz. [Hız Sınırları](/resources/rate-limits) |
+| `500` | Sunucu hatası |
+| `503` | Geçici olarak kullanılamıyor — kısa süre sonra tekrar deneyin |
 
-## Yaygin hata kodlari
+## Yaygın hata kodları
 
-| Kod | Aciklama |
-|------|-------------|
-| `INSUFFICIENT_BALANCE` | Bu islem icin hesap bakiyesi yetersiz |
-| `ADDRESS_ALREADY_ACTIVE` | Bu adres icin Akilli Mod zaten aktif |
-| `ORDER_NOT_FOUND` | Siparis kimlik numarasi mevcut degil |
-| `INVALID_ADDRESS` | Gecerli bir TRON adresi degil |
-| `RATE_LIMITED` | Cok fazla istek, bekleme suresinden sonra tekrar deneyin |
-| `PASSKEY_REQUIRED` | Cekim icin passkey dogrulamasi gerekli |
-| `2FA_REQUIRED` | Cekim icin 2FA kodu gerekli |
+Standart biçimde, `detail.error.code` altında döndürülür:
+
+| Kod | Durum | Açıklama |
+|------|--------|-------------|
+| `INVALID_TOKEN` | `401` | API anahtarı eksik, bilinmiyor veya devre dışı |
+| `ACCOUNT_BLOCKED` | `403` | Bu hesap için API erişimi engellendi |
+| `FORBIDDEN` | `403` | Anahtarda bu uç noktanın gerektirdiği kapsam yok ya da isteğin IP'si anahtarın izin listesinde değil |
+| `INSUFFICIENT_BALANCE` | `402` | Bu işlem için hesap bakiyesi yetersiz |
+| `INVALID_ADDRESS` | `400` | Geçerli bir TRON adresi değil |
+| `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Hedef bir akıllı sözleşme — TRON ona kaynak devretmeyi yasaklar |
+| `INVALID_VOLUME` | `400` | İstenen miktar izin verilen aralığın dışında |
+| `INVALID_DURATION` | `400` | Süre, kabul edilen değerlerden biri değil |
+| `ORDER_NOT_FOUND` | `404` | Sipariş kimliği mevcut değil |
+| `RATE_LIMIT_EXCEEDED` | `429` | Çok fazla istek — bkz. [Hız Sınırları](/resources/rate-limits) |
+
+<Warning>
+`INSUFFICIENT_BALANCE` her yerde kullanılmaz. `POST /api/v1/smart-mode/activate` ve
+`POST /api/v1/transfer-packages/buy` aynı durumu `400` olarak, mesajla ve **kodsuz** bildirir:
+`{"detail":{"error":{"message":"Insufficient balance"}}}`. Bu iki uç noktada bakiye sorununu yalnızca
+koda bakarak tespit etmeyin.
+</Warning>
+
+## Para çekme doğrulama kodları
+
+`POST /api/v1/account/withdrawal` bu doğrulama kodlarını düz biçimde, `code` ile `detail` yan yana
+olacak şekilde döndürür; aynı uç noktanın diğer hataları standart biçimi kullanır:
+
+| Kod | Durum | Açıklama |
+|------|--------|-------------|
+| `WITHDRAW_SCOPE_REQUIRED` | `403` | API anahtarında `withdraw` kapsamı yok |
+| `2FA_REQUIRED` | `403` | 2FA etkinleştirilmeli veya bir kod verilmeli |
+| `IP_WHITELIST_REQUIRED` | `403` | Para çekmek için anahtarın IP izin listesi gerekir |
+| `PASSKEY_REQUIRED` | `403` | Hesapta bir passkey var — para çekme bunu gerektirir |
+| `INVALID_PASSKEY` | `403` | Passkey doğrulaması geçersiz, süresi dolmuş veya size ait değil |
+| `INVALID_2FA_CODE` | `403` | 2FA veya yedek kod reddedildi |
+| `RATE_UNAVAILABLE` | `503` | Döviz kuru geçici olarak kullanılamıyor — kısa süre sonra deneyin |
 
 ## Yeniden deneme stratejisi
 
-`429` ve `5xx` hatalari icin ustel geri cekilme uygulayin:
+`5xx` yanıtlarını üstel geri çekilmeyle yeniden deneyin. `429` için, yanıtta varsa `Retry-After`
+başlığını tercih edin ve önce gövdeyi okuyun — her `429` bir hız sınırı değildir
+(bkz. [Hız Sınırları](/resources/rate-limits)).
 
 ```python
 import time
@@ -63,7 +114,10 @@ import requests
 def api_call_with_retry(url, **kwargs):
     for attempt in range(3):
         resp = requests.get(url, **kwargs)
-        if resp.status_code == 429 or resp.status_code >= 500:
+        if resp.status_code == 429:
+            time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+            continue
+        if resp.status_code >= 500:
             time.sleep(2 ** attempt)
             continue
         return resp

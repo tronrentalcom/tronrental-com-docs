@@ -18,6 +18,18 @@ description: "Проверить статус заказа энергии или
 
 Возвращает полный объект заказа, включая `status`, `type`, `volume`, `price_trx`, `delegate_txid` и временные метки.
 
+<ResponseField name="activation_id" type="number | null">
+  ID активации адреса, за которую заплатил этот заказ, или `null`, если ни за какую не платил.
+</ResponseField>
+
+<ResponseField name="activation_cost_trx" type="string | null">
+  Во сколько обошлась эта активация, в TRX, **сверх** `price_trx` — это и есть разница между ценой заказа и суммой, ушедшей с баланса.
+</ResponseField>
+
+<Note>
+**`null`, а не `"0"`.** Оба поля равны `null`, когда заказ не платил за активацию — аккаунт получателя либо уже существовал, либо был создан чужой транзакцией. Обратите внимание на отличие от `activation_cost_trx` в ответе Buy Energy: там в этом случае строка `"0"`. Сравнение с `"0"` здесь не сработает никогда.
+</Note>
+
 ### Статусы заказа
 
 | Статус | Описание |
@@ -47,6 +59,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "undelegate_txid": null,
   "reclaim_at": null,
   "source": "api",
+  "activation_id": 8891,
+  "activation_cost_trx": "1.20",
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```

@@ -5,56 +5,101 @@ description: "API 错误代码及处理方式"
 
 ## 错误格式
 
-所有错误返回包含 `detail` 字段的 JSON 响应：
+错误以三种形式之一返回。多数端点使用第一种；另外两种出现在特定路径上，此处一并列出，以免您的客户端
+漏掉正在查找的错误代码。
 
-```json
-{
-  "detail": "Insufficient balance"
-}
-```
-
-部分错误包含结构化的 `code`，用于程序化处理：
+**标准形式。** 用于程序化处理的 `code`，嵌套在 `detail.error` 中：
 
 ```json
 {
   "detail": {
     "error": {
       "code": "INSUFFICIENT_BALANCE",
-      "message": "Not enough TRX balance"
+      "message": "Insufficient balance. Required: 12.5 TRX, available: 3.1 TRX"
     }
   }
 }
 ```
+
+**账户级速率限制。** 字段相同，但位于顶层且没有 `detail`——该响应在请求到达端点之前就已生成：
+
+```json
+{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}
+```
+
+**扁平形式。** 提现验证步骤把 `code` 放在 `detail` 旁边，而 `detail` 中直接是消息本身：
+
+```json
+{"detail":"Passkey verification required","code":"PASSKEY_REQUIRED"}
+```
+
+并非每个响应都带代码。请求校验失败采用框架自身的格式，其中 `detail` 是字段错误的**数组**而非字符串；
+少数内部检查返回带纯文本消息的 `{"detail": "..."}`。而有些 `422` 响应确实带代码，且采用标准形式——例如
+重复使用的幂等键。
+
+<Tip>
+按以下顺序读取第一个存在的字段：`detail.error.code`，其次 `error.code`，再次 `code`。三者都不存在时
+以 HTTP 状态码为准；并且切勿假定 `detail` 是字符串——标准形式中它是对象，校验错误中它是数组。
+</Tip>
 
 ## HTTP 状态码
 
 | 状态码 | 含义 |
 |------|---------|
 | `200` | 成功 |
-| `400` | 错误请求 — 参数无效 |
-| `401` | 未授权 — API 密钥缺失或无效 |
-| `403` | 禁止访问 — 密钥已禁用或操作不被允许 |
+| `400` | 请求错误——参数无效 |
+| `401` | 未授权——API 密钥缺失或无效 |
+| `402` | 需要付款——账户余额不足 |
+| `403` | 禁止访问——密钥缺少所需权限、IP 不在白名单，或需要验证 |
 | `404` | 未找到 |
-| `409` | 冲突 — 重复请求或资源冲突 |
-| `422` | 验证错误 — 请检查请求体 |
-| `429` | 超出速率限制 |
+| `409` | 冲突——重复请求或资源冲突 |
+| `422` | 校验错误——请检查请求体 |
+| `429` | 超出速率限制——参见[速率限制](/resources/rate-limits) |
 | `500` | 服务器错误 |
+| `503` | 暂时不可用——请稍后重试 |
 
 ## 常见错误代码
 
-| 代码 | 描述 |
-|------|-------------|
-| `INSUFFICIENT_BALANCE` | 账户余额不足 |
-| `ADDRESS_ALREADY_ACTIVE` | 该地址已激活智能模式 |
-| `ORDER_NOT_FOUND` | 订单 ID 不存在 |
-| `INVALID_ADDRESS` | 不是有效的 TRON 地址 |
-| `RATE_LIMITED` | 请求过多，请在冷却后重试 |
-| `PASSKEY_REQUIRED` | 提现需要通行密钥验证 |
-| `2FA_REQUIRED` | 提现需要双重验证码 |
+以标准形式返回，位于 `detail.error.code`：
+
+| 代码 | 状态 | 说明 |
+|------|--------|-------------|
+| `INVALID_TOKEN` | `401` | API 密钥缺失、未知或已禁用 |
+| `ACCOUNT_BLOCKED` | `403` | 该账户的 API 访问已被封禁 |
+| `FORBIDDEN` | `403` | 密钥缺少该端点所需的权限，或请求 IP 不在该密钥的白名单中 |
+| `INSUFFICIENT_BALANCE` | `402` | 账户余额不足以完成此操作 |
+| `INVALID_ADDRESS` | `400` | 不是有效的 TRON 地址 |
+| `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | 目标是智能合约——TRON 禁止向其代理资源 |
+| `INVALID_VOLUME` | `400` | 请求数量超出允许范围 |
+| `INVALID_DURATION` | `400` | 时长不在允许的取值之内 |
+| `ORDER_NOT_FOUND` | `404` | 订单 ID 不存在 |
+| `RATE_LIMIT_EXCEEDED` | `429` | 请求过多——参见[速率限制](/resources/rate-limits) |
+
+<Warning>
+`INSUFFICIENT_BALANCE` 并非处处适用。`POST /api/v1/smart-mode/activate` 和
+`POST /api/v1/transfer-packages/buy` 会把同样的情况报成 `400`，只带消息、**不带代码**：
+`{"detail":{"error":{"message":"Insufficient balance"}}}`。在这两个端点上，请勿仅凭代码判断余额不足。
+</Warning>
+
+## 提现验证代码
+
+`POST /api/v1/account/withdrawal` 以扁平形式返回这些验证代码，`code` 与 `detail` 并列；该端点的其他
+错误则使用标准形式：
+
+| 代码 | 状态 | 说明 |
+|------|--------|-------------|
+| `WITHDRAW_SCOPE_REQUIRED` | `403` | API 密钥缺少 `withdraw` 权限 |
+| `2FA_REQUIRED` | `403` | 必须启用 2FA，或需提供验证码 |
+| `IP_WHITELIST_REQUIRED` | `403` | 该密钥需先设置 IP 白名单才能提现 |
+| `PASSKEY_REQUIRED` | `403` | 账户已绑定通行密钥——提现需要它 |
+| `INVALID_PASSKEY` | `403` | 通行密钥挑战无效、已过期或不属于本账户 |
+| `INVALID_2FA_CODE` | `403` | 2FA 验证码或备用码被拒绝 |
+| `RATE_UNAVAILABLE` | `503` | 汇率暂时不可用——请稍后重试 |
 
 ## 重试策略
 
-对于 `429` 和 `5xx` 错误，请实现指数退避重试：
+对 `5xx` 响应采用指数退避重试。对 `429`，当响应带有 `Retry-After` 头时优先使用它，并先读取响应体——
+并非所有 `429` 都是速率限制（参见[速率限制](/resources/rate-limits)）。
 
 ```python
 import time
@@ -63,7 +108,10 @@ import requests
 def api_call_with_retry(url, **kwargs):
     for attempt in range(3):
         resp = requests.get(url, **kwargs)
-        if resp.status_code == 429 or resp.status_code >= 500:
+        if resp.status_code == 429:
+            time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+            continue
+        if resp.status_code >= 500:
             time.sleep(2 ** attempt)
             continue
         return resp

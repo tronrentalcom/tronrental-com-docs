@@ -5,56 +5,107 @@ description: "API error codes and handling"
 
 ## Error format
 
-All errors return a JSON response with a `detail` field:
+Errors come back in one of three shapes. Most endpoints use the first one; the other two exist on
+specific paths and are listed here so your client does not miss an error code it is looking for.
 
-```json
-{
-  "detail": "Insufficient balance"
-}
-```
-
-Some errors include a structured `code` for programmatic handling:
+**Standard.** A `code` for programmatic handling, nested under `detail.error`:
 
 ```json
 {
   "detail": {
     "error": {
       "code": "INSUFFICIENT_BALANCE",
-      "message": "Not enough TRX balance"
+      "message": "Insufficient balance. Required: 12.5 TRX, available: 3.1 TRX"
     }
   }
 }
 ```
 
-## HTTP Status Codes
+**Account-level rate limit.** The same fields, but at the top level, without `detail` — this response
+is produced before the request reaches the endpoint:
+
+```json
+{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests. Please try again later."}}
+```
+
+**Flat.** The withdrawal verification steps put `code` next to `detail`, and `detail` holds the
+message itself:
+
+```json
+{"detail":"Passkey verification required","code":"PASSKEY_REQUIRED"}
+```
+
+Not every response carries a code. Request validation failures come back in the framework's own
+format, where `detail` is an **array** of field errors rather than a string, and a few internal checks
+return `{"detail": "..."}` with a plain message. Some `422` responses do carry a code in the standard
+shape — a reused idempotency key, for example.
+
+<Tip>
+Read the code from the first of these that is present: `detail.error.code`, then `error.code`, then
+`code`. Fall back to the HTTP status when none of them is there, and never assume `detail` is a string:
+it is an object in the standard shape and an array in a validation error.
+</Tip>
+
+## HTTP status codes
 
 | Code | Meaning |
 |------|---------|
 | `200` | Success |
 | `400` | Bad request — invalid parameters |
 | `401` | Unauthorized — missing or invalid API key |
-| `403` | Forbidden — key disabled or action not allowed |
+| `402` | Payment required — account balance too low |
+| `403` | Forbidden — key lacks the required scope, IP not whitelisted, or verification required |
 | `404` | Not found |
 | `409` | Conflict — duplicate request or resource conflict |
 | `422` | Validation error — check request body |
-| `429` | Rate limit exceeded |
+| `429` | Rate limit exceeded — see [Rate Limits](/resources/rate-limits) |
 | `500` | Server error |
+| `503` | Temporarily unavailable — retry shortly |
 
 ## Common error codes
 
-| Code | Description |
-|------|-------------|
-| `INSUFFICIENT_BALANCE` | Account balance too low for this operation |
-| `ADDRESS_ALREADY_ACTIVE` | Smart Mode already active for this address |
-| `ORDER_NOT_FOUND` | Order ID does not exist |
-| `INVALID_ADDRESS` | Not a valid TRON address |
-| `RATE_LIMITED` | Too many requests, retry after cooldown |
-| `PASSKEY_REQUIRED` | Withdrawal requires passkey verification |
-| `2FA_REQUIRED` | Withdrawal requires 2FA code |
+Returned in the standard shape, under `detail.error.code`:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `INVALID_TOKEN` | `401` | API key missing, unknown, or disabled |
+| `ACCOUNT_BLOCKED` | `403` | API access blocked for this account |
+| `FORBIDDEN` | `403` | The key lacks the scope this endpoint requires, or the request IP is not on the key's whitelist |
+| `INSUFFICIENT_BALANCE` | `402` | Account balance too low for this operation |
+| `INVALID_ADDRESS` | `400` | Not a valid TRON address |
+| `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Target is a smart contract — TRON forbids delegating resources to it |
+| `INVALID_VOLUME` | `400` | Requested amount is outside the allowed range |
+| `INVALID_DURATION` | `400` | Duration is not one of the accepted values |
+| `ORDER_NOT_FOUND` | `404` | Order ID does not exist |
+| `RATE_LIMIT_EXCEEDED` | `429` | Too many requests — see [Rate Limits](/resources/rate-limits) |
+
+<Warning>
+`INSUFFICIENT_BALANCE` is not used everywhere. `POST /api/v1/smart-mode/activate` and
+`POST /api/v1/transfer-packages/buy` report the same condition as `400` with a message and **no code**:
+`{"detail":{"error":{"message":"Insufficient balance"}}}`. On those two endpoints, do not detect a
+funding problem by the code alone.
+</Warning>
+
+## Withdrawal verification codes
+
+`POST /api/v1/account/withdrawal` returns these verification codes in the flat shape, with `code` next
+to `detail`. Other errors on the same endpoint use the standard shape:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `WITHDRAW_SCOPE_REQUIRED` | `403` | The API key lacks the `withdraw` scope |
+| `2FA_REQUIRED` | `403` | 2FA must be enabled, or a code must be supplied |
+| `IP_WHITELIST_REQUIRED` | `403` | The key needs an IP whitelist before it can withdraw |
+| `PASSKEY_REQUIRED` | `403` | The account has a passkey — withdrawal requires it |
+| `INVALID_PASSKEY` | `403` | Passkey challenge is invalid, expired, or not yours |
+| `INVALID_2FA_CODE` | `403` | 2FA or backup code rejected |
+| `RATE_UNAVAILABLE` | `503` | Exchange rate temporarily unavailable — retry shortly |
 
 ## Retry strategy
 
-For `429` and `5xx` errors, implement exponential backoff:
+Retry `5xx` responses with exponential backoff. For `429`, prefer the `Retry-After` header when the
+response carries one, and check the body first — not every `429` is a rate limit
+(see [Rate Limits](/resources/rate-limits)).
 
 ```python
 import time
@@ -63,7 +114,10 @@ import requests
 def api_call_with_retry(url, **kwargs):
     for attempt in range(3):
         resp = requests.get(url, **kwargs)
-        if resp.status_code == 429 or resp.status_code >= 500:
+        if resp.status_code == 429:
+            time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+            continue
+        if resp.status_code >= 500:
             time.sleep(2 ** attempt)
             continue
         return resp
