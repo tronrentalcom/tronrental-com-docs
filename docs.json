@@ -66,6 +66,7 @@
                 "group": "Core API",
                 "pages": [
                   "api-reference/energy/get-prices",
+                  "api-reference/energy/quote",
                   "api-reference/energy/buy-energy",
                   "api-reference/energy/activate-address",
                   "api-reference/bandwidth/buy-bandwidth"
@@ -179,6 +180,7 @@
                 "group": "Основное API",
                 "pages": [
                   "ru/api-reference/energy/get-prices",
+                  "ru/api-reference/energy/quote",
                   "ru/api-reference/energy/buy-energy",
                   "ru/api-reference/energy/activate-address",
                   "ru/api-reference/bandwidth/buy-bandwidth"
@@ -291,6 +293,7 @@
                 "group": "核心 API",
                 "pages": [
                   "zh/api-reference/energy/get-prices",
+                  "zh/api-reference/energy/quote",
                   "zh/api-reference/energy/buy-energy",
                   "zh/api-reference/energy/activate-address",
                   "zh/api-reference/bandwidth/buy-bandwidth"
@@ -403,6 +406,7 @@
                 "group": "API Principal",
                 "pages": [
                   "es/api-reference/energy/get-prices",
+                  "es/api-reference/energy/quote",
                   "es/api-reference/energy/buy-energy",
                   "es/api-reference/energy/activate-address",
                   "es/api-reference/bandwidth/buy-bandwidth"
@@ -515,6 +519,7 @@
                 "group": "Temel API",
                 "pages": [
                   "tr/api-reference/energy/get-prices",
+                  "tr/api-reference/energy/quote",
                   "tr/api-reference/energy/buy-energy",
                   "tr/api-reference/energy/activate-address",
                   "tr/api-reference/bandwidth/buy-bandwidth"
@@ -627,6 +632,7 @@
                 "group": "API Principal",
                 "pages": [
                   "pt/api-reference/energy/get-prices",
+                  "pt/api-reference/energy/quote",
                   "pt/api-reference/energy/buy-energy",
                   "pt/api-reference/energy/activate-address",
                   "pt/api-reference/bandwidth/buy-bandwidth"
@@ -739,6 +745,7 @@
                 "group": "मुख्य API",
                 "pages": [
                   "hi/api-reference/energy/get-prices",
+                  "hi/api-reference/energy/quote",
                   "hi/api-reference/energy/buy-energy",
                   "hi/api-reference/energy/activate-address",
                   "hi/api-reference/bandwidth/buy-bandwidth"

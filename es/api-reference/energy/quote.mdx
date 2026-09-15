@@ -1,0 +1,129 @@
+---
+title: Calcular precio
+api: GET /api/v1/energy/quote
+description: "Precio final para un volumen de energía concreto, comisión fija incluida"
+---
+
+## Calcular precio
+
+Devuelve el importe exacto que se cobrará por un volumen de energía dado — alquiler y comisión fija juntos, a **su** tarifa.
+
+**Este endpoint es público — la autenticación es opcional.** Envíe su clave API para recibir su propio precio; sin ella obtendrá el precio público de mercado.
+
+<Info>
+  Use este endpoint cuando necesite el precio de un volumen concreto. `GET /api/v1/prices` siempre cotiza 65 000 unidades y no acepta parámetros, y `POST /api/v1/energy/estimate` devuelve solo el alquiler a precio de mercado, ignorando su clave.
+</Info>
+
+### Parámetros de consulta
+
+<ParamField query="volume" type="integer" required>
+  Unidades de energía a cotizar. Entre 60 000 y 5 000 000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Periodo de alquiler. La energía solo admite `1h`.
+</ParamField>
+
+### Cabeceras
+
+<ParamField header="X-API-Key" type="string">
+  Opcional. Con una clave válida la respuesta refleja su tarifa negociada y su comisión. Una clave ausente, inválida o revocada no es un error: simplemente obtendrá el precio público de mercado.
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="volume" type="number">
+  Unidades de energía para las que se calculó la cotización
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Periodo de alquiler (`1h`)
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Tarifa en SUN por 1 unidad de energía. Úsela para calcular otros volúmenes usted mismo: `alquiler = volumen × price_sun / 1 000 000`
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Coste de alquiler para este volumen, sin la comisión fija
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Comisión fija, cobrada **una vez por pedido** sin importar el volumen. Refleja su propia comisión si a su cuenta se le aplica una comisión personalizada, un descuento o una exención.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **Lo que se le cobrará**: `rental_trx + fixed_fee_trx`
+</ResponseField>
+
+<ResponseField name="total_usd" type="string | null">
+  El mismo total en USD. `null` cuando la tasa TRX/USD no está disponible momentáneamente — las cifras en TRX siguen siendo válidas.
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true` cuando se aplicó su tarifa negociada, `false` cuando la cotización va al precio público de mercado. Compruébelo: una cabecera `X-API-Key` olvidada parece una respuesta normal, y estaría cotizando a sus clientes el precio público mientras se le cobra el suyo.
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/quote",
+    params={"volume": 131000, "duration": "1h"},
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/quote?volume=131000&duration=1h",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Los valores siguientes son un ejemplo. La energía tiene precio de mercado y se mueve durante el día.
+</Info>
+
+```json Response
+{
+  "volume": 131000,
+  "duration": "1h",
+  "price_sun": "20.99",
+  "rental_trx": "2.749690",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "2.949690",
+  "total_usd": "1.02",
+  "personal_price": true
+}
+```
+
+### Volúmenes habituales
+
+| Volumen | Cuándo |
+|---|---|
+| 65,000 | Transferencia USDT a un destinatario que ya posee USDT |
+| 131,000 | Transferencia USDT a un destinatario que nunca ha tenido USDT (se crea un nuevo slot de almacenamiento) |
+
+No hay catálogo de paquetes — cualquier volumen entre 60 000 y 5 000 000 es válido, y la comisión fija se cobra una vez por pedido en cualquier caso. Dos transferencias al mismo destinatario salen más baratas como un pedido de 131 000 que como dos de 65 000: la comisión se paga una vez en lugar de dos.
+
+### Errores
+
+| Código | Significado |
+|------|---------|
+| `400 INVALID_VOLUME` | Volumen fuera de 60 000–5 000 000 |
+| `400 INVALID_DURATION` | Duración distinta de `1h` |
+
+Una `X-API-Key` inválida o revocada **no** es un error aquí: la cotización se devuelve al precio público de mercado con `personal_price: false`.
