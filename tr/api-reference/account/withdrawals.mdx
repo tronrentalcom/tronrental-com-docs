@@ -83,3 +83,21 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | Isleme alinmak uzere siraya alindi |
 | `completed` | TRX gonderildi, tx_hash mevcut |
 | `failed` | Basarisiz oldu, tutar iade edildi |
+
+### E-posta değişikliğinden sonra güvenlik kilidi
+
+Hesabın e-posta adresi değiştirildikten sonraki 24 saat boyunca çekim oluşturma `403` ve `WITHDRAWAL_EMAIL_COOLDOWN` hata koduyla reddedilir. Yanıt, çekimlerin açılmasına ne kadar süre kaldığını gösteren `retry_after_seconds` alanını içerir:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "WITHDRAWAL_EMAIL_COOLDOWN",
+      "message": "Withdrawals are temporarily blocked after an email change",
+      "retry_after_seconds": 79214
+    }
+  }
+}
+```
+
+Bu kilit, `withdraw` yetkisine sahip API anahtarları dâhil olmak üzere her oturum türü için geçerlidir. Hesabın e-postasını siz değiştirmediyseniz hemen destek ekibiyle iletişime geçin.

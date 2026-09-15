@@ -83,3 +83,21 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | Na fila para processamento |
 | `completed` | TRX enviado, tx_hash disponível |
 | `failed` | Falhou, valor reembolsado |
+
+### Bloqueio de segurança após a alteração do e-mail
+
+Durante 24 horas após a alteração do e-mail da conta, a criação de saques é rejeitada com `403` e o código de erro `WITHDRAWAL_EMAIL_COOLDOWN`. A resposta traz `retry_after_seconds` — o tempo restante até que os saques sejam desbloqueados:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "WITHDRAWAL_EMAIL_COOLDOWN",
+      "message": "Withdrawals are temporarily blocked after an email change",
+      "retry_after_seconds": 79214
+    }
+  }
+}
+```
+
+Esse bloqueio se aplica a todos os tipos de sessão, incluindo chaves de API com o escopo `withdraw`. Se você não alterou o e-mail da conta, entre em contato com o suporte imediatamente.

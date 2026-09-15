@@ -83,3 +83,21 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | 已排队处理 |
 | `completed` | TRX 已发送，tx_hash 可用 |
 | `failed` | 失败，金额已退回 |
+
+### 更改邮箱后的安全锁定
+
+账户邮箱更改后的 24 小时内，创建提现会被拒绝，返回 `403` 和错误码 `WITHDRAWAL_EMAIL_COOLDOWN`。响应中包含 `retry_after_seconds`，即距离提现解锁还剩多少秒：
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "WITHDRAWAL_EMAIL_COOLDOWN",
+      "message": "Withdrawals are temporarily blocked after an email change",
+      "retry_after_seconds": 79214
+    }
+  }
+}
+```
+
+该锁定适用于所有会话类型，包括拥有 `withdraw` 权限的 API 密钥。如果您本人没有更改账户邮箱，请立即联系客服。

@@ -83,3 +83,21 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | प्रोसेसिंग के लिए कतार में |
 | `completed` | TRX भेजा गया, tx_hash उपलब्ध |
 | `failed` | विफल, राशि वापस की गई |
+
+### ईमेल बदलने के बाद सुरक्षा रोक
+
+खाते का ईमेल बदलने के बाद 24 घंटे तक निकासी बनाने का अनुरोध `403` और एरर कोड `WITHDRAWAL_EMAIL_COOLDOWN` के साथ अस्वीकार किया जाता है। रिस्पॉन्स में `retry_after_seconds` आता है — निकासी खुलने में कितना समय बचा है:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "WITHDRAWAL_EMAIL_COOLDOWN",
+      "message": "Withdrawals are temporarily blocked after an email change",
+      "retry_after_seconds": 79214
+    }
+  }
+}
+```
+
+यह रोक हर सेशन प्रकार पर लागू होती है, जिसमें `withdraw` स्कोप वाली API कुंजियाँ भी शामिल हैं। यदि आपने खाते का ईमेल नहीं बदला है, तो तुरंत सपोर्ट से संपर्क करें।

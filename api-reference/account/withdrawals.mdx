@@ -83,3 +83,21 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | Queued for processing |
 | `completed` | TRX sent, tx_hash available |
 | `failed` | Failed, amount refunded |
+
+### Security hold after an email change
+
+For 24 hours after the account email is changed, creating a withdrawal is rejected with `403` and the error code `WITHDRAWAL_EMAIL_COOLDOWN`. The response carries `retry_after_seconds` — how long is left until withdrawals unlock:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "WITHDRAWAL_EMAIL_COOLDOWN",
+      "message": "Withdrawals are temporarily blocked after an email change",
+      "retry_after_seconds": 79214
+    }
+  }
+}
+```
+
+This hold applies to every session type, including API keys with the `withdraw` scope. If you did not change the account email, contact support immediately.

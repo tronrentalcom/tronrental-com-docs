@@ -83,3 +83,21 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | En cola para procesamiento |
 | `completed` | TRX enviado, tx_hash disponible |
 | `failed` | Fallido, monto reembolsado |
+
+### Bloqueo de seguridad tras cambiar el correo electrónico
+
+Durante las 24 horas siguientes al cambio del correo electrónico de la cuenta, la creación de retiros se rechaza con `403` y el código de error `WITHDRAWAL_EMAIL_COOLDOWN`. La respuesta incluye `retry_after_seconds`: el tiempo restante hasta que los retiros se desbloqueen:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "WITHDRAWAL_EMAIL_COOLDOWN",
+      "message": "Withdrawals are temporarily blocked after an email change",
+      "retry_after_seconds": 79214
+    }
+  }
+}
+```
+
+Este bloqueo se aplica a todos los tipos de sesión, incluidas las claves API con el permiso `withdraw`. Si usted no cambió el correo electrónico de la cuenta, contacte con el soporte de inmediato.

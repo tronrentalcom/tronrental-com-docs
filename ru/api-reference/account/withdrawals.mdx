@@ -83,3 +83,21 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | В очереди на обработку |
 | `completed` | TRX отправлены, tx_hash доступен |
 | `failed` | Ошибка, сумма возвращена |
+
+### Блокировка вывода после смены email
+
+В течение 24 часов после смены email аккаунта создание вывода отклоняется с кодом `403` и ошибкой `WITHDRAWAL_EMAIL_COOLDOWN`. В ответе приходит `retry_after_seconds` — сколько секунд осталось до разблокировки:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "WITHDRAWAL_EMAIL_COOLDOWN",
+      "message": "Withdrawals are temporarily blocked after an email change",
+      "retry_after_seconds": 79214
+    }
+  }
+}
+```
+
+Блокировка действует для сессий любого типа, включая API-ключи с правом `withdraw`. Если вы не меняли email аккаунта — немедленно обратитесь в поддержку.
