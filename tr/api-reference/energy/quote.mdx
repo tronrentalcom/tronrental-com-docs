@@ -17,7 +17,7 @@ Belirtilen enerji miktarı için tam olarak tahsil edilecek tutarı döner — k
 ### Sorgu parametreleri
 
 <ParamField query="volume" type="integer" required>
-  Fiyatlandırılacak enerji birimi. 60.000 ile 5.000.000 arasında.
+  Fiyatlandırılacak enerji birimi. 32.000 ile 5.000.000 arasında.
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -117,13 +117,13 @@ console.log(quote.total_trx);
 | 65,000 | Halihazırda USDT bulunduran bir adrese USDT transferi |
 | 131,000 | Hiç USDT tutmamış bir adrese USDT transferi (yeni bir depolama alanı oluşturulur) |
 
-Paket kataloğu yoktur — 60.000 ile 5.000.000 arasındaki her miktar geçerlidir ve sabit ücret her durumda sipariş başına bir kez alınır. Aynı alıcıya iki transfer, iki adet 65.000 yerine tek bir 131.000 siparişi olarak daha ucuza gelir: ücret iki kez yerine bir kez ödenir.
+Paket kataloğu yoktur — 32.000 ile 5.000.000 arasındaki her miktar geçerlidir ve sabit ücret her durumda sipariş başına bir kez alınır. Aynı alıcıya iki transfer, iki adet 65.000 yerine tek bir 131.000 siparişi olarak daha ucuza gelir: ücret iki kez yerine bir kez ödenir.
 
 ### Hatalar
 
 | Kod | Anlamı |
 |------|---------|
-| `400 INVALID_VOLUME` | Miktar 60.000–5.000.000 aralığının dışında |
+| `400 INVALID_VOLUME` | Miktar 32.000–5.000.000 aralığının dışında |
 | `400 INVALID_DURATION` | `1h` dışında bir süre |
 
 Geçersiz veya iptal edilmiş `X-API-Key` burada hata **değildir**: fiyat genel piyasa fiyatıyla ve `personal_price: false` ile döner.
