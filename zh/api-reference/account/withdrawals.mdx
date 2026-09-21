@@ -83,6 +83,11 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | 已排队处理 |
 | `completed` | TRX 已发送，tx_hash 可用 |
 | `failed` | 失败，金额已退回 |
+| `scheduled` | 在网页后台创建；发送前等待 20 秒取消窗口 |
+| `processing` | 正在发送到网络 |
+| `cancelled` | 用户在取消窗口内取消；金额已退回 |
+
+通过 API 密钥创建的提现会立即发送，不会经过 `scheduled`。在网页后台创建的记录带有 `execute_after` 字段——若未提前取消，即为发送时刻。
 
 ### 更改邮箱后的安全锁定
 

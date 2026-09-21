@@ -83,6 +83,11 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | Isleme alinmak uzere siraya alindi |
 | `completed` | TRX gonderildi, tx_hash mevcut |
 | `failed` | Basarisiz oldu, tutar iade edildi |
+| `scheduled` | Web panelinden oluşturuldu; gönderimden önce 20 saniyelik iptal penceresini bekler |
+| `processing` | Ağa gönderiliyor |
+| `cancelled` | İptal penceresinde kullanıcı tarafından iptal edildi; tutar iade edildi |
+
+API anahtarıyla oluşturulan çekimler hemen gönderilir ve hiçbir zaman `scheduled` durumundan geçmez. Web panelinde oluşturulan satırlarda `execute_after` bulunur — daha önce iptal edilmezse gönderim anı.
 
 ### E-posta değişikliğinden sonra güvenlik kilidi
 
