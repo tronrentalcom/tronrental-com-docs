@@ -17,7 +17,7 @@ Devuelve el importe exacto que se cobrará por un volumen de energía dado — a
 ### Parámetros de consulta
 
 <ParamField query="volume" type="integer" required>
-  Unidades de energía a cotizar. Entre 60 000 y 5 000 000.
+  Unidades de energía a cotizar. Entre 32 000 y 5 000 000.
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -117,13 +117,13 @@ console.log(quote.total_trx);
 | 65,000 | Transferencia USDT a un destinatario que ya posee USDT |
 | 131,000 | Transferencia USDT a un destinatario que nunca ha tenido USDT (se crea un nuevo slot de almacenamiento) |
 
-No hay catálogo de paquetes — cualquier volumen entre 60 000 y 5 000 000 es válido, y la comisión fija se cobra una vez por pedido en cualquier caso. Dos transferencias al mismo destinatario salen más baratas como un pedido de 131 000 que como dos de 65 000: la comisión se paga una vez en lugar de dos.
+No hay catálogo de paquetes — cualquier volumen entre 32 000 y 5 000 000 es válido, y la comisión fija se cobra una vez por pedido en cualquier caso. Dos transferencias al mismo destinatario salen más baratas como un pedido de 131 000 que como dos de 65 000: la comisión se paga una vez en lugar de dos.
 
 ### Errores
 
 | Código | Significado |
 |------|---------|
-| `400 INVALID_VOLUME` | Volumen fuera de 60 000–5 000 000 |
+| `400 INVALID_VOLUME` | Volumen fuera de 32 000–5 000 000 |
 | `400 INVALID_DURATION` | Duración distinta de `1h` |
 
 Una `X-API-Key` inválida o revocada **no** es un error aquí: la cotización se devuelve al precio público de mercado con `personal_price: false`.
