@@ -83,6 +83,11 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | Queued for processing |
 | `completed` | TRX sent, tx_hash available |
 | `failed` | Failed, amount refunded |
+| `scheduled` | Created from the web dashboard; waits out a 20-second cancel window before it is sent |
+| `processing` | Being sent to the network |
+| `cancelled` | Cancelled by the user inside the cancel window; amount refunded |
+
+Withdrawals created with an API key are sent immediately and never pass through `scheduled`. Rows created in the web dashboard carry `execute_after` — the moment the transfer is sent unless it is cancelled before then.
 
 ### Security hold after an email change
 

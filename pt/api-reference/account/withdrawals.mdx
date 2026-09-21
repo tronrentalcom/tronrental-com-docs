@@ -83,6 +83,11 @@ curl https://api.tronrental.com/v1/account/withdrawals \
 | `pending` | Na fila para processamento |
 | `completed` | TRX enviado, tx_hash disponível |
 | `failed` | Falhou, valor reembolsado |
+| `scheduled` | Criado no painel web; aguarda uma janela de cancelamento de 20 segundos antes do envio |
+| `processing` | Sendo enviado para a rede |
+| `cancelled` | Cancelado pelo usuário dentro da janela de cancelamento; valor devolvido |
+
+Saques criados via chave de API são enviados imediatamente e nunca passam por `scheduled`. Linhas criadas no painel web trazem `execute_after` — o momento do envio, salvo cancelamento antes dele.
 
 ### Bloqueio de segurança após a alteração do e-mail
 
