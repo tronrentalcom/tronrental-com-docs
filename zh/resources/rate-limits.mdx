@@ -40,6 +40,8 @@ description: "API 速率限制策略"
 |---|---|---|
 | `POST /api/v1/invoices` | 10 次请求/分钟 | IP 地址 |
 | `POST /api/v1/account/withdrawal` | 1 次请求/分钟 | 账户 |
+| `POST /api/v1/energy/auto-refill` | 10 次请求/分钟 | 账户 |
+| `POST /api/v1/bandwidth/auto-refill` | 10 次请求/分钟 | 账户 |
 
 请注意，`POST /api/v1/invoices` 按 **IP 地址**计数，而非按账户：如果您的多个客户端从同一出口 IP 发送
 请求，它们将共用每分钟 10 次的同一份配额。

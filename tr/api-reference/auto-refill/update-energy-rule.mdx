@@ -1,0 +1,111 @@
+---
+title: Enerji Kuralını Güncelle
+api: PATCH /api/v1/energy/auto-refill/{rule_id}
+description: "Bir enerji Otomatik Dolum kuralını değiştirin, duraklatın veya devam ettirin"
+---
+
+## Enerji Kuralını Güncelle
+
+Bir kuralın eşiğini, miktarını veya etiketini değiştirir ya da kuralı duraklatır ve devam ettirir. Yalnızca değiştirmek istediğiniz alanları gönderin; diğerleri olduğu gibi kalır. Değişiklikler bir sonraki kontrolden itibaren geçerli olur. `buy_energy` kapsamını gerektirir.
+
+Bir kuralın adresi ve süresi değiştirilemez. Bir kuralı başka bir adrese taşımak için onu silin ve yeni bir kural oluşturun.
+
+### Yol parametreleri
+
+<ParamField path="rule_id" type="number" required>
+  Kural kimliği — Enerji Kuralı Oluştur veya Enerji Kurallarını Listele yanıtındaki `id`
+</ParamField>
+
+### İstek gövdesi
+
+<ParamField body="threshold_energy" type="number">
+  Yeni eşik. 1 ile 50.000.000 arasında.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  Dolum başına yeni enerji miktarı. 32.000 ile 5.000.000 arasında.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Yeni etiket, en fazla 100 karakter. Boş bir dize etiketi kaldırır.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Kuralı duraklatmak için `"paused"`, devam ettirmek için `"active"`. Devam ettirmek ayrıca `stopped_reason` alanını temizler ve `consecutive_failures` değerini 0'a sıfırlar. Bakiye nedeniyle durdurulmuş bir kural para yatırıldıktan sonra kendiliğinden devam eder, bu yüzden bunu sizin yapmanız gerekmez; bakiye hâlâ yetersizken devam ettirirseniz kural bir sonraki kontrolde yeniden durur. `stopped_insufficient_balance` doğrudan ayarlanamaz.
+</ParamField>
+
+### Yanıt
+
+Güncellenmiş kural; alanları [Enerji Kurallarını Listele](/api-reference/auto-refill/list-energy-rules) ile aynıdır.
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "paused"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+    json={"status": "paused"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "paused" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "paused",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_energy": 212480,
+  "last_refill_at": "2026-10-14T08:57:40Z",
+  "refill_count": 3,
+  "total_spent_trx": "7.854000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `buy_energy` kapsamı yok |
+| `404` | `NOT_FOUND` | Hesabınızda bu kimliğe sahip bir enerji kuralı yok (veya kural silinmiş) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Bu kural için şu anda bir dolum satın alınıyor — bir dakika sonra yeniden deneyin |
+| `422` | — | Bir değer aralık dışında ya da `status` değeri `"active"` veya `"paused"` değil |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

@@ -1,0 +1,111 @@
+---
+title: Изменить правило для энергии
+api: PATCH /api/v1/energy/auto-refill/{rule_id}
+description: "Изменение, пауза или возобновление правила автопополнения энергии"
+---
+
+## Изменить правило для энергии
+
+Меняет порог, объём или название правила либо ставит его на паузу и возобновляет. Передавайте только поля, которые хотите изменить; остальные останутся как есть. Изменения действуют со следующей проверки. Нужен скоуп `buy_energy`.
+
+Адрес и срок правила изменить нельзя. Чтобы перенести правило на другой адрес, удалите его и создайте новое.
+
+### Параметры пути
+
+<ParamField path="rule_id" type="number" required>
+  ID правила — `id` из ответа создания или списка правил для энергии
+</ParamField>
+
+### Тело запроса
+
+<ParamField body="threshold_energy" type="number">
+  Новый порог. От 1 до 50 000 000.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  Новый объём энергии за одно пополнение. От 32 000 до 5 000 000.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Новое название, до 100 символов. Пустая строка удаляет название.
+</ParamField>
+
+<ParamField body="status" type="string">
+  `"paused"` — поставить правило на паузу, `"active"` — возобновить. Возобновление также очищает `stopped_reason` и сбрасывает `consecutive_failures` в 0. Правило, остановленное из-за баланса, возобновляется само после депозита, так что делать это вручную не обязательно; если возобновить его, пока баланса всё ещё не хватает, оно снова остановится при следующей проверке. Установить `stopped_insufficient_balance` напрямую нельзя.
+</ParamField>
+
+### Ответ
+
+Обновлённое правило с теми же полями, что в [Списке правил для энергии](/api-reference/auto-refill/list-energy-rules).
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "paused"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+    json={"status": "paused"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "paused" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "paused",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_energy": 212480,
+  "last_refill_at": "2026-10-14T08:57:40Z",
+  "refill_count": 3,
+  "total_spent_trx": "7.854000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_energy` |
+| `404` | `NOT_FOUND` | В вашем аккаунте нет правила для энергии с таким ID (или оно удалено) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Прямо сейчас по этому правилу покупается пополнение — повторите через минуту |
+| `422` | — | Значение вне диапазона, либо `status` — не `"active"` и не `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

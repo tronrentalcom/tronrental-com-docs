@@ -1,0 +1,111 @@
+---
+title: Actualizar regla de energía
+api: PATCH /api/v1/energy/auto-refill/{rule_id}
+description: "Modifica, pausa o reanuda una regla de Recarga automática de energía"
+---
+
+## Actualizar regla de energía
+
+Cambia el umbral, el volumen o la etiqueta de una regla, o la pausa y la reanuda. Envía solo los campos que quieras cambiar; los demás se quedan como están. Los cambios se aplican desde la siguiente comprobación. Requiere el alcance `buy_energy`.
+
+La dirección y la duración de una regla no se pueden cambiar. Para pasar una regla a otra dirección, elimínala y crea una nueva.
+
+### Parámetros de ruta
+
+<ParamField path="rule_id" type="number" required>
+  ID de la regla — el `id` que devuelven Crear o Listar reglas de energía
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="threshold_energy" type="number">
+  Nuevo umbral. De 1 a 50,000,000.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  Nueva cantidad de energía por recarga. De 32,000 a 5,000,000.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Nueva etiqueta, hasta 100 caracteres. Una cadena vacía elimina la etiqueta.
+</ParamField>
+
+<ParamField body="status" type="string">
+  `"paused"` para pausar la regla, `"active"` para reanudarla. Al reanudarla también se borra `stopped_reason` y `consecutive_failures` vuelve a 0. Una regla detenida por saldo se reanuda sola tras un depósito, así que no tienes que hacerlo tú; si la reanudas mientras el saldo sigue sin alcanzar, se detiene de nuevo en la siguiente comprobación. `stopped_insufficient_balance` no se puede establecer directamente.
+</ParamField>
+
+### Respuesta
+
+La regla actualizada, con los mismos campos que en [Listar reglas de energía](/api-reference/auto-refill/list-energy-rules).
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "paused"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+    json={"status": "paused"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "paused" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "paused",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_energy": 212480,
+  "last_refill_at": "2026-10-14T08:57:40Z",
+  "refill_count": 3,
+  "total_spent_trx": "7.854000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_energy` |
+| `404` | `NOT_FOUND` | No hay ninguna regla de energía con este ID en tu cuenta (o fue eliminada) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Se está comprando una recarga para esta regla en este momento — reintenta en un minuto |
+| `422` | — | Un valor está fuera de rango, o `status` no es `"active"` ni `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

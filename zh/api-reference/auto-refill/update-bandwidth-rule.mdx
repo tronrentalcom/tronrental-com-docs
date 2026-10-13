@@ -1,0 +1,116 @@
+---
+title: 更新带宽规则
+api: PATCH /api/v1/bandwidth/auto-refill/{rule_id}
+description: "修改、暂停或恢复带宽自动补充规则"
+---
+
+## 更新带宽规则
+
+修改规则的阈值、数量、时长或标签，或者暂停、恢复规则。只需发送要修改的字段；其他字段保持不变。更改从下一次检查起生效。需要 `buy_bandwidth` 权限。
+
+规则的地址无法修改。要把规则移到另一个地址，请删除它并创建一条新规则。
+
+### 路径参数
+
+<ParamField path="rule_id" type="number" required>
+  规则 ID——创建或列出带宽规则时返回的 `id`
+</ParamField>
+
+### 请求体
+
+<ParamField body="threshold_bandwidth" type="number">
+  新的阈值。范围 1 至 1,000,000。
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  每次补充的新带宽数量。范围 350 至 100,000。
+</ParamField>
+
+<ParamField body="duration" type="string">
+  之后补充所用的新租赁时长：`"1h"` 或 `"1d"`。已购买的租赁保持原有时长。
+</ParamField>
+
+<ParamField body="label" type="string">
+  新的标签，最多 100 个字符。空字符串会移除标签。
+</ParamField>
+
+<ParamField body="status" type="string">
+  `"paused"` 表示暂停规则，`"active"` 表示恢复规则。恢复时还会清除 `stopped_reason`，并将 `consecutive_failures` 重置为 0。因余额不足而停止的规则会在充值后自行恢复，因此您无需手动恢复；如果在余额仍然不足时恢复，它会在下一次检查时再次停止。`stopped_insufficient_balance` 不能直接设置。
+</ParamField>
+
+### 响应
+
+更新后的规则，字段与[列出带宽规则](/api-reference/auto-refill/list-bandwidth-rules)中的相同。
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto-refill/15 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"duration": "1d"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/15",
+    headers={"X-API-Key": "your_api_key"},
+    json={"duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill/15", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ duration: "1d" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1d",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_bandwidth": 3655,
+  "last_refill_at": "2026-10-14T09:12:30Z",
+  "refill_count": 4,
+  "total_spent_trx": "1.480000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.500000",
+  "volume_below_threshold": false
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
+| `404` | `NOT_FOUND` | 您的账户中没有此 ID 的带宽规则（或已被删除） |
+| `409` | `AUTOREFILL_IN_PROGRESS` | 该规则的一次补充正在购买中——请一分钟后重试 |
+| `422` | — | 数值超出范围，`duration` 不是 `"1h"` 或 `"1d"`，或 `status` 不是 `"active"` 或 `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

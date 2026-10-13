@@ -87,6 +87,17 @@ Retornados no formato padrão, em `detail.error.code`:
 problema de saldo apenas pelo código.
 </Warning>
 
+## Códigos da Recarga automática
+
+Retornados no formato padrão pelos endpoints de [Recarga automática](/api-reference/auto-refill/overview):
+
+| Código | Status | Descrição |
+|--------|--------|-------------|
+| `AUTOREFILL_ADDRESS_TAKEN` | `409` | A conta já tem uma regra para este endereço e recurso — edite essa regra |
+| `AUTOREFILL_LIMIT_REACHED` | `409` | A conta já tem 20 regras para este recurso; o limite também vem em `error.limit` |
+| `AUTOREFILL_IN_PROGRESS` | `409` | Uma recarga da regra está sendo comprada neste momento — repita a edição ou a exclusão em um minuto |
+| `NOT_FOUND` | `404` | Não existe essa regra na conta |
+
 ## Códigos de verificação de saque
 
 `POST /api/v1/account/withdrawal` retorna estes códigos de verificação no formato plano, com `code` ao

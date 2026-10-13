@@ -1,0 +1,123 @@
+---
+title: एनर्जी नियमों की सूची
+api: GET /api/v1/energy/auto-refill
+description: "आपके खाते के सभी एनर्जी ऑटो रिफिल नियम"
+---
+
+## एनर्जी नियमों की सूची
+
+आपके खाते के सभी एनर्जी ऑटो रिफिल नियम लौटाता है, सबसे पुराने पहले। हटाए गए नियम शामिल नहीं होते। `view` स्कोप आवश्यक है।
+
+### रिस्पॉन्स
+
+<ResponseField name="rules" type="array">
+  आपके एनर्जी नियम।
+
+  <Expandable title="नियम ऑब्जेक्ट">
+    <ResponseField name="id" type="number">
+      नियम ID — इसे बदलने और हटाने वाले पाथ में उपयोग करें
+    </ResponseField>
+    <ResponseField name="target_address" type="string">
+      वह एड्रेस जिस पर नियम आपूर्ति बनाए रखता है
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      नियम के लिए आपका नाम
+    </ResponseField>
+    <ResponseField name="threshold_energy" type="number">
+      जब उपलब्ध एनर्जी इससे नीचे होती है, नियम खरीदता है
+    </ResponseField>
+    <ResponseField name="add_volume" type="number">
+      प्रति रिफिल खरीदी जाने वाली एनर्जी
+    </ResponseField>
+    <ResponseField name="duration" type="string">
+      हर रिफिल के किराये की अवधि — हमेशा `1h`
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `paused` या `stopped_insufficient_balance` — देखें [नियम की स्थिति](/api-reference/auto-refill/overview#rule-status)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      नियम क्यों रोका गया या रुका: `insufficient_balance`, `order_failed`, `activation_failed` या `invalid_params`। कोई कारण न हो तो `null`।
+    </ResponseField>
+    <ResponseField name="consecutive_failures" type="number">
+      लगातार विफल रिफिल। यह संख्या 5 तक पहुँचने पर नियम रोक दिया जाता है; सफल रिफिल इसे 0 पर रीसेट कर देता है।
+    </ResponseField>
+    <ResponseField name="last_checked_at" type="string | null">
+      हमने आखिरी बार एड्रेस कब पढ़ा (ISO 8601, UTC)। पहली जाँच से पहले `null`।
+    </ResponseField>
+    <ResponseField name="last_available_energy" type="number | null">
+      उस जाँच के समय एड्रेस पर उपलब्ध एनर्जी। पहली सफल रीडिंग से पहले `null`।
+    </ResponseField>
+    <ResponseField name="last_refill_at" type="string | null">
+      आखिरी रिफिल कब हुआ। यदि अब तक कोई रिफिल नहीं हुआ तो `null`।
+    </ResponseField>
+    <ResponseField name="refill_count" type="number">
+      नियम बनने के बाद से सफल रिफिल की संख्या
+    </ResponseField>
+    <ResponseField name="total_spent_trx" type="string">
+      उन रिफिल पर कुल खर्च हुए TRX
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      नियम कब बनाया गया (ISO 8601, UTC)
+    </ResponseField>
+    <ResponseField name="estimated_cost_per_refill_trx" type="string | null">
+      मौजूदा कीमतों पर आपके खाते के लिए एक रिफिल की पूरी कीमत, फिक्स्ड शुल्क सहित। ज़रूरत पड़ने पर एड्रेस सक्रियण का शुल्क अलग से जुड़ता है। यदि कीमत अस्थायी रूप से उपलब्ध नहीं है तो `null`।
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/energy/auto-refill \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "rules": [
+    {
+      "id": 12,
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "label": "Hot wallet",
+      "threshold_energy": 65000,
+      "add_volume": 131000,
+      "duration": "1h",
+      "status": "active",
+      "stopped_reason": null,
+      "consecutive_failures": 0,
+      "last_checked_at": "2026-10-14T09:41:02Z",
+      "last_available_energy": 212480,
+      "last_refill_at": "2026-10-14T08:57:40Z",
+      "refill_count": 3,
+      "total_spent_trx": "7.854000",
+      "created_at": "2026-10-14T08:12:05Z",
+      "estimated_cost_per_refill_trx": "2.618000"
+    }
+  ]
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `view` स्कोप नहीं है |

@@ -1,0 +1,75 @@
+---
+title: 删除带宽规则
+api: DELETE /api/v1/bandwidth/auto-refill/{rule_id}
+description: "删除一条带宽自动补充规则"
+---
+
+## 删除带宽规则
+
+删除一条规则。该规则不再进行任何补充，该地址也可以重新用于新的带宽规则。已购买的带宽不会被收回：这些租赁会持续到其租期结束。以往的补充订单会保留在您的订单历史中。需要 `buy_bandwidth` 权限。
+
+如果只想暂时停止补充而不丢失规则，请改为[暂停规则](/api-reference/auto-refill/update-bandwidth-rule)。
+
+### 路径参数
+
+<ParamField path="rule_id" type="number" required>
+  规则 ID——创建或列出带宽规则时返回的 `id`
+</ParamField>
+
+### 响应
+
+<ResponseField name="status" type="string">
+  `ok`
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto-refill/15 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/15",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill/15", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "ok"
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
+| `404` | `NOT_FOUND` | 您的账户中没有此 ID 的带宽规则（或已被删除） |
+| `409` | `AUTOREFILL_IN_PROGRESS` | 该规则的一次补充正在购买中——请一分钟后重试 |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-refill rule not found"
+    }
+  }
+}
+```

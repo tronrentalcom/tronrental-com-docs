@@ -1,0 +1,127 @@
+---
+title: Список правил для bandwidth
+api: GET /api/v1/bandwidth/auto-refill
+description: "Все правила автопополнения bandwidth в вашем аккаунте"
+---
+
+## Список правил для bandwidth
+
+Возвращает все правила автопополнения bandwidth в вашем аккаунте, начиная со старых. Удалённые правила в список не входят. Нужен скоуп `view`.
+
+### Ответ
+
+<ResponseField name="rules" type="array">
+  Ваши правила для bandwidth.
+
+  <Expandable title="объект правила">
+    <ResponseField name="id" type="number">
+      ID правила — используйте его в путях изменения и удаления
+    </ResponseField>
+    <ResponseField name="target_address" type="string">
+      Адрес, который правило держит обеспеченным
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      Ваше название правила
+    </ResponseField>
+    <ResponseField name="threshold_bandwidth" type="number">
+      Правило покупает, когда доступного bandwidth меньше этого значения
+    </ResponseField>
+    <ResponseField name="add_volume" type="number">
+      Сколько bandwidth покупается за одно пополнение
+    </ResponseField>
+    <ResponseField name="duration" type="string">
+      Срок аренды для каждого пополнения — `1h` или `1d`
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `paused` или `stopped_insufficient_balance` — см. [Статус правила](/api-reference/auto-refill/overview#rule-status)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      Почему правило поставлено на паузу или остановлено: `insufficient_balance`, `order_failed`, `activation_failed` или `invalid_params`. `null`, если причины нет.
+    </ResponseField>
+    <ResponseField name="consecutive_failures" type="number">
+      Сколько пополнений подряд не прошло. Когда значение доходит до 5, правило ставится на паузу; успешное пополнение сбрасывает его в 0.
+    </ResponseField>
+    <ResponseField name="last_checked_at" type="string | null">
+      Когда мы в последний раз читали адрес (ISO 8601, UTC). `null` до первой проверки.
+    </ResponseField>
+    <ResponseField name="last_available_bandwidth" type="number | null">
+      Bandwidth, доступный на адресе при этой проверке, включая бесплатный. `null` до первого успешного чтения.
+    </ResponseField>
+    <ResponseField name="last_refill_at" type="string | null">
+      Когда было последнее пополнение. `null`, если пополнений ещё не было.
+    </ResponseField>
+    <ResponseField name="refill_count" type="number">
+      Число успешных пополнений с момента создания правила
+    </ResponseField>
+    <ResponseField name="total_spent_trx" type="string">
+      Сколько всего TRX потрачено на эти пополнения
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Когда правило создано (ISO 8601, UTC)
+    </ResponseField>
+    <ResponseField name="estimated_cost_per_refill_trx" type="string | null">
+      Полная цена одного пополнения для вашего аккаунта по текущим ценам, включая фиксированную комиссию. Активация адреса, когда она нужна, оплачивается сверх. `null`, если цена временно недоступна.
+    </ResponseField>
+    <ResponseField name="volume_below_threshold" type="boolean">
+      `true`, когда `add_volume` меньше `threshold_bandwidth`. Тогда одного пополнения может не хватить, чтобы поднять адрес выше порога, и правило продолжает покупать, пока адрес тратит, — см. [предупреждение в обзоре](/api-reference/auto-refill/overview#choosing-the-numbers).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "rules": [
+    {
+      "id": 15,
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "label": "Payouts",
+      "threshold_bandwidth": 1000,
+      "add_volume": 5000,
+      "duration": "1h",
+      "status": "active",
+      "stopped_reason": null,
+      "consecutive_failures": 0,
+      "last_checked_at": "2026-10-14T09:41:02Z",
+      "last_available_bandwidth": 3655,
+      "last_refill_at": "2026-10-14T09:12:30Z",
+      "refill_count": 4,
+      "total_spent_trx": "1.480000",
+      "created_at": "2026-10-14T08:15:00Z",
+      "estimated_cost_per_refill_trx": "0.370000",
+      "volume_below_threshold": false
+    }
+  ]
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `view` |

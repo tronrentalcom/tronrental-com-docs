@@ -1,0 +1,165 @@
+---
+title: Bant Genişliği Kuralı Oluştur
+api: POST /api/v1/bandwidth/auto-refill
+description: "Bir adresteki bant genişliği eşiğin altına düştüğünde onu otomatik olarak doldurun"
+---
+
+## Bant Genişliği Kuralı Oluştur
+
+Bir adres için bir Otomatik Dolum kuralı oluşturur. Bir sonraki kontrolden itibaren adresteki kullanılabilir bant genişliği `threshold_bandwidth` değerinin altına her düştüğünde, seçilen `duration` süresi için `add_volume` kadar bant genişliği satın alır ve bakiyenizden ücret alırız. Kontrollerin, maliyetin ve durumların nasıl işlediği için [genel bakışa](/api-reference/auto-refill/overview) bakın.
+
+İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_bandwidth` kapsamını gerektirir.
+
+<Info>
+Kullanılabilir bant genişliği, adresin bir işlemin bedelini ödemek için kullanabileceği **her şeyi** sayar: günlük ücretsiz 600 ile stake edilmiş veya devredilmiş bant genişliği. 600 veya daha düşük bir eşik, adres bu ücretsiz payı harcayana kadar yalnızca onunla karşılanır.
+</Info>
+
+### İstek gövdesi
+
+<ParamField body="target_address" type="string" required>
+  Kaynağı sürekli sağlanacak TRON adresi (T... formatı, 34 karakter). Sözleşme adresleri reddedilir.
+</ParamField>
+
+<ParamField body="threshold_bandwidth" type="number" required>
+  Adresteki kullanılabilir bant genişliği bu değerin altına düştüğünde satın alınır. 1 ile 1.000.000 arasında.
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  Dolum başına satın alınacak bant genişliği. 350 ile 100.000 arasında. Bu değeri `threshold_bandwidth` ile aynı veya ondan yüksek tutun — bkz. [genel bakıştaki uyarı](/api-reference/auto-refill/overview#choosing-the-numbers).
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  Her dolumun kiralama süresi: `"1h"` veya `"1d"`.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Kurala kendi verdiğiniz ad, en fazla 100 karakter. İsteğe bağlı.
+</ParamField>
+
+### Yanıt
+
+Yeni kural — [Bant Genişliği Kurallarını Listele](/api-reference/auto-refill/list-bandwidth-rules) ile aynı alanlar — ve adresin şu anki durumuna dair iki alan:
+
+<ResponseField name="current_bandwidth" type="number | null">
+  Kural oluşturulduğu anda adreste kullanılabilir olan bant genişliği, ücretsiz bant genişliği dahil. Okunamadıysa `null`; kural her durumda oluşturulur.
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  `current_bandwidth` zaten eşiğin altındaysa `true`; bu durumda bir sonraki kontrol — genellikle bir dakika içinde — satın alır. Adreste yeterli bant genişliği varsa veya seviye okunamadıysa `false`.
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_bandwidth": 1000,
+    "add_volume": 5000,
+    "duration": "1h",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_bandwidth": 1000,
+        "add_volume": 5000,
+        "duration": "1h",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_bandwidth: 1000,
+    add_volume: 5000,
+    duration: "1h",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_bandwidth": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.370000",
+  "volume_below_threshold": false,
+  "current_bandwidth": 600,
+  "will_refill_now": true
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `target_address` geçerli bir TRON adresi değil |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` bir akıllı sözleşme |
+| `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | Hesabınızda bu adres için zaten bir bant genişliği kuralı var — bunun yerine onu düzenleyin |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | Hesabınızda zaten 20 bant genişliği kuralı var; sınır `error.limit` içinde de yer alır |
+| `422` | — | Bir alan eksik veya aralık dışında ya da `duration` değeri `"1h"` veya `"1d"` değil |
+| `429` | `RATE_LIMIT_EXCEEDED` | Bir dakika içinde 10'dan fazla oluşturma isteği |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+Doğrulama hatası, çerçevenin kendi biçiminde ve `detail` bir dizi olarak gelir:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["body", "add_volume"],
+      "msg": "Input should be greater than or equal to 350",
+      "input": 100,
+      "ctx": {"ge": 350}
+    }
+  ]
+}
+```
+
+<Tip>
+Zaman aşımından sonra oluşturma isteğini yeniden denemek güvenlidir. İlk istek başarılı olduysa yeniden deneme ikinci bir kural oluşturmaz, `409 AUTOREFILL_ADDRESS_TAKEN` döndürür; kuralın `id` değerini almak için [kurallarınızı listeleyin](/api-reference/auto-refill/list-bandwidth-rules).
+</Tip>

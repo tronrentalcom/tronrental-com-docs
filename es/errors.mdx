@@ -87,6 +87,17 @@ código**: `{"detail":{"error":{"message":"Insufficient balance"}}}`. En esos do
 un problema de saldo solo por el código.
 </Warning>
 
+## Códigos de Recarga automática
+
+Se devuelven en la forma estándar desde los endpoints de [Recarga automática](/api-reference/auto-refill/overview):
+
+| Código | Estado | Descripción |
+|--------|--------|-------------|
+| `AUTOREFILL_ADDRESS_TAKEN` | `409` | La cuenta ya tiene una regla para esta dirección y este recurso — edita esa regla en su lugar |
+| `AUTOREFILL_LIMIT_REACHED` | `409` | La cuenta ya tiene 20 reglas para este recurso; el límite también figura en `error.limit` |
+| `AUTOREFILL_IN_PROGRESS` | `409` | Se está comprando una recarga para la regla en este momento — reintenta la edición o la eliminación en un minuto |
+| `NOT_FOUND` | `404` | No existe esa regla en la cuenta |
+
 ## Códigos de verificación de retiro
 
 `POST /api/v1/account/withdrawal` devuelve estos códigos de verificación en la forma plana, con `code`

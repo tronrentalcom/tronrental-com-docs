@@ -1,0 +1,75 @@
+---
+title: Enerji Kuralını Sil
+api: DELETE /api/v1/energy/auto-refill/{rule_id}
+description: "Bir enerji Otomatik Dolum kuralını silin"
+---
+
+## Enerji Kuralını Sil
+
+Bir kuralı siler. Bu kural için artık dolum yapılmaz ve adres yeni bir enerji kuralı için serbest kalır. Zaten satın alınmış enerji geri alınmaz: bu kiralamalar saatleri dolana kadar sürer. Geçmiş dolum siparişleri sipariş geçmişinizde kalır. `buy_energy` kapsamını gerektirir.
+
+Kuralı kaybetmeden dolumları bir süreliğine durdurmak için onu silmek yerine [duraklatın](/api-reference/auto-refill/update-energy-rule).
+
+### Yol parametreleri
+
+<ParamField path="rule_id" type="number" required>
+  Kural kimliği — Enerji Kuralı Oluştur veya Enerji Kurallarını Listele yanıtındaki `id`
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="status" type="string">
+  `ok`
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "ok"
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `buy_energy` kapsamı yok |
+| `404` | `NOT_FOUND` | Hesabınızda bu kimliğe sahip bir enerji kuralı yok (veya kural zaten silinmiş) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Bu kural için şu anda bir dolum satın alınıyor — bir dakika sonra yeniden deneyin |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-refill rule not found"
+    }
+  }
+}
+```

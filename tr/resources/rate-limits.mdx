@@ -42,6 +42,8 @@ boyunca yarıya iner; böyle üç dakika daha olursa hesap otuz dakika tamamen e
 |---|---|---|
 | `POST /api/v1/invoices` | 10 istek/dakika | IP adresi |
 | `POST /api/v1/account/withdrawal` | 1 istek/dakika | hesap |
+| `POST /api/v1/energy/auto-refill` | 10 istek/dakika | hesap |
+| `POST /api/v1/bandwidth/auto-refill` | 10 istek/dakika | hesap |
 
 Dikkat: `POST /api/v1/invoices` hesaba göre değil, **IP adresine** göre sayılır. Birden fazla
 istemciniz aynı çıkış IP'sinden istek gönderiyorsa, dakikada 10'luk tek bir bütçeyi paylaşırlar.

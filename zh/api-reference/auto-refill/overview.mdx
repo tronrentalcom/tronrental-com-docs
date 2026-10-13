@@ -1,0 +1,114 @@
+---
+title: 自动补充概述
+description: "让地址上的能量或带宽保持在您选定的水平之上"
+---
+
+## 自动补充
+
+自动补充会监控一个 TRON 地址，每当其能量或带宽低于您设定的水平时为其补充。您可以选择**阈值**、每次**补充**的数量以及租赁**时长**。每次补充都是一笔从您余额中支付的普通订单。
+
+### 工作原理
+
+1. 为地址创建一条规则，设置阈值、`add_volume` 和 `duration`。
+2. 我们**每分钟一次**检查该地址的可用能量（或带宽），并在该地址**每次转出 USDT 后立即**检查。
+3. 如果可用量低于阈值，我们会为该地址购买 `add_volume`，并按您的价格从余额中扣费。
+4. 租赁在时长结束后到期。当可用量再次低于阈值时，规则会再次购买。规则正是这样让地址持续获得资源的：没有单独的续租步骤。
+
+创建规则时不会立即购买任何东西。首次补充发生在下一次检查时，通常在一分钟之内。创建响应会告诉您是否将会补充（`will_refill_now`），以及该地址当前有多少资源。
+
+<Note>
+自动补充在可用量下降之后才做出反应，而不是抢在转账之前补充。请将阈值设为不低于您下一笔交易所需的数量，这样交易发出时资源就已经到位。
+</Note>
+
+### 能量与带宽
+
+两种资源各有自己的端点和自己的规则。同一个地址可以同时拥有一条能量规则和一条带宽规则，各自按自己的阈值检查。
+
+| | 能量 | 带宽 |
+|---|---|---|
+| 端点 | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
+| 阈值字段 | `threshold_energy`，1 – 50,000,000 | `threshold_bandwidth`，1 – 1,000,000 |
+| 每次补充的 `add_volume` | 32,000 – 5,000,000 | 350 – 100,000 |
+| `duration` | 仅 `1h` | `1h` 或 `1d` |
+| 与阈值比较的数值 | 可用能量 | 全部可用带宽，**包括每天免费的 600** |
+| 创建、编辑、删除所需权限 | `buy_energy` | `buy_bandwidth` |
+| 查看列表所需权限 | `view` | `view` |
+
+**能量**的租期为一小时。能量用完或到期后，可用量下降，规则会购买下一个小时。
+
+**带宽**计入地址可用于支付交易的全部带宽：每个账户每天获得的 600 免费带宽，加上任何质押或委托的带宽。因此，阈值为 600 或更低时，在地址用完免费额度之前，仅凭免费额度就已达到阈值。
+
+### 选择数值
+
+<Warning>
+**请让 `add_volume` 不低于阈值。** 每次补充是在地址剩余资源的基础上增加 `add_volume`。如果 `add_volume` 小于阈值，对几乎耗尽的地址补充一次后，可用量仍可能低于阈值，规则就会在下一次检查时再次购买，然后一次又一次，只要地址还在消耗就不会停止。每一次这样的补充都是一笔完整的订单，各自收取固定手续费。带宽规则会用 `volume_below_threshold: true` 标出这种情况。
+</Warning>
+
+收款方已持有 USDT 时，一笔 USDT 转账约消耗 65,000 能量，未持有时约消耗 131,000，另外还需约 345 带宽。例如，`threshold_energy: 65000` 搭配 `add_volume: 131000`，会在剩余不足一笔转账时购买够两笔转账的量。
+
+### 费用
+
+每次补充都是一笔普通订单：按您的费率计算的租赁费，加上**固定手续费，每次补充都会收取**。列表和创建响应中的 `estimated_cost_per_refill_trx` 是您的账户补充一次的全部价格，已包含固定手续费。较小的 `add_volume` 补充得频繁，要多次支付固定手续费；较大的则支付次数更少。
+
+通过 API 密钥创建的规则，按使用该 API 密钥购买的价格计费；在网站上创建的规则，按网站购买的价格计费。`estimated_cost_per_refill_trx` 已反映这一点。
+
+如果该地址在链上尚不存在，首次补充还会将其激活，与普通购买相同。激活费用另行收取，不包含在 `estimated_cost_per_refill_trx` 中；订单会在 `activation_cost_trx` 中显示该费用。
+
+没有每日消费上限：只要可用量低于阈值，且您的余额足以支付一次补充，规则就会购买。
+
+### 订单与 Webhook
+
+每次补充都会出现在您的订单历史中（[订单列表](/api-reference/orders/list-orders)），并带有 `source: "autorefill"`。
+
+通过 API 密钥创建的规则会为其补充订单发送 [`order.updated` Webhook](/api-reference/webhooks/overview)，与您通过 API 下的订单相同。未使用 API 密钥创建的规则不会发送。
+
+### 规则状态
+
+| `status` | 含义 |
+|---|---|
+| `active` | 规则检查地址，并在需要时购买 |
+| `paused` | 在您恢复之前，规则不做任何操作。由您设置，或在补充接连失败时由我们设置——参见 `stopped_reason` |
+| `stopped_insufficient_balance` | 您的余额不足以支付下一次补充。充值后规则会自动恢复 |
+
+**因失败而暂停。** 失败的补充会像任何失败订单一样退款。**连续 5 次补充失败**后，规则会被暂停，`stopped_reason` 给出最后一次失败的原因。`consecutive_failures` 显示规则离这一上限还有多远；补充成功后以及您恢复规则时，它都会归 0。已暂停的规则绝不会自行恢复：请先排除原因，再设置 `status: "active"`。
+
+**因余额不足而停止。** 当您的余额不足以支付一次补充时，规则以 `stopped_insufficient_balance` 停止。一旦充值使余额达到一次补充的价格，规则会自动回到 `active`。您也可以自行设置 `status: "active"`；如果余额仍然不足，规则会在下一次检查时再次停止。
+
+| `stopped_reason` | 含义 |
+|---|---|
+| `insufficient_balance` | 余额不足以支付一次补充 |
+| `order_failed` | 补充订单连续失败 5 次 |
+| `activation_failed` | 地址激活连续失败 5 次 |
+| `invalid_params` | 规则的数量或时长已不再被接受（立即暂停，不经过 5 次尝试）——请先编辑，再恢复 |
+| `null` | 没有停止记录 |
+
+如果您已绑定 Telegram 账户，规则首次补充时，以及规则被暂停、因余额不足停止或恢复时，您都会收到一条消息。
+
+### 限制
+
+- 一个账户中**每个地址每种资源只能有一条规则**。为同一地址创建第二条能量规则（或第二条带宽规则）会返回 `409 AUTOREFILL_ADDRESS_TAKEN`——请改为编辑现有规则。
+- 每个账户最多 **20 条能量规则和 20 条带宽规则**。已删除的规则不计入。超出上限时返回 `409 AUTOREFILL_LIMIT_REACHED`。
+- **不支持合约地址**，例如 USDT 代币合约：TRON 不允许向其委托资源。
+- **创建规则**的请求每个账户每分钟限 10 次，两种资源分别计算。参见[速率限制](/resources/rate-limits)。
+
+### 编辑与删除
+
+更改从下一次检查起生效。当规则的某次补充正在购买时，`PATCH` 和 `DELETE` 会返回 `409 AUTOREFILL_IN_PROGRESS`——请一分钟后重试。删除规则不会收回已购买的能量或带宽；这些租赁会持续到期满。
+
+### 与智能模式和自动续费租赁的比较
+
+| | 自动补充 | [智能模式](/api-reference/smart-mode/overview) | [自动续费租赁](/api-reference/bandwidth-rentals/create-rental) |
+|---|---|---|---|
+| 资源 | 能量或带宽 | 能量，外加可选的带宽 | 带宽 |
+| 何时提供 | 可用量低于您的阈值时 | 每次转出 USDT 时 | 一次性委托，并在租赁期间一直保持 |
+| 您支付什么 | 每次补充，按普通订单计费 | 每日订阅费，加上每笔 USDT 转账的费用 | 每天一次 |
+| 覆盖范围 | 任何消耗——USDT、TRX、合约调用 | USDT 转账 | 稳定的带宽需求 |
+
+### 端点
+
+| 操作 | 能量 | 带宽 |
+|---|---|---|
+| 创建规则 | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
+| 列出规则 | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
+| 编辑、暂停、恢复 | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
+| 删除 | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |

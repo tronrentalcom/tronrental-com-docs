@@ -1,0 +1,165 @@
+---
+title: Crear regla de ancho de banda
+api: POST /api/v1/bandwidth/auto-refill
+description: "Recarga el ancho de banda de una dirección cada vez que cae por debajo de un umbral"
+---
+
+## Crear regla de ancho de banda
+
+Crea una regla de Recarga automática para una dirección. A partir de la siguiente comprobación, cada vez que la dirección tenga menos ancho de banda disponible que `threshold_bandwidth`, compramos `add_volume` de ancho de banda por la `duration` elegida y lo cobramos de tu saldo. Consulta la [descripción general](/api-reference/auto-refill/overview) para ver cómo funcionan las comprobaciones, el coste y los estados.
+
+La solicitud solo crea la regla — no compra nada por sí misma. Requiere el alcance `buy_bandwidth`.
+
+<Info>
+El ancho de banda disponible cuenta **todo** aquello con lo que la dirección puede pagar una transacción: los 600 gratuitos al día más cualquier ancho de banda obtenido por stake o recibido por delegación. Un umbral de 600 o menos se cumple solo con la asignación gratuita hasta que la dirección la gasta.
+</Info>
+
+### Cuerpo de la solicitud
+
+<ParamField body="target_address" type="string" required>
+  Dirección TRON que se mantendrá abastecida (formato T..., 34 caracteres). Las direcciones de contrato se rechazan.
+</ParamField>
+
+<ParamField body="threshold_bandwidth" type="number" required>
+  Se compra cuando la dirección tiene menos ancho de banda disponible que este valor. De 1 a 1,000,000.
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  Ancho de banda que se compra en cada recarga. De 350 a 100,000. Mantenlo igual o por encima de `threshold_bandwidth` — consulta la [advertencia de la descripción general](/api-reference/auto-refill/overview#choosing-the-numbers).
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  Duración del alquiler de cada recarga: `"1h"` o `"1d"`.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Tu propio nombre para la regla, hasta 100 caracteres. Opcional.
+</ParamField>
+
+### Respuesta
+
+La nueva regla — con los mismos campos que en [Listar reglas de ancho de banda](/api-reference/auto-refill/list-bandwidth-rules) — más dos campos sobre el estado actual de la dirección:
+
+<ResponseField name="current_bandwidth" type="number | null">
+  Ancho de banda disponible en la dirección en el momento de crear la regla, ancho de banda gratuito incluido. `null` si no se pudo leer; la regla se crea de todos modos.
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  `true` si `current_bandwidth` ya está por debajo del umbral, de modo que la siguiente comprobación — normalmente en menos de un minuto — comprará. `false` si la dirección tiene suficiente, o si no se pudo leer el nivel.
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_bandwidth": 1000,
+    "add_volume": 5000,
+    "duration": "1h",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_bandwidth": 1000,
+        "add_volume": 5000,
+        "duration": "1h",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_bandwidth: 1000,
+    add_volume: 5000,
+    duration: "1h",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_bandwidth": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.370000",
+  "volume_below_threshold": false,
+  "current_bandwidth": 600,
+  "will_refill_now": true
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `400` | `INVALID_ADDRESS` | `target_address` no es una dirección TRON válida |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` es un contrato inteligente |
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | Tu cuenta ya tiene una regla de ancho de banda para esta dirección — edítala en su lugar |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | Tu cuenta ya tiene 20 reglas de ancho de banda; el límite también figura en `error.limit` |
+| `422` | — | Falta un campo o está fuera de rango, o `duration` no es `"1h"` ni `"1d"` |
+| `429` | `RATE_LIMIT_EXCEEDED` | Más de 10 solicitudes de creación en un minuto |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+Un error de validación llega en el formato del framework, con `detail` como array:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["body", "add_volume"],
+      "msg": "Input should be greater than or equal to 350",
+      "input": 100,
+      "ctx": {"ge": 350}
+    }
+  ]
+}
+```
+
+<Tip>
+Reintentar una creación tras agotarse el tiempo de espera es seguro. Si la primera solicitud se completó, el reintento devuelve `409 AUTOREFILL_ADDRESS_TAKEN` en lugar de crear una segunda regla; [lista tus reglas](/api-reference/auto-refill/list-bandwidth-rules) para obtener su `id`.
+</Tip>

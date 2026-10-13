@@ -43,6 +43,8 @@ la bloquean por completo durante treinta, con `Retry-After: 1800`. Las cuentas d
 |---|---|---|
 | `POST /api/v1/invoices` | 10 solicitudes/minuto | dirección IP |
 | `POST /api/v1/account/withdrawal` | 1 solicitud/minuto | cuenta |
+| `POST /api/v1/energy/auto-refill` | 10 solicitudes/minuto | cuenta |
+| `POST /api/v1/bandwidth/auto-refill` | 10 solicitudes/minuto | cuenta |
 
 Ten en cuenta que `POST /api/v1/invoices` se cuenta por **dirección IP**, no por cuenta: si varios de
 tus clientes envían solicitudes desde la misma IP de salida, comparten un único presupuesto de 10 por

@@ -1,0 +1,127 @@
+---
+title: Bant Genişliği Kurallarını Listele
+api: GET /api/v1/bandwidth/auto-refill
+description: "Hesabınızdaki tüm bant genişliği Otomatik Dolum kuralları"
+---
+
+## Bant Genişliği Kurallarını Listele
+
+Hesabınızdaki tüm bant genişliği Otomatik Dolum kurallarını en eskiden başlayarak döndürür. Silinmiş kurallar dahil edilmez. `view` kapsamını gerektirir.
+
+### Yanıt
+
+<ResponseField name="rules" type="array">
+  Bant genişliği kurallarınız.
+
+  <Expandable title="kural nesnesi">
+    <ResponseField name="id" type="number">
+      Kural kimliği — düzenleme ve silme yollarında bunu kullanın
+    </ResponseField>
+    <ResponseField name="target_address" type="string">
+      Kuralın kaynağını sürekli sağladığı adres
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      Kurala verdiğiniz ad
+    </ResponseField>
+    <ResponseField name="threshold_bandwidth" type="number">
+      Kullanılabilir bant genişliği bu değerin altına düştüğünde kural satın alır
+    </ResponseField>
+    <ResponseField name="add_volume" type="number">
+      Dolum başına satın alınan bant genişliği
+    </ResponseField>
+    <ResponseField name="duration" type="string">
+      Her dolumun kiralama süresi — `1h` veya `1d`
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `paused` veya `stopped_insufficient_balance` — bkz. [Kural durumu](/api-reference/auto-refill/overview#rule-status)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      Kuralın neden duraklatıldığı veya durdurulduğu: `insufficient_balance`, `order_failed`, `activation_failed` veya `invalid_params`. Neden yoksa `null`.
+    </ResponseField>
+    <ResponseField name="consecutive_failures" type="number">
+      Art arda başarısız dolum sayısı. Bu değer 5'e ulaştığında kural duraklatılır; başarılı bir dolum onu 0'a sıfırlar.
+    </ResponseField>
+    <ResponseField name="last_checked_at" type="string | null">
+      Adresi en son ne zaman okuduğumuz (ISO 8601, UTC). İlk kontrolden önce `null`.
+    </ResponseField>
+    <ResponseField name="last_available_bandwidth" type="number | null">
+      O kontrolde adreste kullanılabilir olan bant genişliği, ücretsiz bant genişliği dahil. İlk başarılı okumadan önce `null`.
+    </ResponseField>
+    <ResponseField name="last_refill_at" type="string | null">
+      Son dolumun yapıldığı zaman. Hiç dolum yapılmadıysa `null`.
+    </ResponseField>
+    <ResponseField name="refill_count" type="number">
+      Kural oluşturulduğundan beri yapılan başarılı dolum sayısı
+    </ResponseField>
+    <ResponseField name="total_spent_trx" type="string">
+      Bu dolumlara harcanan toplam TRX
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Kuralın oluşturulduğu zaman (ISO 8601, UTC)
+    </ResponseField>
+    <ResponseField name="estimated_cost_per_refill_trx" type="string | null">
+      Güncel fiyatlarla hesabınız için bir dolumun sabit ücret dahil tam fiyatı. Gerektiğinde adres aktivasyonu ayrıca ücretlendirilir. Fiyat geçici olarak alınamıyorsa `null`.
+    </ResponseField>
+    <ResponseField name="volume_below_threshold" type="boolean">
+      `add_volume`, `threshold_bandwidth` değerinden küçük olduğunda `true`. Bu durumda tek bir dolum adresi eşiğin üzerine çıkarmayabilir ve adres harcadıkça kural satın almaya devam eder — bkz. [genel bakıştaki uyarı](/api-reference/auto-refill/overview#choosing-the-numbers).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "rules": [
+    {
+      "id": 15,
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "label": "Payouts",
+      "threshold_bandwidth": 1000,
+      "add_volume": 5000,
+      "duration": "1h",
+      "status": "active",
+      "stopped_reason": null,
+      "consecutive_failures": 0,
+      "last_checked_at": "2026-10-14T09:41:02Z",
+      "last_available_bandwidth": 3655,
+      "last_refill_at": "2026-10-14T09:12:30Z",
+      "refill_count": 4,
+      "total_spent_trx": "1.480000",
+      "created_at": "2026-10-14T08:15:00Z",
+      "estimated_cost_per_refill_trx": "0.370000",
+      "volume_below_threshold": false
+    }
+  ]
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `view` kapsamı yok |

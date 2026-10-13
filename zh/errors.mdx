@@ -81,6 +81,17 @@ description: "API 错误代码及处理方式"
 `{"detail":{"error":{"message":"Insufficient balance"}}}`。在这两个端点上，请勿仅凭代码判断余额不足。
 </Warning>
 
+## 自动补充代码
+
+[自动补充](/api-reference/auto-refill/overview)端点以标准形式返回：
+
+| 代码 | 状态 | 说明 |
+|------|--------|-------------|
+| `AUTOREFILL_ADDRESS_TAKEN` | `409` | 账户中已有该地址和该资源的规则——请改为编辑那条规则 |
+| `AUTOREFILL_LIMIT_REACHED` | `409` | 账户中该资源的规则已达 20 条；该上限也在 `error.limit` 中给出 |
+| `AUTOREFILL_IN_PROGRESS` | `409` | 该规则的一次补充正在购买中——请一分钟后重试编辑或删除 |
+| `NOT_FOUND` | `404` | 账户中没有该规则 |
+
 ## 提现验证代码
 
 `POST /api/v1/account/withdrawal` 以扁平形式返回这些验证代码，`code` 与 `detail` 并列；该端点的其他

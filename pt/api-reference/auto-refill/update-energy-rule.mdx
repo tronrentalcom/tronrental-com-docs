@@ -1,0 +1,111 @@
+---
+title: Atualizar regra de energia
+api: PATCH /api/v1/energy/auto-refill/{rule_id}
+description: "Alterar, pausar ou retomar uma regra de Recarga automática de energia"
+---
+
+## Atualizar regra de energia
+
+Altera o limiar, o volume ou o rótulo de uma regra, ou a pausa e retoma. Envie apenas os campos que deseja alterar; os demais permanecem como estão. As alterações valem a partir da verificação seguinte. Exige o escopo `buy_energy`.
+
+O endereço e a duração de uma regra não podem ser alterados. Para mover uma regra para outro endereço, exclua-a e crie uma nova.
+
+### Parâmetros de caminho
+
+<ParamField path="rule_id" type="number" required>
+  ID da regra — o `id` retornado por Criar ou Listar regras de energia
+</ParamField>
+
+### Corpo da requisição
+
+<ParamField body="threshold_energy" type="number">
+  Novo limiar. De 1 a 50.000.000.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  Nova quantidade de energia por recarga. De 32.000 a 5.000.000.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Novo rótulo, até 100 caracteres. Uma string vazia remove o rótulo.
+</ParamField>
+
+<ParamField body="status" type="string">
+  `"paused"` para pausar a regra, `"active"` para retomá-la. Retomar também limpa `stopped_reason` e redefine `consecutive_failures` para 0. Uma regra parada por saldo é retomada sozinha após um depósito, então você não precisa fazer isso; se você a retomar enquanto o saldo ainda for insuficiente, ela para de novo na verificação seguinte. `stopped_insufficient_balance` não pode ser definido diretamente.
+</ParamField>
+
+### Resposta
+
+A regra atualizada, com os mesmos campos de [Listar regras de energia](/api-reference/auto-refill/list-energy-rules).
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "paused"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+    json={"status": "paused"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "paused" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "paused",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_energy": 212480,
+  "last_refill_at": "2026-10-14T08:57:40Z",
+  "refill_count": 3,
+  "total_spent_trx": "7.854000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_energy` |
+| `404` | `NOT_FOUND` | Não há regra de energia com este ID na sua conta (ou ela foi excluída) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Uma recarga desta regra está sendo comprada neste momento — tente novamente em um minuto |
+| `422` | — | Um valor está fora do intervalo, ou `status` não é `"active"` nem `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

@@ -1,0 +1,165 @@
+---
+title: बैंडविड्थ नियम बनाएं
+api: POST /api/v1/bandwidth/auto-refill
+description: "जब भी किसी एड्रेस पर बैंडविड्थ थ्रेशोल्ड से नीचे गिरे, उसे टॉप-अप करें"
+---
+
+## बैंडविड्थ नियम बनाएं
+
+एक एड्रेस के लिए ऑटो रिफिल नियम बनाता है। अगली जाँच से, जब भी एड्रेस पर उपलब्ध बैंडविड्थ `threshold_bandwidth` से कम होती है, हम चुनी गई `duration` के लिए `add_volume` बैंडविड्थ खरीदते हैं और आपके बैलेंस से शुल्क लेते हैं। जाँच, लागत और स्थितियाँ कैसे काम करती हैं, यह जानने के लिए [अवलोकन](/api-reference/auto-refill/overview) देखें।
+
+अनुरोध केवल नियम बनाता है — यह स्वयं कुछ नहीं खरीदता। `buy_bandwidth` स्कोप आवश्यक है।
+
+<Info>
+उपलब्ध बैंडविड्थ में वह **सब कुछ** गिना जाता है जिससे एड्रेस किसी ट्रांज़ैक्शन का भुगतान कर सकता है: रोज़ाना मुफ़्त 600 और साथ में कोई भी स्टेक की गई या डेलिगेट की गई बैंडविड्थ। 600 या उससे कम का थ्रेशोल्ड, जब तक एड्रेस मुफ़्त कोटा खर्च नहीं कर देता, अकेले उसी से पूरा हो जाता है।
+</Info>
+
+### अनुरोध बॉडी
+
+<ParamField body="target_address" type="string" required>
+  वह TRON एड्रेस जिस पर आपूर्ति बनाए रखनी है (T... प्रारूप, 34 अक्षर)। कॉन्ट्रैक्ट एड्रेस अस्वीकार किए जाते हैं।
+</ParamField>
+
+<ParamField body="threshold_bandwidth" type="number" required>
+  जब एड्रेस पर उपलब्ध बैंडविड्थ इससे कम हो, तब खरीदें। 1 से 1,000,000 तक।
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  प्रति रिफिल खरीदी जाने वाली बैंडविड्थ। 350 से 100,000 तक। इसे `threshold_bandwidth` के बराबर या उससे ऊपर रखें — देखें [अवलोकन में चेतावनी](/api-reference/auto-refill/overview#choosing-the-numbers)।
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  हर रिफिल के किराये की अवधि: `"1h"` या `"1d"`।
+</ParamField>
+
+<ParamField body="label" type="string">
+  नियम के लिए आपका अपना नाम, अधिकतम 100 अक्षर। वैकल्पिक।
+</ParamField>
+
+### रिस्पॉन्स
+
+नया नियम — वही फ़ील्ड जो [बैंडविड्थ नियमों की सूची](/api-reference/auto-refill/list-bandwidth-rules) में हैं — और साथ में इस समय के एड्रेस के बारे में दो फ़ील्ड:
+
+<ResponseField name="current_bandwidth" type="number | null">
+  नियम बनाए जाने के समय एड्रेस पर उपलब्ध बैंडविड्थ, मुफ़्त बैंडविड्थ सहित। यदि इसे पढ़ा नहीं जा सका तो `null`; नियम हर हाल में बन जाता है।
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  `true` यदि `current_bandwidth` पहले से थ्रेशोल्ड से नीचे है, यानी अगली जाँच — आमतौर पर एक मिनट के भीतर — खरीदेगी। `false` यदि एड्रेस पर पर्याप्त है, या स्तर पढ़ा नहीं जा सका।
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_bandwidth": 1000,
+    "add_volume": 5000,
+    "duration": "1h",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_bandwidth": 1000,
+        "add_volume": 5000,
+        "duration": "1h",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_bandwidth: 1000,
+    add_volume: 5000,
+    duration: "1h",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_bandwidth": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.370000",
+  "volume_below_threshold": false,
+  "current_bandwidth": 600,
+  "will_refill_now": true
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `target_address` मान्य TRON एड्रेस नहीं है |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` एक स्मार्ट कॉन्ट्रैक्ट है |
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | आपके खाते में इस एड्रेस के लिए पहले से एक बैंडविड्थ नियम है — उसी को बदलें |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | आपके खाते में पहले से 20 बैंडविड्थ नियम हैं; सीमा `error.limit` में भी दी जाती है |
+| `422` | — | कोई फ़ील्ड गायब है या सीमा से बाहर है, या `duration` न `"1h"` है न `"1d"` |
+| `429` | `RATE_LIMIT_EXCEEDED` | एक मिनट में नियम बनाने के 10 से अधिक अनुरोध |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+सत्यापन त्रुटि फ्रेमवर्क के प्रारूप में आती है, जिसमें `detail` एक ऐरे होता है:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["body", "add_volume"],
+      "msg": "Input should be greater than or equal to 350",
+      "input": 100,
+      "ctx": {"ge": 350}
+    }
+  ]
+}
+```
+
+<Tip>
+टाइमआउट के बाद नियम बनाने का अनुरोध दोबारा भेजना सुरक्षित है। यदि पहला अनुरोध सफल हो गया था, तो दोबारा भेजा गया अनुरोध दूसरा नियम बनाने के बजाय `409 AUTOREFILL_ADDRESS_TAKEN` लौटाता है; उसका `id` पाने के लिए [अपने नियमों की सूची देखें](/api-reference/auto-refill/list-bandwidth-rules)।
+</Tip>

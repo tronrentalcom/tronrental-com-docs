@@ -1,0 +1,75 @@
+---
+title: Eliminar regla de energía
+api: DELETE /api/v1/energy/auto-refill/{rule_id}
+description: "Elimina una regla de Recarga automática de energía"
+---
+
+## Eliminar regla de energía
+
+Elimina una regla. Ya no se hacen recargas para ella, y la dirección queda libre para una nueva regla de energía. La energía ya comprada no se recupera: esos alquileres siguen hasta el final de su hora. Las órdenes de recarga anteriores permanecen en tu historial de órdenes. Requiere el alcance `buy_energy`.
+
+Para detener las recargas durante un tiempo sin perder la regla, [páusala](/api-reference/auto-refill/update-energy-rule) en su lugar.
+
+### Parámetros de ruta
+
+<ParamField path="rule_id" type="number" required>
+  ID de la regla — el `id` que devuelven Crear o Listar reglas de energía
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="status" type="string">
+  `ok`
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "ok"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_energy` |
+| `404` | `NOT_FOUND` | No hay ninguna regla de energía con este ID en tu cuenta (o ya fue eliminada) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Se está comprando una recarga para esta regla en este momento — reintenta en un minuto |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-refill rule not found"
+    }
+  }
+}
+```

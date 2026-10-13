@@ -1,0 +1,75 @@
+---
+title: Excluir regra de energia
+api: DELETE /api/v1/energy/auto-refill/{rule_id}
+description: "Excluir uma regra de Recarga automática de energia"
+---
+
+## Excluir regra de energia
+
+Exclui uma regra. Nenhuma nova recarga é feita para ela, e o endereço fica livre para uma nova regra de energia. A energia já comprada não é recuperada: esses aluguéis seguem até o fim da sua hora. Os pedidos de recarga anteriores permanecem no seu histórico de pedidos. Exige o escopo `buy_energy`.
+
+Para interromper as recargas por um tempo sem perder a regra, [pause-a](/api-reference/auto-refill/update-energy-rule) em vez de excluí-la.
+
+### Parâmetros de caminho
+
+<ParamField path="rule_id" type="number" required>
+  ID da regra — o `id` retornado por Criar ou Listar regras de energia
+</ParamField>
+
+### Resposta
+
+<ResponseField name="status" type="string">
+  `ok`
+</ResponseField>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "ok"
+}
+```
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_energy` |
+| `404` | `NOT_FOUND` | Não há regra de energia com este ID na sua conta (ou ela já foi excluída) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Uma recarga desta regra está sendo comprada neste momento — tente novamente em um minuto |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-refill rule not found"
+    }
+  }
+}
+```
