@@ -8,7 +8,7 @@ description: "每当地址的带宽低于阈值时为其补充带宽"
 
 为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用带宽低于 `threshold_bandwidth`，我们就会按所选的 `duration` 购买 `add_volume` 带宽，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/api-reference/auto-refill/overview)。
 
-该请求只创建规则——本身不会购买任何东西。需要 `buy_bandwidth` 权限。
+该请求只创建规则——本身不会购买任何东西。需要 `buy_bandwidth` 权限。如需先查看一次补充的价格，请使用[带宽补充报价](/api-reference/auto-refill/quote-bandwidth-refill)。
 
 <Info>
 可用带宽计入地址可用于支付交易的**全部**带宽：每天免费的 600，加上任何质押或委托的带宽。阈值为 600 或更低时，在地址用完免费额度之前，仅凭免费额度就已达到阈值。
@@ -110,6 +110,7 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_bandwidth": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",

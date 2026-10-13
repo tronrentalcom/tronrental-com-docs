@@ -42,10 +42,13 @@ description: "आपके खाते के सभी बैंडविड�
       लगातार विफल रिफिल। यह संख्या 5 तक पहुँचने पर नियम रोक दिया जाता है; सफल रिफिल इसे 0 पर रीसेट कर देता है।
     </ResponseField>
     <ResponseField name="last_checked_at" type="string | null">
-      हमने आखिरी बार एड्रेस कब पढ़ा (ISO 8601, UTC)। पहली जाँच से पहले `null`।
+      हमने आखिरी बार एड्रेस की जाँच कब की (ISO 8601, UTC), चाहे पढ़ना सफल रहा हो या नहीं। पहली जाँच से पहले `null`।
     </ResponseField>
     <ResponseField name="last_available_bandwidth" type="number | null">
-      उस जाँच के समय एड्रेस पर उपलब्ध बैंडविड्थ, मुफ़्त बैंडविड्थ सहित। पहली सफल रीडिंग से पहले `null`।
+      आखिरी सफल जाँच के समय एड्रेस पर उपलब्ध बैंडविड्थ, मुफ़्त बैंडविड्थ सहित। पहली सफल रीडिंग से पहले `null`।
+    </ResponseField>
+    <ResponseField name="last_read_error_at" type="string | null">
+      आखिरी बार कब कोई जाँच एड्रेस को पढ़ने में विफल रही (ISO 8601, UTC)। आखिरी जाँच सफल रही हो तो `null`। जब तक यह सेट है, `last_available_bandwidth` किसी पिछली जाँच का है और पुराना हो सकता है। जो जाँच एड्रेस को पढ़ नहीं पाती, वह कुछ नहीं खरीदती।
     </ResponseField>
     <ResponseField name="last_refill_at" type="string | null">
       आखिरी रिफिल कब हुआ। यदि अब तक कोई रिफिल नहीं हुआ तो `null`।
@@ -63,7 +66,7 @@ description: "आपके खाते के सभी बैंडविड�
       मौजूदा कीमतों पर आपके खाते के लिए एक रिफिल की पूरी कीमत, फिक्स्ड शुल्क सहित। ज़रूरत पड़ने पर एड्रेस सक्रियण का शुल्क अलग से जुड़ता है। यदि कीमत अस्थायी रूप से उपलब्ध नहीं है तो `null`।
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `true` जब `add_volume` `threshold_bandwidth` से छोटा हो। तब एक रिफिल शायद एड्रेस को थ्रेशोल्ड से ऊपर न ला पाए, और जब तक एड्रेस खर्च करता है, नियम खरीदता रहता है — देखें [अवलोकन में चेतावनी](/api-reference/auto-refill/overview#choosing-the-numbers)।
+      `true` जब `add_volume` `threshold_bandwidth` से छोटा हो। तब एक रिफिल शायद एड्रेस को थ्रेशोल्ड से ऊपर न ला पाए, और नियम हर खर्च के बाद फिर खरीदता है — देखें [अवलोकन में चेतावनी](/api-reference/auto-refill/overview#choosing-the-numbers)।
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -109,6 +112,7 @@ console.log(await resp.json());
       "consecutive_failures": 0,
       "last_checked_at": "2026-10-14T09:41:02Z",
       "last_available_bandwidth": 3655,
+      "last_read_error_at": null,
       "last_refill_at": "2026-10-14T09:12:30Z",
       "refill_count": 4,
       "total_spent_trx": "1.480000",

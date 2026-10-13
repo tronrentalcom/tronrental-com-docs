@@ -8,7 +8,7 @@ description: "每当地址的能量低于阈值时为其补充能量"
 
 为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用能量低于 `threshold_energy`，我们就会购买一小时的 `add_volume` 能量，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/api-reference/auto-refill/overview)。
 
-该请求只创建规则——本身不会购买任何东西。需要 `buy_energy` 权限。
+该请求只创建规则——本身不会购买任何东西。需要 `buy_energy` 权限。如需先查看一次补充的价格，请使用[能量补充报价](/api-reference/auto-refill/quote-energy-refill)。
 
 ### 请求体
 
@@ -106,11 +106,13 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_energy": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",
   "created_at": "2026-10-14T08:12:05Z",
   "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
   "current_energy": 0,
   "will_refill_now": true
 }

@@ -8,7 +8,7 @@ description: "Bir adresteki enerji eşiğin altına düştüğünde onu otomatik
 
 Bir adres için bir Otomatik Dolum kuralı oluşturur. Bir sonraki kontrolden itibaren adresteki kullanılabilir enerji `threshold_energy` değerinin altına her düştüğünde, bir saatliğine `add_volume` kadar enerji satın alır ve bakiyenizden ücret alırız. Kontrollerin, maliyetin ve durumların nasıl işlediği için [genel bakışa](/api-reference/auto-refill/overview) bakın.
 
-İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_energy` kapsamını gerektirir.
+İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_energy` kapsamını gerektirir. Önce bir dolumun fiyatını görmek için [Enerji Dolum Fiyatı](/api-reference/auto-refill/quote-energy-refill) uç noktasını kullanın.
 
 ### İstek gövdesi
 
@@ -106,11 +106,13 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_energy": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",
   "created_at": "2026-10-14T08:12:05Z",
   "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
   "current_energy": 0,
   "will_refill_now": true
 }

@@ -8,7 +8,7 @@ description: "Пополнение энергии на адресе, как то
 
 Создаёт правило автопополнения для одного адреса. Начиная со следующей проверки, всякий раз, когда доступной энергии на адресе меньше `threshold_energy`, мы покупаем `add_volume` энергии на один час и списываем стоимость с вашего баланса. Как устроены проверки, стоимость и статусы, — в [обзоре](/api-reference/auto-refill/overview).
 
-Запрос только создаёт правило — сам он ничего не покупает. Нужен скоуп `buy_energy`.
+Запрос только создаёт правило — сам он ничего не покупает. Нужен скоуп `buy_energy`. Чтобы сначала узнать цену одного пополнения, см. [Рассчитать цену пополнения энергии](/api-reference/auto-refill/quote-energy-refill).
 
 ### Тело запроса
 
@@ -106,11 +106,13 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_energy": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",
   "created_at": "2026-10-14T08:12:05Z",
   "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
   "current_energy": 0,
   "will_refill_now": true
 }

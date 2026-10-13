@@ -14,6 +14,8 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 3. 如果可用量低于阈值，我们会为该地址购买 `add_volume`，并按您的价格从余额中扣费。
 4. 租赁在时长结束后到期。当可用量再次低于阈值时，规则会再次购买。规则正是这样让地址持续获得资源的：没有单独的续租步骤。
 
+如果某次检查无法读取该地址，则不会购买任何东西；规则会在 `last_read_error_at` 中显示该时间，下一次检查会重新尝试。
+
 创建规则时不会立即购买任何东西。首次补充发生在下一次检查时，通常在一分钟之内。创建响应会告诉您是否将会补充（`will_refill_now`），以及该地址当前有多少资源。
 
 <Note>
@@ -32,7 +34,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 | `duration` | 仅 `1h` | `1h` 或 `1d` |
 | 与阈值比较的数值 | 可用能量 | 全部可用带宽，**包括每天免费的 600** |
 | 创建、编辑、删除所需权限 | `buy_energy` | `buy_bandwidth` |
-| 查看列表所需权限 | `view` | `view` |
+| 查看列表和报价所需权限 | `view` | `view` |
 
 **能量**的租期为一小时。能量用完或到期后，可用量下降，规则会购买下一个小时。
 
@@ -41,14 +43,14 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 ### 选择数值
 
 <Warning>
-**请让 `add_volume` 不低于阈值。** 每次补充是在地址剩余资源的基础上增加 `add_volume`。如果 `add_volume` 小于阈值，对几乎耗尽的地址补充一次后，可用量仍可能低于阈值，规则就会在下一次检查时再次购买，然后一次又一次，只要地址还在消耗就不会停止。每一次这样的补充都是一笔完整的订单，各自收取固定手续费。带宽规则会用 `volume_below_threshold: true` 标出这种情况。
+**请让 `add_volume` 不低于阈值。** 每次补充是在地址剩余资源的基础上增加 `add_volume`。如果 `add_volume` 小于阈值，对几乎耗尽的地址补充一次后，可用量仍可能低于阈值，规则就会在每次消耗后再次购买——最多可达每分钟数次，而不是每小时一次。每一次这样的补充都是一笔完整的订单，各自收取固定手续费。规则响应会用 `volume_below_threshold: true` 标出这种情况。
 </Warning>
 
 收款方已持有 USDT 时，一笔 USDT 转账约消耗 65,000 能量，未持有时约消耗 131,000，另外还需约 345 带宽。例如，`threshold_energy: 65000` 搭配 `add_volume: 131000`，会在剩余不足一笔转账时购买够两笔转账的量。
 
 ### 费用
 
-每次补充都是一笔普通订单：按您的费率计算的租赁费，加上**固定手续费，每次补充都会收取**。列表和创建响应中的 `estimated_cost_per_refill_trx` 是您的账户补充一次的全部价格，已包含固定手续费。较小的 `add_volume` 补充得频繁，要多次支付固定手续费；较大的则支付次数更少。
+每次补充都是一笔普通订单：按您的费率计算的租赁费，加上**固定手续费，每次补充都会收取**。列表和创建响应中的 `estimated_cost_per_refill_trx` 是您的账户补充一次的全部价格，已包含固定手续费。如需在创建规则之前查看该价格，请使用报价端点：[能量](/api-reference/auto-refill/quote-energy-refill)、[带宽](/api-reference/auto-refill/quote-bandwidth-refill)。较小的 `add_volume` 补充得频繁，要多次支付固定手续费；较大的则支付次数更少。
 
 通过 API 密钥创建的规则，按使用该 API 密钥购买的价格计费；在网站上创建的规则，按网站购买的价格计费。`estimated_cost_per_refill_trx` 已反映这一点。
 
@@ -108,6 +110,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 
 | 操作 | 能量 | 带宽 |
 |---|---|---|
+| 一次补充的价格 | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
 | 创建规则 | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
 | 列出规则 | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
 | 编辑、暂停、恢复 | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |

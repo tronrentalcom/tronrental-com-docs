@@ -14,6 +14,8 @@ A Recarga automática monitora um endereço TRON e o reabastece sempre que a ene
 3. Se o nível estiver abaixo do limiar, compramos `add_volume` para o endereço e cobramos do seu saldo pelo seu preço.
 4. O aluguel termina ao fim da sua duração. Quando o nível volta a cair abaixo do limiar, a regra compra de novo. É assim que a regra mantém o endereço abastecido: não existe uma etapa separada de renovação.
 
+Se uma verificação não consegue ler o endereço, ela não compra nada; a regra mostra o horário em `last_read_error_at`, e a verificação seguinte tenta de novo.
+
 Criar uma regra não compra nada na hora. A primeira recarga acontece na verificação seguinte, normalmente em até um minuto. A resposta da criação informa se ela vai acontecer (`will_refill_now`) e quanto o endereço tem neste momento.
 
 <Note>
@@ -32,7 +34,7 @@ Os dois recursos têm endpoints próprios e regras próprias. Um endereço pode 
 | `duration` | apenas `1h` | `1h` ou `1d` |
 | Nível que comparamos com o limiar | Energia disponível | Toda a largura de banda disponível, **incluindo as 600 gratuitas por dia** |
 | Escopo para criar, editar, excluir | `buy_energy` | `buy_bandwidth` |
-| Escopo para listar | `view` | `view` |
+| Escopo para listar e para cotar | `view` | `view` |
 
 **A energia** é alugada por uma hora. Quando ela se esgota ou expira, o nível cai e a regra compra a hora seguinte.
 
@@ -41,14 +43,14 @@ Os dois recursos têm endpoints próprios e regras próprias. Um endereço pode 
 ### Escolhendo os números
 
 <Warning>
-**Mantenha `add_volume` igual ou acima do limiar.** Uma recarga soma `add_volume` ao que ainda resta no endereço. Se `add_volume` for menor que o limiar, uma recarga num endereço quase vazio pode deixá-lo ainda abaixo do limiar, e a regra compra de novo na verificação seguinte, e de novo, enquanto o endereço continuar gastando. Cada uma dessas recargas é um pedido completo, com a sua própria taxa fixa. As regras de largura de banda sinalizam esse caso com `volume_below_threshold: true`.
+**Mantenha `add_volume` igual ou acima do limiar.** Uma recarga soma `add_volume` ao que ainda resta no endereço. Se `add_volume` for menor que o limiar, uma recarga num endereço quase vazio pode deixá-lo ainda abaixo do limiar, e a regra vai comprar de novo após cada gasto — até várias vezes por minuto, e não uma vez por hora. Cada uma dessas recargas é um pedido completo, com a sua própria taxa fixa. As respostas das regras sinalizam esse caso com `volume_below_threshold: true`.
 </Warning>
 
 Uma transferência USDT usa cerca de 65.000 de energia quando o destinatário já possui USDT e cerca de 131.000 quando não possui, mais aproximadamente 345 de largura de banda. Por exemplo, `threshold_energy: 65000` com `add_volume: 131000` compra o equivalente a duas transferências sempre que resta menos do que uma.
 
 ### Custo
 
-Cada recarga é um pedido comum: o aluguel pela sua tarifa mais a **taxa fixa, cobrada em toda recarga**. `estimated_cost_per_refill_trx` nas respostas de listagem e de criação é o preço total de uma recarga para a sua conta, taxa fixa incluída. Um `add_volume` pequeno, recarregado com frequência, paga a taxa fixa muitas vezes; um maior a paga com menos frequência.
+Cada recarga é um pedido comum: o aluguel pela sua tarifa mais a **taxa fixa, cobrada em toda recarga**. `estimated_cost_per_refill_trx` nas respostas de listagem e de criação é o preço total de uma recarga para a sua conta, taxa fixa incluída. Para ver esse preço antes de criar uma regra, use o endpoint de cotação: [energia](/api-reference/auto-refill/quote-energy-refill), [largura de banda](/api-reference/auto-refill/quote-bandwidth-refill). Um `add_volume` pequeno, recarregado com frequência, paga a taxa fixa muitas vezes; um maior a paga com menos frequência.
 
 Uma regra criada com uma chave de API tem o preço de uma compra feita com essa chave de API; uma regra criada no site tem o preço de uma compra feita no site. `estimated_cost_per_refill_trx` já reflete isso.
 
@@ -108,6 +110,7 @@ As alterações valem a partir da verificação seguinte. Enquanto uma recarga d
 
 | Ação | Energia | Largura de banda |
 |---|---|---|
+| Preço de uma recarga | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
 | Criar uma regra | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
 | Listar regras | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
 | Editar, pausar, retomar | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |

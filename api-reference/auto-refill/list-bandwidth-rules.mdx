@@ -42,10 +42,13 @@ Returns every bandwidth Auto Refill rule on your account, oldest first. Deleted 
       Failed refills in a row. The rule is paused when this reaches 5; a successful refill resets it to 0.
     </ResponseField>
     <ResponseField name="last_checked_at" type="string | null">
-      When we last read the address (ISO 8601, UTC). `null` before the first check.
+      When we last checked the address (ISO 8601, UTC), whether or not the read succeeded. `null` before the first check.
     </ResponseField>
     <ResponseField name="last_available_bandwidth" type="number | null">
-      Bandwidth available on the address at that check, free bandwidth included. `null` before the first successful read.
+      Bandwidth available on the address at the last successful check, free bandwidth included. `null` before the first successful read.
+    </ResponseField>
+    <ResponseField name="last_read_error_at" type="string | null">
+      When a check last failed to read the address (ISO 8601, UTC). `null` when the last check succeeded. While it is set, `last_available_bandwidth` is from an earlier check and may be out of date. A check that cannot read the address buys nothing.
     </ResponseField>
     <ResponseField name="last_refill_at" type="string | null">
       When the last refill was made. `null` if there has been none.
@@ -63,7 +66,7 @@ Returns every bandwidth Auto Refill rule on your account, oldest first. Deleted 
       Full price of one refill for your account at current prices, fixed fee included. Address activation, when needed, is charged on top. `null` if the price is temporarily unavailable.
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `true` when `add_volume` is smaller than `threshold_bandwidth`. One refill may then not lift the address above the threshold, and the rule keeps buying while the address spends — see the [warning in the overview](/api-reference/auto-refill/overview#choosing-the-numbers).
+      `true` when `add_volume` is smaller than `threshold_bandwidth`. One refill may then not lift the address above the threshold, and the rule buys again after every spend — see the [warning in the overview](/api-reference/auto-refill/overview#choosing-the-numbers).
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -109,6 +112,7 @@ console.log(await resp.json());
       "consecutive_failures": 0,
       "last_checked_at": "2026-10-14T09:41:02Z",
       "last_available_bandwidth": 3655,
+      "last_read_error_at": null,
       "last_refill_at": "2026-10-14T09:12:30Z",
       "refill_count": 4,
       "total_spent_trx": "1.480000",

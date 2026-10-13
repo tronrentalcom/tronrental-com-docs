@@ -8,7 +8,7 @@ description: "Top up bandwidth on an address whenever it falls below a threshold
 
 Creates an Auto Refill rule for one address. From the next check on, whenever the address has less available bandwidth than `threshold_bandwidth`, we buy `add_volume` bandwidth for the chosen `duration` and charge your balance. See the [overview](/api-reference/auto-refill/overview) for how checks, cost and statuses work.
 
-The request only creates the rule — it does not buy anything itself. Requires the `buy_bandwidth` scope.
+The request only creates the rule — it does not buy anything itself. Requires the `buy_bandwidth` scope. To see the price of one refill first, use [Bandwidth Refill Quote](/api-reference/auto-refill/quote-bandwidth-refill).
 
 <Info>
 Available bandwidth counts **everything** the address can pay for a transaction with: the free 600 a day plus any staked or delegated bandwidth. A threshold of 600 or less is met by the free allowance alone until the address has spent it.
@@ -110,6 +110,7 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_bandwidth": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",

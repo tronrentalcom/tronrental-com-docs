@@ -42,10 +42,13 @@ Hesabınızdaki tüm bant genişliği Otomatik Dolum kurallarını en eskiden ba
       Art arda başarısız dolum sayısı. Bu değer 5'e ulaştığında kural duraklatılır; başarılı bir dolum onu 0'a sıfırlar.
     </ResponseField>
     <ResponseField name="last_checked_at" type="string | null">
-      Adresi en son ne zaman okuduğumuz (ISO 8601, UTC). İlk kontrolden önce `null`.
+      Adresi en son ne zaman kontrol ettiğimiz (ISO 8601, UTC); okumanın başarılı olup olmadığından bağımsız. İlk kontrolden önce `null`.
     </ResponseField>
     <ResponseField name="last_available_bandwidth" type="number | null">
-      O kontrolde adreste kullanılabilir olan bant genişliği, ücretsiz bant genişliği dahil. İlk başarılı okumadan önce `null`.
+      Son başarılı kontrolde adreste kullanılabilir olan bant genişliği, ücretsiz bant genişliği dahil. İlk başarılı okumadan önce `null`.
+    </ResponseField>
+    <ResponseField name="last_read_error_at" type="string | null">
+      Bir kontrolün adresi en son ne zaman okuyamadığı (ISO 8601, UTC). Son kontrol başarılıysa `null`. Bu alan doluyken `last_available_bandwidth` daha önceki bir kontrolden gelir ve güncel olmayabilir. Adresi okuyamayan bir kontrol hiçbir şey satın almaz.
     </ResponseField>
     <ResponseField name="last_refill_at" type="string | null">
       Son dolumun yapıldığı zaman. Hiç dolum yapılmadıysa `null`.
@@ -63,7 +66,7 @@ Hesabınızdaki tüm bant genişliği Otomatik Dolum kurallarını en eskiden ba
       Güncel fiyatlarla hesabınız için bir dolumun sabit ücret dahil tam fiyatı. Gerektiğinde adres aktivasyonu ayrıca ücretlendirilir. Fiyat geçici olarak alınamıyorsa `null`.
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `add_volume`, `threshold_bandwidth` değerinden küçük olduğunda `true`. Bu durumda tek bir dolum adresi eşiğin üzerine çıkarmayabilir ve adres harcadıkça kural satın almaya devam eder — bkz. [genel bakıştaki uyarı](/api-reference/auto-refill/overview#choosing-the-numbers).
+      `add_volume`, `threshold_bandwidth` değerinden küçük olduğunda `true`. Bu durumda tek bir dolum adresi eşiğin üzerine çıkarmayabilir ve kural her harcamadan sonra yeniden satın alır — bkz. [genel bakıştaki uyarı](/api-reference/auto-refill/overview#choosing-the-numbers).
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -109,6 +112,7 @@ console.log(await resp.json());
       "consecutive_failures": 0,
       "last_checked_at": "2026-10-14T09:41:02Z",
       "last_available_bandwidth": 3655,
+      "last_read_error_at": null,
       "last_refill_at": "2026-10-14T09:12:30Z",
       "refill_count": 4,
       "total_spent_trx": "1.480000",

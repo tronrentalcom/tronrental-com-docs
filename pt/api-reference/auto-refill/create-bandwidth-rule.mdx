@@ -8,7 +8,7 @@ description: "Reabasteça a largura de banda de um endereço sempre que ela cair
 
 Cria uma regra de Recarga automática para um endereço. A partir da verificação seguinte, sempre que o endereço tiver menos largura de banda disponível do que `threshold_bandwidth`, compramos `add_volume` de largura de banda pela `duration` escolhida e cobramos do seu saldo. Veja a [visão geral](/api-reference/auto-refill/overview) para entender como funcionam as verificações, o custo e os status.
 
-A requisição apenas cria a regra — ela mesma não compra nada. Exige o escopo `buy_bandwidth`.
+A requisição apenas cria a regra — ela mesma não compra nada. Exige o escopo `buy_bandwidth`. Para ver antes o preço de uma recarga, use [Cotação de recarga de largura de banda](/api-reference/auto-refill/quote-bandwidth-refill).
 
 <Info>
 A largura de banda disponível conta **tudo** com que o endereço pode pagar uma transação: as 600 gratuitas por dia, mais qualquer largura de banda em stake ou delegada. Um limiar de 600 ou menos é atendido só pela cota gratuita, até que o endereço a gaste.
@@ -110,6 +110,7 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_bandwidth": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",

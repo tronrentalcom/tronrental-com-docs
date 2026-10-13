@@ -1,0 +1,106 @@
+---
+title: बैंडविड्थ रिफिल मूल्य अनुमान
+api: GET /api/v1/bandwidth/auto-refill/quote
+description: "नियम बनाने से पहले, एक बैंडविड्थ रिफिल की कीमत"
+---
+
+## बैंडविड्थ रिफिल मूल्य अनुमान
+
+बताता है कि `duration` के लिए `add_volume` बैंडविड्थ का एक रिफिल आपके खाते को कितने का पड़ेगा: इन सेटिंग्स वाला नियम प्रति रिफिल जो कीमत चुकाता है, फिक्स्ड शुल्क सहित। न कुछ बनाया जाता है, न कोई शुल्क लिया जाता है। `view` स्कोप आवश्यक है।
+
+कीमत इस पर निर्भर करती है कि आप इसे कैसे कॉल करते हैं। API कुंजी से कॉल करने पर यह उस API कुंजी से बनाए गए नियम की कीमत है; वेबसाइट से — वेबसाइट पर बनाए गए नियम की कीमत। यह अनुरोध के समय की कीमत है, और इसमें ऐसे एड्रेस का सक्रियण शामिल नहीं है जो अभी ऑन-चेन मौजूद नहीं है — वह पहले रिफिल में जुड़ता है।
+
+### क्वेरी पैरामीटर
+
+<ParamField query="add_volume" type="number" required>
+  प्रति रिफिल बैंडविड्थ। 350 से 100,000 तक, वही सीमा जो नियम बनाते समय होती है।
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  हर रिफिल के किराये की अवधि: `1h` या `1d`।
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="add_volume" type="number">
+  वह मात्रा जिसके बारे में आपने पूछा
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  वह अवधि जिसके बारे में आपने पूछा — `1h` या `1d`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  आपके खाते के लिए एक रिफिल की पूरी कीमत, फिक्स्ड शुल्क सहित
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 5000, "duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 5000,
+  "duration": "1d",
+  "estimated_cost_per_refill_trx": "0.500000"
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `view` स्कोप नहीं है |
+| `422` | — | `add_volume` गायब है या 350 – 100,000 से बाहर है, या `duration` न `1h` है न `1d` |
+| `503` | `TEMPORARILY_UNAVAILABLE` | कीमत अभी पढ़ी नहीं जा सकी — `Retry-After` में दिए गए सेकंड के बाद फिर प्रयास करें |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+सत्यापन त्रुटि फ्रेमवर्क के प्रारूप में आती है, जिसमें `detail` एक ऐरे होता है:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["query", "duration"],
+      "msg": "Input should be '1h' or '1d'",
+      "input": "2h",
+      "ctx": {"expected": "'1h' or '1d'"}
+    }
+  ]
+}
+```

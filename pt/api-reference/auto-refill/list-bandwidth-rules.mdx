@@ -42,10 +42,13 @@ Retorna todas as regras de Recarga automática de largura de banda da sua conta,
       Recargas com falha seguidas. A regra é pausada quando este valor chega a 5; uma recarga bem-sucedida o redefine para 0.
     </ResponseField>
     <ResponseField name="last_checked_at" type="string | null">
-      Quando lemos o endereço pela última vez (ISO 8601, UTC). `null` antes da primeira verificação.
+      Quando verificamos o endereço pela última vez (ISO 8601, UTC), com ou sem sucesso na leitura. `null` antes da primeira verificação.
     </ResponseField>
     <ResponseField name="last_available_bandwidth" type="number | null">
-      Largura de banda disponível no endereço nessa verificação, incluindo a gratuita. `null` antes da primeira leitura bem-sucedida.
+      Largura de banda disponível no endereço na última verificação bem-sucedida, incluindo a gratuita. `null` antes da primeira leitura bem-sucedida.
+    </ResponseField>
+    <ResponseField name="last_read_error_at" type="string | null">
+      Quando uma verificação falhou pela última vez ao ler o endereço (ISO 8601, UTC). `null` quando a última verificação teve sucesso. Enquanto estiver preenchido, `last_available_bandwidth` vem de uma verificação anterior e pode estar desatualizado. Uma verificação que não consegue ler o endereço não compra nada.
     </ResponseField>
     <ResponseField name="last_refill_at" type="string | null">
       Quando foi feita a última recarga. `null` se ainda não houve nenhuma.
@@ -63,7 +66,7 @@ Retorna todas as regras de Recarga automática de largura de banda da sua conta,
       Preço total de uma recarga para a sua conta pelos preços atuais, taxa fixa incluída. A ativação do endereço, quando necessária, é cobrada à parte. `null` se o preço estiver temporariamente indisponível.
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `true` quando `add_volume` é menor que `threshold_bandwidth`. Nesse caso, uma recarga pode não levar o endereço acima do limiar, e a regra continua comprando enquanto o endereço gasta — veja o [aviso na visão geral](/api-reference/auto-refill/overview#choosing-the-numbers).
+      `true` quando `add_volume` é menor que `threshold_bandwidth`. Nesse caso, uma recarga pode não levar o endereço acima do limiar, e a regra compra de novo após cada gasto — veja o [aviso na visão geral](/api-reference/auto-refill/overview#choosing-the-numbers).
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -109,6 +112,7 @@ console.log(await resp.json());
       "consecutive_failures": 0,
       "last_checked_at": "2026-10-14T09:41:02Z",
       "last_available_bandwidth": 3655,
+      "last_read_error_at": null,
       "last_refill_at": "2026-10-14T09:12:30Z",
       "refill_count": 4,
       "total_spent_trx": "1.480000",

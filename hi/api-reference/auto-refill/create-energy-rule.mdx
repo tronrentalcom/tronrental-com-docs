@@ -8,7 +8,7 @@ description: "जब भी किसी एड्रेस पर एनर्�
 
 एक एड्रेस के लिए ऑटो रिफिल नियम बनाता है। अगली जाँच से, जब भी एड्रेस पर उपलब्ध एनर्जी `threshold_energy` से कम होती है, हम एक घंटे के लिए `add_volume` एनर्जी खरीदते हैं और आपके बैलेंस से शुल्क लेते हैं। जाँच, लागत और स्थितियाँ कैसे काम करती हैं, यह जानने के लिए [अवलोकन](/api-reference/auto-refill/overview) देखें।
 
-अनुरोध केवल नियम बनाता है — यह स्वयं कुछ नहीं खरीदता। `buy_energy` स्कोप आवश्यक है।
+अनुरोध केवल नियम बनाता है — यह स्वयं कुछ नहीं खरीदता। `buy_energy` स्कोप आवश्यक है। पहले एक रिफिल की कीमत देखने के लिए [एनर्जी रिफिल मूल्य अनुमान](/api-reference/auto-refill/quote-energy-refill) का उपयोग करें।
 
 ### अनुरोध बॉडी
 
@@ -106,11 +106,13 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_energy": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",
   "created_at": "2026-10-14T08:12:05Z",
   "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
   "current_energy": 0,
   "will_refill_now": true
 }

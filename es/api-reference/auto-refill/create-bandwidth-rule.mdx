@@ -8,7 +8,7 @@ description: "Recarga el ancho de banda de una dirección cada vez que cae por d
 
 Crea una regla de Recarga automática para una dirección. A partir de la siguiente comprobación, cada vez que la dirección tenga menos ancho de banda disponible que `threshold_bandwidth`, compramos `add_volume` de ancho de banda por la `duration` elegida y lo cobramos de tu saldo. Consulta la [descripción general](/api-reference/auto-refill/overview) para ver cómo funcionan las comprobaciones, el coste y los estados.
 
-La solicitud solo crea la regla — no compra nada por sí misma. Requiere el alcance `buy_bandwidth`.
+La solicitud solo crea la regla — no compra nada por sí misma. Requiere el alcance `buy_bandwidth`. Para ver antes el precio de una recarga, usa [Cotización de recarga de ancho de banda](/api-reference/auto-refill/quote-bandwidth-refill).
 
 <Info>
 El ancho de banda disponible cuenta **todo** aquello con lo que la dirección puede pagar una transacción: los 600 gratuitos al día más cualquier ancho de banda obtenido por stake o recibido por delegación. Un umbral de 600 o menos se cumple solo con la asignación gratuita hasta que la dirección la gasta.
@@ -110,6 +110,7 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_bandwidth": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",

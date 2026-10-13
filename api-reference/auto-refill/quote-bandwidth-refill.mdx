@@ -1,0 +1,106 @@
+---
+title: Bandwidth Refill Quote
+api: GET /api/v1/bandwidth/auto-refill/quote
+description: "Price of one bandwidth refill, before you create a rule"
+---
+
+## Bandwidth Refill Quote
+
+Returns what one refill of `add_volume` bandwidth for `duration` costs your account: the price a rule with these settings pays per refill, fixed fee included. Nothing is created or charged. Requires the `view` scope.
+
+The price depends on how you call it. Called with an API key, it is the price of a rule created with that API key; from the website, the price of a rule created on the website. It is the price at the moment of the request, and it does not include activating an address that does not exist on-chain yet — the first refill adds that.
+
+### Query parameters
+
+<ParamField query="add_volume" type="number" required>
+  Bandwidth per refill. From 350 to 100,000, the same range as when creating a rule.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Rental duration of each refill: `1h` or `1d`.
+</ParamField>
+
+### Response
+
+<ResponseField name="add_volume" type="number">
+  The volume you asked about
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  The duration you asked about — `1h` or `1d`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  Full price of one refill for your account, fixed fee included
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 5000, "duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 5000,
+  "duration": "1d",
+  "estimated_cost_per_refill_trx": "0.500000"
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `view` scope |
+| `422` | — | `add_volume` is missing or outside 350 – 100,000, or `duration` is not `1h` or `1d` |
+| `503` | `TEMPORARILY_UNAVAILABLE` | The price could not be read right now — retry after the `Retry-After` seconds |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+A validation error comes in the framework's format, with `detail` as an array:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["query", "duration"],
+      "msg": "Input should be '1h' or '1d'",
+      "input": "2h",
+      "ctx": {"expected": "'1h' or '1d'"}
+    }
+  ]
+}
+```

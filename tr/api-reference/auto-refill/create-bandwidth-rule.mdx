@@ -8,7 +8,7 @@ description: "Bir adresteki bant genişliği eşiğin altına düştüğünde on
 
 Bir adres için bir Otomatik Dolum kuralı oluşturur. Bir sonraki kontrolden itibaren adresteki kullanılabilir bant genişliği `threshold_bandwidth` değerinin altına her düştüğünde, seçilen `duration` süresi için `add_volume` kadar bant genişliği satın alır ve bakiyenizden ücret alırız. Kontrollerin, maliyetin ve durumların nasıl işlediği için [genel bakışa](/api-reference/auto-refill/overview) bakın.
 
-İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_bandwidth` kapsamını gerektirir.
+İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_bandwidth` kapsamını gerektirir. Önce bir dolumun fiyatını görmek için [Bant Genişliği Dolum Fiyatı](/api-reference/auto-refill/quote-bandwidth-refill) uç noktasını kullanın.
 
 <Info>
 Kullanılabilir bant genişliği, adresin bir işlemin bedelini ödemek için kullanabileceği **her şeyi** sayar: günlük ücretsiz 600 ile stake edilmiş veya devredilmiş bant genişliği. 600 veya daha düşük bir eşik, adres bu ücretsiz payı harcayana kadar yalnızca onunla karşılanır.
@@ -110,6 +110,7 @@ console.log(await resp.json());
   "consecutive_failures": 0,
   "last_checked_at": null,
   "last_available_bandwidth": null,
+  "last_read_error_at": null,
   "last_refill_at": null,
   "refill_count": 0,
   "total_spent_trx": "0.000000",

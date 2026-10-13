@@ -14,6 +14,8 @@ La Recarga automática vigila una dirección TRON y la recarga cada vez que su e
 3. Si el nivel está por debajo del umbral, compramos `add_volume` para la dirección y lo cobramos de tu saldo a tu precio.
 4. El alquiler termina al cumplirse su duración. Cuando el nivel vuelve a caer por debajo del umbral, la regla compra de nuevo. Así es como la regla mantiene abastecida la dirección: no hay un paso de renovación aparte.
 
+Si una comprobación no puede leer la dirección, no compra nada; la regla muestra la hora en `last_read_error_at`, y la siguiente comprobación lo vuelve a intentar.
+
 Crear una regla no compra nada en el acto. La primera recarga ocurre en la siguiente comprobación, normalmente en menos de un minuto. La respuesta de creación indica si va a ocurrir (`will_refill_now`) y cuánto tiene la dirección en este momento.
 
 <Note>
@@ -32,7 +34,7 @@ Los dos recursos tienen sus propios endpoints y sus propias reglas. Una direcci�
 | `duration` | solo `1h` | `1h` o `1d` |
 | Nivel que comparamos con el umbral | Energía disponible | Todo el ancho de banda disponible, **incluidos los 600 gratuitos al día** |
 | Alcance para crear, editar y eliminar | `buy_energy` | `buy_bandwidth` |
-| Alcance para listar | `view` | `view` |
+| Alcance para listar y cotizar | `view` | `view` |
 
 **La energía** se alquila por una hora. Cuando se agota o vence, el nivel baja y la regla compra la hora siguiente.
 
@@ -41,14 +43,14 @@ Los dos recursos tienen sus propios endpoints y sus propias reglas. Una direcci�
 ### Cómo elegir los valores
 
 <Warning>
-**Mantén `add_volume` igual o por encima del umbral.** Una recarga suma `add_volume` a lo que quede en la dirección. Si `add_volume` es menor que el umbral, una recarga sobre una dirección casi vacía puede dejarla todavía por debajo del umbral, y la regla vuelve a comprar en la siguiente comprobación, y otra vez más, mientras la dirección siga gastando. Cada una de esas recargas es una orden completa con su propia comisión fija. Las reglas de ancho de banda señalan este caso con `volume_below_threshold: true`.
+**Mantén `add_volume` igual o por encima del umbral.** Una recarga suma `add_volume` a lo que quede en la dirección. Si `add_volume` es menor que el umbral, una recarga sobre una dirección casi vacía puede dejarla todavía por debajo del umbral, y la regla volverá a comprar después de cada gasto — hasta varias veces por minuto, no una vez por hora. Cada una de esas recargas es una orden completa con su propia comisión fija. Las respuestas de las reglas señalan este caso con `volume_below_threshold: true`.
 </Warning>
 
 Una transferencia USDT consume unos 65,000 de energía cuando el destinatario ya tiene USDT y unos 131,000 cuando no, más aproximadamente 345 de ancho de banda. Por ejemplo, `threshold_energy: 65000` con `add_volume: 131000` compra energía para dos transferencias cada vez que queda menos de la necesaria para una.
 
 ### Coste
 
-Cada recarga es una orden normal: el alquiler a tu tarifa más la **comisión fija, que se cobra en cada recarga**. `estimated_cost_per_refill_trx` en las respuestas de listado y de creación es el precio completo de una recarga para tu cuenta, comisión fija incluida. Un `add_volume` pequeño que se recarga a menudo paga la comisión fija muchas veces; uno más grande la paga con menos frecuencia.
+Cada recarga es una orden normal: el alquiler a tu tarifa más la **comisión fija, que se cobra en cada recarga**. `estimated_cost_per_refill_trx` en las respuestas de listado y de creación es el precio completo de una recarga para tu cuenta, comisión fija incluida. Para ver ese precio antes de crear una regla, usa el endpoint de cotización: [energía](/api-reference/auto-refill/quote-energy-refill), [ancho de banda](/api-reference/auto-refill/quote-bandwidth-refill). Un `add_volume` pequeño que se recarga a menudo paga la comisión fija muchas veces; uno más grande la paga con menos frecuencia.
 
 Una regla creada con una clave API tiene el precio de una compra hecha con esa clave API; una regla creada en el sitio web tiene el precio de una compra en el sitio web. `estimated_cost_per_refill_trx` ya lo tiene en cuenta.
 
@@ -108,6 +110,7 @@ Los cambios se aplican desde la siguiente comprobación. Mientras se compra una 
 
 | Acción | Energía | Ancho de banda |
 |---|---|---|
+| Precio de una recarga | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
 | Crear una regla | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
 | Listar reglas | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
 | Editar, pausar, reanudar | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
