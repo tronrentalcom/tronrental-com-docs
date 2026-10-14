@@ -1,0 +1,113 @@
+---
+title: एनर्जी नियम अपडेट करें
+api: PATCH /api/v1/energy/auto-refill/{rule_id}
+description: "एनर्जी ऑटो रिफिल नियम बदलें, रोकें या फिर से शुरू करें"
+---
+
+## एनर्जी नियम अपडेट करें
+
+नियम का थ्रेशोल्ड, मात्रा या लेबल बदलता है, या नियम को रोकता और फिर से शुरू करता है। केवल वे फ़ील्ड भेजें जिन्हें आप बदलना चाहते हैं; बाकी जैसे हैं वैसे ही रहते हैं। बदलाव अगली जाँच से लागू होते हैं। `buy_energy` स्कोप आवश्यक है।
+
+नियम का एड्रेस और अवधि नहीं बदले जा सकते। नियम को दूसरे एड्रेस पर ले जाने के लिए उसे हटाएं और नया नियम बनाएं।
+
+### पाथ पैरामीटर
+
+<ParamField path="rule_id" type="number" required>
+  नियम ID — एनर्जी नियम बनाएं या एनर्जी नियमों की सूची से मिला `id`
+</ParamField>
+
+### अनुरोध बॉडी
+
+<ParamField body="threshold_energy" type="number">
+  नया थ्रेशोल्ड। 1 से 50,000,000 तक।
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  प्रति रिफिल एनर्जी की नई मात्रा। 32,000 से 5,000,000 तक।
+</ParamField>
+
+<ParamField body="label" type="string">
+  नया लेबल, अधिकतम 100 अक्षर। खाली स्ट्रिंग लेबल हटा देती है।
+</ParamField>
+
+<ParamField body="status" type="string">
+  नियम रोकने के लिए `"paused"`, फिर से शुरू करने के लिए `"active"`। फिर से शुरू करने पर `stopped_reason` भी साफ़ हो जाता है और `consecutive_failures` 0 पर रीसेट हो जाता है। बैलेंस के कारण रुका नियम डिपॉज़िट के बाद अपने-आप फिर से शुरू हो जाता है, इसलिए आपको यह करना ज़रूरी नहीं; यदि आप बैलेंस कम रहते हुए उसे फिर से शुरू करते हैं, तो वह अगली जाँच पर फिर रुक जाता है। `stopped_insufficient_balance` को सीधे सेट नहीं किया जा सकता।
+</ParamField>
+
+### रिस्पॉन्स
+
+अपडेट किया गया नियम, उन्हीं फ़ील्ड के साथ जो [एनर्जी नियमों की सूची](/api-reference/auto-refill/list-energy-rules) में हैं।
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "paused"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+    json={"status": "paused"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "paused" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "paused",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_energy": 212480,
+  "last_read_error_at": null,
+  "last_refill_at": "2026-10-14T08:57:40Z",
+  "refill_count": 3,
+  "total_spent_trx": "7.854000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_energy` स्कोप नहीं है |
+| `404` | `NOT_FOUND` | आपके खाते में इस ID का कोई एनर्जी नियम नहीं है (या उसे हटा दिया गया है) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | इस नियम के लिए अभी रिफिल खरीदा जा रहा है — एक मिनट में फिर प्रयास करें |
+| `422` | — | कोई मान सीमा से बाहर है, या `status` न `"active"` है न `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

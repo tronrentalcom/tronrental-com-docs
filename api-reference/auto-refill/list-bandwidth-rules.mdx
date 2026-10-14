@@ -1,0 +1,131 @@
+---
+title: List Bandwidth Rules
+api: GET /api/v1/bandwidth/auto-refill
+description: "All bandwidth Auto Refill rules on your account"
+---
+
+## List Bandwidth Rules
+
+Returns every bandwidth Auto Refill rule on your account, oldest first. Deleted rules are not included. Requires the `view` scope.
+
+### Response
+
+<ResponseField name="rules" type="array">
+  Your bandwidth rules.
+
+  <Expandable title="rule object">
+    <ResponseField name="id" type="number">
+      Rule ID — use it in the edit and delete paths
+    </ResponseField>
+    <ResponseField name="target_address" type="string">
+      The address the rule keeps supplied
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      Your name for the rule
+    </ResponseField>
+    <ResponseField name="threshold_bandwidth" type="number">
+      The rule buys when available bandwidth is below this
+    </ResponseField>
+    <ResponseField name="add_volume" type="number">
+      Bandwidth bought per refill
+    </ResponseField>
+    <ResponseField name="duration" type="string">
+      Rental duration of each refill — `1h` or `1d`
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `paused` or `stopped_insufficient_balance` — see [Rule status](/api-reference/auto-refill/overview#rule-status)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      Why the rule was paused or stopped: `insufficient_balance`, `order_failed`, `activation_failed` or `invalid_params`. `null` when there is none.
+    </ResponseField>
+    <ResponseField name="consecutive_failures" type="number">
+      Failed refills in a row. The rule is paused when this reaches 5; a successful refill resets it to 0.
+    </ResponseField>
+    <ResponseField name="last_checked_at" type="string | null">
+      When we last checked the address (ISO 8601, UTC), whether or not the read succeeded. `null` before the first check.
+    </ResponseField>
+    <ResponseField name="last_available_bandwidth" type="number | null">
+      Bandwidth available on the address at the last successful check, free bandwidth included. `null` before the first successful read.
+    </ResponseField>
+    <ResponseField name="last_read_error_at" type="string | null">
+      When a check last failed to read the address (ISO 8601, UTC). `null` when the last check succeeded. While it is set, `last_available_bandwidth` is from an earlier check and may be out of date. A check that cannot read the address buys nothing.
+    </ResponseField>
+    <ResponseField name="last_refill_at" type="string | null">
+      When the last refill was made. `null` if there has been none.
+    </ResponseField>
+    <ResponseField name="refill_count" type="number">
+      Successful refills since the rule was created
+    </ResponseField>
+    <ResponseField name="total_spent_trx" type="string">
+      TRX spent on those refills, in total
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      When the rule was created (ISO 8601, UTC)
+    </ResponseField>
+    <ResponseField name="estimated_cost_per_refill_trx" type="string | null">
+      Full price of one refill for your account at current prices, fixed fee included. Address activation, when needed, is charged on top. `null` if the price is temporarily unavailable.
+    </ResponseField>
+    <ResponseField name="volume_below_threshold" type="boolean">
+      `true` when `add_volume` is smaller than `threshold_bandwidth`. One refill may then not lift the address above the threshold, and the rule buys again after every spend — see the [warning in the overview](/api-reference/auto-refill/overview#choosing-the-numbers).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "rules": [
+    {
+      "id": 15,
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "label": "Payouts",
+      "threshold_bandwidth": 1000,
+      "add_volume": 5000,
+      "duration": "1h",
+      "status": "active",
+      "stopped_reason": null,
+      "consecutive_failures": 0,
+      "last_checked_at": "2026-10-14T09:41:02Z",
+      "last_available_bandwidth": 3655,
+      "last_read_error_at": null,
+      "last_refill_at": "2026-10-14T09:12:30Z",
+      "refill_count": 4,
+      "total_spent_trx": "1.480000",
+      "created_at": "2026-10-14T08:15:00Z",
+      "estimated_cost_per_refill_trx": "0.370000",
+      "volume_below_threshold": false
+    }
+  ]
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `view` scope |

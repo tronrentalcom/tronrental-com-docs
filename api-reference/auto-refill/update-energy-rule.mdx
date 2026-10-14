@@ -1,0 +1,113 @@
+---
+title: Update Energy Rule
+api: PATCH /api/v1/energy/auto-refill/{rule_id}
+description: "Change, pause or resume an energy Auto Refill rule"
+---
+
+## Update Energy Rule
+
+Changes the threshold, volume or label of a rule, or pauses and resumes it. Send only the fields you want to change; the others stay as they are. Changes apply from the next check. Requires the `buy_energy` scope.
+
+The address and the duration of a rule cannot be changed. To move a rule to another address, delete it and create a new one.
+
+### Path parameters
+
+<ParamField path="rule_id" type="number" required>
+  Rule ID — the `id` from Create or List Energy Rules
+</ParamField>
+
+### Request body
+
+<ParamField body="threshold_energy" type="number">
+  New threshold. From 1 to 50,000,000.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  New energy amount per refill. From 32,000 to 5,000,000.
+</ParamField>
+
+<ParamField body="label" type="string">
+  New label, up to 100 characters. An empty string removes the label.
+</ParamField>
+
+<ParamField body="status" type="string">
+  `"paused"` to pause the rule, `"active"` to resume it. Resuming also clears `stopped_reason` and resets `consecutive_failures` to 0. A rule stopped for balance resumes on its own after a deposit, so you do not have to; if you resume it while the balance is still short, it stops again at the next check. `stopped_insufficient_balance` cannot be set directly.
+</ParamField>
+
+### Response
+
+The updated rule, with the same fields as in [List Energy Rules](/api-reference/auto-refill/list-energy-rules).
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "paused"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+    json={"status": "paused"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "paused" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "paused",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_energy": 212480,
+  "last_read_error_at": null,
+  "last_refill_at": "2026-10-14T08:57:40Z",
+  "refill_count": 3,
+  "total_spent_trx": "7.854000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `buy_energy` scope |
+| `404` | `NOT_FOUND` | No energy rule with this ID on your account (or it was deleted) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | A refill for this rule is being bought right now — retry in a minute |
+| `422` | — | A value is out of range, or `status` is not `"active"` or `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

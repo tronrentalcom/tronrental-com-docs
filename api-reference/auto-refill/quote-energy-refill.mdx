@@ -1,0 +1,104 @@
+---
+title: Energy Refill Quote
+api: GET /api/v1/energy/auto-refill/quote
+description: "Price of one energy refill, before you create a rule"
+---
+
+## Energy Refill Quote
+
+Returns what one refill of `add_volume` energy costs your account: the price a rule with this volume pays per refill, fixed fee included. Nothing is created or charged. Requires the `view` scope.
+
+The price depends on how you call it. Called with an API key, it is the price of a rule created with that API key; from the website, the price of a rule created on the website. It is the price at the moment of the request, and it does not include activating an address that does not exist on-chain yet — the first refill adds that.
+
+### Query parameters
+
+<ParamField query="add_volume" type="number" required>
+  Energy per refill. From 32,000 to 5,000,000, the same range as when creating a rule.
+</ParamField>
+
+Energy refills always last one hour, so there is no `duration` parameter; the response always has `"duration": "1h"`.
+
+### Response
+
+<ResponseField name="add_volume" type="number">
+  The volume you asked about
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Rental duration of the refill — always `1h` for energy
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  Full price of one refill for your account, fixed fee included
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 131000},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 131000,
+  "duration": "1h",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `view` scope |
+| `422` | — | `add_volume` is missing or outside 32,000 – 5,000,000 |
+| `503` | `TEMPORARILY_UNAVAILABLE` | The price could not be read right now — retry after the `Retry-After` seconds |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+A validation error comes in the framework's format, with `detail` as an array:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["query", "add_volume"],
+      "msg": "Input should be greater than or equal to 32000",
+      "input": "1000",
+      "ctx": {"ge": 32000}
+    }
+  ]
+}
+```

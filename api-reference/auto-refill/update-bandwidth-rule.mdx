@@ -1,0 +1,117 @@
+---
+title: Update Bandwidth Rule
+api: PATCH /api/v1/bandwidth/auto-refill/{rule_id}
+description: "Change, pause or resume a bandwidth Auto Refill rule"
+---
+
+## Update Bandwidth Rule
+
+Changes the threshold, volume, duration or label of a rule, or pauses and resumes it. Send only the fields you want to change; the others stay as they are. Changes apply from the next check. Requires the `buy_bandwidth` scope.
+
+The address of a rule cannot be changed. To move a rule to another address, delete it and create a new one.
+
+### Path parameters
+
+<ParamField path="rule_id" type="number" required>
+  Rule ID — the `id` from Create or List Bandwidth Rules
+</ParamField>
+
+### Request body
+
+<ParamField body="threshold_bandwidth" type="number">
+  New threshold. From 1 to 1,000,000.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  New bandwidth amount per refill. From 350 to 100,000.
+</ParamField>
+
+<ParamField body="duration" type="string">
+  New rental duration for future refills: `"1h"` or `"1d"`. Rentals already bought keep their duration.
+</ParamField>
+
+<ParamField body="label" type="string">
+  New label, up to 100 characters. An empty string removes the label.
+</ParamField>
+
+<ParamField body="status" type="string">
+  `"paused"` to pause the rule, `"active"` to resume it. Resuming also clears `stopped_reason` and resets `consecutive_failures` to 0. A rule stopped for balance resumes on its own after a deposit, so you do not have to; if you resume it while the balance is still short, it stops again at the next check. `stopped_insufficient_balance` cannot be set directly.
+</ParamField>
+
+### Response
+
+The updated rule, with the same fields as in [List Bandwidth Rules](/api-reference/auto-refill/list-bandwidth-rules).
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto-refill/15 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"duration": "1d"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/15",
+    headers={"X-API-Key": "your_api_key"},
+    json={"duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill/15", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ duration: "1d" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1d",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_bandwidth": 3655,
+  "last_read_error_at": null,
+  "last_refill_at": "2026-10-14T09:12:30Z",
+  "refill_count": 4,
+  "total_spent_trx": "1.480000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.500000",
+  "volume_below_threshold": false
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `buy_bandwidth` scope |
+| `404` | `NOT_FOUND` | No bandwidth rule with this ID on your account (or it was deleted) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | A refill for this rule is being bought right now — retry in a minute |
+| `422` | — | A value is out of range, `duration` is not `"1h"` or `"1d"`, or `status` is not `"active"` or `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

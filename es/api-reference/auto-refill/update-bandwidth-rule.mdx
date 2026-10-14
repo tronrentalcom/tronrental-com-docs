@@ -1,0 +1,117 @@
+---
+title: Actualizar regla de ancho de banda
+api: PATCH /api/v1/bandwidth/auto-refill/{rule_id}
+description: "Modifica, pausa o reanuda una regla de Recarga automática de ancho de banda"
+---
+
+## Actualizar regla de ancho de banda
+
+Cambia el umbral, el volumen, la duración o la etiqueta de una regla, o la pausa y la reanuda. Envía solo los campos que quieras cambiar; los demás se quedan como están. Los cambios se aplican desde la siguiente comprobación. Requiere el alcance `buy_bandwidth`.
+
+La dirección de una regla no se puede cambiar. Para pasar una regla a otra dirección, elimínala y crea una nueva.
+
+### Parámetros de ruta
+
+<ParamField path="rule_id" type="number" required>
+  ID de la regla — el `id` que devuelven Crear o Listar reglas de ancho de banda
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="threshold_bandwidth" type="number">
+  Nuevo umbral. De 1 a 1,000,000.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  Nueva cantidad de ancho de banda por recarga. De 350 a 100,000.
+</ParamField>
+
+<ParamField body="duration" type="string">
+  Nueva duración del alquiler para las recargas futuras: `"1h"` o `"1d"`. Los alquileres ya comprados mantienen su duración.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Nueva etiqueta, hasta 100 caracteres. Una cadena vacía elimina la etiqueta.
+</ParamField>
+
+<ParamField body="status" type="string">
+  `"paused"` para pausar la regla, `"active"` para reanudarla. Al reanudarla también se borra `stopped_reason` y `consecutive_failures` vuelve a 0. Una regla detenida por saldo se reanuda sola tras un depósito, así que no tienes que hacerlo tú; si la reanudas mientras el saldo sigue sin alcanzar, se detiene de nuevo en la siguiente comprobación. `stopped_insufficient_balance` no se puede establecer directamente.
+</ParamField>
+
+### Respuesta
+
+La regla actualizada, con los mismos campos que en [Listar reglas de ancho de banda](/api-reference/auto-refill/list-bandwidth-rules).
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto-refill/15 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"duration": "1d"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/15",
+    headers={"X-API-Key": "your_api_key"},
+    json={"duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill/15", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ duration: "1d" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1d",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_bandwidth": 3655,
+  "last_read_error_at": null,
+  "last_refill_at": "2026-10-14T09:12:30Z",
+  "refill_count": 4,
+  "total_spent_trx": "1.480000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.500000",
+  "volume_below_threshold": false
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
+| `404` | `NOT_FOUND` | No hay ninguna regla de ancho de banda con este ID en tu cuenta (o fue eliminada) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Se está comprando una recarga para esta regla en este momento — reintenta en un minuto |
+| `422` | — | Un valor está fuera de rango, `duration` no es `"1h"` ni `"1d"`, o `status` no es `"active"` ni `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

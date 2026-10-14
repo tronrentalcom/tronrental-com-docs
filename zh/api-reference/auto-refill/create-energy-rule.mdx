@@ -1,0 +1,174 @@
+---
+title: 创建能量规则
+api: POST /api/v1/energy/auto-refill
+description: "每当地址的能量低于阈值时为其补充能量"
+---
+
+## 创建能量规则
+
+为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用能量低于 `threshold_energy`，我们就会购买一小时的 `add_volume` 能量，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/api-reference/auto-refill/overview)。
+
+该请求只创建规则——本身不会购买任何东西。需要 `buy_energy` 权限。如需先查看一次补充的价格，请使用[能量补充报价](/api-reference/auto-refill/quote-energy-refill)。
+
+### 请求体
+
+<ParamField body="target_address" type="string" required>
+  需要持续供给的 TRON 地址（T... 格式，34 个字符）。不接受合约地址。
+</ParamField>
+
+<ParamField body="threshold_energy" type="number" required>
+  当地址的可用能量低于此值时购买。范围 1 至 50,000,000。
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  每次补充购买的能量。范围 32,000 至 5,000,000。请让它不低于 `threshold_energy`——参见[概述中的警告](/api-reference/auto-refill/overview#choosing-the-numbers)。
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  每次补充的租赁时长。只接受 `"1h"`；其他任何值都会返回 `422`。
+</ParamField>
+
+<ParamField body="label" type="string">
+  您为规则起的名称，最多 100 个字符。可选。
+</ParamField>
+
+### 响应
+
+新建的规则——字段与[列出能量规则](/api-reference/auto-refill/list-energy-rules)中的相同——另加两个反映地址当前状态的字段：
+
+<ResponseField name="current_energy" type="number | null">
+  创建规则时该地址的可用能量。无法读取时为 `null`；无论如何规则都会创建。
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  如果 `current_energy` 已低于阈值，则为 `true`，下一次检查（通常在一分钟之内）就会购买。如果地址资源充足，或无法读取其可用量，则为 `false`。
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/energy/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_energy": 65000,
+    "add_volume": 131000,
+    "duration": "1h",
+    "label": "Hot wallet"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/energy/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_energy": 65000,
+        "add_volume": 131000,
+        "duration": "1h",
+        "label": "Hot wallet",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_energy: 65000,
+    add_volume: 131000,
+    duration: "1h",
+    label: "Hot wallet",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_energy": null,
+  "last_read_error_at": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
+  "current_energy": 0,
+  "will_refill_now": true
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `target_address` 不是有效的 TRON 地址 |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` 是智能合约 |
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_energy` 权限 |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | 您的账户已有该地址的能量规则——请改为编辑它 |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | 您的账户已有 20 条能量规则；该上限也在 `error.limit` 中给出 |
+| `422` | — | 缺少字段或字段超出范围，或 `duration` 不是 `"1h"` |
+| `429` | `RATE_LIMIT_EXCEEDED` | 一分钟内的创建请求超过 10 次 |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_LIMIT_REACHED",
+      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
+      "limit": 20
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+校验错误采用框架自身的格式，其中 `detail` 是数组：
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["body", "duration"],
+      "msg": "Input should be '1h'",
+      "input": "1d",
+      "ctx": {"expected": "'1h'"}
+    }
+  ]
+}
+```
+
+<Tip>
+超时后重试创建请求是安全的。如果第一次请求已经成功，重试会返回 `409 AUTOREFILL_ADDRESS_TAKEN`，而不会创建第二条规则；[列出您的规则](/api-reference/auto-refill/list-energy-rules)即可获取其 `id`。
+</Tip>

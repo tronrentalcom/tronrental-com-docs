@@ -1,0 +1,106 @@
+---
+title: Cotización de recarga de ancho de banda
+api: GET /api/v1/bandwidth/auto-refill/quote
+description: "Precio de una recarga de ancho de banda, antes de crear una regla"
+---
+
+## Cotización de recarga de ancho de banda
+
+Devuelve lo que cuesta a tu cuenta una recarga de `add_volume` de ancho de banda por `duration`: el precio que paga por recarga una regla con estos ajustes, comisión fija incluida. No se crea ni se cobra nada. Requiere el alcance `view`.
+
+El precio depende de cómo hagas la llamada. Con una clave API, es el precio de una regla creada con esa clave API; desde el sitio web, el precio de una regla creada en el sitio web. Es el precio en el momento de la solicitud, y no incluye la activación de una dirección que todavía no existe on-chain — eso lo añade la primera recarga.
+
+### Parámetros de consulta
+
+<ParamField query="add_volume" type="number" required>
+  Ancho de banda por recarga. De 350 a 100,000, el mismo rango que al crear una regla.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Duración del alquiler de cada recarga: `1h` o `1d`.
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="add_volume" type="number">
+  El volumen que consultaste
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  La duración que consultaste — `1h` o `1d`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  Precio completo de una recarga para tu cuenta, comisión fija incluida
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 5000, "duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 5000,
+  "duration": "1d",
+  "estimated_cost_per_refill_trx": "0.500000"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `view` |
+| `422` | — | Falta `add_volume` o está fuera de 350 – 100,000, o `duration` no es `1h` ni `1d` |
+| `503` | `TEMPORARILY_UNAVAILABLE` | No se pudo obtener el precio en este momento — reintenta pasados los segundos de `Retry-After` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+Un error de validación llega en el formato del framework, con `detail` como array:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["query", "duration"],
+      "msg": "Input should be '1h' or '1d'",
+      "input": "2h",
+      "ctx": {"expected": "'1h' or '1d'"}
+    }
+  ]
+}
+```

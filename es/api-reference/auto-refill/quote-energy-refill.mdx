@@ -1,0 +1,104 @@
+---
+title: Cotización de recarga de energía
+api: GET /api/v1/energy/auto-refill/quote
+description: "Precio de una recarga de energía, antes de crear una regla"
+---
+
+## Cotización de recarga de energía
+
+Devuelve lo que cuesta a tu cuenta una recarga de `add_volume` de energía: el precio que paga por recarga una regla con este volumen, comisión fija incluida. No se crea ni se cobra nada. Requiere el alcance `view`.
+
+El precio depende de cómo hagas la llamada. Con una clave API, es el precio de una regla creada con esa clave API; desde el sitio web, el precio de una regla creada en el sitio web. Es el precio en el momento de la solicitud, y no incluye la activación de una dirección que todavía no existe on-chain — eso lo añade la primera recarga.
+
+### Parámetros de consulta
+
+<ParamField query="add_volume" type="number" required>
+  Energía por recarga. De 32,000 a 5,000,000, el mismo rango que al crear una regla.
+</ParamField>
+
+Las recargas de energía siempre duran una hora, así que no hay parámetro `duration`; la respuesta siempre trae `"duration": "1h"`.
+
+### Respuesta
+
+<ResponseField name="add_volume" type="number">
+  El volumen que consultaste
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Duración del alquiler de la recarga — siempre `1h` para la energía
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  Precio completo de una recarga para tu cuenta, comisión fija incluida
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 131000},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 131000,
+  "duration": "1h",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `view` |
+| `422` | — | Falta `add_volume` o está fuera de 32,000 – 5,000,000 |
+| `503` | `TEMPORARILY_UNAVAILABLE` | No se pudo obtener el precio en este momento — reintenta pasados los segundos de `Retry-After` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+Un error de validación llega en el formato del framework, con `detail` como array:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["query", "add_volume"],
+      "msg": "Input should be greater than or equal to 32000",
+      "input": "1000",
+      "ctx": {"ge": 32000}
+    }
+  ]
+}
+```

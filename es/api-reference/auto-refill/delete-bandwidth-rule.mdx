@@ -1,0 +1,75 @@
+---
+title: Eliminar regla de ancho de banda
+api: DELETE /api/v1/bandwidth/auto-refill/{rule_id}
+description: "Elimina una regla de Recarga automática de ancho de banda"
+---
+
+## Eliminar regla de ancho de banda
+
+Elimina una regla. Ya no se hacen recargas para ella, y la dirección queda libre para una nueva regla de ancho de banda. El ancho de banda ya comprado no se recupera: esos alquileres siguen hasta el final de su plazo. Las órdenes de recarga anteriores permanecen en tu historial de órdenes. Requiere el alcance `buy_bandwidth`.
+
+Para detener las recargas durante un tiempo sin perder la regla, [páusala](/api-reference/auto-refill/update-bandwidth-rule) en su lugar.
+
+### Parámetros de ruta
+
+<ParamField path="rule_id" type="number" required>
+  ID de la regla — el `id` que devuelven Crear o Listar reglas de ancho de banda
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="status" type="string">
+  `ok`
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto-refill/15 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/15",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill/15", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "ok"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
+| `404` | `NOT_FOUND` | No hay ninguna regla de ancho de banda con este ID en tu cuenta (o ya fue eliminada) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Se está comprando una recarga para esta regla en este momento — reintenta en un minuto |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-refill rule not found"
+    }
+  }
+}
+```

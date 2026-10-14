@@ -1,0 +1,131 @@
+---
+title: Listar reglas de energía
+api: GET /api/v1/energy/auto-refill
+description: "Todas las reglas de Recarga automática de energía de tu cuenta"
+---
+
+## Listar reglas de energía
+
+Devuelve todas las reglas de Recarga automática de energía de tu cuenta, de la más antigua a la más reciente. Las reglas eliminadas no se incluyen. Requiere el alcance `view`.
+
+### Respuesta
+
+<ResponseField name="rules" type="array">
+  Tus reglas de energía.
+
+  <Expandable title="objeto de regla">
+    <ResponseField name="id" type="number">
+      ID de la regla — úsalo en las rutas de edición y eliminación
+    </ResponseField>
+    <ResponseField name="target_address" type="string">
+      La dirección que la regla mantiene abastecida
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      Tu nombre para la regla
+    </ResponseField>
+    <ResponseField name="threshold_energy" type="number">
+      La regla compra cuando la energía disponible está por debajo de este valor
+    </ResponseField>
+    <ResponseField name="add_volume" type="number">
+      Energía comprada en cada recarga
+    </ResponseField>
+    <ResponseField name="duration" type="string">
+      Duración del alquiler de cada recarga — siempre `1h`
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `paused` o `stopped_insufficient_balance` — ver [Estado de la regla](/api-reference/auto-refill/overview#rule-status)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      Por qué se pausó o se detuvo la regla: `insufficient_balance`, `order_failed`, `activation_failed` o `invalid_params`. `null` si no hay ningún motivo.
+    </ResponseField>
+    <ResponseField name="consecutive_failures" type="number">
+      Recargas fallidas seguidas. La regla se pausa cuando llega a 5; una recarga exitosa lo devuelve a 0.
+    </ResponseField>
+    <ResponseField name="last_checked_at" type="string | null">
+      Cuándo comprobamos la dirección por última vez (ISO 8601, UTC), se haya podido leer o no. `null` antes de la primera comprobación.
+    </ResponseField>
+    <ResponseField name="last_available_energy" type="number | null">
+      Energía disponible en la dirección en la última comprobación correcta. `null` antes de la primera lectura correcta.
+    </ResponseField>
+    <ResponseField name="last_read_error_at" type="string | null">
+      Cuándo falló por última vez una comprobación al leer la dirección (ISO 8601, UTC). `null` si la última comprobación fue correcta. Mientras tenga valor, `last_available_energy` procede de una comprobación anterior y puede estar desactualizado. Una comprobación que no puede leer la dirección no compra nada.
+    </ResponseField>
+    <ResponseField name="last_refill_at" type="string | null">
+      Cuándo se hizo la última recarga. `null` si aún no ha habido ninguna.
+    </ResponseField>
+    <ResponseField name="refill_count" type="number">
+      Recargas exitosas desde que se creó la regla
+    </ResponseField>
+    <ResponseField name="total_spent_trx" type="string">
+      TRX gastados en esas recargas, en total
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Cuándo se creó la regla (ISO 8601, UTC)
+    </ResponseField>
+    <ResponseField name="estimated_cost_per_refill_trx" type="string | null">
+      Precio completo de una recarga para tu cuenta a los precios actuales, comisión fija incluida. La activación de la dirección, cuando hace falta, se cobra aparte. `null` si el precio no está disponible temporalmente.
+    </ResponseField>
+    <ResponseField name="volume_below_threshold" type="boolean">
+      `true` cuando `add_volume` es menor que `threshold_energy`. En ese caso, una recarga puede no subir la dirección por encima del umbral, y la regla vuelve a comprar después de cada gasto — consulta la [advertencia de la descripción general](/api-reference/auto-refill/overview#choosing-the-numbers).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/energy/auto-refill \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "rules": [
+    {
+      "id": 12,
+      "target_address": "TYourRecipientAddress1234567890abc",
+      "label": "Hot wallet",
+      "threshold_energy": 65000,
+      "add_volume": 131000,
+      "duration": "1h",
+      "status": "active",
+      "stopped_reason": null,
+      "consecutive_failures": 0,
+      "last_checked_at": "2026-10-14T09:41:02Z",
+      "last_available_energy": 212480,
+      "last_read_error_at": null,
+      "last_refill_at": "2026-10-14T08:57:40Z",
+      "refill_count": 3,
+      "total_spent_trx": "7.854000",
+      "created_at": "2026-10-14T08:12:05Z",
+      "estimated_cost_per_refill_trx": "2.618000",
+      "volume_below_threshold": false
+    }
+  ]
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `view` |

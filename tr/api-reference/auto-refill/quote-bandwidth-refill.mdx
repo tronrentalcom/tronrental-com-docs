@@ -1,0 +1,106 @@
+---
+title: Bant Genişliği Dolum Fiyatı
+api: GET /api/v1/bandwidth/auto-refill/quote
+description: "Kural oluşturmadan önce bir bant genişliği dolumunun fiyatı"
+---
+
+## Bant Genişliği Dolum Fiyatı
+
+`duration` süresi için `add_volume` kadar bant genişliğiyle yapılan bir dolumun hesabınıza maliyetini döndürür: bu ayarlara sahip bir kuralın dolum başına ödediği, sabit ücret dahil fiyat. Hiçbir şey oluşturulmaz ve ücret alınmaz. `view` kapsamını gerektirir.
+
+Fiyat, uç noktayı nasıl çağırdığınıza bağlıdır. API anahtarıyla çağrıldığında, o API anahtarıyla oluşturulan bir kuralın fiyatıdır; web sitesinden çağrıldığında ise web sitesinde oluşturulan bir kuralın fiyatıdır. Bu, istek anındaki fiyattır ve henüz zincirde olmayan bir adresin aktivasyonunu içermez — onu ilk dolum ekler.
+
+### Sorgu parametreleri
+
+<ParamField query="add_volume" type="number" required>
+  Dolum başına bant genişliği. 350 ile 100.000 arasında; kural oluştururken geçerli olan aralıkla aynı.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Her dolumun kiralama süresi: `1h` veya `1d`.
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="add_volume" type="number">
+  Sorduğunuz miktar
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Sorduğunuz süre — `1h` veya `1d`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  Hesabınız için bir dolumun sabit ücret dahil tam fiyatı
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 5000, "duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 5000,
+  "duration": "1d",
+  "estimated_cost_per_refill_trx": "0.500000"
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `view` kapsamı yok |
+| `422` | — | `add_volume` eksik veya 350 – 100.000 aralığının dışında ya da `duration` değeri `1h` veya `1d` değil |
+| `503` | `TEMPORARILY_UNAVAILABLE` | Fiyat şu anda okunamadı — `Retry-After` değerindeki saniye kadar bekleyip yeniden deneyin |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+Doğrulama hatası, çerçevenin kendi biçiminde ve `detail` bir dizi olarak gelir:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["query", "duration"],
+      "msg": "Input should be '1h' or '1d'",
+      "input": "2h",
+      "ctx": {"expected": "'1h' or '1d'"}
+    }
+  ]
+}
+```

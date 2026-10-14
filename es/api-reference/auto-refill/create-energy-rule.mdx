@@ -1,0 +1,174 @@
+---
+title: Crear regla de energía
+api: POST /api/v1/energy/auto-refill
+description: "Recarga la energía de una dirección cada vez que cae por debajo de un umbral"
+---
+
+## Crear regla de energía
+
+Crea una regla de Recarga automática para una dirección. A partir de la siguiente comprobación, cada vez que la dirección tenga menos energía disponible que `threshold_energy`, compramos `add_volume` de energía por una hora y lo cobramos de tu saldo. Consulta la [descripción general](/api-reference/auto-refill/overview) para ver cómo funcionan las comprobaciones, el coste y los estados.
+
+La solicitud solo crea la regla — no compra nada por sí misma. Requiere el alcance `buy_energy`. Para ver antes el precio de una recarga, usa [Cotización de recarga de energía](/api-reference/auto-refill/quote-energy-refill).
+
+### Cuerpo de la solicitud
+
+<ParamField body="target_address" type="string" required>
+  Dirección TRON que se mantendrá abastecida (formato T..., 34 caracteres). Las direcciones de contrato se rechazan.
+</ParamField>
+
+<ParamField body="threshold_energy" type="number" required>
+  Se compra cuando la dirección tiene menos energía disponible que este valor. De 1 a 50,000,000.
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  Energía que se compra en cada recarga. De 32,000 a 5,000,000. Mantenlo igual o por encima de `threshold_energy` — consulta la [advertencia de la descripción general](/api-reference/auto-refill/overview#choosing-the-numbers).
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  Duración del alquiler de cada recarga. Solo se acepta `"1h"`; cualquier otro valor devuelve `422`.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Tu propio nombre para la regla, hasta 100 caracteres. Opcional.
+</ParamField>
+
+### Respuesta
+
+La nueva regla — con los mismos campos que en [Listar reglas de energía](/api-reference/auto-refill/list-energy-rules) — más dos campos sobre el estado actual de la dirección:
+
+<ResponseField name="current_energy" type="number | null">
+  Energía disponible en la dirección en el momento de crear la regla. `null` si no se pudo leer; la regla se crea de todos modos.
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  `true` si `current_energy` ya está por debajo del umbral, de modo que la siguiente comprobación — normalmente en menos de un minuto — comprará. `false` si la dirección tiene suficiente, o si no se pudo leer el nivel.
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/energy/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_energy": 65000,
+    "add_volume": 131000,
+    "duration": "1h",
+    "label": "Hot wallet"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/energy/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_energy": 65000,
+        "add_volume": 131000,
+        "duration": "1h",
+        "label": "Hot wallet",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_energy: 65000,
+    add_volume: 131000,
+    duration: "1h",
+    label: "Hot wallet",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_energy": null,
+  "last_read_error_at": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
+  "current_energy": 0,
+  "will_refill_now": true
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `400` | `INVALID_ADDRESS` | `target_address` no es una dirección TRON válida |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` es un contrato inteligente |
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_energy` |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | Tu cuenta ya tiene una regla de energía para esta dirección — edítala en su lugar |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | Tu cuenta ya tiene 20 reglas de energía; el límite también figura en `error.limit` |
+| `422` | — | Falta un campo o está fuera de rango, o `duration` no es `"1h"` |
+| `429` | `RATE_LIMIT_EXCEEDED` | Más de 10 solicitudes de creación en un minuto |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_LIMIT_REACHED",
+      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
+      "limit": 20
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+Un error de validación llega en el formato del framework, con `detail` como array:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["body", "duration"],
+      "msg": "Input should be '1h'",
+      "input": "1d",
+      "ctx": {"expected": "'1h'"}
+    }
+  ]
+}
+```
+
+<Tip>
+Reintentar una creación tras agotarse el tiempo de espera es seguro. Si la primera solicitud se completó, el reintento devuelve `409 AUTOREFILL_ADDRESS_TAKEN` en lugar de crear una segunda regla; [lista tus reglas](/api-reference/auto-refill/list-energy-rules) para obtener su `id`.
+</Tip>

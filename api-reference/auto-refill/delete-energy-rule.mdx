@@ -1,0 +1,75 @@
+---
+title: Delete Energy Rule
+api: DELETE /api/v1/energy/auto-refill/{rule_id}
+description: "Delete an energy Auto Refill rule"
+---
+
+## Delete Energy Rule
+
+Deletes a rule. No more refills are made for it, and the address becomes free for a new energy rule. Energy already bought is not taken back: those rentals run until the end of their hour. Past refill orders stay in your order history. Requires the `buy_energy` scope.
+
+To stop refills for a while without losing the rule, [pause it](/api-reference/auto-refill/update-energy-rule) instead.
+
+### Path parameters
+
+<ParamField path="rule_id" type="number" required>
+  Rule ID — the `id` from Create or List Energy Rules
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  `ok`
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "ok"
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `buy_energy` scope |
+| `404` | `NOT_FOUND` | No energy rule with this ID on your account (or it was already deleted) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | A refill for this rule is being bought right now — retry in a minute |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-refill rule not found"
+    }
+  }
+}
+```

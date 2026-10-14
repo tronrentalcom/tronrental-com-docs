@@ -26,6 +26,10 @@ Siparişlerinizin sayfalanmış listesini, en yeniden başlayarak döndürür.
   Sipariş türüne göre filtrele — `energy` veya `bandwidth`
 </ParamField>
 
+<ParamField query="source" type="string">
+  Yalnızca `autorefill` kabul edilir: sadece [Otomatik Dolum](/api-reference/auto-refill/overview) kurallarınızın oluşturduğu siparişleri döndürür. Başka herhangi bir değer `422` döndürür. Tüm siparişleri almak için bu parametreyi göndermeyin.
+</ParamField>
+
 <ParamField query="from" type="string">
   Dönemin ilk günü, `YYYY-MM-DD`, dahil. İki tarih de verilmezse tüm liste döner.
 </ParamField>

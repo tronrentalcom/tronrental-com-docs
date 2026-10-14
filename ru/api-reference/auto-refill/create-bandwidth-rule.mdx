@@ -1,0 +1,166 @@
+---
+title: Создать правило для bandwidth
+api: POST /api/v1/bandwidth/auto-refill
+description: "Пополнение bandwidth на адресе, как только он опускается ниже порога"
+---
+
+## Создать правило для bandwidth
+
+Создаёт правило автопополнения для одного адреса. Начиная со следующей проверки, всякий раз, когда доступного bandwidth на адресе меньше `threshold_bandwidth`, мы покупаем `add_volume` bandwidth на выбранный срок `duration` и списываем стоимость с вашего баланса. Как устроены проверки, стоимость и статусы, — в [обзоре](/api-reference/auto-refill/overview).
+
+Запрос только создаёт правило — сам он ничего не покупает. Нужен скоуп `buy_bandwidth`. Чтобы сначала узнать цену одного пополнения, см. [Рассчитать цену пополнения bandwidth](/api-reference/auto-refill/quote-bandwidth-refill).
+
+<Info>
+Доступный bandwidth учитывает **всё**, чем адрес может оплатить транзакцию: бесплатные 600 в сутки плюс любой застейканный или делегированный bandwidth. Порог 600 или ниже выполняется за счёт одного лишь бесплатного лимита, пока адрес его не израсходует.
+</Info>
+
+### Тело запроса
+
+<ParamField body="target_address" type="string" required>
+  Адрес TRON, который нужно держать обеспеченным (формат T..., 34 символа). Адреса контрактов отклоняются.
+</ParamField>
+
+<ParamField body="threshold_bandwidth" type="number" required>
+  Покупать, когда доступного bandwidth на адресе меньше этого значения. От 1 до 1 000 000.
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  Сколько bandwidth покупать за одно пополнение. От 350 до 100 000. Держите значение не ниже `threshold_bandwidth` — см. [предупреждение в обзоре](/api-reference/auto-refill/overview#choosing-the-numbers).
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  Срок аренды для каждого пополнения: `"1h"` или `"1d"`.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Ваше собственное название правила, до 100 символов. Необязательно.
+</ParamField>
+
+### Ответ
+
+Новое правило — с теми же полями, что в [Списке правил для bandwidth](/api-reference/auto-refill/list-bandwidth-rules), — плюс два поля о текущем состоянии адреса:
+
+<ResponseField name="current_bandwidth" type="number | null">
+  Bandwidth, доступный на адресе в момент создания правила, включая бесплатный. `null`, если его не удалось прочитать; правило создаётся в любом случае.
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  `true`, если `current_bandwidth` уже ниже порога, и значит следующая проверка — обычно в течение минуты — сделает покупку. `false`, если bandwidth на адресе достаточно или уровень не удалось прочитать.
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_bandwidth": 1000,
+    "add_volume": 5000,
+    "duration": "1h",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_bandwidth": 1000,
+        "add_volume": 5000,
+        "duration": "1h",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_bandwidth: 1000,
+    add_volume: 5000,
+    duration: "1h",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_bandwidth": null,
+  "last_read_error_at": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.370000",
+  "volume_below_threshold": false,
+  "current_bandwidth": 600,
+  "will_refill_now": true
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `target_address` — некорректный адрес TRON |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` — смарт-контракт |
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_bandwidth` |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | В вашем аккаунте уже есть правило для bandwidth на этот адрес — вместо этого измените его |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | В вашем аккаунте уже 20 правил для bandwidth; лимит также передаётся в `error.limit` |
+| `422` | — | Поле отсутствует или вне диапазона, либо `duration` — не `"1h"` и не `"1d"` |
+| `429` | `RATE_LIMIT_EXCEEDED` | Больше 10 запросов на создание за минуту |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+Ошибка валидации приходит в формате фреймворка, где `detail` — массив:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["body", "add_volume"],
+      "msg": "Input should be greater than or equal to 350",
+      "input": 100,
+      "ctx": {"ge": 350}
+    }
+  ]
+}
+```
+
+<Tip>
+Повторять создание после таймаута безопасно. Если первый запрос прошёл, повтор вернёт `409 AUTOREFILL_ADDRESS_TAKEN`, а не создаст второе правило; чтобы узнать его `id`, [запросите список правил](/api-reference/auto-refill/list-bandwidth-rules).
+</Tip>

@@ -41,6 +41,8 @@ description: "API रेट लिमिटिंग नीति"
 |---|---|---|
 | `POST /api/v1/invoices` | 10 अनुरोध/मिनट | IP पता |
 | `POST /api/v1/account/withdrawal` | 1 अनुरोध/मिनट | खाता |
+| `POST /api/v1/energy/auto-refill` | 10 अनुरोध/मिनट | खाता |
+| `POST /api/v1/bandwidth/auto-refill` | 10 अनुरोध/मिनट | खाता |
 
 ध्यान दें कि `POST /api/v1/invoices` की गणना **IP पते** के हिसाब से होती है, खाते के नहीं: यदि आपके कई
 क्लाइंट एक ही आउटगोइंग IP से अनुरोध भेजते हैं, तो वे प्रति मिनट 10 का एक ही बजट साझा करते हैं।

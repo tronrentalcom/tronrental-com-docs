@@ -1,0 +1,117 @@
+---
+title: बैंडविड्थ नियम अपडेट करें
+api: PATCH /api/v1/bandwidth/auto-refill/{rule_id}
+description: "बैंडविड्थ ऑटो रिफिल नियम बदलें, रोकें या फिर से शुरू करें"
+---
+
+## बैंडविड्थ नियम अपडेट करें
+
+नियम का थ्रेशोल्ड, मात्रा, अवधि या लेबल बदलता है, या नियम को रोकता और फिर से शुरू करता है। केवल वे फ़ील्ड भेजें जिन्हें आप बदलना चाहते हैं; बाकी जैसे हैं वैसे ही रहते हैं। बदलाव अगली जाँच से लागू होते हैं। `buy_bandwidth` स्कोप आवश्यक है।
+
+नियम का एड्रेस नहीं बदला जा सकता। नियम को दूसरे एड्रेस पर ले जाने के लिए उसे हटाएं और नया नियम बनाएं।
+
+### पाथ पैरामीटर
+
+<ParamField path="rule_id" type="number" required>
+  नियम ID — बैंडविड्थ नियम बनाएं या बैंडविड्थ नियमों की सूची से मिला `id`
+</ParamField>
+
+### अनुरोध बॉडी
+
+<ParamField body="threshold_bandwidth" type="number">
+  नया थ्रेशोल्ड। 1 से 1,000,000 तक।
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  प्रति रिफिल बैंडविड्थ की नई मात्रा। 350 से 100,000 तक।
+</ParamField>
+
+<ParamField body="duration" type="string">
+  आगे के रिफिल के लिए किराये की नई अवधि: `"1h"` या `"1d"`। पहले से खरीदे गए किराये अपनी अवधि बनाए रखते हैं।
+</ParamField>
+
+<ParamField body="label" type="string">
+  नया लेबल, अधिकतम 100 अक्षर। खाली स्ट्रिंग लेबल हटा देती है।
+</ParamField>
+
+<ParamField body="status" type="string">
+  नियम रोकने के लिए `"paused"`, फिर से शुरू करने के लिए `"active"`। फिर से शुरू करने पर `stopped_reason` भी साफ़ हो जाता है और `consecutive_failures` 0 पर रीसेट हो जाता है। बैलेंस के कारण रुका नियम डिपॉज़िट के बाद अपने-आप फिर से शुरू हो जाता है, इसलिए आपको यह करना ज़रूरी नहीं; यदि आप बैलेंस कम रहते हुए उसे फिर से शुरू करते हैं, तो वह अगली जाँच पर फिर रुक जाता है। `stopped_insufficient_balance` को सीधे सेट नहीं किया जा सकता।
+</ParamField>
+
+### रिस्पॉन्स
+
+अपडेट किया गया नियम, उन्हीं फ़ील्ड के साथ जो [बैंडविड्थ नियमों की सूची](/api-reference/auto-refill/list-bandwidth-rules) में हैं।
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto-refill/15 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"duration": "1d"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/15",
+    headers={"X-API-Key": "your_api_key"},
+    json={"duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill/15", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ duration: "1d" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1d",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_bandwidth": 3655,
+  "last_read_error_at": null,
+  "last_refill_at": "2026-10-14T09:12:30Z",
+  "refill_count": 4,
+  "total_spent_trx": "1.480000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.500000",
+  "volume_below_threshold": false
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
+| `404` | `NOT_FOUND` | आपके खाते में इस ID का कोई बैंडविड्थ नियम नहीं है (या उसे हटा दिया गया है) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | इस नियम के लिए अभी रिफिल खरीदा जा रहा है — एक मिनट में फिर प्रयास करें |
+| `422` | — | कोई मान सीमा से बाहर है, `duration` न `"1h"` है न `"1d"`, या `status` न `"active"` है न `"paused"` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

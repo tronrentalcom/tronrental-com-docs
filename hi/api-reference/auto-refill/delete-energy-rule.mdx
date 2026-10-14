@@ -1,0 +1,75 @@
+---
+title: एनर्जी नियम हटाएं
+api: DELETE /api/v1/energy/auto-refill/{rule_id}
+description: "एनर्जी ऑटो रिफिल नियम हटाएं"
+---
+
+## एनर्जी नियम हटाएं
+
+नियम हटाता है। इसके लिए आगे कोई रिफिल नहीं होता, और एड्रेस नए एनर्जी नियम के लिए मुक्त हो जाता है। पहले से खरीदी गई एनर्जी वापस नहीं ली जाती: वे किराये अपने घंटे के अंत तक चलते हैं। पिछले रिफिल ऑर्डर आपके ऑर्डर इतिहास में बने रहते हैं। `buy_energy` स्कोप आवश्यक है।
+
+नियम खोए बिना कुछ समय के लिए रिफिल बंद करने हेतु, इसके बजाय [उसे रोकें](/api-reference/auto-refill/update-energy-rule)।
+
+### पाथ पैरामीटर
+
+<ParamField path="rule_id" type="number" required>
+  नियम ID — एनर्जी नियम बनाएं या एनर्जी नियमों की सूची से मिला `id`
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="status" type="string">
+  `ok`
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/energy/auto-refill/12 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/energy/auto-refill/12",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill/12", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "ok"
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_energy` स्कोप नहीं है |
+| `404` | `NOT_FOUND` | आपके खाते में इस ID का कोई एनर्जी नियम नहीं है (या उसे पहले ही हटा दिया गया है) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | इस नियम के लिए अभी रिफिल खरीदा जा रहा है — एक मिनट में फिर प्रयास करें |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-refill rule not found"
+    }
+  }
+}
+```

@@ -1,0 +1,104 @@
+---
+title: एनर्जी रिफिल मूल्य अनुमान
+api: GET /api/v1/energy/auto-refill/quote
+description: "नियम बनाने से पहले, एक एनर्जी रिफिल की कीमत"
+---
+
+## एनर्जी रिफिल मूल्य अनुमान
+
+बताता है कि `add_volume` एनर्जी का एक रिफिल आपके खाते को कितने का पड़ेगा: इस मात्रा वाला नियम प्रति रिफिल जो कीमत चुकाता है, फिक्स्ड शुल्क सहित। न कुछ बनाया जाता है, न कोई शुल्क लिया जाता है। `view` स्कोप आवश्यक है।
+
+कीमत इस पर निर्भर करती है कि आप इसे कैसे कॉल करते हैं। API कुंजी से कॉल करने पर यह उस API कुंजी से बनाए गए नियम की कीमत है; वेबसाइट से — वेबसाइट पर बनाए गए नियम की कीमत। यह अनुरोध के समय की कीमत है, और इसमें ऐसे एड्रेस का सक्रियण शामिल नहीं है जो अभी ऑन-चेन मौजूद नहीं है — वह पहले रिफिल में जुड़ता है।
+
+### क्वेरी पैरामीटर
+
+<ParamField query="add_volume" type="number" required>
+  प्रति रिफिल एनर्जी। 32,000 से 5,000,000 तक, वही सीमा जो नियम बनाते समय होती है।
+</ParamField>
+
+एनर्जी रिफिल हमेशा एक घंटे का होता है, इसलिए कोई `duration` पैरामीटर नहीं है; रिस्पॉन्स में हमेशा `"duration": "1h"` होता है।
+
+### रिस्पॉन्स
+
+<ResponseField name="add_volume" type="number">
+  वह मात्रा जिसके बारे में आपने पूछा
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  रिफिल के किराये की अवधि — एनर्जी के लिए हमेशा `1h`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  आपके खाते के लिए एक रिफिल की पूरी कीमत, फिक्स्ड शुल्क सहित
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 131000},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 131000,
+  "duration": "1h",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `view` स्कोप नहीं है |
+| `422` | — | `add_volume` गायब है या 32,000 – 5,000,000 से बाहर है |
+| `503` | `TEMPORARILY_UNAVAILABLE` | कीमत अभी पढ़ी नहीं जा सकी — `Retry-After` में दिए गए सेकंड के बाद फिर प्रयास करें |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+सत्यापन त्रुटि फ्रेमवर्क के प्रारूप में आती है, जिसमें `detail` एक ऐरे होता है:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["query", "add_volume"],
+      "msg": "Input should be greater than or equal to 32000",
+      "input": "1000",
+      "ctx": {"ge": 32000}
+    }
+  ]
+}
+```

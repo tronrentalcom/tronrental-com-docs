@@ -1,0 +1,117 @@
+---
+title: Otomatik Dolum Genel Bakış
+description: "Bir adresteki enerjiyi veya bant genişliğini seçtiğiniz seviyenin üzerinde tutun"
+---
+
+## Otomatik Dolum
+
+Otomatik Dolum bir TRON adresini izler ve enerjisi veya bant genişliği belirlediğiniz seviyenin altına düştüğünde adresi doldurur. **Eşiği**, her seferinde ne kadar **ekleneceğini** ve kiralama **süresini** siz seçersiniz. Her dolum, bakiyenizden ödenen sıradan bir sipariştir.
+
+### Nasıl çalışır
+
+1. Bir adres için eşik, `add_volume` ve `duration` içeren bir kural oluşturun.
+2. Adreste ne kadar kullanılabilir enerji (veya bant genişliği) olduğunu **dakikada bir kez** ve o adresten yapılan **her giden USDT transferinin hemen ardından** kontrol ederiz.
+3. Seviye eşiğin altındaysa adres için `add_volume` kadar satın alır ve bakiyenizden sizin fiyatınızla ücret alırız.
+4. Kiralama, süresi dolunca sona erer. Seviye yeniden eşiğin altına düştüğünde kural yeniden satın alır. Kural adresi bu yolla sürekli dolu tutar: ayrı bir yenileme adımı yoktur.
+
+Bir kontrol adresi okuyamazsa hiçbir şey satın almaz; kural bu zamanı `last_read_error_at` alanında gösterir ve bir sonraki kontrol yeniden dener.
+
+Kural oluşturmak anında hiçbir şey satın almaz. İlk dolum bir sonraki kontrolde, genellikle bir dakika içinde yapılır. Oluşturma yanıtı, dolumun yapılıp yapılmayacağını (`will_refill_now`) ve adreste şu anda ne kadar kaynak olduğunu bildirir.
+
+<Note>
+Otomatik Dolum, seviye düştükten sonra tepki verir; bir transferden önce hazırda beklemez. Eşiği en az bir sonraki işleminizin ihtiyacı kadar ayarlayın; böylece işlem gönderildiğinde zaten karşılanmış olur.
+</Note>
+
+### Enerji ve bant genişliği
+
+İki kaynağın kendi uç noktaları ve kendi kuralları vardır. Bir adreste aynı anda bir enerji kuralı ve bir bant genişliği kuralı olabilir; her biri kendi eşiğine göre kontrol edilir.
+
+| | Enerji | Bant genişliği |
+|---|---|---|
+| Uç noktalar | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
+| Eşik alanı | `threshold_energy`, 1 – 50.000.000 | `threshold_bandwidth`, 1 – 1.000.000 |
+| Dolum başına `add_volume` | 32.000 – 5.000.000 | 350 – 100.000 |
+| `duration` | yalnızca `1h` | `1h` veya `1d` |
+| Eşikle karşılaştırdığımız seviye | Kullanılabilir enerji | **Günlük ücretsiz 600 dahil** tüm kullanılabilir bant genişliği |
+| Oluşturma, düzenleme, silme kapsamı | `buy_energy` | `buy_bandwidth` |
+| Listeleme ve fiyat sorgulama kapsamı | `view` | `view` |
+
+**Enerji** bir saatliğine kiralanır. Bittiğinde veya süresi dolduğunda seviye düşer ve kural bir sonraki saati satın alır.
+
+**Bant genişliği**, adresin bir işlemin bedelini ödemek için kullanabileceği her şeyi sayar: her hesabın günde aldığı ücretsiz 600 bant genişliği ile stake edilmiş veya devredilmiş bant genişliği. Bu nedenle 600 veya daha düşük bir eşik, adres bu ücretsiz payı harcayana kadar yalnızca onunla karşılanır.
+
+### Sayıları seçmek
+
+<Warning>
+**`add_volume` değerini eşikle aynı veya ondan yüksek tutun.** Bir dolum, adreste kalan miktarın üzerine `add_volume` ekler. `add_volume` eşikten küçükse, neredeyse boş bir adrese yapılan tek bir dolum onu hâlâ eşiğin altında bırakabilir; kural da her harcamadan sonra yeniden satın alır — saatte bir kez değil, dakikada birkaç kereye kadar. Bu dolumların her biri, kendi sabit ücreti olan tam bir sipariştir. Kural yanıtları bu durumu `volume_below_threshold: true` ile işaretler.
+</Warning>
+
+Bir USDT transferi, alıcıda zaten USDT varsa yaklaşık 65.000, yoksa yaklaşık 131.000 enerji kullanır; buna ek olarak yaklaşık 345 bant genişliği. Örneğin `threshold_energy: 65000` ile `add_volume: 131000`, bir transferlik miktardan az kaldığında iki transferlik enerji satın alır.
+
+### Maliyet
+
+Her dolum normal bir sipariştir: sizin tarifenizle kiralama bedeli artı **her dolumda alınan sabit ücret**. Liste ve oluşturma yanıtlarındaki `estimated_cost_per_refill_trx`, hesabınız için bir dolumun sabit ücret dahil tam fiyatıdır. Bu fiyatı kural oluşturmadan önce görmek için fiyat sorgulama uç noktasını kullanın: [enerji](/api-reference/auto-refill/quote-energy-refill), [bant genişliği](/api-reference/auto-refill/quote-bandwidth-refill). Sık doldurulan küçük bir `add_volume` sabit ücreti birçok kez öder; daha büyüğü daha seyrek öder.
+
+API anahtarıyla oluşturulan bir kural, o API anahtarıyla yapılan bir alım gibi fiyatlandırılır; web sitesinde oluşturulan bir kural ise web sitesinden yapılan bir alım gibi. `estimated_cost_per_refill_trx` bunu zaten yansıtır.
+
+Adres henüz zincirde yoksa ilk dolum, normal bir alımda olduğu gibi adresi de etkinleştirir. Aktivasyon ayrıca ücretlendirilir ve `estimated_cost_per_refill_trx` içinde yer almaz; sipariş bunu `activation_cost_trx` alanında gösterir.
+
+Günlük harcama sınırı yoktur: seviye eşiğin altında olduğu ve bakiyeniz bir dolumu karşıladığı sürece kural satın alır.
+
+### Siparişler ve webhook'lar
+
+Her dolum, sipariş geçmişinizde ([Siparişleri Listele](/api-reference/orders/list-orders)) `source: "autorefill"` ile görünür. Yalnızca dolum siparişlerini listelemek için `GET /orders?source=autorefill` çağırın; bunları dosya olarak dışa aktarmak için `autorefill` [raporunu](/api-reference/account/reports) kullanın.
+
+API anahtarıyla oluşturulan kurallar, dolum siparişleri için API üzerinden verdiğiniz siparişlerde olduğu gibi [`order.updated` webhook'ları](/api-reference/webhooks/overview) gönderir. API anahtarı olmadan oluşturulan kurallar göndermez.
+
+### Kural durumu
+
+| `status` | Anlamı |
+|---|---|
+| `active` | Kural adresi kontrol eder ve gerektiğinde satın alır |
+| `paused` | Siz devam ettirene kadar kural hiçbir şey yapmaz. Sizin tarafınızdan ya da dolumlar art arda başarısız olduğunda bizim tarafımızdan ayarlanır — bkz. `stopped_reason` |
+| `stopped_insufficient_balance` | Bakiyeniz bir sonraki dolumu karşılamadı. Kural, para yatırıldıktan sonra kendiliğinden devam eder |
+
+**Hatalardan sonra duraklatma.** Başarısız bir dolum, başarısız her sipariş gibi iade edilir. **Art arda 5 başarısız dolumdan** sonra kural duraklatılır ve `stopped_reason` son hatanın nedenini verir. `consecutive_failures`, kuralın bu sınıra ne kadar yaklaştığını gösterir; başarılı bir dolumdan sonra ve kuralı devam ettirdiğinizde 0'a döner. Duraklatılmış bir kural asla kendiliğinden devam etmez: nedeni giderin, ardından `status: "active"` ayarlayın.
+
+**Bakiye nedeniyle durdurma.** Bakiyeniz bir dolumu karşılayamadığında kural `stopped_insufficient_balance` ile durur. Bir para yatırma işlemi bakiyeyi bir dolumun fiyatına çıkardığında kural otomatik olarak `active` durumuna döner. `status: "active"` değerini kendiniz de ayarlayabilirsiniz; bakiye hâlâ yetersizse kural bir sonraki kontrolde yeniden durur.
+
+| `stopped_reason` | Anlamı |
+|---|---|
+| `insufficient_balance` | Bakiye bir dolumu karşılamadı |
+| `order_failed` | Dolum siparişleri art arda 5 kez başarısız oldu |
+| `activation_failed` | Adresin aktivasyonu art arda 5 kez başarısız oldu |
+| `invalid_params` | Kuralın miktarı veya süresi artık kabul edilmiyor (5 deneme beklenmeden hemen duraklatılır) — kuralı düzenleyin, ardından devam ettirin |
+| `null` | Kayıtlı bir durdurma yok |
+
+Telegram hesabınız bağlıysa, bir kuralın ilk dolumunda ve bir kural duraklatıldığında, bakiye nedeniyle durdurulduğunda veya devam ettirildiğinde mesaj alırsınız.
+
+### Sınırlar
+
+- Bir hesapta **adres ve kaynak başına bir kural**. Aynı adres için ikinci bir enerji kuralı (veya ikinci bir bant genişliği kuralı) oluşturmak `409 AUTOREFILL_ADDRESS_TAKEN` döndürür — bunun yerine mevcut kuralı düzenleyin.
+- Hesap başına **20 enerji kuralı ve 20 bant genişliği kuralı**. Silinmiş kurallar sayılmaz. Sınır aşıldığında: `409 AUTOREFILL_LIMIT_REACHED`.
+- USDT token sözleşmesi gibi **sözleşme adresleri kabul edilmez**: TRON onlara kaynak devredilmesine izin vermez.
+- **Kural oluşturma**, her kaynak için hesap başına dakikada 10 istekle sınırlıdır. Bkz. [Hız Sınırları](/resources/rate-limits).
+
+### Düzenleme ve silme
+
+Değişiklikler bir sonraki kontrolden itibaren geçerli olur. Kural için bir dolum satın alınırken `PATCH` ve `DELETE`, `409 AUTOREFILL_IN_PROGRESS` döndürür — bir dakika sonra yeniden deneyin. Bir kuralı silmek, zaten satın alınmış enerjiyi veya bant genişliğini geri almaz; bu kiralamalar süreleri bitene kadar devam eder.
+
+### Akıllı Mod ve otomatik yenilenen kiralamalarla karşılaştırma
+
+| | Otomatik Dolum | [Akıllı Mod](/api-reference/smart-mode/overview) | [Otomatik yenilenen kiralama](/api-reference/bandwidth-rentals/create-rental) |
+|---|---|---|---|
+| Kaynak | Enerji veya bant genişliği | Enerji, isteğe bağlı olarak bant genişliği | Bant genişliği |
+| Ne zaman teslim edilir | Seviye eşiğinizin altına düştüğünde | Her giden USDT transferinde | Bir kez devredilir ve kiralama sürdükçe korunur |
+| Ne ödersiniz | Her dolumu, normal bir sipariş olarak | Günlük abonelik artı her USDT transferi | Günde bir kez |
+| Neyi karşılar | Her türlü harcamayı — USDT, TRX, sözleşme çağrıları | USDT transferleri | Sürekli bir bant genişliği ihtiyacı |
+
+### Uç noktalar
+
+| İşlem | Enerji | Bant genişliği |
+|---|---|---|
+| Bir dolumun fiyatı | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
+| Kural oluşturma | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
+| Kuralları listeleme | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
+| Düzenleme, duraklatma, devam ettirme | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
+| Silme | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |

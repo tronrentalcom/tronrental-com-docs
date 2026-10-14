@@ -1,0 +1,117 @@
+---
+title: Visão Geral da Recarga automática
+description: "Mantenha a energia ou a largura de banda de um endereço acima do nível que você escolher"
+---
+
+## Recarga automática
+
+A Recarga automática monitora um endereço TRON e o reabastece sempre que a energia ou a largura de banda dele cai abaixo de um nível definido por você. Você escolhe o **limiar**, quanto **adicionar** a cada vez e a **duração** do aluguel. Cada recarga é um pedido comum, pago com o seu saldo.
+
+### Como funciona
+
+1. Crie uma regra para um endereço com um limiar, um `add_volume` e uma `duration`.
+2. Verificamos quanta energia (ou largura de banda) o endereço tem disponível **uma vez por minuto** e **logo após cada transferência USDT de saída** desse endereço.
+3. Se o nível estiver abaixo do limiar, compramos `add_volume` para o endereço e cobramos do seu saldo pelo seu preço.
+4. O aluguel termina ao fim da sua duração. Quando o nível volta a cair abaixo do limiar, a regra compra de novo. É assim que a regra mantém o endereço abastecido: não existe uma etapa separada de renovação.
+
+Se uma verificação não consegue ler o endereço, ela não compra nada; a regra mostra o horário em `last_read_error_at`, e a verificação seguinte tenta de novo.
+
+Criar uma regra não compra nada na hora. A primeira recarga acontece na verificação seguinte, normalmente em até um minuto. A resposta da criação informa se ela vai acontecer (`will_refill_now`) e quanto o endereço tem neste momento.
+
+<Note>
+A Recarga automática reage depois que o nível cai; ela não se antecipa a uma transferência. Defina o limiar em pelo menos o que a sua próxima transação precisa, para que a transação já esteja coberta quando for enviada.
+</Note>
+
+### Energia e largura de banda
+
+Os dois recursos têm endpoints próprios e regras próprias. Um endereço pode ter uma regra de energia e uma regra de largura de banda ao mesmo tempo; cada uma é comparada com o seu próprio limiar.
+
+| | Energia | Largura de banda |
+|---|---|---|
+| Endpoints | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
+| Campo do limiar | `threshold_energy`, 1 – 50.000.000 | `threshold_bandwidth`, 1 – 1.000.000 |
+| `add_volume` por recarga | 32.000 – 5.000.000 | 350 – 100.000 |
+| `duration` | apenas `1h` | `1h` ou `1d` |
+| Nível que comparamos com o limiar | Energia disponível | Toda a largura de banda disponível, **incluindo as 600 gratuitas por dia** |
+| Escopo para criar, editar, excluir | `buy_energy` | `buy_bandwidth` |
+| Escopo para listar e para cotar | `view` | `view` |
+
+**A energia** é alugada por uma hora. Quando ela se esgota ou expira, o nível cai e a regra compra a hora seguinte.
+
+**A largura de banda** conta tudo com que o endereço pode pagar uma transação: as 600 unidades gratuitas que toda conta recebe por dia, mais qualquer largura de banda em stake ou delegada. Por isso, um limiar de 600 ou menos é atendido só pela cota gratuita, até que o endereço a gaste.
+
+### Escolhendo os números
+
+<Warning>
+**Mantenha `add_volume` igual ou acima do limiar.** Uma recarga soma `add_volume` ao que ainda resta no endereço. Se `add_volume` for menor que o limiar, uma recarga num endereço quase vazio pode deixá-lo ainda abaixo do limiar, e a regra vai comprar de novo após cada gasto — até várias vezes por minuto, e não uma vez por hora. Cada uma dessas recargas é um pedido completo, com a sua própria taxa fixa. As respostas das regras sinalizam esse caso com `volume_below_threshold: true`.
+</Warning>
+
+Uma transferência USDT usa cerca de 65.000 de energia quando o destinatário já possui USDT e cerca de 131.000 quando não possui, mais aproximadamente 345 de largura de banda. Por exemplo, `threshold_energy: 65000` com `add_volume: 131000` compra o equivalente a duas transferências sempre que resta menos do que uma.
+
+### Custo
+
+Cada recarga é um pedido comum: o aluguel pela sua tarifa mais a **taxa fixa, cobrada em toda recarga**. `estimated_cost_per_refill_trx` nas respostas de listagem e de criação é o preço total de uma recarga para a sua conta, taxa fixa incluída. Para ver esse preço antes de criar uma regra, use o endpoint de cotação: [energia](/api-reference/auto-refill/quote-energy-refill), [largura de banda](/api-reference/auto-refill/quote-bandwidth-refill). Um `add_volume` pequeno, recarregado com frequência, paga a taxa fixa muitas vezes; um maior a paga com menos frequência.
+
+Uma regra criada com uma chave de API tem o preço de uma compra feita com essa chave de API; uma regra criada no site tem o preço de uma compra feita no site. `estimated_cost_per_refill_trx` já reflete isso.
+
+Se o endereço ainda não existe na blockchain, a primeira recarga também o ativa, como em uma compra comum. A ativação é cobrada à parte e não entra em `estimated_cost_per_refill_trx`; o pedido a mostra em `activation_cost_trx`.
+
+Não há teto de gasto diário: uma regra compra sempre que o nível está abaixo do limiar e o seu saldo cobre uma recarga.
+
+### Pedidos e webhooks
+
+Toda recarga aparece no seu histórico de pedidos ([Listar pedidos](/api-reference/orders/list-orders)) com `source: "autorefill"`. Para listar apenas os pedidos de recarga, chame `GET /orders?source=autorefill`; para exportá-los como arquivo, use o [relatório](/api-reference/account/reports) `autorefill`.
+
+As regras criadas com uma chave de API enviam [webhooks `order.updated`](/api-reference/webhooks/overview) para os seus pedidos de recarga, assim como os pedidos que você faz pela API. As regras criadas sem chave de API não enviam.
+
+### Status da regra
+
+| `status` | Significado |
+|---|---|
+| `active` | A regra verifica o endereço e compra quando necessário |
+| `paused` | A regra não faz nada até você retomá-la. Definido por você, ou por nós quando as recargas falham repetidamente — veja `stopped_reason` |
+| `stopped_insufficient_balance` | O seu saldo não cobriu a próxima recarga. A regra é retomada sozinha após um depósito |
+
+**Pausada após falhas.** Uma recarga que falha é reembolsada como qualquer pedido que falhou. Após **5 recargas com falha seguidas**, a regra é pausada e `stopped_reason` informa o motivo da última falha. `consecutive_failures` mostra quão perto a regra está desse limite; o contador volta a 0 após uma recarga bem-sucedida e quando você retoma a regra. Uma regra pausada nunca é retomada sozinha: corrija a causa e depois defina `status: "active"`.
+
+**Parada por saldo.** Quando o seu saldo não cobre uma recarga, a regra para com `stopped_insufficient_balance`. Assim que um depósito eleva o saldo até o preço de uma recarga, a regra volta a `active` automaticamente. Você também pode definir `status: "active"` por conta própria; se o saldo ainda for insuficiente, a regra para de novo na verificação seguinte.
+
+| `stopped_reason` | Significado |
+|---|---|
+| `insufficient_balance` | O saldo não cobriu uma recarga |
+| `order_failed` | Os pedidos de recarga falharam 5 vezes seguidas |
+| `activation_failed` | A ativação do endereço falhou 5 vezes seguidas |
+| `invalid_params` | O volume ou a duração da regra não são mais aceitos (pausada de imediato, sem 5 tentativas) — edite-a e depois retome |
+| `null` | Nenhuma parada registrada |
+
+Se a sua conta do Telegram estiver vinculada, você recebe uma mensagem na primeira recarga de uma regra e quando uma regra é pausada, parada por saldo ou retomada.
+
+### Limites
+
+- **Uma regra por endereço e recurso** em cada conta. Criar uma segunda regra de energia (ou uma segunda regra de largura de banda) para o mesmo endereço retorna `409 AUTOREFILL_ADDRESS_TAKEN` — edite a regra existente.
+- **20 regras de energia e 20 regras de largura de banda** por conta. Regras excluídas não contam. Acima do limite: `409 AUTOREFILL_LIMIT_REACHED`.
+- **Sem endereços de contrato**, como o contrato do token USDT: a TRON não permite delegar recursos a eles.
+- **A criação de regras** é limitada a 10 requisições por minuto por conta, para cada recurso. Veja [Limites de Taxa](/resources/rate-limits).
+
+### Edição e exclusão
+
+As alterações valem a partir da verificação seguinte. Enquanto uma recarga da regra está sendo comprada, `PATCH` e `DELETE` retornam `409 AUTOREFILL_IN_PROGRESS` — tente novamente em um minuto. Excluir uma regra não recupera a energia ou a largura de banda já compradas; esses aluguéis seguem até o fim do seu prazo.
+
+### Comparação com o Smart Mode e os aluguéis com renovação automática
+
+| | Recarga automática | [Smart Mode](/api-reference/smart-mode/overview) | [Aluguel com renovação automática](/api-reference/bandwidth-rentals/create-rental) |
+|---|---|---|---|
+| Recurso | Energia ou largura de banda | Energia, mais largura de banda opcional | Largura de banda |
+| Quando entrega | Quando o nível cai abaixo do seu limiar | A cada transferência USDT de saída | Delegada uma vez e mantida enquanto o aluguel dura |
+| O que você paga | Cada recarga, como um pedido comum | Uma assinatura diária mais cada transferência USDT | Uma vez por dia |
+| Cobre | Qualquer gasto — USDT, TRX, chamadas de contrato | Transferências USDT | Uma necessidade constante de largura de banda |
+
+### Endpoints
+
+| Ação | Energia | Largura de banda |
+|---|---|---|
+| Preço de uma recarga | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
+| Criar uma regra | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
+| Listar regras | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
+| Editar, pausar, retomar | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
+| Excluir | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |

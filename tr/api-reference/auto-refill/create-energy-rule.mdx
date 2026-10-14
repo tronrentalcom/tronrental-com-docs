@@ -1,0 +1,174 @@
+---
+title: Enerji Kuralı Oluştur
+api: POST /api/v1/energy/auto-refill
+description: "Bir adresteki enerji eşiğin altına düştüğünde onu otomatik olarak doldurun"
+---
+
+## Enerji Kuralı Oluştur
+
+Bir adres için bir Otomatik Dolum kuralı oluşturur. Bir sonraki kontrolden itibaren adresteki kullanılabilir enerji `threshold_energy` değerinin altına her düştüğünde, bir saatliğine `add_volume` kadar enerji satın alır ve bakiyenizden ücret alırız. Kontrollerin, maliyetin ve durumların nasıl işlediği için [genel bakışa](/api-reference/auto-refill/overview) bakın.
+
+İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_energy` kapsamını gerektirir. Önce bir dolumun fiyatını görmek için [Enerji Dolum Fiyatı](/api-reference/auto-refill/quote-energy-refill) uç noktasını kullanın.
+
+### İstek gövdesi
+
+<ParamField body="target_address" type="string" required>
+  Kaynağı sürekli sağlanacak TRON adresi (T... formatı, 34 karakter). Sözleşme adresleri reddedilir.
+</ParamField>
+
+<ParamField body="threshold_energy" type="number" required>
+  Adresteki kullanılabilir enerji bu değerin altına düştüğünde satın alınır. 1 ile 50.000.000 arasında.
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  Dolum başına satın alınacak enerji. 32.000 ile 5.000.000 arasında. Bu değeri `threshold_energy` ile aynı veya ondan yüksek tutun — bkz. [genel bakıştaki uyarı](/api-reference/auto-refill/overview#choosing-the-numbers).
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  Her dolumun kiralama süresi. Yalnızca `"1h"` kabul edilir; başka herhangi bir değer `422` döndürür.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Kurala kendi verdiğiniz ad, en fazla 100 karakter. İsteğe bağlı.
+</ParamField>
+
+### Yanıt
+
+Yeni kural — [Enerji Kurallarını Listele](/api-reference/auto-refill/list-energy-rules) ile aynı alanlar — ve adresin şu anki durumuna dair iki alan:
+
+<ResponseField name="current_energy" type="number | null">
+  Kural oluşturulduğu anda adreste kullanılabilir olan enerji. Okunamadıysa `null`; kural her durumda oluşturulur.
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  `current_energy` zaten eşiğin altındaysa `true`; bu durumda bir sonraki kontrol — genellikle bir dakika içinde — satın alır. Adreste yeterli enerji varsa veya seviye okunamadıysa `false`.
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/energy/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_energy": 65000,
+    "add_volume": 131000,
+    "duration": "1h",
+    "label": "Hot wallet"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/energy/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_energy": 65000,
+        "add_volume": 131000,
+        "duration": "1h",
+        "label": "Hot wallet",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_energy: 65000,
+    add_volume: 131000,
+    duration: "1h",
+    label: "Hot wallet",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_energy": null,
+  "last_read_error_at": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
+  "current_energy": 0,
+  "will_refill_now": true
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `target_address` geçerli bir TRON adresi değil |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` bir akıllı sözleşme |
+| `403` | `FORBIDDEN` | API anahtarında `buy_energy` kapsamı yok |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | Hesabınızda bu adres için zaten bir enerji kuralı var — bunun yerine onu düzenleyin |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | Hesabınızda zaten 20 enerji kuralı var; sınır `error.limit` içinde de yer alır |
+| `422` | — | Bir alan eksik veya aralık dışında ya da `duration` değeri `"1h"` değil |
+| `429` | `RATE_LIMIT_EXCEEDED` | Bir dakika içinde 10'dan fazla oluşturma isteği |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_LIMIT_REACHED",
+      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
+      "limit": 20
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+Doğrulama hatası, çerçevenin kendi biçiminde ve `detail` bir dizi olarak gelir:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["body", "duration"],
+      "msg": "Input should be '1h'",
+      "input": "1d",
+      "ctx": {"expected": "'1h'"}
+    }
+  ]
+}
+```
+
+<Tip>
+Zaman aşımından sonra oluşturma isteğini yeniden denemek güvenlidir. İlk istek başarılı olduysa yeniden deneme ikinci bir kural oluşturmaz, `409 AUTOREFILL_ADDRESS_TAKEN` döndürür; kuralın `id` değerini almak için [kurallarınızı listeleyin](/api-reference/auto-refill/list-energy-rules).
+</Tip>

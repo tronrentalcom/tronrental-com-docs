@@ -1,0 +1,174 @@
+---
+title: Criar regra de energia
+api: POST /api/v1/energy/auto-refill
+description: "Reabasteça a energia de um endereço sempre que ela cair abaixo de um limiar"
+---
+
+## Criar regra de energia
+
+Cria uma regra de Recarga automática para um endereço. A partir da verificação seguinte, sempre que o endereço tiver menos energia disponível do que `threshold_energy`, compramos `add_volume` de energia por uma hora e cobramos do seu saldo. Veja a [visão geral](/api-reference/auto-refill/overview) para entender como funcionam as verificações, o custo e os status.
+
+A requisição apenas cria a regra — ela mesma não compra nada. Exige o escopo `buy_energy`. Para ver antes o preço de uma recarga, use [Cotação de recarga de energia](/api-reference/auto-refill/quote-energy-refill).
+
+### Corpo da requisição
+
+<ParamField body="target_address" type="string" required>
+  Endereço TRON a manter abastecido (formato T..., 34 caracteres). Endereços de contrato são recusados.
+</ParamField>
+
+<ParamField body="threshold_energy" type="number" required>
+  Compra quando o endereço tem menos energia disponível do que este valor. De 1 a 50.000.000.
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  Energia a comprar por recarga. De 32.000 a 5.000.000. Mantenha-o igual ou acima de `threshold_energy` — veja o [aviso na visão geral](/api-reference/auto-refill/overview#choosing-the-numbers).
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  Duração do aluguel de cada recarga. Apenas `"1h"` é aceito; qualquer outro valor retorna `422`.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Um nome próprio para a regra, até 100 caracteres. Opcional.
+</ParamField>
+
+### Resposta
+
+A nova regra — com os mesmos campos de [Listar regras de energia](/api-reference/auto-refill/list-energy-rules) — mais dois campos sobre o estado atual do endereço:
+
+<ResponseField name="current_energy" type="number | null">
+  Energia disponível no endereço no momento em que a regra foi criada. `null` se não foi possível lê-la; a regra é criada de qualquer forma.
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  `true` se `current_energy` já está abaixo do limiar, de modo que a próxima verificação — normalmente em até um minuto — vai comprar. `false` se o endereço tem o suficiente ou se não foi possível ler o nível.
+</ResponseField>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/energy/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_energy": 65000,
+    "add_volume": 131000,
+    "duration": "1h",
+    "label": "Hot wallet"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/energy/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_energy": 65000,
+        "add_volume": 131000,
+        "duration": "1h",
+        "label": "Hot wallet",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/energy/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_energy: 65000,
+    add_volume: 131000,
+    duration: "1h",
+    label: "Hot wallet",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 12,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Hot wallet",
+  "threshold_energy": 65000,
+  "add_volume": 131000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_energy": null,
+  "last_read_error_at": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:12:05Z",
+  "estimated_cost_per_refill_trx": "2.618000",
+  "volume_below_threshold": false,
+  "current_energy": 0,
+  "will_refill_now": true
+}
+```
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `target_address` não é um endereço TRON válido |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` é um contrato inteligente |
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_energy` |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | A sua conta já tem uma regra de energia para este endereço — edite-a |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | A sua conta já tem 20 regras de energia; o limite também vem em `error.limit` |
+| `422` | — | Um campo está ausente ou fora do intervalo, ou `duration` não é `"1h"` |
+| `429` | `RATE_LIMIT_EXCEEDED` | Mais de 10 requisições de criação em um minuto |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_LIMIT_REACHED",
+      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
+      "limit": 20
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+Um erro de validação vem no formato do framework, com `detail` como array:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["body", "duration"],
+      "msg": "Input should be '1h'",
+      "input": "1d",
+      "ctx": {"expected": "'1h'"}
+    }
+  ]
+}
+```
+
+<Tip>
+Repetir uma criação após um timeout é seguro. Se a primeira requisição foi processada, a repetição retorna `409 AUTOREFILL_ADDRESS_TAKEN` em vez de criar uma segunda regra; [liste as suas regras](/api-reference/auto-refill/list-energy-rules) para obter o `id` dela.
+</Tip>

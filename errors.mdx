@@ -86,6 +86,17 @@ Returned in the standard shape, under `detail.error.code`:
 funding problem by the code alone.
 </Warning>
 
+## Auto Refill codes
+
+Returned in the standard shape by the [Auto Refill](/api-reference/auto-refill/overview) endpoints:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `AUTOREFILL_ADDRESS_TAKEN` | `409` | The account already has a rule for this address and resource — edit that rule instead |
+| `AUTOREFILL_LIMIT_REACHED` | `409` | The account already has 20 rules for this resource; the limit is also in `error.limit` |
+| `AUTOREFILL_IN_PROGRESS` | `409` | A refill for the rule is being bought right now — retry the edit or delete in a minute |
+| `NOT_FOUND` | `404` | No such rule on the account |
+
 ## Withdrawal verification codes
 
 `POST /api/v1/account/withdrawal` returns these verification codes in the flat shape, with `code` next

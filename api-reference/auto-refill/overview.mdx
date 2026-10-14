@@ -1,0 +1,117 @@
+---
+title: Auto Refill Overview
+description: "Keep energy or bandwidth on an address above a level you choose"
+---
+
+## Auto Refill
+
+Auto Refill watches a TRON address and tops it up whenever its energy or bandwidth falls below a level you set. You choose the **threshold**, how much to **add** each time, and the rental **duration**. Every refill is an ordinary order paid from your balance.
+
+### How it works
+
+1. Create a rule for an address with a threshold, an `add_volume` and a `duration`.
+2. We check how much energy (or bandwidth) the address has available **once a minute**, and **right after every outgoing USDT transfer** from that address.
+3. If the level is below the threshold, we buy `add_volume` for the address and charge your balance at your price.
+4. The rental ends after its duration. When the level falls below the threshold again, the rule buys again. That is how the rule keeps the address supplied: there is no separate renewal step.
+
+If a check cannot read the address, it buys nothing; the rule shows the time in `last_read_error_at`, and the next check tries again.
+
+Creating a rule does not buy anything on the spot. The first refill happens at the next check, usually within a minute. The create response says whether it will happen (`will_refill_now`) and how much the address has right now.
+
+<Note>
+Auto Refill reacts after the level drops; it does not wait in front of a transfer. Set the threshold to at least what your next transaction needs, so that the transaction is already covered when it is sent.
+</Note>
+
+### Energy and bandwidth
+
+The two resources have their own endpoints and their own rules. One address can have an energy rule and a bandwidth rule at the same time; each is checked against its own threshold.
+
+| | Energy | Bandwidth |
+|---|---|---|
+| Endpoints | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
+| Threshold field | `threshold_energy`, 1 – 50,000,000 | `threshold_bandwidth`, 1 – 1,000,000 |
+| `add_volume` per refill | 32,000 – 5,000,000 | 350 – 100,000 |
+| `duration` | `1h` only | `1h` or `1d` |
+| Level we compare with the threshold | Available energy | All available bandwidth, **including the free 600 a day** |
+| Scope to create, edit, delete | `buy_energy` | `buy_bandwidth` |
+| Scope to list and to quote | `view` | `view` |
+
+**Energy** is rented for one hour. When it runs out or expires, the level falls and the rule buys the next hour.
+
+**Bandwidth** counts everything the address can pay for a transaction with: the free 600 bandwidth every account gets per day, plus any staked or delegated bandwidth. A threshold of 600 or less is therefore met by the free allowance alone until the address has spent it.
+
+### Choosing the numbers
+
+<Warning>
+**Keep `add_volume` at or above the threshold.** A refill adds `add_volume` to whatever is left on the address. If `add_volume` is smaller than the threshold, one refill on a nearly empty address can leave it still below the threshold, and the rule will buy again after every spend — up to several times a minute, not once an hour. Each of those refills is a full order with its own fixed fee. Rule responses flag this case with `volume_below_threshold: true`.
+</Warning>
+
+A USDT transfer uses about 65,000 energy when the recipient already holds USDT and about 131,000 when it does not, plus roughly 345 bandwidth. For example, `threshold_energy: 65000` with `add_volume: 131000` buys two transfers' worth whenever less than one is left.
+
+### Cost
+
+Each refill is a regular order: the rental at your rate plus the **fixed fee, which is charged on every refill**. `estimated_cost_per_refill_trx` in the list and create responses is the full price of one refill for your account, fixed fee included. To see that price before you create a rule, use the quote endpoint: [energy](/api-reference/auto-refill/quote-energy-refill), [bandwidth](/api-reference/auto-refill/quote-bandwidth-refill). A small `add_volume` refilled often pays the fixed fee many times; a larger one pays it less often.
+
+A rule created with an API key is priced like a purchase made with that API key; a rule created on the website is priced like a website purchase. `estimated_cost_per_refill_trx` already reflects this.
+
+If the address does not exist on-chain yet, the first refill also activates it, the same as a regular purchase. The activation is charged on top and is not part of `estimated_cost_per_refill_trx`; the order shows it in `activation_cost_trx`.
+
+There is no daily spending cap: a rule buys whenever the level is below its threshold and your balance covers a refill.
+
+### Orders and webhooks
+
+Every refill appears in your order history ([List Orders](/api-reference/orders/list-orders)) with `source: "autorefill"`. To list only refill orders, call `GET /orders?source=autorefill`; to export them as a file, use the `autorefill` [report](/api-reference/account/reports).
+
+Rules created with an API key send [`order.updated` webhooks](/api-reference/webhooks/overview) for their refill orders, the same as orders you place through the API. Rules created without an API key do not.
+
+### Rule status
+
+| `status` | Meaning |
+|---|---|
+| `active` | The rule checks the address and buys when needed |
+| `paused` | The rule does nothing until you resume it. Set by you, or by us when refills keep failing — see `stopped_reason` |
+| `stopped_insufficient_balance` | Your balance did not cover the next refill. The rule resumes on its own after a deposit |
+
+**Paused after failures.** A failed refill is refunded like any failed order. After **5 failed refills in a row** the rule is paused and `stopped_reason` gives the reason of the last failure. `consecutive_failures` shows how close a rule is to that limit; it goes back to 0 after a successful refill and when you resume the rule. A paused rule never resumes by itself: fix the cause, then set `status: "active"`.
+
+**Stopped for balance.** When your balance cannot cover one refill, the rule stops with `stopped_insufficient_balance`. Once a deposit brings the balance up to the price of one refill, the rule returns to `active` automatically. You can also set `status: "active"` yourself; if the balance is still short, the rule stops again at the next check.
+
+| `stopped_reason` | Meaning |
+|---|---|
+| `insufficient_balance` | The balance did not cover one refill |
+| `order_failed` | Refill orders failed 5 times in a row |
+| `activation_failed` | Activating the address failed 5 times in a row |
+| `invalid_params` | The rule's volume or duration is no longer accepted (paused at once, without 5 attempts) — edit it, then resume |
+| `null` | No stop on record |
+
+If your Telegram account is linked, you get a message on the first refill of a rule and when a rule is paused, stopped for balance or resumed.
+
+### Limits
+
+- **One rule per address and resource** on an account. Creating a second energy rule (or a second bandwidth rule) for the same address returns `409 AUTOREFILL_ADDRESS_TAKEN` — edit the existing rule instead.
+- **20 energy rules and 20 bandwidth rules** per account. Deleted rules do not count. Over the limit: `409 AUTOREFILL_LIMIT_REACHED`.
+- **No contract addresses**, such as the USDT token contract: TRON does not allow delegating resources to them.
+- **Creating rules** is limited to 10 requests per minute per account, for each resource. See [Rate Limits](/resources/rate-limits).
+
+### Editing and deleting
+
+Changes apply from the next check. While a refill for the rule is being bought, `PATCH` and `DELETE` return `409 AUTOREFILL_IN_PROGRESS` — retry in a minute. Deleting a rule does not take back energy or bandwidth already bought; those rentals run until the end of their term.
+
+### Compared with Smart Mode and auto-renew rentals
+
+| | Auto Refill | [Smart Mode](/api-reference/smart-mode/overview) | [Auto-renew rental](/api-reference/bandwidth-rentals/create-rental) |
+|---|---|---|---|
+| Resource | Energy or bandwidth | Energy, plus optional bandwidth | Bandwidth |
+| When it delivers | When the level drops below your threshold | On every outgoing USDT transfer | Delegated once and kept while the rental runs |
+| What you pay | Each refill, as a regular order | A daily subscription plus each USDT transfer | Once a day |
+| Covers | Any spending — USDT, TRX, contract calls | USDT transfers | A steady bandwidth need |
+
+### Endpoints
+
+| Action | Energy | Bandwidth |
+|---|---|---|
+| Price of one refill | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
+| Create a rule | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
+| List rules | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
+| Edit, pause, resume | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
+| Delete | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |

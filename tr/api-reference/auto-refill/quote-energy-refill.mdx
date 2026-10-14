@@ -1,0 +1,104 @@
+---
+title: Enerji Dolum Fiyatı
+api: GET /api/v1/energy/auto-refill/quote
+description: "Kural oluşturmadan önce bir enerji dolumunun fiyatı"
+---
+
+## Enerji Dolum Fiyatı
+
+`add_volume` kadar enerjiyle yapılan bir dolumun hesabınıza maliyetini döndürür: bu miktara sahip bir kuralın dolum başına ödediği, sabit ücret dahil fiyat. Hiçbir şey oluşturulmaz ve ücret alınmaz. `view` kapsamını gerektirir.
+
+Fiyat, uç noktayı nasıl çağırdığınıza bağlıdır. API anahtarıyla çağrıldığında, o API anahtarıyla oluşturulan bir kuralın fiyatıdır; web sitesinden çağrıldığında ise web sitesinde oluşturulan bir kuralın fiyatıdır. Bu, istek anındaki fiyattır ve henüz zincirde olmayan bir adresin aktivasyonunu içermez — onu ilk dolum ekler.
+
+### Sorgu parametreleri
+
+<ParamField query="add_volume" type="number" required>
+  Dolum başına enerji. 32.000 ile 5.000.000 arasında; kural oluştururken geçerli olan aralıkla aynı.
+</ParamField>
+
+Enerji dolumları her zaman bir saat sürer, bu yüzden `duration` parametresi yoktur; yanıtta her zaman `"duration": "1h"` bulunur.
+
+### Yanıt
+
+<ResponseField name="add_volume" type="number">
+  Sorduğunuz miktar
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Dolumun kiralama süresi — enerji için her zaman `1h`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  Hesabınız için bir dolumun sabit ücret dahil tam fiyatı
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/energy/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 131000},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/energy/auto-refill/quote?add_volume=131000",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 131000,
+  "duration": "1h",
+  "estimated_cost_per_refill_trx": "2.618000"
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `view` kapsamı yok |
+| `422` | — | `add_volume` eksik veya 32.000 – 5.000.000 aralığının dışında |
+| `503` | `TEMPORARILY_UNAVAILABLE` | Fiyat şu anda okunamadı — `Retry-After` değerindeki saniye kadar bekleyip yeniden deneyin |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+Doğrulama hatası, çerçevenin kendi biçiminde ve `detail` bir dizi olarak gelir:
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["query", "add_volume"],
+      "msg": "Input should be greater than or equal to 32000",
+      "input": "1000",
+      "ctx": {"ge": 32000}
+    }
+  ]
+}
+```

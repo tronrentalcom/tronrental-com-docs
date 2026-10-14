@@ -1,0 +1,106 @@
+---
+title: 带宽补充报价
+api: GET /api/v1/bandwidth/auto-refill/quote
+description: "在创建规则之前查看一次带宽补充的价格"
+---
+
+## 带宽补充报价
+
+返回您的账户按 `duration` 补充一次 `add_volume` 带宽的费用：即采用这些设置的规则每次补充支付的价格，已包含固定手续费。不会创建任何东西，也不会扣费。需要 `view` 权限。
+
+价格取决于调用方式。使用 API 密钥调用时，返回的是通过该 API 密钥创建的规则的价格；在网站上调用时，返回的是在网站上创建的规则的价格。这是请求时刻的价格，不包含激活链上尚不存在的地址的费用——激活费用会在首次补充时加上。
+
+### 查询参数
+
+<ParamField query="add_volume" type="number" required>
+  每次补充的带宽。范围 350 至 100,000，与创建规则时相同。
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  每次补充的租赁时长：`1h` 或 `1d`。
+</ParamField>
+
+### 响应
+
+<ResponseField name="add_volume" type="number">
+  您查询的数量
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  您查询的时长——`1h` 或 `1d`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  您的账户补充一次的全部价格，已包含固定手续费
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 5000, "duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 5000,
+  "duration": "1d",
+  "estimated_cost_per_refill_trx": "0.500000"
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API 密钥缺少 `view` 权限 |
+| `422` | — | 缺少 `add_volume` 或其超出 350 – 100,000 范围，或 `duration` 不是 `1h` 或 `1d` |
+| `503` | `TEMPORARILY_UNAVAILABLE` | 暂时无法获取价格——请等待 `Retry-After` 给出的秒数后重试 |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+校验错误采用框架自身的格式，其中 `detail` 是数组：
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["query", "duration"],
+      "msg": "Input should be '1h' or '1d'",
+      "input": "2h",
+      "ctx": {"expected": "'1h' or '1d'"}
+    }
+  ]
+}
+```

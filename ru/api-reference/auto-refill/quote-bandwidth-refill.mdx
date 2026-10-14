@@ -1,0 +1,106 @@
+---
+title: Рассчитать цену пополнения bandwidth
+api: GET /api/v1/bandwidth/auto-refill/quote
+description: "Цена одного пополнения bandwidth — ещё до создания правила"
+---
+
+## Рассчитать цену пополнения bandwidth
+
+Возвращает, сколько стоит вашему аккаунту одно пополнение на `add_volume` bandwidth на срок `duration`: цену, которую правило с такими настройками платит за каждое пополнение, включая фиксированную комиссию. Ничего не создаётся и не списывается. Нужен скоуп `view`.
+
+Цена зависит от того, как вы вызываете эндпоинт. С API-ключом это цена правила, созданного с этим API-ключом; с сайта — цена правила, созданного на сайте. Это цена на момент запроса, и в неё не входит активация адреса, которого ещё нет в сети, — её добавит первое пополнение.
+
+### Параметры запроса
+
+<ParamField query="add_volume" type="number" required>
+  Bandwidth за одно пополнение. От 350 до 100 000 — тот же диапазон, что при создании правила.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Срок аренды для каждого пополнения: `1h` или `1d`.
+</ParamField>
+
+### Ответ
+
+<ResponseField name="add_volume" type="number">
+  Объём, о котором вы спросили
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Срок, о котором вы спросили, — `1h` или `1d`
+</ResponseField>
+
+<ResponseField name="estimated_cost_per_refill_trx" type="string">
+  Полная цена одного пополнения для вашего аккаунта, включая фиксированную комиссию
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"add_volume": 5000, "duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto-refill/quote?add_volume=5000&duration=1d",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "add_volume": 5000,
+  "duration": "1d",
+  "estimated_cost_per_refill_trx": "0.500000"
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `view` |
+| `422` | — | `add_volume` отсутствует или вне диапазона 350 – 100 000, либо `duration` — не `1h` и не `1d` |
+| `503` | `TEMPORARILY_UNAVAILABLE` | Цену сейчас не удалось получить — повторите запрос, подождав столько секунд, сколько указано в `Retry-After` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "message": "Please retry shortly"
+    }
+  }
+}
+```
+
+Ошибка валидации приходит в формате фреймворка, где `detail` — массив:
+
+```json
+{
+  "detail": [
+    {
+      "type": "literal_error",
+      "loc": ["query", "duration"],
+      "msg": "Input should be '1h' or '1d'",
+      "input": "2h",
+      "ctx": {"expected": "'1h' or '1d'"}
+    }
+  ]
+}
+```

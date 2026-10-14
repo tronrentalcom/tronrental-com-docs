@@ -26,6 +26,10 @@ Returns a paginated list of your orders, newest first.
   Filter by order type — `energy` or `bandwidth`
 </ParamField>
 
+<ParamField query="source" type="string">
+  Only `autorefill` is accepted: returns just the orders made by your [Auto Refill](/api-reference/auto-refill/overview) rules. Any other value returns `422`. Omit it to get all orders.
+</ParamField>
+
 <ParamField query="from" type="string">
   First day of the period, `YYYY-MM-DD`, inclusive. Omit both dates for the full list.
 </ParamField>

@@ -81,6 +81,22 @@
                 ]
               },
               {
+                "group": "Auto Refill",
+                "pages": [
+                  "api-reference/auto-refill/overview",
+                  "api-reference/auto-refill/quote-energy-refill",
+                  "api-reference/auto-refill/create-energy-rule",
+                  "api-reference/auto-refill/list-energy-rules",
+                  "api-reference/auto-refill/update-energy-rule",
+                  "api-reference/auto-refill/delete-energy-rule",
+                  "api-reference/auto-refill/quote-bandwidth-refill",
+                  "api-reference/auto-refill/create-bandwidth-rule",
+                  "api-reference/auto-refill/list-bandwidth-rules",
+                  "api-reference/auto-refill/update-bandwidth-rule",
+                  "api-reference/auto-refill/delete-bandwidth-rule"
+                ]
+              },
+              {
                 "group": "Orders",
                 "pages": [
                   "api-reference/orders/get-order",
@@ -193,6 +209,22 @@
                   "ru/api-reference/bandwidth-rentals/create-rental",
                   "ru/api-reference/bandwidth-rentals/list-rentals",
                   "ru/api-reference/bandwidth-rentals/cancel-rental"
+                ]
+              },
+              {
+                "group": "Автопополнение",
+                "pages": [
+                  "ru/api-reference/auto-refill/overview",
+                  "ru/api-reference/auto-refill/quote-energy-refill",
+                  "ru/api-reference/auto-refill/create-energy-rule",
+                  "ru/api-reference/auto-refill/list-energy-rules",
+                  "ru/api-reference/auto-refill/update-energy-rule",
+                  "ru/api-reference/auto-refill/delete-energy-rule",
+                  "ru/api-reference/auto-refill/quote-bandwidth-refill",
+                  "ru/api-reference/auto-refill/create-bandwidth-rule",
+                  "ru/api-reference/auto-refill/list-bandwidth-rules",
+                  "ru/api-reference/auto-refill/update-bandwidth-rule",
+                  "ru/api-reference/auto-refill/delete-bandwidth-rule"
                 ]
               },
               {
@@ -310,6 +342,22 @@
                 ]
               },
               {
+                "group": "自动补充",
+                "pages": [
+                  "zh/api-reference/auto-refill/overview",
+                  "zh/api-reference/auto-refill/quote-energy-refill",
+                  "zh/api-reference/auto-refill/create-energy-rule",
+                  "zh/api-reference/auto-refill/list-energy-rules",
+                  "zh/api-reference/auto-refill/update-energy-rule",
+                  "zh/api-reference/auto-refill/delete-energy-rule",
+                  "zh/api-reference/auto-refill/quote-bandwidth-refill",
+                  "zh/api-reference/auto-refill/create-bandwidth-rule",
+                  "zh/api-reference/auto-refill/list-bandwidth-rules",
+                  "zh/api-reference/auto-refill/update-bandwidth-rule",
+                  "zh/api-reference/auto-refill/delete-bandwidth-rule"
+                ]
+              },
+              {
                 "group": "订单",
                 "pages": [
                   "zh/api-reference/orders/get-order",
@@ -421,6 +469,22 @@
                   "es/api-reference/bandwidth-rentals/create-rental",
                   "es/api-reference/bandwidth-rentals/list-rentals",
                   "es/api-reference/bandwidth-rentals/cancel-rental"
+                ]
+              },
+              {
+                "group": "Recarga automática",
+                "pages": [
+                  "es/api-reference/auto-refill/overview",
+                  "es/api-reference/auto-refill/quote-energy-refill",
+                  "es/api-reference/auto-refill/create-energy-rule",
+                  "es/api-reference/auto-refill/list-energy-rules",
+                  "es/api-reference/auto-refill/update-energy-rule",
+                  "es/api-reference/auto-refill/delete-energy-rule",
+                  "es/api-reference/auto-refill/quote-bandwidth-refill",
+                  "es/api-reference/auto-refill/create-bandwidth-rule",
+                  "es/api-reference/auto-refill/list-bandwidth-rules",
+                  "es/api-reference/auto-refill/update-bandwidth-rule",
+                  "es/api-reference/auto-refill/delete-bandwidth-rule"
                 ]
               },
               {
@@ -538,6 +602,22 @@
                 ]
               },
               {
+                "group": "Otomatik Dolum",
+                "pages": [
+                  "tr/api-reference/auto-refill/overview",
+                  "tr/api-reference/auto-refill/quote-energy-refill",
+                  "tr/api-reference/auto-refill/create-energy-rule",
+                  "tr/api-reference/auto-refill/list-energy-rules",
+                  "tr/api-reference/auto-refill/update-energy-rule",
+                  "tr/api-reference/auto-refill/delete-energy-rule",
+                  "tr/api-reference/auto-refill/quote-bandwidth-refill",
+                  "tr/api-reference/auto-refill/create-bandwidth-rule",
+                  "tr/api-reference/auto-refill/list-bandwidth-rules",
+                  "tr/api-reference/auto-refill/update-bandwidth-rule",
+                  "tr/api-reference/auto-refill/delete-bandwidth-rule"
+                ]
+              },
+              {
                 "group": "Siparişler",
                 "pages": [
                   "tr/api-reference/orders/get-order",
@@ -652,6 +732,22 @@
                 ]
               },
               {
+                "group": "Recarga automática",
+                "pages": [
+                  "pt/api-reference/auto-refill/overview",
+                  "pt/api-reference/auto-refill/quote-energy-refill",
+                  "pt/api-reference/auto-refill/create-energy-rule",
+                  "pt/api-reference/auto-refill/list-energy-rules",
+                  "pt/api-reference/auto-refill/update-energy-rule",
+                  "pt/api-reference/auto-refill/delete-energy-rule",
+                  "pt/api-reference/auto-refill/quote-bandwidth-refill",
+                  "pt/api-reference/auto-refill/create-bandwidth-rule",
+                  "pt/api-reference/auto-refill/list-bandwidth-rules",
+                  "pt/api-reference/auto-refill/update-bandwidth-rule",
+                  "pt/api-reference/auto-refill/delete-bandwidth-rule"
+                ]
+              },
+              {
                 "group": "Pedidos",
                 "pages": [
                   "pt/api-reference/orders/get-order",
@@ -763,6 +859,22 @@
                   "hi/api-reference/bandwidth-rentals/create-rental",
                   "hi/api-reference/bandwidth-rentals/list-rentals",
                   "hi/api-reference/bandwidth-rentals/cancel-rental"
+                ]
+              },
+              {
+                "group": "ऑटो रिफिल",
+                "pages": [
+                  "hi/api-reference/auto-refill/overview",
+                  "hi/api-reference/auto-refill/quote-energy-refill",
+                  "hi/api-reference/auto-refill/create-energy-rule",
+                  "hi/api-reference/auto-refill/list-energy-rules",
+                  "hi/api-reference/auto-refill/update-energy-rule",
+                  "hi/api-reference/auto-refill/delete-energy-rule",
+                  "hi/api-reference/auto-refill/quote-bandwidth-refill",
+                  "hi/api-reference/auto-refill/create-bandwidth-rule",
+                  "hi/api-reference/auto-refill/list-bandwidth-rules",
+                  "hi/api-reference/auto-refill/update-bandwidth-rule",
+                  "hi/api-reference/auto-refill/delete-bandwidth-rule"
                 ]
               },
               {

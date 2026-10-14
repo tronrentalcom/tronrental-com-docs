@@ -1,0 +1,117 @@
+---
+title: Bant Genişliği Kuralını Güncelle
+api: PATCH /api/v1/bandwidth/auto-refill/{rule_id}
+description: "Bir bant genişliği Otomatik Dolum kuralını değiştirin, duraklatın veya devam ettirin"
+---
+
+## Bant Genişliği Kuralını Güncelle
+
+Bir kuralın eşiğini, miktarını, süresini veya etiketini değiştirir ya da kuralı duraklatır ve devam ettirir. Yalnızca değiştirmek istediğiniz alanları gönderin; diğerleri olduğu gibi kalır. Değişiklikler bir sonraki kontrolden itibaren geçerli olur. `buy_bandwidth` kapsamını gerektirir.
+
+Bir kuralın adresi değiştirilemez. Bir kuralı başka bir adrese taşımak için onu silin ve yeni bir kural oluşturun.
+
+### Yol parametreleri
+
+<ParamField path="rule_id" type="number" required>
+  Kural kimliği — Bant Genişliği Kuralı Oluştur veya Bant Genişliği Kurallarını Listele yanıtındaki `id`
+</ParamField>
+
+### İstek gövdesi
+
+<ParamField body="threshold_bandwidth" type="number">
+  Yeni eşik. 1 ile 1.000.000 arasında.
+</ParamField>
+
+<ParamField body="add_volume" type="number">
+  Dolum başına yeni bant genişliği miktarı. 350 ile 100.000 arasında.
+</ParamField>
+
+<ParamField body="duration" type="string">
+  Sonraki dolumlar için yeni kiralama süresi: `"1h"` veya `"1d"`. Zaten satın alınmış kiralamalar kendi sürelerini korur.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Yeni etiket, en fazla 100 karakter. Boş bir dize etiketi kaldırır.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Kuralı duraklatmak için `"paused"`, devam ettirmek için `"active"`. Devam ettirmek ayrıca `stopped_reason` alanını temizler ve `consecutive_failures` değerini 0'a sıfırlar. Bakiye nedeniyle durdurulmuş bir kural para yatırıldıktan sonra kendiliğinden devam eder, bu yüzden bunu sizin yapmanız gerekmez; bakiye hâlâ yetersizken devam ettirirseniz kural bir sonraki kontrolde yeniden durur. `stopped_insufficient_balance` doğrudan ayarlanamaz.
+</ParamField>
+
+### Yanıt
+
+Güncellenmiş kural; alanları [Bant Genişliği Kurallarını Listele](/api-reference/auto-refill/list-bandwidth-rules) ile aynıdır.
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto-refill/15 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"duration": "1d"}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill/15",
+    headers={"X-API-Key": "your_api_key"},
+    json={"duration": "1d"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill/15", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ duration: "1d" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1d",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": "2026-10-14T09:41:02Z",
+  "last_available_bandwidth": 3655,
+  "last_read_error_at": null,
+  "last_refill_at": "2026-10-14T09:12:30Z",
+  "refill_count": 4,
+  "total_spent_trx": "1.480000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.500000",
+  "volume_below_threshold": false
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
+| `404` | `NOT_FOUND` | Hesabınızda bu kimliğe sahip bir bant genişliği kuralı yok (veya kural silinmiş) |
+| `409` | `AUTOREFILL_IN_PROGRESS` | Bu kural için şu anda bir dolum satın alınıyor — bir dakika sonra yeniden deneyin |
+| `422` | — | Bir değer aralık dışında, `duration` değeri `"1h"` veya `"1d"` değil ya da `status` değeri `"active"` veya `"paused"` değil |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_IN_PROGRESS",
+      "message": "A refill is in progress for this rule; try again in a minute"
+    }
+  }
+}
+```

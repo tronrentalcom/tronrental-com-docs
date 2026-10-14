@@ -1,0 +1,166 @@
+---
+title: 创建带宽规则
+api: POST /api/v1/bandwidth/auto-refill
+description: "每当地址的带宽低于阈值时为其补充带宽"
+---
+
+## 创建带宽规则
+
+为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用带宽低于 `threshold_bandwidth`，我们就会按所选的 `duration` 购买 `add_volume` 带宽，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/api-reference/auto-refill/overview)。
+
+该请求只创建规则——本身不会购买任何东西。需要 `buy_bandwidth` 权限。如需先查看一次补充的价格，请使用[带宽补充报价](/api-reference/auto-refill/quote-bandwidth-refill)。
+
+<Info>
+可用带宽计入地址可用于支付交易的**全部**带宽：每天免费的 600，加上任何质押或委托的带宽。阈值为 600 或更低时，在地址用完免费额度之前，仅凭免费额度就已达到阈值。
+</Info>
+
+### 请求体
+
+<ParamField body="target_address" type="string" required>
+  需要持续供给的 TRON 地址（T... 格式，34 个字符）。不接受合约地址。
+</ParamField>
+
+<ParamField body="threshold_bandwidth" type="number" required>
+  当地址的可用带宽低于此值时购买。范围 1 至 1,000,000。
+</ParamField>
+
+<ParamField body="add_volume" type="number" required>
+  每次补充购买的带宽。范围 350 至 100,000。请让它不低于 `threshold_bandwidth`——参见[概述中的警告](/api-reference/auto-refill/overview#choosing-the-numbers)。
+</ParamField>
+
+<ParamField body="duration" type="string" default="1h">
+  每次补充的租赁时长：`"1h"` 或 `"1d"`。
+</ParamField>
+
+<ParamField body="label" type="string">
+  您为规则起的名称，最多 100 个字符。可选。
+</ParamField>
+
+### 响应
+
+新建的规则——字段与[列出带宽规则](/api-reference/auto-refill/list-bandwidth-rules)中的相同——另加两个反映地址当前状态的字段：
+
+<ResponseField name="current_bandwidth" type="number | null">
+  创建规则时该地址的可用带宽，包括免费带宽。无法读取时为 `null`；无论如何规则都会创建。
+</ResponseField>
+
+<ResponseField name="will_refill_now" type="boolean">
+  如果 `current_bandwidth` 已低于阈值，则为 `true`，下一次检查（通常在一分钟之内）就会购买。如果地址资源充足，或无法读取其可用量，则为 `false`。
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto-refill \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "threshold_bandwidth": 1000,
+    "add_volume": 5000,
+    "duration": "1h",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto-refill",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "target_address": "TYourRecipientAddress1234567890abc",
+        "threshold_bandwidth": 1000,
+        "add_volume": 5000,
+        "duration": "1h",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto-refill", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    target_address: "TYourRecipientAddress1234567890abc",
+    threshold_bandwidth: 1000,
+    add_volume: 5000,
+    duration: "1h",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 15,
+  "target_address": "TYourRecipientAddress1234567890abc",
+  "label": "Payouts",
+  "threshold_bandwidth": 1000,
+  "add_volume": 5000,
+  "duration": "1h",
+  "status": "active",
+  "stopped_reason": null,
+  "consecutive_failures": 0,
+  "last_checked_at": null,
+  "last_available_bandwidth": null,
+  "last_read_error_at": null,
+  "last_refill_at": null,
+  "refill_count": 0,
+  "total_spent_trx": "0.000000",
+  "created_at": "2026-10-14T08:15:00Z",
+  "estimated_cost_per_refill_trx": "0.370000",
+  "volume_below_threshold": false,
+  "current_bandwidth": 600,
+  "will_refill_now": true
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `target_address` 不是有效的 TRON 地址 |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` 是智能合约 |
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
+| `409` | `AUTOREFILL_ADDRESS_TAKEN` | 您的账户已有该地址的带宽规则——请改为编辑它 |
+| `409` | `AUTOREFILL_LIMIT_REACHED` | 您的账户已有 20 条带宽规则；该上限也在 `error.limit` 中给出 |
+| `422` | — | 缺少字段或字段超出范围，或 `duration` 不是 `"1h"` 或 `"1d"` |
+| `429` | `RATE_LIMIT_EXCEEDED` | 一分钟内的创建请求超过 10 次 |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_ADDRESS_TAKEN",
+      "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+校验错误采用框架自身的格式，其中 `detail` 是数组：
+
+```json
+{
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["body", "add_volume"],
+      "msg": "Input should be greater than or equal to 350",
+      "input": 100,
+      "ctx": {"ge": 350}
+    }
+  ]
+}
+```
+
+<Tip>
+超时后重试创建请求是安全的。如果第一次请求已经成功，重试会返回 `409 AUTOREFILL_ADDRESS_TAKEN`，而不会创建第二条规则；[列出您的规则](/api-reference/auto-refill/list-bandwidth-rules)即可获取其 `id`。
+</Tip>

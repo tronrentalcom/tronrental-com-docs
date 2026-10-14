@@ -42,6 +42,8 @@ halved for the next ten minutes; three more such minutes block it entirely for t
 |---|---|---|
 | `POST /api/v1/invoices` | 10 requests/minute | IP address |
 | `POST /api/v1/account/withdrawal` | 1 request/minute | account |
+| `POST /api/v1/energy/auto-refill` | 10 requests/minute | account |
+| `POST /api/v1/bandwidth/auto-refill` | 10 requests/minute | account |
 
 Note that `POST /api/v1/invoices` is counted per **IP address**, not per account: if several of your
 clients send requests from the same egress IP, they share one budget of 10 per minute.
