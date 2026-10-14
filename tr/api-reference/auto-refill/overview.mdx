@@ -60,7 +60,7 @@ Günlük harcama sınırı yoktur: seviye eşiğin altında olduğu ve bakiyeniz
 
 ### Siparişler ve webhook'lar
 
-Her dolum, sipariş geçmişinizde ([Siparişleri Listele](/api-reference/orders/list-orders)) `source: "autorefill"` ile görünür.
+Her dolum, sipariş geçmişinizde ([Siparişleri Listele](/api-reference/orders/list-orders)) `source: "autorefill"` ile görünür. Yalnızca dolum siparişlerini listelemek için `GET /orders?source=autorefill` çağırın; bunları dosya olarak dışa aktarmak için `autorefill` [raporunu](/api-reference/account/reports) kullanın.
 
 API anahtarıyla oluşturulan kurallar, dolum siparişleri için API üzerinden verdiğiniz siparişlerde olduğu gibi [`order.updated` webhook'ları](/api-reference/webhooks/overview) gönderir. API anahtarı olmadan oluşturulan kurallar göndermez.
 

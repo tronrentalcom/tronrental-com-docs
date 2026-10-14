@@ -60,7 +60,7 @@ There is no daily spending cap: a rule buys whenever the level is below its thre
 
 ### Orders and webhooks
 
-Every refill appears in your order history ([List Orders](/api-reference/orders/list-orders)) with `source: "autorefill"`.
+Every refill appears in your order history ([List Orders](/api-reference/orders/list-orders)) with `source: "autorefill"`. To list only refill orders, call `GET /orders?source=autorefill`; to export them as a file, use the `autorefill` [report](/api-reference/account/reports).
 
 Rules created with an API key send [`order.updated` webhooks](/api-reference/webhooks/overview) for their refill orders, the same as orders you place through the API. Rules created without an API key do not.
 

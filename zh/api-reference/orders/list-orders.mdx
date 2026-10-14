@@ -26,6 +26,10 @@ description: "分页和筛选列出您的订单"
   按订单类型筛选 —— `energy` 或 `bandwidth`
 </ParamField>
 
+<ParamField query="source" type="string">
+  只接受 `autorefill`：仅返回由您的[自动补充](/api-reference/auto-refill/overview)规则产生的订单。其他任何值都会返回 `422`。不传则返回全部订单。
+</ParamField>
+
 <ParamField query="from" type="string">
   周期的第一天，`YYYY-MM-DD`，含当天。两个日期都不传则返回完整列表。
 </ParamField>

@@ -60,7 +60,7 @@ API कुंजी से बनाए गए नियम की कीमत 
 
 ### ऑर्डर और वेबहुक
 
-हर रिफिल आपके ऑर्डर इतिहास ([ऑर्डर सूची](/api-reference/orders/list-orders)) में `source: "autorefill"` के साथ दिखता है।
+हर रिफिल आपके ऑर्डर इतिहास ([ऑर्डर सूची](/api-reference/orders/list-orders)) में `source: "autorefill"` के साथ दिखता है। केवल रिफिल ऑर्डर की सूची पाने के लिए `GET /orders?source=autorefill` कॉल करें; उन्हें फ़ाइल के रूप में एक्सपोर्ट करने के लिए `autorefill` [रिपोर्ट](/api-reference/account/reports) का उपयोग करें।
 
 API कुंजी से बनाए गए नियम अपने रिफिल ऑर्डर के लिए [`order.updated` वेबहुक](/api-reference/webhooks/overview) भेजते हैं, ठीक वैसे ही जैसे API से दिए गए ऑर्डर के लिए। API कुंजी के बिना बनाए गए नियम ये नहीं भेजते।
 

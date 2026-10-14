@@ -30,6 +30,7 @@ it (`tronrental_purchases_2026-08-01_2026-08-31.xlsx`).
 | `purchases` | Energy and bandwidth orders together |
 | `energy` | Energy orders only |
 | `bandwidth` | Bandwidth orders only |
+| `autorefill` | Orders made by [Auto Refill](/api-reference/auto-refill/overview) rules — the same orders as `GET /orders?source=autorefill` |
 | `invoices` | InstantBuy invoices (paid by transfer, not from balance) |
 | `activations` | Address activations |
 | `deposits` | Incoming deposits — requires the `deposit_view` scope |
@@ -58,8 +59,8 @@ it (`tronrental_purchases_2026-08-01_2026-08-31.xlsx`).
 
 ### Sections
 
-A report can hold more than one table. `purchases`, `energy` and `bandwidth`
-carry the address activations they paid for as a second table; `everything`
+A report can hold more than one table. `purchases`, `energy`, `bandwidth` and
+`autorefill` carry the address activations they paid for as a second table; `everything`
 carries four. In XLSX each section is its own sheet; in PDF they follow one
 after another, each starting a new page.
 

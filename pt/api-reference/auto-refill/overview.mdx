@@ -60,7 +60,7 @@ Não há teto de gasto diário: uma regra compra sempre que o nível está abaix
 
 ### Pedidos e webhooks
 
-Toda recarga aparece no seu histórico de pedidos ([Listar pedidos](/api-reference/orders/list-orders)) com `source: "autorefill"`.
+Toda recarga aparece no seu histórico de pedidos ([Listar pedidos](/api-reference/orders/list-orders)) com `source: "autorefill"`. Para listar apenas os pedidos de recarga, chame `GET /orders?source=autorefill`; para exportá-los como arquivo, use o [relatório](/api-reference/account/reports) `autorefill`.
 
 As regras criadas com uma chave de API enviam [webhooks `order.updated`](/api-reference/webhooks/overview) para os seus pedidos de recarga, assim como os pedidos que você faz pela API. As regras criadas sem chave de API não enviam.
 

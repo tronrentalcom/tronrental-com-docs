@@ -60,7 +60,7 @@ description: "Энергия или bandwidth на адресе не опуск�
 
 ### Заказы и вебхуки
 
-Каждое пополнение появляется в истории заказов ([Список заказов](/api-reference/orders/list-orders)) с `source: "autorefill"`.
+Каждое пополнение появляется в истории заказов ([Список заказов](/api-reference/orders/list-orders)) с `source: "autorefill"`. Чтобы получить только заказы пополнения, вызовите `GET /orders?source=autorefill`; чтобы выгрузить их файлом, используйте [отчёт](/api-reference/account/reports) `autorefill`.
 
 Правила, созданные с API-ключом, отправляют [вебхуки `order.updated`](/api-reference/webhooks/overview) по своим заказам пополнения — так же, как заказы, оформленные через API. Правила, созданные без API-ключа, их не отправляют.
 

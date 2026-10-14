@@ -60,7 +60,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 
 ### 订单与 Webhook
 
-每次补充都会出现在您的订单历史中（[订单列表](/api-reference/orders/list-orders)），并带有 `source: "autorefill"`。
+每次补充都会出现在您的订单历史中（[订单列表](/api-reference/orders/list-orders)），并带有 `source: "autorefill"`。如只需列出补充订单，请调用 `GET /orders?source=autorefill`；如需将其导出为文件，请使用 `autorefill` [报表](/api-reference/account/reports)。
 
 通过 API 密钥创建的规则会为其补充订单发送 [`order.updated` Webhook](/api-reference/webhooks/overview)，与您通过 API 下的订单相同。未使用 API 密钥创建的规则不会发送。
 

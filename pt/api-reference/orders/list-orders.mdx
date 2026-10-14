@@ -26,6 +26,10 @@ Retorna uma lista paginada dos seus pedidos, os mais recentes primeiro.
   Filtrar por tipo de pedido — `energy` ou `bandwidth`
 </ParamField>
 
+<ParamField query="source" type="string">
+  Apenas `autorefill` é aceito: retorna somente os pedidos feitos pelas suas regras de [Recarga automática](/api-reference/auto-refill/overview). Qualquer outro valor retorna `422`. Omita-o para obter todos os pedidos.
+</ParamField>
+
 <ParamField query="from" type="string">
   Primeiro dia do período, `YYYY-MM-DD`, inclusive. Sem nenhuma das duas datas, a lista completa.
 </ParamField>

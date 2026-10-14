@@ -26,6 +26,10 @@ Devuelve una lista paginada de tus órdenes, las más recientes primero.
   Filtrar por tipo de orden — `energy` o `bandwidth`
 </ParamField>
 
+<ParamField query="source" type="string">
+  Solo se acepta `autorefill`: devuelve únicamente las órdenes creadas por tus reglas de [Recarga automática](/api-reference/auto-refill/overview). Cualquier otro valor devuelve `422`. Omítelo para obtener todas las órdenes.
+</ParamField>
+
 <ParamField query="from" type="string">
   Primer día del período, `YYYY-MM-DD`, inclusive. Sin ninguna de las dos fechas, la lista completa.
 </ParamField>

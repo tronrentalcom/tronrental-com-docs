@@ -26,6 +26,10 @@ description: "Список ваших заказов с пагинацией и 
   Фильтр по типу заказа — `energy` или `bandwidth`
 </ParamField>
 
+<ParamField query="source" type="string">
+  Принимается только `autorefill`: возвращает лишь заказы, созданные вашими правилами [автопополнения](/api-reference/auto-refill/overview). Любое другое значение вернёт `422`. Без параметра возвращаются все заказы.
+</ParamField>
+
 <ParamField query="from" type="string">
   Первый день периода, `YYYY-MM-DD`, включительно. Без обеих дат — весь список.
 </ParamField>

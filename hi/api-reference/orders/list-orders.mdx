@@ -26,6 +26,10 @@ description: "पेजिनेशन और फ़िल्टर के स�
   ऑर्डर प्रकार के अनुसार फ़िल्टर करें — `energy` या `bandwidth`
 </ParamField>
 
+<ParamField query="source" type="string">
+  केवल `autorefill` स्वीकार किया जाता है: सिर्फ़ वे ऑर्डर लौटाता है जो आपके [ऑटो रिफिल](/api-reference/auto-refill/overview) नियमों ने किए हैं। कोई अन्य मान `422` लौटाता है। सभी ऑर्डर पाने के लिए इसे न भेजें।
+</ParamField>
+
 <ParamField query="from" type="string">
   अवधि का पहला दिन, `YYYY-MM-DD`, सहित। दोनों तिथियाँ न देने पर पूरी सूची।
 </ParamField>
