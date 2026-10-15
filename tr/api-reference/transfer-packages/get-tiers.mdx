@@ -23,7 +23,7 @@ Mevcut onceden ayarlanmis paket boyutlarini, fiyatlandirmayi ve sinirlari dondur
 </ResponseField>
 
 <ResponseField name="min_custom_size" type="number">
-  Minimum ozel paket boyutu (1)
+  Minimum ozel paket boyutu (2). Tek transfer icin `single_transfer: true` kullanin
 </ResponseField>
 
 <ResponseField name="max_custom_size" type="number">
@@ -40,13 +40,15 @@ curl https://api.tronrental.com/v1/transfer-packages/tiers \
 ```json Response
 {
   "tiers": [
-    { "size": 100, "price_trx": "270.00" },
-    { "size": 500, "price_trx": "1350.00" },
-    { "size": 1000, "price_trx": "2700.00" }
+    { "size": 100, "price_per_transfer": "2.7", "total_price": "270.0", "bw_fee_per_transfer": "0.3" },
+    { "size": 500, "price_per_transfer": "2.7", "total_price": "1350.0", "bw_fee_per_transfer": "0.3" },
+    { "size": 1000, "price_per_transfer": "2.7", "total_price": "2700.0", "bw_fee_per_transfer": "0.3" },
+    { "size": 5000, "price_per_transfer": "2.7", "total_price": "13500.0", "bw_fee_per_transfer": "0.3" },
+    { "size": 10000, "price_per_transfer": "2.7", "total_price": "27000.0", "bw_fee_per_transfer": "0.3" }
   ],
-  "single_transfer_price": "2.70",
-  "bw_fee_per_transfer": "0.30",
-  "min_custom_size": 1,
+  "single_transfer_price": "3",
+  "bw_fee_per_transfer": "0.3",
+  "min_custom_size": 2,
   "max_custom_size": 10000
 }
 ```

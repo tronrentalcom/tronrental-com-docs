@@ -14,8 +14,12 @@ Compra un paquete de transferencias usando el saldo de tu cuenta.
   Direccion TRON a monitorear
 </ParamField>
 
-<ParamField body="package_size" type="number" required>
-  Numero de transferencias (1 – 10,000)
+<ParamField body="package_size" type="number">
+  Numero de transferencias del paquete (2 – 10,000). Obligatorio salvo que `single_transfer` sea `true`. `package_size: 1` se rechaza con `422`: para comprar una sola transferencia, envia `single_transfer: true`.
+</ParamField>
+
+<ParamField body="single_transfer" type="boolean" default="false">
+  Comprar una sola transferencia en lugar de un paquete; `package_size` se ignora. Precio: `single_transfer_price` de [Obtener niveles](/api-reference/transfer-packages/get-tiers) (con Garantia de BW se suma `bw_fee_per_transfer`).
 </ParamField>
 
 <ParamField body="bw_guarantee" type="boolean" default="true">
@@ -24,7 +28,7 @@ Compra un paquete de transferencias usando el saldo de tu cuenta.
 
 ### Respuesta
 
-Devuelve el objeto del paquete creado con `id`, `address`, `remaining_transfers`, `status` y `price_trx`.
+Devuelve `package_id`, `status`, `total_price_trx`, `activation_cost_trx` (TRX para activar la direccion si aun no estaba activada; si no, `0`) y `total_charged_trx`.
 
 ### Ejemplo
 
@@ -41,14 +45,11 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
 
 ```json Response
 {
-  "id": 101,
-  "address": "TYourAddress...",
-  "total_transfers": 500,
-  "remaining_transfers": 500,
-  "bw_guarantee": true,
-  "price_trx": "1350.00",
+  "package_id": 101,
   "status": "active",
-  "created_at": "2026-03-05T12:00:00Z"
+  "total_price_trx": "1500.0",
+  "activation_cost_trx": "0",
+  "total_charged_trx": "1500.0"
 }
 ```
 
