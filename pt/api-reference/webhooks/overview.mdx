@@ -9,12 +9,16 @@ Sua conta tem **uma única URL de webhook**, e todos os eventos vão para ela. D
 
 ### Eventos
 
-Hoje existem dois eventos.
+Hoje existem seis eventos.
 
 | Evento | Quando é enviado |
 |-------|-----------|
 | `order.updated` | Um pedido de energia ou de bandwidth muda de estado — **somente para pedidos criados pela API** |
 | `subscription.transfer` | O Smart Mode pagou por uma transferência de um endereço monitorado |
+| `package.transfer` | Um Transfer Package pagou por uma transferência do seu endereço |
+| `package.completed` | Um Transfer Package deixou de cobrir transferências |
+| `package.activated` | Um Transfer Package foi ativado |
+| `package.expired` | A fatura não paga de um Transfer Package expirou |
 
 <Warning>
   `order.updated` é enviado apenas para pedidos criados com uma chave de API. Compras feitas no site ou pelo bot do Telegram não geram webhook, embora a mesma conta receba normalmente os eventos do Smart Mode.
@@ -173,13 +177,150 @@ Internamente dividimos pedidos grandes em partes, mas isso é problema nosso: vo
 }
 ```
 
+### Eventos de Transfer Package
+
+Os quatro eventos `package.*` vão para a conta **dona do pacote**. Um pacote comprado por fatura sem login nem chave de API não tem dono e não gera eventos. Faturas canceladas, compras recusadas e compras em revisão manual também não geram eventos; um pacote em revisão envia `package.activated` quando for ativado.
+
+Todo evento `package.*` traz estes campos em `data`:
+
+<ResponseField name="package_id" type="number">
+  ID do pacote — o `id` em [Listar Pacotes](/api-reference/transfer-packages/list).
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  O endereço que o pacote atende.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status do pacote após o evento: `active` ou `completed` em `package.transfer`, `completed` em `package.completed`, `active` em `package.activated`, `expired` em `package.expired`.
+</ResponseField>
+
+<ResponseField name="quota_total" type="number">
+  Transferências com que o pacote foi comprado.
+</ResponseField>
+
+<ResponseField name="remaining" type="number">
+  Transferências que restam neste pacote após a mudança informada pelo evento — um número absoluto, não uma diferença.
+</ResponseField>
+
+<Warning>
+  **Os eventos podem chegar fora de ordem.** Cada um é entregue separadamente, com novas tentativas por cerca de 35 segundos, então o `package.completed` causado por uma transferência pode chegar antes do `package.transfer` dessa transferência, e um `package.transfer` pode chegar antes de `package.activated`. Para cada `package_id`, guarde o **menor** `remaining` que já viu: ele nunca aumenta. `completed` e `expired` são definitivos.
+</Warning>
+
+<Note>
+  `remaining` também pode diminuir sem evento. Um pacote de várias transferências consome uma transferência por dia como assinatura diária — a primeira na ativação, por isso um pacote de 500 transferências começa com `remaining: 499` — e essa cobrança não é anunciada. Trate `remaining` como uma indicação e [Listar Pacotes](/api-reference/transfer-packages/list) como a fonte da verdade.
+</Note>
+
+Para reconhecer uma nova tentativa, use `(package_id, tx_hash)` em `package.transfer` e `(event, package_id)` nos demais: a nova tentativa traz o mesmo corpo, o mesmo `timestamp` e a mesma assinatura.
+
+#### `package.transfer`
+
+Uma transferência do endereço foi paga com um pacote. Enviado uma vez **por pacote** cobrado pela transferência — quase sempre um evento por transferência; uma transferência que usou a última transferência de um pacote e continuou no seguinte gera um evento para cada um.
+
+<ResponseField name="tx_hash" type="string">
+  A transação da transferência na blockchain.
+</ResponseField>
+
+<ResponseField name="units" type="number">
+  Transferências descontadas **deste** pacote nesta transação. Uma transferência para um endereço sem USDT precisa do dobro de energia e conta como `2`, que podem ser divididas entre dois pacotes.
+</ResponseField>
+
+Aqui `status` é `completed` quando esta transferência esgotou o pacote.
+
+```json Response
+{
+  "event": "package.transfer",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 312,
+    "tx_hash": "9f8e7d6c5b4a...",
+    "units": 1
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.completed`
+
+O pacote deixou de cobrir transferências.
+
+<ResponseField name="reason" type="string">
+  `transfer` — uma transferência esgotou o pacote; `subscription` — a cobrança diária o esgotou; `manual` — o suporte encerrou o pacote. Depois de `manual`, `remaining` pode ser maior que zero, mas essas transferências não podem mais ser usadas.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  Com `reason: "transfer"`, a transferência que encerrou o pacote; `null` nos demais casos.
+</ResponseField>
+
+Um pacote sem saldo — por exemplo, um pacote comum de uma transferência cuja primeira cobrança diária levou sua única transferência — é encerrado pela transferência seguinte sem um `package.transfer` próprio: você recebe apenas `package.completed` com o `tx_hash` dessa transferência.
+
+```json Response
+{
+  "event": "package.completed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "quota_total": 500,
+    "remaining": 0,
+    "reason": "transfer",
+    "tx_hash": "9f8e7d6c5b4a..."
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.activated`
+
+O pacote foi ativado e a partir de agora suas transferências recebem energia. Enviado a cada ativação — inclusive em uma compra com saldo, cuja resposta já diz `active`, e no pagamento de uma fatura, que ativa o pacote pouco depois de o pagamento aparecer na blockchain.
+
+<ResponseField name="payment_method" type="string">
+  Como o pacote foi pago: exatamente `balance`, `TRX` ou `USDT`.
+</ResponseField>
+
+```json Response
+{
+  "event": "package.activated",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 499,
+    "payment_method": "USDT"
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.expired`
+
+A fatura de um pacote não foi paga dentro do prazo de 30 minutos. Nada foi cobrado; compre novamente para obter uma nova fatura. Sem campos extras; `remaining` é igual a `quota_total` e não pode ser usado.
+
+```json Response
+{
+  "event": "package.expired",
+  "data": {
+    "package_id": 319,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "expired",
+    "quota_total": 500,
+    "remaining": 500
+  },
+  "timestamp": "2026-10-15T15:21:16.986341+00:00"
+}
+```
+
 ### Entrega
 
 - Até **3 tentativas**, com pausas de **1 segundo** e depois **4 segundos** entre elas. Não há pausa após um sucesso nem após a última tentativa.
 - Tempo limite de **10 segundos** por tentativa.
 - Esperamos qualquer **`2xx`**. Qualquer outra coisa conta como tentativa falha.
 - **Redirecionamentos não são seguidos.** Um `301`/`302` é uma tentativa falha, não um salto.
-- Eventos perdidos **não** são reenviados depois. Se as três tentativas falharem, aquele evento se perdeu; reconcilie com [Consultar pedido](/api-reference/orders/get-order) em vez de esperar uma repetição.
+- Eventos perdidos **não** são reenviados depois. Se as três tentativas falharem, aquele evento se perdeu; reconcilie com [Consultar pedido](/api-reference/orders/get-order) ou [Listar Pacotes](/api-reference/transfer-packages/list) em vez de esperar uma repetição.
 
 Sua URL precisa resolver para um endereço **público**. Faixas de loopback, privadas e link-local são recusadas, assim como um host que não resolve — em ambos os casos nada é enviado e nenhuma linha de registro é escrita.
 

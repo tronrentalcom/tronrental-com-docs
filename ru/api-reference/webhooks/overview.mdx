@@ -9,12 +9,16 @@ description: "Получайте уведомления о событиях ак
 
 ### События
 
-Сегодня существует два события.
+Сегодня существует шесть событий.
 
 | Событие | Когда отправляется |
 |-------|-----------|
 | `order.updated` | Заказ энергии или bandwidth сменил состояние — **только для заказов, созданных через API** |
 | `subscription.transfer` | Smart Mode оплатил перевод с отслеживаемого адреса |
+| `package.transfer` | Transfer Package оплатил перевод со своего адреса |
+| `package.completed` | Transfer Package перестал обслуживать переводы |
+| `package.activated` | Transfer Package стал активным |
+| `package.expired` | Истёк неоплаченный инвойс Transfer Package |
 
 <Warning>
   `order.updated` отправляется только для заказов, созданных с API-ключом. Покупки на сайте и через Telegram-бота вебхук не порождают — при том что события Smart Mode тот же аккаунт получает как обычно.
@@ -173,13 +177,150 @@ description: "Получайте уведомления о событиях ак
 }
 ```
 
+### События Transfer Package
+
+Четыре события `package.*` уходят аккаунту, которому **принадлежит пакет**. У пакета, купленного по инвойсу без входа в аккаунт и без API-ключа, владельца нет, и событий по нему не будет. Не будет их и по отменённым инвойсам, отклонённым покупкам и покупкам на ручной проверке; пакет с проверки пришлёт `package.activated`, когда будет активирован.
+
+Каждое событие `package.*` несёт в `data` эти поля:
+
+<ResponseField name="package_id" type="number">
+  ID пакета — `id` в [Списке пакетов](/api-reference/transfer-packages/list).
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Адрес, который обслуживает пакет.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Статус пакета после события: `active` или `completed` у `package.transfer`, `completed` у `package.completed`, `active` у `package.activated`, `expired` у `package.expired`.
+</ResponseField>
+
+<ResponseField name="quota_total" type="number">
+  Сколько переводов было в пакете при покупке.
+</ResponseField>
+
+<ResponseField name="remaining" type="number">
+  Сколько переводов осталось в пакете после изменения, о котором сообщает событие, — абсолютное число, а не разница.
+</ResponseField>
+
+<Warning>
+  **События могут прийти не по порядку.** Каждое доставляется отдельно, с повторами примерно до 35 секунд, поэтому `package.completed`, вызванное переводом, может прийти раньше `package.transfer` этого перевода, а `package.transfer` — раньше `package.activated`. Для каждого `package_id` храните **наименьший** увиденный `remaining`: он никогда не растёт. Статусы `completed` и `expired` окончательные.
+</Warning>
+
+<Note>
+  `remaining` может уменьшиться и без события. Пакет на несколько переводов списывает один перевод в сутки как суточную подписку — первый при активации, поэтому пакет на 500 переводов начинается с `remaining: 499`, — и об этом списании событие не приходит. Считайте `remaining` подсказкой, а источником правды — [Список пакетов](/api-reference/transfer-packages/list).
+</Note>
+
+Чтобы распознать повтор, используйте `(package_id, tx_hash)` для `package.transfer` и `(event, package_id)` для остальных: повтор приходит с тем же телом, тем же `timestamp` и той же подписью.
+
+#### `package.transfer`
+
+Перевод с адреса оплачен из пакета. Отправляется по одному разу **на каждый пакет**, с которого списан перевод, — почти всегда одно событие на перевод; перевод, забравший последний перевод одного пакета и продолжившийся на следующем, даёт по событию на каждый.
+
+<ResponseField name="tx_hash" type="string">
+  Транзакция перевода в сети.
+</ResponseField>
+
+<ResponseField name="units" type="number">
+  Сколько переводов списано с **этого** пакета за эту транзакцию. Перевод на адрес, где нет USDT, требует двойной энергии и считается за `2` — их можно разделить между двумя пакетами.
+</ResponseField>
+
+Здесь `status` равен `completed`, если этот перевод исчерпал пакет.
+
+```json Response
+{
+  "event": "package.transfer",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 312,
+    "tx_hash": "9f8e7d6c5b4a...",
+    "units": 1
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.completed`
+
+Пакет перестал обслуживать переводы.
+
+<ResponseField name="reason" type="string">
+  `transfer` — пакет исчерпан переводом; `subscription` — его исчерпало суточное списание; `manual` — пакет закрыла поддержка. После `manual` значение `remaining` может быть больше нуля, но эти переводы использовать уже нельзя.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  При `reason: "transfer"` — перевод, закрывший пакет; иначе `null`.
+</ResponseField>
+
+Пакет без остатка — например, обычный пакет на один перевод, у которого первое суточное списание забрало единственный перевод, — закрывается следующим переводом без собственного `package.transfer`: придёт только `package.completed` с `tx_hash` этого перевода.
+
+```json Response
+{
+  "event": "package.completed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "quota_total": 500,
+    "remaining": 0,
+    "reason": "transfer",
+    "tx_hash": "9f8e7d6c5b4a..."
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.activated`
+
+Пакет стал активным, и с этого момента его переводы получают энергию. Отправляется при каждой активации — в том числе при покупке с баланса, хотя её ответ уже содержит `active`, и при оплате инвойса, которая активирует пакет вскоре после того, как платёж виден в сети.
+
+<ResponseField name="payment_method" type="string">
+  Как оплачен пакет: ровно `balance`, `TRX` или `USDT`.
+</ResponseField>
+
+```json Response
+{
+  "event": "package.activated",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 499,
+    "payment_method": "USDT"
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.expired`
+
+Инвойс на пакет не оплачен за отведённые 30 минут. Ничего не списано; чтобы получить новый инвойс, купите заново. Дополнительных полей нет; `remaining` равен `quota_total` и для использования недоступен.
+
+```json Response
+{
+  "event": "package.expired",
+  "data": {
+    "package_id": 319,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "expired",
+    "quota_total": 500,
+    "remaining": 500
+  },
+  "timestamp": "2026-10-15T15:21:16.986341+00:00"
+}
+```
+
 ### Доставка
 
 - До **3 попыток**, с паузами **1 секунда** и затем **4 секунды** между ними. После успеха и после последней попытки пауз нет.
 - Таймаут **10 секунд** на попытку.
 - Мы ждём любой **`2xx`**. Всё остальное считается неудачной попыткой.
 - **Редиректы не следуются.** `301`/`302` — это неудачная попытка, а не переход.
-- Пропущенные события **не досылаются**. Если все три попытки не удались, событие потеряно; сверяйтесь через [Получение заказа](/api-reference/orders/get-order), а не ждите повтора.
+- Пропущенные события **не досылаются**. Если все три попытки не удались, событие потеряно; сверяйтесь через [Получение заказа](/api-reference/orders/get-order) или [Список пакетов](/api-reference/transfer-packages/list), а не ждите повтора.
 
 Ваш URL обязан резолвиться в **публичный** адрес. Loopback, приватные и link-local диапазоны отвергаются, как и хост, который вообще не резолвится — в обоих случаях ничего не отправляется и строка в журнале не пишется.
 

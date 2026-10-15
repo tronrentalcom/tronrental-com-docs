@@ -85,6 +85,6 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 <Note>
   Two gaps worth knowing before you use this log to debug:
 
-  - It lists deliveries attributed to your **API keys**, so today `subscription.transfer` deliveries do not appear here even when they were sent.
+  - It lists deliveries attributed to your **API keys**, so today `subscription.transfer` and `package.*` deliveries do not appear here even when they were sent.
   - A URL we could not resolve, or one that resolves to a private address, writes **no row at all** — an empty log does not distinguish "no events happened" from "the address was refused". Check the URL in [Dashboard → API](https://tronrental.com/dashboard/api) if you expected traffic and see nothing.
 </Note>

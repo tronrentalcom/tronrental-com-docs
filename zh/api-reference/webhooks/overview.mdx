@@ -9,12 +9,16 @@ description: "实时接收账户事件通知"
 
 ### 事件
 
-目前共有两个事件。
+目前共有六个事件。
 
 | 事件 | 触发时机 |
 |-------|-----------|
 | `order.updated` | 能量或带宽订单状态变化时——**仅限通过 API 创建的订单** |
 | `subscription.transfer` | Smart Mode 为受监控地址的一笔转账付费时 |
+| `package.transfer` | Transfer Package 为其地址的一笔转账付费时 |
+| `package.completed` | Transfer Package 停止为转账服务时 |
+| `package.activated` | Transfer Package 激活时 |
+| `package.expired` | 未支付的 Transfer Package 账单过期时 |
 
 <Warning>
   `order.updated` 仅针对使用 API 密钥创建的订单发送。在网站或 Telegram 机器人上完成的购买不会产生 Webhook，即便同一账户仍能正常收到 Smart Mode 事件。
@@ -173,13 +177,150 @@ description: "实时接收账户事件通知"
 }
 ```
 
+### Transfer Package 事件
+
+四个 `package.*` 事件发送给**拥有该套餐**的账户。未登录、也未使用 API 密钥而通过账单购买的套餐没有所有者，不会产生事件。已取消的账单、被拒绝的购买以及处于人工审核中的购买也不会产生事件；审核中的套餐在激活时发送 `package.activated`。
+
+每个 `package.*` 事件的 `data` 中都包含以下字段：
+
+<ResponseField name="package_id" type="number">
+  套餐 ID——即[套餐列表](/api-reference/transfer-packages/list)中的 `id`。
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  套餐服务的地址。
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  事件发生后的套餐状态：`package.transfer` 为 `active` 或 `completed`，`package.completed` 为 `completed`，`package.activated` 为 `active`，`package.expired` 为 `expired`。
+</ResponseField>
+
+<ResponseField name="quota_total" type="number">
+  购买套餐时包含的转账次数。
+</ResponseField>
+
+<ResponseField name="remaining" type="number">
+  事件所报告的变化之后该套餐剩余的转账次数——是绝对值，而不是差值。
+</ResponseField>
+
+<Warning>
+  **事件可能乱序到达。**每个事件单独投递，并在约 35 秒内重试，因此由某笔转账引起的 `package.completed` 可能早于该转账的 `package.transfer` 到达，`package.transfer` 也可能早于 `package.activated` 到达。对每个 `package_id`，请保留您见过的**最小** `remaining`：它永远不会增加。`completed` 和 `expired` 是最终状态。
+</Warning>
+
+<Note>
+  `remaining` 也可能在没有事件的情况下减少。多次转账套餐每天扣除一次转账作为每日订阅——第一次在激活时扣除，因此 500 次转账的套餐从 `remaining: 499` 开始——这笔扣除不会单独通知。请把 `remaining` 当作参考，把[套餐列表](/api-reference/transfer-packages/list)当作准确来源。
+</Note>
+
+识别重发时，`package.transfer` 请使用 `(package_id, tx_hash)`，其他事件使用 `(event, package_id)`：重发的请求体、`timestamp` 和签名都相同。
+
+#### `package.transfer`
+
+该地址的一笔转账已由套餐支付。转账计入的**每个套餐**各发送一次——几乎总是每笔转账一个事件；如果一笔转账用完了一个套餐的最后一次转账并继续使用下一个套餐，则每个套餐各发送一个事件。
+
+<ResponseField name="tx_hash" type="string">
+  链上的转账交易。
+</ResponseField>
+
+<ResponseField name="units" type="number">
+  本次交易从**该**套餐扣除的转账次数。向不持有 USDT 的地址转账需要双倍能量，计为 `2`，这两次可能分摊到两个套餐。
+</ResponseField>
+
+此处如果这笔转账用完了套餐，`status` 为 `completed`。
+
+```json Response
+{
+  "event": "package.transfer",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 312,
+    "tx_hash": "9f8e7d6c5b4a...",
+    "units": 1
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.completed`
+
+套餐已停止为转账服务。
+
+<ResponseField name="reason" type="string">
+  `transfer`——一笔转账用完了套餐；`subscription`——每日扣除用完了套餐；`manual`——客服关闭了套餐。`manual` 时 `remaining` 可能大于零，但这些转账已无法使用。
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  当 `reason: "transfer"` 时，为关闭套餐的那笔转账；否则为 `null`。
+</ResponseField>
+
+没有剩余的套餐——例如一个普通的单次转账套餐，其首次每日扣除已用掉唯一的一次转账——会被下一笔转账关闭，而不会有自己的 `package.transfer`：您只会收到带有该转账 `tx_hash` 的 `package.completed`。
+
+```json Response
+{
+  "event": "package.completed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "quota_total": 500,
+    "remaining": 0,
+    "reason": "transfer",
+    "tx_hash": "9f8e7d6c5b4a..."
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.activated`
+
+套餐已激活，从现在起其转账会获得能量。每次激活都会发送——包括余额购买（其响应已显示 `active`）和账单支付（在链上看到付款后不久激活套餐）。
+
+<ResponseField name="payment_method" type="string">
+  套餐的支付方式：精确为 `balance`、`TRX` 或 `USDT`。
+</ResponseField>
+
+```json Response
+{
+  "event": "package.activated",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 499,
+    "payment_method": "USDT"
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.expired`
+
+套餐账单未在 30 分钟内支付。未扣任何费用；如需新账单，请重新购买。没有额外字段；`remaining` 等于 `quota_total`，且不可使用。
+
+```json Response
+{
+  "event": "package.expired",
+  "data": {
+    "package_id": 319,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "expired",
+    "quota_total": 500,
+    "remaining": 500
+  },
+  "timestamp": "2026-10-15T15:21:16.986341+00:00"
+}
+```
+
 ### 投递
 
 - 最多 **3 次尝试**，两次之间分别间隔 **1 秒**和 **4 秒**。成功之后以及最后一次尝试之后没有停顿。
 - 每次尝试超时 **10 秒**。
 - 我们接受任何 **`2xx`**。其他一律视为失败尝试。
 - **不跟随重定向。** `301`/`302` 是一次失败尝试，而不是跳转。
-- 错过的事件**不会**补发。三次尝试都失败，该事件就丢失了；请用[查询订单](/api-reference/orders/get-order)对账，而不是等待重发。
+- 错过的事件**不会**补发。三次尝试都失败，该事件就丢失了；请用[查询订单](/api-reference/orders/get-order)或[套餐列表](/api-reference/transfer-packages/list)对账，而不是等待重发。
 
 您的 URL 必须解析到**公网**地址。回环、私有和链路本地地址段会被拒绝，无法解析的主机同样如此——这两种情况下都不会发送任何请求，也不会写入日志。
 

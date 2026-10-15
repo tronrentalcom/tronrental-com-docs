@@ -85,6 +85,6 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 <Note>
   在用这份日志排查之前，有两点需要知道：
 
-  - 日志列出的是归属于您**API 密钥**的投递，因此 `subscription.transfer` 的投递目前不会出现在这里，即使它们确实已经发送。
+  - 日志列出的是归属于您**API 密钥**的投递，因此 `subscription.transfer` 和 `package.*` 的投递目前不会出现在这里，即使它们确实已经发送。
   - 无法解析的 URL，或解析到私有地址的 URL，**完全不会产生记录**——空日志无法区分「没有事件」和「地址被拒绝」。如果您预期有流量却什么也看不到，请到 [Dashboard → API](https://tronrental.com/dashboard/api) 检查 URL。
 </Note>

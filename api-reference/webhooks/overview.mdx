@@ -9,12 +9,16 @@ Your account has **one webhook URL**, and every event goes to it. Set it in [Das
 
 ### Events
 
-Two events exist today.
+Six events exist today.
 
 | Event | Sent when |
 |-------|-----------|
 | `order.updated` | An energy or bandwidth order changes state — **only for orders created through the API** |
 | `subscription.transfer` | Smart Mode paid for a transfer on a watched address |
+| `package.transfer` | A Transfer Package paid for a transfer from its address |
+| `package.completed` | A Transfer Package stopped serving transfers |
+| `package.activated` | A Transfer Package became active |
+| `package.expired` | An unpaid Transfer Package invoice expired |
 
 <Warning>
   `order.updated` is sent only for orders that were created with an API key. Orders placed on the website or through the Telegram bot produce no webhook, even though the same account receives Smart Mode events normally.
@@ -173,13 +177,150 @@ A large order is split into chunks internally, but that is our business: you rec
 }
 ```
 
+### Transfer Package events
+
+The four `package.*` events go to the account that **owns the package**. A package bought by invoice without signing in or an API key has no owner and produces no events. Cancelled invoices, refused purchases and purchases held for manual review produce no events either; a held package sends `package.activated` once it is activated.
+
+Every `package.*` event carries these fields in `data`:
+
+<ResponseField name="package_id" type="number">
+  Package ID — the `id` in [List Packages](/api-reference/transfer-packages/list).
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  The address the package serves.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Package status after the event: `active` or `completed` for `package.transfer`, `completed` for `package.completed`, `active` for `package.activated`, `expired` for `package.expired`.
+</ResponseField>
+
+<ResponseField name="quota_total" type="number">
+  Transfers the package was bought with.
+</ResponseField>
+
+<ResponseField name="remaining" type="number">
+  Transfers left on this package after the change the event reports — an absolute number, not a difference.
+</ResponseField>
+
+<Warning>
+  **Events can arrive out of order.** Each one is delivered on its own, with retries for up to about 35 seconds, so the `package.completed` caused by a transfer can arrive before that transfer's `package.transfer`, and a `package.transfer` can arrive before `package.activated`. For each `package_id`, keep the **lowest** `remaining` you have seen: it never grows. `completed` and `expired` are final.
+</Warning>
+
+<Note>
+  `remaining` can also go down without an event. A multi-transfer package takes one transfer a day as its daily subscription — the first one at activation, which is why a 500-transfer package starts at `remaining: 499` — and that charge is not announced. Treat `remaining` as a hint and [List Packages](/api-reference/transfer-packages/list) as the source of truth.
+</Note>
+
+To recognise a retry, use `(package_id, tx_hash)` for `package.transfer` and `(event, package_id)` for the others: a retry carries the same body, the same `timestamp` and the same signature.
+
+#### `package.transfer`
+
+A transfer from the address was paid from a package. Sent once **per package** the transfer was charged to — almost always one event per transfer; a transfer that took the last transfer of one package and continued on the next produces one event for each.
+
+<ResponseField name="tx_hash" type="string">
+  The transfer transaction on chain.
+</ResponseField>
+
+<ResponseField name="units" type="number">
+  Transfers taken from **this** package for this transaction. A transfer to an address that holds no USDT needs double energy and counts as `2`, which can be split across two packages.
+</ResponseField>
+
+Here `status` is `completed` when this transfer used up the package.
+
+```json Response
+{
+  "event": "package.transfer",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 312,
+    "tx_hash": "9f8e7d6c5b4a...",
+    "units": 1
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.completed`
+
+The package stopped serving transfers.
+
+<ResponseField name="reason" type="string">
+  `transfer` — a transfer used up the package; `subscription` — the daily charge used it up; `manual` — support closed the package. After `manual`, `remaining` can be above zero, but those transfers can no longer be used.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  For `reason: "transfer"`, the transfer that closed the package; `null` otherwise.
+</ResponseField>
+
+A package with nothing left — for example a regular one-transfer package, whose first daily charge took its only transfer — is closed by the next transfer without a `package.transfer` of its own: you receive only `package.completed` with that transfer's `tx_hash`.
+
+```json Response
+{
+  "event": "package.completed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "quota_total": 500,
+    "remaining": 0,
+    "reason": "transfer",
+    "tx_hash": "9f8e7d6c5b4a..."
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.activated`
+
+The package became active and its transfers get energy from now on. Sent for every activation — including a purchase from balance, whose response already says `active`, and an invoice payment, which activates the package shortly after the payment is seen on chain.
+
+<ResponseField name="payment_method" type="string">
+  How the package was paid: exactly `balance`, `TRX` or `USDT`.
+</ResponseField>
+
+```json Response
+{
+  "event": "package.activated",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 499,
+    "payment_method": "USDT"
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.expired`
+
+An invoice for a package was not paid within its 30-minute window. Nothing was charged; buy again to get a new invoice. No extra fields; `remaining` equals `quota_total` and is not available to use.
+
+```json Response
+{
+  "event": "package.expired",
+  "data": {
+    "package_id": 319,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "expired",
+    "quota_total": 500,
+    "remaining": 500
+  },
+  "timestamp": "2026-10-15T15:21:16.986341+00:00"
+}
+```
+
 ### Delivery
 
 - Up to **3 attempts**, with pauses of **1 second** and then **4 seconds** between them. There is no pause after a success and none after the last attempt.
 - **10 seconds** timeout per attempt.
 - We expect any **`2xx`**. Anything else counts as a failed attempt.
 - **Redirects are not followed.** A `301`/`302` is a failed attempt, not a hop.
-- Missed events are **not** backfilled. When all three attempts fail, that event is gone; reconcile with [Get Order](/api-reference/orders/get-order) rather than waiting for a replay.
+- Missed events are **not** backfilled. When all three attempts fail, that event is gone; reconcile with [Get Order](/api-reference/orders/get-order) or [List Packages](/api-reference/transfer-packages/list) rather than waiting for a replay.
 
 Your URL must resolve to a **public** address. Loopback, private and link-local ranges are rejected, and so is a host that does not resolve — in both cases nothing is sent and no log row is written.
 

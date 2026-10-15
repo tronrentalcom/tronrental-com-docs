@@ -9,12 +9,16 @@ Hesabınızın **tek bir webhook URL'si** vardır ve tüm olaylar oraya gider. [
 
 ### Olaylar
 
-Bugün iki olay mevcut.
+Bugün altı olay mevcut.
 
 | Olay | Ne zaman gönderilir |
 |-------|-----------|
 | `order.updated` | Bir enerji veya bandwidth siparişi durum değiştirdiğinde — **yalnızca API üzerinden oluşturulan siparişler için** |
 | `subscription.transfer` | Smart Mode, izlenen bir adresten yapılan transferin bedelini ödediğinde |
+| `package.transfer` | Bir Transfer Package, kendi adresinden yapılan bir transferin bedelini ödediğinde |
+| `package.completed` | Bir Transfer Package transferleri karşılamayı bıraktığında |
+| `package.activated` | Bir Transfer Package etkinleştiğinde |
+| `package.expired` | Ödenmemiş bir Transfer Package faturasının süresi dolduğunda |
 
 <Warning>
   `order.updated` yalnızca bir API anahtarıyla oluşturulan siparişler için gönderilir. Web sitesinden veya Telegram botundan yapılan alımlar webhook üretmez — aynı hesap Smart Mode olaylarını normal biçimde almaya devam etse bile.
@@ -173,13 +177,150 @@ Büyük siparişleri içeride parçalara böleriz, ama bu bizim işimiz: siz **s
 }
 ```
 
+### Transfer Package olayları
+
+Dört `package.*` olayı **paketin sahibi olan** hesaba gönderilir. Oturum açmadan veya API anahtarı olmadan faturayla satın alınan bir paketin sahibi yoktur ve olay üretmez. İptal edilen faturalar, reddedilen satın almalar ve manuel incelemedeki satın almalar da olay üretmez; incelemedeki bir paket etkinleştirildiğinde `package.activated` gönderir.
+
+Her `package.*` olayı `data` içinde şu alanları taşır:
+
+<ResponseField name="package_id" type="number">
+  Paket kimliği — [Paketleri Listele](/api-reference/transfer-packages/list) yanıtındaki `id`.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Paketin hizmet verdiği adres.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Olaydan sonraki paket durumu: `package.transfer` için `active` veya `completed`, `package.completed` için `completed`, `package.activated` için `active`, `package.expired` için `expired`.
+</ResponseField>
+
+<ResponseField name="quota_total" type="number">
+  Paketin satın alındığı transfer sayısı.
+</ResponseField>
+
+<ResponseField name="remaining" type="number">
+  Olayın bildirdiği değişiklikten sonra bu pakette kalan transfer sayısı — fark değil, mutlak bir sayı.
+</ResponseField>
+
+<Warning>
+  **Olaylar sırasız gelebilir.** Her biri ayrı ayrı, yaklaşık 35 saniyeye kadar yeniden denemelerle teslim edilir; bu yüzden bir transferin yol açtığı `package.completed`, o transferin `package.transfer` olayından önce, bir `package.transfer` da `package.activated` olayından önce gelebilir. Her `package_id` için gördüğünüz **en düşük** `remaining` değerini saklayın: bu değer hiç artmaz. `completed` ve `expired` kesindir.
+</Warning>
+
+<Note>
+  `remaining` olay olmadan da azalabilir. Çok transferli bir paket, günlük abonelik olarak günde bir transfer düşer — ilki etkinleştirmede, bu yüzden 500 transferlik bir paket `remaining: 499` ile başlar — ve bu kesinti bildirilmez. `remaining` değerini bir ipucu, [Paketleri Listele](/api-reference/transfer-packages/list) yanıtını ise doğruluk kaynağı olarak kabul edin.
+</Note>
+
+Bir yeniden denemeyi tanımak için `package.transfer` olayında `(package_id, tx_hash)`, diğerlerinde `(event, package_id)` kullanın: yeniden deneme aynı gövdeyi, aynı `timestamp` değerini ve aynı imzayı taşır.
+
+#### `package.transfer`
+
+Adresten yapılan bir transferin bedeli bir paketten ödendi. Transferin düşüldüğü **her paket için** bir kez gönderilir — neredeyse her zaman transfer başına bir olay; bir paketin son transferini alıp sonrakinde devam eden bir transfer, her biri için bir olay üretir.
+
+<ResponseField name="tx_hash" type="string">
+  Zincirdeki transfer işlemi.
+</ResponseField>
+
+<ResponseField name="units" type="number">
+  Bu işlem için **bu** paketten düşülen transfer sayısı. USDT bulunmayan bir adrese yapılan transfer iki kat enerji gerektirir ve `2` sayılır; bu iki birim iki pakete bölünebilir.
+</ResponseField>
+
+Burada bu transfer paketi tükettiyse `status` değeri `completed` olur.
+
+```json Response
+{
+  "event": "package.transfer",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 312,
+    "tx_hash": "9f8e7d6c5b4a...",
+    "units": 1
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.completed`
+
+Paket transferleri karşılamayı bıraktı.
+
+<ResponseField name="reason" type="string">
+  `transfer` — paketi bir transfer tüketti; `subscription` — paketi günlük kesinti tüketti; `manual` — paketi destek ekibi kapattı. `manual` sonrasında `remaining` sıfırdan büyük olabilir, ancak bu transferler artık kullanılamaz.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  `reason: "transfer"` olduğunda paketi kapatan transfer; aksi halde `null`.
+</ResponseField>
+
+Kalanı olmayan bir paket — örneğin ilk günlük kesintisi tek transferini almış, tek transferlik normal bir paket — sonraki transferle kendine ait bir `package.transfer` olmadan kapanır: yalnızca o transferin `tx_hash` değeriyle `package.completed` alırsınız.
+
+```json Response
+{
+  "event": "package.completed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "quota_total": 500,
+    "remaining": 0,
+    "reason": "transfer",
+    "tx_hash": "9f8e7d6c5b4a..."
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.activated`
+
+Paket etkinleşti ve bundan sonra transferleri enerji alır. Her etkinleştirmede gönderilir — yanıtı zaten `active` diyen bakiyeyle satın alma ve ödemesi zincirde görüldükten kısa süre sonra paketi etkinleştiren fatura ödemesi dahil.
+
+<ResponseField name="payment_method" type="string">
+  Paketin nasıl ödendiği: tam olarak `balance`, `TRX` veya `USDT`.
+</ResponseField>
+
+```json Response
+{
+  "event": "package.activated",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 499,
+    "payment_method": "USDT"
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.expired`
+
+Bir paketin faturası 30 dakikalık süresi içinde ödenmedi. Hiçbir ücret alınmadı; yeni bir fatura için yeniden satın alın. Ek alan yoktur; `remaining`, `quota_total` değerine eşittir ve kullanılamaz.
+
+```json Response
+{
+  "event": "package.expired",
+  "data": {
+    "package_id": 319,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "expired",
+    "quota_total": 500,
+    "remaining": 500
+  },
+  "timestamp": "2026-10-15T15:21:16.986341+00:00"
+}
+```
+
 ### Teslimat
 
 - En çok **3 deneme**, aralarında **1 saniye** ve ardından **4 saniye** bekleme ile. Başarıdan sonra ve son denemeden sonra bekleme yoktur.
 - Deneme başına **10 saniye** zaman aşımı.
 - Herhangi bir **`2xx`** bekleriz. Bunun dışındaki her şey başarısız deneme sayılır.
 - **Yönlendirmeler izlenmez.** `301`/`302` bir sıçrama değil, başarısız bir denemedir.
-- Kaçan olaylar sonradan **yeniden gönderilmez**. Üç deneme de başarısız olursa o olay kaybolur; tekrar beklemek yerine [Sipariş sorgulama](/api-reference/orders/get-order) ile mutabakat yapın.
+- Kaçan olaylar sonradan **yeniden gönderilmez**. Üç deneme de başarısız olursa o olay kaybolur; tekrar beklemek yerine [Sipariş sorgulama](/api-reference/orders/get-order) veya [Paketleri Listele](/api-reference/transfer-packages/list) ile mutabakat yapın.
 
 URL'niz **genel** bir adrese çözümlenmelidir. Loopback, özel ve link-local aralıklar reddedilir; hiç çözümlenmeyen bir host da öyle — her iki durumda da hiçbir şey gönderilmez ve günlüğe satır yazılmaz.
 
