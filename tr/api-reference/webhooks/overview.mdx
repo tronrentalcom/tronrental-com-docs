@@ -208,7 +208,7 @@ Her `package.*` olayı `data` içinde şu alanları taşır:
 </Warning>
 
 <Note>
-  `remaining` olay olmadan da azalabilir. Çok transferli bir paket, günlük abonelik olarak günde bir transfer düşer — ilki etkinleştirmede, bu yüzden 500 transferlik bir paket `remaining: 499` ile başlar — ve bu kesinti bildirilmez. `remaining` değerini bir ipucu, [Paketleri Listele](/api-reference/transfer-packages/list) yanıtını ise doğruluk kaynağı olarak kabul edin.
+  `remaining` olay olmadan da azalabilir. Çok transferli bir paket, günlük abonelik olarak günde bir transfer düşer — ilki etkinleştirmede, bu yüzden 500 transferlik bir paket `remaining: 499` ile başlar — ve bu kesinti bildirilmez. Aynı adresten aynı blokta yapılan iki transfer aynı `remaining` değerini bildirebilir. `remaining` değerini bir ipucu, [Paketleri Listele](/api-reference/transfer-packages/list) yanıtını ise doğruluk kaynağı olarak kabul edin.
 </Note>
 
 Bir yeniden denemeyi tanımak için `package.transfer` olayında `(package_id, tx_hash)`, diğerlerinde `(event, package_id)` kullanın: yeniden deneme aynı gövdeyi, aynı `timestamp` değerini ve aynı imzayı taşır.

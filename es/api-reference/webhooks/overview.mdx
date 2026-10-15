@@ -208,7 +208,7 @@ Cada evento `package.*` incluye estos campos en `data`:
 </Warning>
 
 <Note>
-  `remaining` también puede bajar sin evento. Un paquete de varias transferencias consume una transferencia al día como suscripción diaria —la primera al activarse, por eso un paquete de 500 transferencias empieza con `remaining: 499`— y ese cargo no se notifica. Tome `remaining` como una indicación y [Listar paquetes](/api-reference/transfer-packages/list) como la fuente de verdad.
+  `remaining` también puede bajar sin evento. Un paquete de varias transferencias consume una transferencia al día como suscripción diaria —la primera al activarse, por eso un paquete de 500 transferencias empieza con `remaining: 499`— y ese cargo no se notifica. Dos transferencias desde la misma dirección en el mismo bloque pueden informar el mismo `remaining`. Tome `remaining` como una indicación y [Listar paquetes](/api-reference/transfer-packages/list) como la fuente de verdad.
 </Note>
 
 Para reconocer un reintento, use `(package_id, tx_hash)` en `package.transfer` y `(event, package_id)` en los demás: un reintento trae el mismo cuerpo, el mismo `timestamp` y la misma firma.

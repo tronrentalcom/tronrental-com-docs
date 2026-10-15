@@ -208,7 +208,7 @@ Todo evento `package.*` traz estes campos em `data`:
 </Warning>
 
 <Note>
-  `remaining` também pode diminuir sem evento. Um pacote de várias transferências consome uma transferência por dia como assinatura diária — a primeira na ativação, por isso um pacote de 500 transferências começa com `remaining: 499` — e essa cobrança não é anunciada. Trate `remaining` como uma indicação e [Listar Pacotes](/api-reference/transfer-packages/list) como a fonte da verdade.
+  `remaining` também pode diminuir sem evento. Um pacote de várias transferências consome uma transferência por dia como assinatura diária — a primeira na ativação, por isso um pacote de 500 transferências começa com `remaining: 499` — e essa cobrança não é anunciada. Duas transferências do mesmo endereço no mesmo bloco podem informar o mesmo `remaining`. Trate `remaining` como uma indicação e [Listar Pacotes](/api-reference/transfer-packages/list) como a fonte da verdade.
 </Note>
 
 Para reconhecer uma nova tentativa, use `(package_id, tx_hash)` em `package.transfer` e `(event, package_id)` nos demais: a nova tentativa traz o mesmo corpo, o mesmo `timestamp` e a mesma assinatura.

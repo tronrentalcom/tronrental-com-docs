@@ -208,7 +208,7 @@ description: "实时接收账户事件通知"
 </Warning>
 
 <Note>
-  `remaining` 也可能在没有事件的情况下减少。多次转账套餐每天扣除一次转账作为每日订阅——第一次在激活时扣除，因此 500 次转账的套餐从 `remaining: 499` 开始——这笔扣除不会单独通知。请把 `remaining` 当作参考，把[套餐列表](/api-reference/transfer-packages/list)当作准确来源。
+  `remaining` 也可能在没有事件的情况下减少。多次转账套餐每天扣除一次转账作为每日订阅——第一次在激活时扣除，因此 500 次转账的套餐从 `remaining: 499` 开始——这笔扣除不会单独通知。同一地址在同一区块中的两笔转账可能报告相同的 `remaining`。请把 `remaining` 当作参考，把[套餐列表](/api-reference/transfer-packages/list)当作准确来源。
 </Note>
 
 识别重发时，`package.transfer` 请使用 `(package_id, tx_hash)`，其他事件使用 `(event, package_id)`：重发的请求体、`timestamp` 和签名都相同。

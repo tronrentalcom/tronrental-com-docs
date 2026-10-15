@@ -208,7 +208,7 @@ Every `package.*` event carries these fields in `data`:
 </Warning>
 
 <Note>
-  `remaining` can also go down without an event. A multi-transfer package takes one transfer a day as its daily subscription — the first one at activation, which is why a 500-transfer package starts at `remaining: 499` — and that charge is not announced. Treat `remaining` as a hint and [List Packages](/api-reference/transfer-packages/list) as the source of truth.
+  `remaining` can also go down without an event. A multi-transfer package takes one transfer a day as its daily subscription — the first one at activation, which is why a 500-transfer package starts at `remaining: 499` — and that charge is not announced. Two transfers from the same address in the same block can report the same `remaining`. Treat `remaining` as a hint and [List Packages](/api-reference/transfer-packages/list) as the source of truth.
 </Note>
 
 To recognise a retry, use `(package_id, tx_hash)` for `package.transfer` and `(event, package_id)` for the others: a retry carries the same body, the same `timestamp` and the same signature.
