@@ -14,8 +14,12 @@ description: "अकाउंट बैलेंस से ट्रांसफ
   मॉनिटर करने के लिए TRON एड्रेस
 </ParamField>
 
-<ParamField body="package_size" type="number" required>
-  ट्रांसफर की संख्या (1 – 10,000)
+<ParamField body="package_size" type="number">
+  पैकेज में ट्रांसफर की संख्या (2 – 10,000)। `single_transfer` `true` न हो तो अनिवार्य। `package_size: 1` को `422` के साथ अस्वीकार किया जाता है — एक ट्रांसफर खरीदने के लिए `single_transfer: true` भेजें।
+</ParamField>
+
+<ParamField body="single_transfer" type="boolean" default="false">
+  पैकेज के बजाय एक ट्रांसफर खरीदें; तब `package_size` को अनदेखा किया जाता है। मूल्य — [टियर प्राप्त करें](/api-reference/transfer-packages/get-tiers) से `single_transfer_price` (BW Guarantee के साथ `bw_fee_per_transfer` जुड़ता है)।
 </ParamField>
 
 <ParamField body="bw_guarantee" type="boolean" default="true">
@@ -24,7 +28,7 @@ description: "अकाउंट बैलेंस से ट्रांसफ
 
 ### रिस्पॉन्स
 
-`id`, `address`, `remaining_transfers`, `status`, और `price_trx` के साथ बनाया गया पैकेज ऑब्जेक्ट लौटाता है।
+`package_id`, `status`, `total_price_trx`, `activation_cost_trx` (यदि एड्रेस सक्रिय नहीं था तो उसे सक्रिय करने पर खर्च TRX, अन्यथा `0`) और `total_charged_trx` लौटाता है।
 
 ### उदाहरण
 
@@ -41,14 +45,11 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
 
 ```json Response
 {
-  "id": 101,
-  "address": "TYourAddress...",
-  "total_transfers": 500,
-  "remaining_transfers": 500,
-  "bw_guarantee": true,
-  "price_trx": "1350.00",
+  "package_id": 101,
   "status": "active",
-  "created_at": "2026-03-05T12:00:00Z"
+  "total_price_trx": "1500.0",
+  "activation_cost_trx": "0",
+  "total_charged_trx": "1500.0"
 }
 ```
 
