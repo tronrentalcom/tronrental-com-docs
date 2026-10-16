@@ -371,3 +371,4 @@ function verifyWebhook(rawBody, signatureHeader, secret) {
 <Warning>
   Verify the signature before acting on the payload, and compare in constant time (`hmac.compare_digest` / `crypto.timingSafeEqual`). Comparing with `==` leaks timing.
 </Warning>
+

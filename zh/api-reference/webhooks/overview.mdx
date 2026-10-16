@@ -365,3 +365,4 @@ function verifyWebhook(rawBody, signatureHeader, secret) {
 <Warning>
   在依据内容采取行动之前先验证签名，并使用恒定时间比较（`hmac.compare_digest` / `crypto.timingSafeEqual`）。用 `==` 比较会通过时间泄露信息。
 </Warning>
+
