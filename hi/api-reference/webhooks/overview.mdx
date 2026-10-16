@@ -9,12 +9,16 @@ description: "अपने खाते की घटनाओं की सू�
 
 ### घटनाएँ
 
-आज दो घटनाएँ मौजूद हैं।
+आज छह घटनाएँ मौजूद हैं।
 
 | घटना | कब भेजी जाती है |
 |-------|-----------|
 | `order.updated` | एनर्जी या बैंडविड्थ ऑर्डर की स्थिति बदलने पर — **केवल API से बनाए गए ऑर्डर के लिए** |
 | `subscription.transfer` | Smart Mode ने किसी निगरानी वाले पते से हुए ट्रांसफ़र का भुगतान किया |
+| `package.transfer` | Transfer Package ने अपने पते से हुए ट्रांसफ़र का भुगतान किया |
+| `package.completed` | Transfer Package ने ट्रांसफ़र की सेवा बंद कर दी |
+| `package.activated` | Transfer Package सक्रिय हुआ |
+| `package.expired` | बिना भुगतान वाले Transfer Package इनवॉइस की अवधि समाप्त हुई |
 
 <Warning>
   `order.updated` केवल उन ऑर्डर के लिए भेजी जाती है जो API कुंजी से बनाए गए हों। वेबसाइट या टेलीग्राम बॉट से की गई खरीद पर कोई वेबहुक नहीं जाता — भले ही वही खाता Smart Mode की घटनाएँ सामान्य रूप से पाता रहे।
@@ -173,13 +177,150 @@ description: "अपने खाते की घटनाओं की सू�
 }
 ```
 
+### Transfer Package घटनाएँ
+
+चारों `package.*` घटनाएँ उस खाते को जाती हैं जो **पैकेज का मालिक** है। साइन इन किए बिना या API कुंजी के बिना इनवॉइस से खरीदे गए पैकेज का कोई मालिक नहीं होता, और उससे कोई घटना नहीं बनती। रद्द किए गए इनवॉइस, अस्वीकृत खरीद और मैन्युअल समीक्षा में रुकी खरीद से भी कोई घटना नहीं बनती; समीक्षा वाला पैकेज सक्रिय होने पर `package.activated` भेजता है।
+
+हर `package.*` घटना के `data` में ये फ़ील्ड होते हैं:
+
+<ResponseField name="package_id" type="number">
+  पैकेज ID — [पैकेज सूची](/api-reference/transfer-packages/list) में `id`।
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  वह पता जिसकी सेवा पैकेज करता है।
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  घटना के बाद पैकेज की स्थिति: `package.transfer` के लिए `active` या `completed`, `package.completed` के लिए `completed`, `package.activated` के लिए `active`, `package.expired` के लिए `expired`।
+</ResponseField>
+
+<ResponseField name="quota_total" type="number">
+  पैकेज कितने ट्रांसफ़र के साथ खरीदा गया था।
+</ResponseField>
+
+<ResponseField name="remaining" type="number">
+  घटना जिस बदलाव की सूचना देती है, उसके बाद इस पैकेज में बचे ट्रांसफ़र — एक निरपेक्ष संख्या, अंतर नहीं।
+</ResponseField>
+
+<Warning>
+  **घटनाएँ क्रम से बाहर आ सकती हैं।** हर घटना अलग से भेजी जाती है और लगभग 35 सेकंड तक दोबारा कोशिश होती है, इसलिए किसी ट्रांसफ़र से हुई `package.completed` उसी ट्रांसफ़र की `package.transfer` से पहले आ सकती है, और `package.transfer` `package.activated` से पहले आ सकती है। हर `package_id` के लिए अब तक देखा गया **सबसे कम** `remaining` रखें: यह कभी नहीं बढ़ता। `completed` और `expired` अंतिम हैं।
+</Warning>
+
+<Note>
+  `remaining` बिना किसी घटना के भी घट सकता है। कई ट्रांसफ़र वाला पैकेज दैनिक सदस्यता के रूप में दिन में एक ट्रांसफ़र लेता है — पहला सक्रिय होते समय, इसीलिए 500 ट्रांसफ़र वाला पैकेज `remaining: 499` से शुरू होता है — और इस कटौती की अलग सूचना नहीं आती। एक ही पते से एक ही ब्लॉक में हुए दो ट्रांसफ़र एक जैसा `remaining` बता सकते हैं। `remaining` को संकेत मानें और [पैकेज सूची](/api-reference/transfer-packages/list) को सच्चाई का स्रोत।
+</Note>
+
+दोबारा भेजी गई घटना पहचानने के लिए `package.transfer` में `(package_id, tx_hash)` और बाकी में `(event, package_id)` का उपयोग करें: दोबारा भेजी गई घटना में वही बॉडी, वही `timestamp` और वही हस्ताक्षर होते हैं।
+
+#### `package.transfer`
+
+पते से हुए ट्रांसफ़र का भुगतान पैकेज से हुआ। ट्रांसफ़र जिस **हर पैकेज** से काटा गया, उसके लिए एक बार भेजी जाती है — लगभग हमेशा प्रति ट्रांसफ़र एक घटना; जो ट्रांसफ़र एक पैकेज का आख़िरी ट्रांसफ़र लेकर अगले पैकेज पर जारी रहता है, वह दोनों के लिए एक-एक घटना देता है।
+
+<ResponseField name="tx_hash" type="string">
+  चेन पर ट्रांसफ़र का ट्रांज़ैक्शन।
+</ResponseField>
+
+<ResponseField name="units" type="number">
+  इस ट्रांज़ैक्शन के लिए **इस** पैकेज से काटे गए ट्रांसफ़र। ऐसे पते पर ट्रांसफ़र जिसके पास USDT नहीं है, दोगुनी ऊर्जा लेता है और `2` गिना जाता है, जो दो पैकेजों में बँट सकता है।
+</ResponseField>
+
+यहाँ अगर इस ट्रांसफ़र ने पैकेज खत्म कर दिया तो `status` `completed` होता है।
+
+```json Response
+{
+  "event": "package.transfer",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 312,
+    "tx_hash": "9f8e7d6c5b4a...",
+    "units": 1
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.completed`
+
+पैकेज ने ट्रांसफ़र की सेवा बंद कर दी।
+
+<ResponseField name="reason" type="string">
+  `transfer` — एक ट्रांसफ़र ने पैकेज खत्म किया; `subscription` — दैनिक कटौती ने उसे खत्म किया; `manual` — सपोर्ट ने पैकेज बंद किया। `manual` के बाद `remaining` शून्य से अधिक हो सकता है, लेकिन वे ट्रांसफ़र अब उपयोग नहीं किए जा सकते।
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  `reason: "transfer"` होने पर वह ट्रांसफ़र जिसने पैकेज बंद किया; अन्यथा `null`।
+</ResponseField>
+
+बिना शेष वाला पैकेज — जैसे एक ट्रांसफ़र वाला सामान्य पैकेज, जिसकी पहली दैनिक कटौती ने उसका इकलौता ट्रांसफ़र ले लिया — अगले ट्रांसफ़र से अपनी `package.transfer` के बिना बंद हो जाता है: आपको उस ट्रांसफ़र के `tx_hash` के साथ केवल `package.completed` मिलती है।
+
+```json Response
+{
+  "event": "package.completed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "quota_total": 500,
+    "remaining": 0,
+    "reason": "transfer",
+    "tx_hash": "9f8e7d6c5b4a..."
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.activated`
+
+पैकेज सक्रिय हो गया और अब से उसके ट्रांसफ़र को ऊर्जा मिलती है। हर सक्रियण पर भेजी जाती है — बैलेंस से खरीद पर भी, जिसका जवाब पहले से `active` कहता है, और इनवॉइस भुगतान पर भी, जो चेन पर भुगतान दिखने के थोड़ी देर बाद पैकेज सक्रिय करता है।
+
+<ResponseField name="payment_method" type="string">
+  पैकेज का भुगतान कैसे हुआ: ठीक `balance`, `TRX` या `USDT`।
+</ResponseField>
+
+```json Response
+{
+  "event": "package.activated",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 499,
+    "payment_method": "USDT"
+  },
+  "timestamp": "2026-10-15T14:51:16.986341+00:00"
+}
+```
+
+#### `package.expired`
+
+पैकेज का इनवॉइस अपनी 30 मिनट की अवधि में नहीं चुकाया गया। कुछ नहीं काटा गया; नया इनवॉइस पाने के लिए फिर से खरीदें। कोई अतिरिक्त फ़ील्ड नहीं; `remaining` `quota_total` के बराबर है और उपयोग के लिए उपलब्ध नहीं है।
+
+```json Response
+{
+  "event": "package.expired",
+  "data": {
+    "package_id": 319,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "expired",
+    "quota_total": 500,
+    "remaining": 500
+  },
+  "timestamp": "2026-10-15T15:21:16.986341+00:00"
+}
+```
+
 ### डिलीवरी
 
 - अधिकतम **3 प्रयास**, बीच में **1 सेकंड** और फिर **4 सेकंड** का ठहराव। सफलता के बाद और अंतिम प्रयास के बाद कोई ठहराव नहीं।
 - प्रति प्रयास **10 सेकंड** का टाइमआउट।
 - हम कोई भी **`2xx`** स्वीकार करते हैं। बाकी सब विफल प्रयास गिना जाता है।
 - **रीडायरेक्ट का पालन नहीं किया जाता।** `301`/`302` एक विफल प्रयास है, छलाँग नहीं।
-- छूटी हुई घटनाएँ बाद में **दोबारा नहीं भेजी जातीं**। तीनों प्रयास विफल हुए तो वह घटना चली गई; दोबारा भेजे जाने की प्रतीक्षा के बजाय [ऑर्डर देखें](/api-reference/orders/get-order) से मिलान करें।
+- छूटी हुई घटनाएँ बाद में **दोबारा नहीं भेजी जातीं**। तीनों प्रयास विफल हुए तो वह घटना चली गई; दोबारा भेजे जाने की प्रतीक्षा के बजाय [ऑर्डर देखें](/api-reference/orders/get-order) या [पैकेज सूची](/api-reference/transfer-packages/list) से मिलान करें।
 
 आपका URL किसी **सार्वजनिक** पते पर रिज़ॉल्व होना चाहिए। लूपबैक, निजी और लिंक-लोकल रेंज अस्वीकार की जाती हैं, और वह होस्ट भी जो रिज़ॉल्व ही न हो — दोनों स्थितियों में कुछ नहीं भेजा जाता और लॉग में कोई पंक्ति नहीं लिखी जाती।
 

@@ -85,6 +85,6 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 <Note>
   Dos limitaciones que conviene conocer antes de depurar con este registro:
 
-  - Lista las entregas atribuidas a sus **claves API**, por lo que hoy las entregas de `subscription.transfer` no aparecen aquí aunque se hayan enviado.
+  - Lista las entregas atribuidas a sus **claves API**, por lo que hoy las entregas de `subscription.transfer` y `package.*` no aparecen aquí aunque se hayan enviado.
   - Una URL que no pudimos resolver, o que resuelve a una dirección privada, **no genera ninguna fila**: un registro vacío no distingue entre «no hubo eventos» y «la dirección fue rechazada». Si esperaba tráfico y no ve nada, revise la URL en [Dashboard → API](https://tronrental.com/dashboard/api).
 </Note>
