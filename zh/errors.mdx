@@ -68,6 +68,8 @@ description: "API 错误代码及处理方式"
 | `ACCOUNT_BLOCKED` | `403` | 该账户的 API 访问已被封禁 |
 | `FORBIDDEN` | `403` | 密钥缺少该端点所需的权限，或请求 IP 不在该密钥的白名单中 |
 | `INSUFFICIENT_BALANCE` | `402` | 账户余额不足以完成此操作 |
+| `IDEMPOTENCY_KEY_REUSED` | `422` | 此 Idempotency-Key 已用于不同的请求体 |
+| `IDEMPOTENCY_KEY_TOO_LONG` | `422` | Idempotency-Key 超过 64 个字符 |
 | `INVALID_ADDRESS` | `400` | 不是有效的 TRON 地址 |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | 目标是智能合约——TRON 禁止向其代理资源 |
 | `INVALID_VOLUME` | `400` | 请求数量超出允许范围 |

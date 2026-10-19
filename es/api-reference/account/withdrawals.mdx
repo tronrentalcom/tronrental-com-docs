@@ -21,9 +21,26 @@ Retira TRX a cualquier direccion TRON. Comision: 1 TRX.
   Monto a retirar en TRX
 </ParamField>
 
+<ParamField body="currency" type="string">
+  `TRX` (predeterminado) o `USDT`. Con `USDT`, `amount_trx` lleva el importe en USDT a enviar.
+</ParamField>
+
 <ParamField body="totp_code" type="string">
   Codigo 2FA (si la autenticacion de dos factores esta habilitada)
 </ParamField>
+
+### Encabezados
+
+<ParamField header="Idempotency-Key" type="string">
+  Opcional, hasta 64 caracteres. Envía una clave nueva (un UUID, por ejemplo) con cada retiro nuevo y la misma clave cuando repitas una solicitud cuya respuesta no recibiste: la repetición devuelve el primer retiro en lugar de crear un segundo.
+</ParamField>
+
+### Reintentos seguros
+
+- La misma clave con los mismos `to_address`, `amount_trx` y `currency` devuelve `200` con el retiro que creó la primera solicitud, en su estado actual. No se cobra dos veces.
+- La misma clave con otro cuerpo se rechaza con `422` y el código `IDEMPOTENCY_KEY_REUSED`; una clave de más de 64 caracteres, con `422` y `IDEMPOTENCY_KEY_TOO_LONG`. Las claves son propias de tu cuenta y no caducan: nunca reutilices una para otro retiro.
+- Un solo retiro sin completar (`pending`, `scheduled` o `processing`) a la vez: otra solicitud mientras exista recibe `400` con `You already have a pending withdrawal`.
+- Tras un retiro creado con `Idempotency-Key`, el siguiente puede crearse a los 5 segundos; sin el encabezado la pausa sigue siendo de 60 segundos (`429`, consulta [Límites de solicitudes](/resources/rate-limits)).
 
 ### Ejemplo
 
@@ -31,6 +48,7 @@ Retira TRX a cualquier direccion TRON. Comision: 1 TRX.
 curl -X POST https://api.tronrental.com/v1/account/withdrawal \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 7f9c2b1e-5d4a-4c1e-9b3f-2a6d8e0c4f11" \
   -d '{
     "to_address": "TDestinationAddress...",
     "amount_trx": "100"

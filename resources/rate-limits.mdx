@@ -41,7 +41,7 @@ halved for the next ten minutes; three more such minutes block it entirely for t
 | Endpoint | Limit | Counted per |
 |---|---|---|
 | `POST /api/v1/invoices` | 10 requests/minute | IP address |
-| `POST /api/v1/account/withdrawal` | 1 request/minute | account |
+| `POST /api/v1/account/withdrawal` | 5 s after a withdrawal created with `Idempotency-Key`, 60 s after one without | account |
 | `POST /api/v1/energy/auto-refill` | 10 requests/minute | account |
 | `POST /api/v1/bandwidth/auto-refill` | 10 requests/minute | account |
 

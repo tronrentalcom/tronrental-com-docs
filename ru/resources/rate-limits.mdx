@@ -41,7 +41,7 @@ description: "Политика ограничения частоты запро�
 | Эндпоинт | Лимит | Считается по |
 |---|---|---|
 | `POST /api/v1/invoices` | 10 запросов/минута | IP-адресу |
-| `POST /api/v1/account/withdrawal` | 1 запрос/минута | аккаунту |
+| `POST /api/v1/account/withdrawal` | 5 с после вывода, созданного с `Idempotency-Key`, 60 с — после вывода без него | аккаунту |
 | `POST /api/v1/energy/auto-refill` | 10 запросов/минута | аккаунту |
 | `POST /api/v1/bandwidth/auto-refill` | 10 запросов/минута | аккаунту |
 

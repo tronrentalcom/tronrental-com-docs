@@ -21,9 +21,26 @@ description: "अपने अकाउंट से TRX निकालें"
   TRX में निकासी राशि
 </ParamField>
 
+<ParamField body="currency" type="string">
+  `TRX` (डिफ़ॉल्ट) या `USDT`। `USDT` के साथ `amount_trx` में भेजी जाने वाली USDT राशि होती है।
+</ParamField>
+
 <ParamField body="totp_code" type="string">
   2FA कोड (यदि 2FA सक्षम है)
 </ParamField>
+
+### हेडर
+
+<ParamField header="Idempotency-Key" type="string">
+  वैकल्पिक, अधिकतम 64 अक्षर। हर नई निकासी के साथ नई कुंजी (जैसे UUID) भेजें, और जिस अनुरोध का उत्तर नहीं मिला उसे दोहराते समय वही कुंजी भेजें — दोहराया गया अनुरोध दूसरी निकासी बनाने के बजाय पहली निकासी लौटाता है।
+</ParamField>
+
+### सुरक्षित दोहराव
+
+- वही कुंजी और वही `to_address`, `amount_trx` व `currency` होने पर `200` के साथ पहले अनुरोध से बनी निकासी उसकी मौजूदा स्थिति में लौटती है। दो बार शुल्क नहीं कटता।
+- वही कुंजी लेकिन अलग बॉडी होने पर `422` और कोड `IDEMPOTENCY_KEY_REUSED` के साथ अस्वीकार; 64 अक्षरों से लंबी कुंजी — `422` और `IDEMPOTENCY_KEY_TOO_LONG` के साथ। कुंजियाँ आपके खाते तक सीमित हैं और समाप्त नहीं होतीं — किसी दूसरी निकासी के लिए कुंजी दोबारा इस्तेमाल न करें।
+- एक समय में केवल एक अधूरी निकासी (`pending`, `scheduled` या `processing`): उसके रहते नया अनुरोध `400` और `You already have a pending withdrawal` पाता है।
+- `Idempotency-Key` के साथ बनी निकासी के बाद अगली 5 सेकंड में बनाई जा सकती है; हेडर के बिना विराम 60 सेकंड ही रहता है (`429`, देखें [रेट लिमिट](/resources/rate-limits))।
 
 ### उदाहरण
 
@@ -31,6 +48,7 @@ description: "अपने अकाउंट से TRX निकालें"
 curl -X POST https://api.tronrental.com/v1/account/withdrawal \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 7f9c2b1e-5d4a-4c1e-9b3f-2a6d8e0c4f11" \
   -d '{
     "to_address": "TDestinationAddress...",
     "amount_trx": "100"

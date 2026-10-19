@@ -21,9 +21,26 @@ Herhangi bir TRON adresine TRX ceker. Ucret: 1 TRX.
   TRX cinsinden cekilecek miktar
 </ParamField>
 
+<ParamField body="currency" type="string">
+  `TRX` (varsayılan) veya `USDT`. `USDT` ile `amount_trx`, gönderilecek USDT tutarını taşır.
+</ParamField>
+
 <ParamField body="totp_code" type="string">
   2FA kodu (2FA etkinse)
 </ParamField>
+
+### Başlıklar
+
+<ParamField header="Idempotency-Key" type="string">
+  İsteğe bağlı, en fazla 64 karakter. Her yeni çekimde yeni bir anahtar (örneğin bir UUID) gönderin; yanıtını alamadığınız bir isteği tekrarlarken aynı anahtarı kullanın — tekrar, ikinci bir çekim oluşturmak yerine ilk çekimi döndürür.
+</ParamField>
+
+### Güvenli tekrar
+
+- Aynı anahtar ve aynı `to_address`, `amount_trx` ve `currency` ile istek, ilk isteğin oluşturduğu çekimi güncel durumuyla `200` olarak döndürür. İki kez ücret alınmaz.
+- Aynı anahtar farklı bir gövdeyle `422` ve `IDEMPOTENCY_KEY_REUSED` koduyla reddedilir; 64 karakterden uzun anahtar `422` ve `IDEMPOTENCY_KEY_TOO_LONG` ile reddedilir. Anahtarlar hesabınıza özeldir ve süresi dolmaz — bir anahtarı başka bir çekim için asla yeniden kullanmayın.
+- Aynı anda yalnızca bir tamamlanmamış çekim (`pending`, `scheduled` veya `processing`) olabilir: varken gelen yeni istek `400` ve `You already have a pending withdrawal` alır.
+- `Idempotency-Key` ile oluşturulan bir çekimden sonra bir sonraki 5 saniye içinde oluşturulabilir; başlık olmadan bekleme 60 saniye olarak kalır (`429`, bkz. [Hız limitleri](/resources/rate-limits)).
 
 ### Ornek
 
@@ -31,6 +48,7 @@ Herhangi bir TRON adresine TRX ceker. Ucret: 1 TRX.
 curl -X POST https://api.tronrental.com/v1/account/withdrawal \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 7f9c2b1e-5d4a-4c1e-9b3f-2a6d8e0c4f11" \
   -d '{
     "to_address": "TDestinationAddress...",
     "amount_trx": "100"

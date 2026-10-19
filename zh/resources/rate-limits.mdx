@@ -39,7 +39,7 @@ description: "API 速率限制策略"
 | 端点 | 限制 | 计数维度 |
 |---|---|---|
 | `POST /api/v1/invoices` | 10 次请求/分钟 | IP 地址 |
-| `POST /api/v1/account/withdrawal` | 1 次请求/分钟 | 账户 |
+| `POST /api/v1/account/withdrawal` | 带 `Idempotency-Key` 创建的提现之后 5 秒，不带时之后 60 秒 | 账户 |
 | `POST /api/v1/energy/auto-refill` | 10 次请求/分钟 | 账户 |
 | `POST /api/v1/bandwidth/auto-refill` | 10 次请求/分钟 | 账户 |
 

@@ -73,6 +73,8 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `ACCOUNT_BLOCKED` | `403` | Acceso a la API bloqueado para esta cuenta |
 | `FORBIDDEN` | `403` | La clave carece del alcance que exige este endpoint, o la IP de la solicitud no está en la lista permitida de la clave |
 | `INSUFFICIENT_BALANCE` | `402` | Saldo de la cuenta insuficiente para esta operación |
+| `IDEMPOTENCY_KEY_REUSED` | `422` | Esta Idempotency-Key ya se usó con otro cuerpo de solicitud |
+| `IDEMPOTENCY_KEY_TOO_LONG` | `422` | La Idempotency-Key tiene más de 64 caracteres |
 | `INVALID_ADDRESS` | `400` | Dirección TRON no válida |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | El destino es un contrato inteligente — TRON prohíbe delegarle recursos |
 | `INVALID_VOLUME` | `400` | La cantidad solicitada está fuera del rango permitido |

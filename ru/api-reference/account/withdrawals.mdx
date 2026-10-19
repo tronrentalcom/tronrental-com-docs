@@ -21,9 +21,26 @@ description: "Вывод TRX с вашего аккаунта"
   Сумма вывода в TRX
 </ParamField>
 
+<ParamField body="currency" type="string">
+  `TRX` (по умолчанию) или `USDT`. Для `USDT` в `amount_trx` передаётся сумма в USDT.
+</ParamField>
+
 <ParamField body="totp_code" type="string">
   Код 2FA (если 2FA включена)
 </ParamField>
+
+### Заголовки
+
+<ParamField header="Idempotency-Key" type="string">
+  Необязательный, до 64 символов. Передавайте новый ключ (например, UUID) с каждым новым выводом и тот же ключ, когда повторяете запрос, ответ на который не получили, — повтор вернёт первый вывод, а не создаст второй.
+</ParamField>
+
+### Безопасный повтор
+
+- Тот же ключ с теми же `to_address`, `amount_trx` и `currency` возвращает `200` с выводом, который создал первый запрос, в его текущем состоянии. Второго списания нет.
+- Тот же ключ с другим телом запроса отклоняется с `422` и кодом `IDEMPOTENCY_KEY_REUSED`; ключ длиннее 64 символов — с `422` и `IDEMPOTENCY_KEY_TOO_LONG`. Ключи действуют в пределах вашего аккаунта и не истекают — не используйте один ключ для другого вывода.
+- Незавершённый вывод (`pending`, `scheduled` или `processing`) может быть только один: новый запрос, пока он есть, получит `400` с `You already have a pending withdrawal`.
+- После вывода, созданного с `Idempotency-Key`, следующий можно создать через 5 секунд; без заголовка пауза остаётся 60 секунд (`429`, см. [Лимиты запросов](/resources/rate-limits)).
 
 ### Пример
 
@@ -31,6 +48,7 @@ description: "Вывод TRX с вашего аккаунта"
 curl -X POST https://api.tronrental.com/v1/account/withdrawal \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 7f9c2b1e-5d4a-4c1e-9b3f-2a6d8e0c4f11" \
   -d '{
     "to_address": "TDestinationAddress...",
     "amount_trx": "100"

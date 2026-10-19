@@ -41,7 +41,7 @@ por trinta, com `Retry-After: 1800`. Contas no nível de 1000/minuto estão isen
 | Endpoint | Limite | Contado por |
 |---|---|---|
 | `POST /api/v1/invoices` | 10 requisições/minuto | endereço IP |
-| `POST /api/v1/account/withdrawal` | 1 requisição/minuto | conta |
+| `POST /api/v1/account/withdrawal` | 5 s após um saque criado com `Idempotency-Key`, 60 s após um saque sem ele | conta |
 | `POST /api/v1/energy/auto-refill` | 10 requisições/minuto | conta |
 | `POST /api/v1/bandwidth/auto-refill` | 10 requisições/minuto | conta |
 

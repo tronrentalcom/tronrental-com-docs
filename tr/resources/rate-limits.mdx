@@ -41,7 +41,7 @@ boyunca yarıya iner; böyle üç dakika daha olursa hesap otuz dakika tamamen e
 | Uç nokta | Sınır | Neye göre sayılır |
 |---|---|---|
 | `POST /api/v1/invoices` | 10 istek/dakika | IP adresi |
-| `POST /api/v1/account/withdrawal` | 1 istek/dakika | hesap |
+| `POST /api/v1/account/withdrawal` | `Idempotency-Key` ile oluşturulan çekimden sonra 5 sn, onsuz oluşturulandan sonra 60 sn | hesap |
 | `POST /api/v1/energy/auto-refill` | 10 istek/dakika | hesap |
 | `POST /api/v1/bandwidth/auto-refill` | 10 istek/dakika | hesap |
 

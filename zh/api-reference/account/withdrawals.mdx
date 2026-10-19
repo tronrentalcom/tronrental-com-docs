@@ -21,9 +21,26 @@ description: "从您的账户提现 TRX"
   提现金额，以 TRX 计
 </ParamField>
 
+<ParamField body="currency" type="string">
+  `TRX`（默认）或 `USDT`。使用 `USDT` 时，`amount_trx` 填写要发送的 USDT 金额。
+</ParamField>
+
 <ParamField body="totp_code" type="string">
   双重验证码（如已启用双重验证）
 </ParamField>
+
+### 请求头
+
+<ParamField header="Idempotency-Key" type="string">
+  可选，最多 64 个字符。每次新的提现都发送一个新键（例如 UUID）；重试未收到响应的请求时使用同一个键——重试会返回第一次的提现，而不会创建第二笔。
+</ParamField>
+
+### 安全重试
+
+- 同一个键且 `to_address`、`amount_trx`、`currency` 相同时，返回 `200` 及第一次请求创建的提现（当前状态），不会重复扣款。
+- 同一个键但请求体不同，将以 `422` 和代码 `IDEMPOTENCY_KEY_REUSED` 拒绝；键超过 64 个字符，以 `422` 和 `IDEMPOTENCY_KEY_TOO_LONG` 拒绝。键仅在您的账户内有效，且不会过期——切勿将同一个键用于另一笔提现。
+- 同一时间只能有一笔未完成的提现（`pending`、`scheduled` 或 `processing`）：存在时再次请求会收到 `400` 和 `You already have a pending withdrawal`。
+- 使用 `Idempotency-Key` 创建提现后，5 秒后即可创建下一笔；不带该请求头时，间隔仍为 60 秒（`429`，参见[速率限制](/resources/rate-limits)）。
 
 ### 示例
 
@@ -31,6 +48,7 @@ description: "从您的账户提现 TRX"
 curl -X POST https://api.tronrental.com/v1/account/withdrawal \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 7f9c2b1e-5d4a-4c1e-9b3f-2a6d8e0c4f11" \
   -d '{
     "to_address": "TDestinationAddress...",
     "amount_trx": "100"
