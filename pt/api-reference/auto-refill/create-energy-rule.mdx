@@ -6,9 +6,9 @@ description: "Reabasteça a energia de um endereço sempre que ela cair abaixo d
 
 ## Criar regra de energia
 
-Cria uma regra de Recarga automática para um endereço. A partir da verificação seguinte, sempre que o endereço tiver menos energia disponível do que `threshold_energy`, compramos `add_volume` de energia por uma hora e cobramos do seu saldo. Veja a [visão geral](/api-reference/auto-refill/overview) para entender como funcionam as verificações, o custo e os status.
+Cria uma regra de Recarga automática para um endereço. A partir da verificação seguinte, sempre que o endereço tiver menos energia disponível do que `threshold_energy`, compramos `add_volume` de energia por uma hora e cobramos do seu saldo. Veja a [visão geral](/pt/api-reference/auto-refill/overview) para entender como funcionam as verificações, o custo e os status.
 
-A requisição apenas cria a regra — ela mesma não compra nada. Exige o escopo `buy_energy`. Para ver antes o preço de uma recarga, use [Cotação de recarga de energia](/api-reference/auto-refill/quote-energy-refill).
+A requisição apenas cria a regra — ela mesma não compra nada. Exige o escopo `buy_energy`. Para ver antes o preço de uma recarga, use [Cotação de recarga de energia](/pt/api-reference/auto-refill/quote-energy-refill).
 
 ### Corpo da requisição
 
@@ -21,7 +21,7 @@ A requisição apenas cria a regra — ela mesma não compra nada. Exige o escop
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  Energia a comprar por recarga. De 32.000 a 5.000.000. Mantenha-o igual ou acima de `threshold_energy` — veja o [aviso na visão geral](/api-reference/auto-refill/overview#choosing-the-numbers).
+  Energia a comprar por recarga. De 32.000 a 5.000.000. Mantenha-o igual ou acima de `threshold_energy` — veja o [aviso na visão geral](/pt/api-reference/auto-refill/overview#escolhendo-os-números).
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -34,7 +34,7 @@ A requisição apenas cria a regra — ela mesma não compra nada. Exige o escop
 
 ### Resposta
 
-A nova regra — com os mesmos campos de [Listar regras de energia](/api-reference/auto-refill/list-energy-rules) — mais dois campos sobre o estado atual do endereço:
+A nova regra — com os mesmos campos de [Listar regras de energia](/pt/api-reference/auto-refill/list-energy-rules) — mais dois campos sobre o estado atual do endereço:
 
 <ResponseField name="current_energy" type="number | null">
   Energia disponível no endereço no momento em que a regra foi criada. `null` se não foi possível lê-la; a regra é criada de qualquer forma.
@@ -170,5 +170,5 @@ Um erro de validação vem no formato do framework, com `detail` como array:
 ```
 
 <Tip>
-Repetir uma criação após um timeout é seguro. Se a primeira requisição foi processada, a repetição retorna `409 AUTOREFILL_ADDRESS_TAKEN` em vez de criar uma segunda regra; [liste as suas regras](/api-reference/auto-refill/list-energy-rules) para obter o `id` dela.
+Repetir uma criação após um timeout é seguro. Se a primeira requisição foi processada, a repetição retorna `409 AUTOREFILL_ADDRESS_TAKEN` em vez de criar uma segunda regra; [liste as suas regras](/pt/api-reference/auto-refill/list-energy-rules) para obter o `id` dela.
 </Tip>

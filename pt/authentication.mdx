@@ -25,11 +25,12 @@ Você pode restringir sua chave de API a endereços IP específicos para seguran
 
 ### Permissões da chave
 
-Cada chave de API tem acesso total às operações de API da sua conta:
-- Comprar energia e largura de banda
-- Gerenciar assinaturas do Smart Mode
-- Criar faturas
-- Consultar saldo e histórico de transações
+Cada chave de API tem **escopos** (scopes): as operações que ela pode realizar. Você os escolhe no
+painel ao criar ou editar uma chave. Uma chave nova recebe todos os escopos de leitura e escrita
+(comprar energia e largura de banda, Smart Mode, consultar saldo e histórico, entre outros), exceto
+`withdraw`: esse escopo é ativado separadamente e exige 2FA e uma lista de IPs permitidos. Uma
+solicitação fora dos escopos da chave é recusada com HTTP `403`. A lista completa:
+[Listar escopos de chaves de API](/pt/api-reference/account/api-key-scopes).
 
 <Warning>
   Mantenha sua chave de API em sigilo. Não a exponha em código do lado do cliente, repositórios públicos ou URLs.
@@ -49,7 +50,7 @@ Cada solicitação autenticada com uma chave de API é guardada por 7 dias: mét
 
 ## Limites de Taxa
 
-O limite de taxa é contado por conta, não por chave: todas as chaves de uma conta compartilham um único orçamento. Consulte [Limites de Taxa](/resources/rate-limits) para detalhes.
+O limite de taxa é contado por conta, não por chave: todas as chaves de uma conta compartilham um único orçamento. Consulte [Limites de Taxa](/pt/resources/rate-limits) para detalhes.
 
 ## Erros
 

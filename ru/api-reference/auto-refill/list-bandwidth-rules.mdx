@@ -33,7 +33,7 @@ description: "Все правила автопополнения bandwidth в в
       Срок аренды для каждого пополнения — `1h` или `1d`
     </ResponseField>
     <ResponseField name="status" type="string">
-      `active`, `paused` или `stopped_insufficient_balance` — см. [Статус правила](/api-reference/auto-refill/overview#rule-status)
+      `active`, `paused` или `stopped_insufficient_balance` — см. [Статус правила](/ru/api-reference/auto-refill/overview#статус-правила)
     </ResponseField>
     <ResponseField name="stopped_reason" type="string | null">
       Почему правило поставлено на паузу или остановлено: `insufficient_balance`, `order_failed`, `activation_failed` или `invalid_params`. `null`, если причины нет.
@@ -66,7 +66,7 @@ description: "Все правила автопополнения bandwidth в в
       Полная цена одного пополнения для вашего аккаунта по текущим ценам, включая фиксированную комиссию. Активация адреса, когда она нужна, оплачивается сверх. `null`, если цена временно недоступна.
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `true`, когда `add_volume` меньше `threshold_bandwidth`. Тогда одного пополнения может не хватить, чтобы поднять адрес выше порога, и правило покупает снова после каждой траты, — см. [предупреждение в обзоре](/api-reference/auto-refill/overview#choosing-the-numbers).
+      `true`, когда `add_volume` меньше `threshold_bandwidth`. Тогда одного пополнения может не хватить, чтобы поднять адрес выше порога, и правило покупает снова после каждой траты, — см. [предупреждение в обзоре](/ru/api-reference/auto-refill/overview#как-выбрать-значения).
     </ResponseField>
   </Expandable>
 </ResponseField>

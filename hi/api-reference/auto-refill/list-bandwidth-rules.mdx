@@ -33,7 +33,7 @@ description: "आपके खाते के सभी बैंडविड�
       हर रिफिल के किराये की अवधि — `1h` या `1d`
     </ResponseField>
     <ResponseField name="status" type="string">
-      `active`, `paused` या `stopped_insufficient_balance` — देखें [नियम की स्थिति](/api-reference/auto-refill/overview#rule-status)
+      `active`, `paused` या `stopped_insufficient_balance` — देखें [नियम की स्थिति](/hi/api-reference/auto-refill/overview#नियम-की-स्थिति)
     </ResponseField>
     <ResponseField name="stopped_reason" type="string | null">
       नियम क्यों रोका गया या रुका: `insufficient_balance`, `order_failed`, `activation_failed` या `invalid_params`। कोई कारण न हो तो `null`।
@@ -66,7 +66,7 @@ description: "आपके खाते के सभी बैंडविड�
       मौजूदा कीमतों पर आपके खाते के लिए एक रिफिल की पूरी कीमत, फिक्स्ड शुल्क सहित। ज़रूरत पड़ने पर एड्रेस सक्रियण का शुल्क अलग से जुड़ता है। यदि कीमत अस्थायी रूप से उपलब्ध नहीं है तो `null`।
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `true` जब `add_volume` `threshold_bandwidth` से छोटा हो। तब एक रिफिल शायद एड्रेस को थ्रेशोल्ड से ऊपर न ला पाए, और नियम हर खर्च के बाद फिर खरीदता है — देखें [अवलोकन में चेतावनी](/api-reference/auto-refill/overview#choosing-the-numbers)।
+      `true` जब `add_volume` `threshold_bandwidth` से छोटा हो। तब एक रिफिल शायद एड्रेस को थ्रेशोल्ड से ऊपर न ला पाए, और नियम हर खर्च के बाद फिर खरीदता है — देखें [अवलोकन में चेतावनी](/hi/api-reference/auto-refill/overview#संख्याएँ-कैसे-चुनें)।
     </ResponseField>
   </Expandable>
 </ResponseField>

@@ -59,7 +59,7 @@ formato padrão ele é um objeto e, num erro de validação, um array.
 | `404` | Não encontrado |
 | `409` | Conflito — requisição duplicada ou conflito de recurso |
 | `422` | Erro de validação — verifique o corpo da requisição |
-| `429` | Limite de taxa excedido — veja [Limites de Taxa](/resources/rate-limits) |
+| `429` | Limite de taxa excedido — veja [Limites de Taxa](/pt/resources/rate-limits) |
 | `500` | Erro do servidor |
 | `503` | Temporariamente indisponível — tente novamente em breve |
 
@@ -79,7 +79,7 @@ Retornados no formato padrão, em `detail.error.code`:
 | `INVALID_VOLUME` | `400` | Quantidade solicitada fora do intervalo permitido |
 | `INVALID_DURATION` | `400` | Duração não está entre os valores aceitos |
 | `ORDER_NOT_FOUND` | `404` | O ID do pedido não existe |
-| `RATE_LIMIT_EXCEEDED` | `429` | Requisições em excesso — veja [Limites de Taxa](/resources/rate-limits) |
+| `RATE_LIMIT_EXCEEDED` | `429` | Requisições em excesso — veja [Limites de Taxa](/pt/resources/rate-limits) |
 
 <Note>
 O Node API (`node.tronrental.com`) tem códigos de erro próprios, em outro formato — veja
@@ -95,7 +95,7 @@ problema de saldo apenas pelo código.
 
 ## Códigos da Recarga automática
 
-Retornados no formato padrão pelos endpoints de [Recarga automática](/api-reference/auto-refill/overview):
+Retornados no formato padrão pelos endpoints de [Recarga automática](/pt/api-reference/auto-refill/overview):
 
 | Código | Status | Descrição |
 |--------|--------|-------------|
@@ -123,7 +123,7 @@ lado de `detail`. Os demais erros do mesmo endpoint usam o formato padrão:
 
 Repita respostas `5xx` com recuo exponencial. Para `429`, prefira o cabeçalho `Retry-After` quando a
 resposta o trouxer, e leia o corpo primeiro — nem todo `429` é um limite de taxa
-(veja [Limites de Taxa](/resources/rate-limits)).
+(veja [Limites de Taxa](/pt/resources/rate-limits)).
 
 ```python
 import time

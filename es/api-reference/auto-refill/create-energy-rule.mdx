@@ -6,9 +6,9 @@ description: "Recarga la energía de una dirección cada vez que cae por debajo 
 
 ## Crear regla de energía
 
-Crea una regla de Recarga automática para una dirección. A partir de la siguiente comprobación, cada vez que la dirección tenga menos energía disponible que `threshold_energy`, compramos `add_volume` de energía por una hora y lo cobramos de tu saldo. Consulta la [descripción general](/api-reference/auto-refill/overview) para ver cómo funcionan las comprobaciones, el coste y los estados.
+Crea una regla de Recarga automática para una dirección. A partir de la siguiente comprobación, cada vez que la dirección tenga menos energía disponible que `threshold_energy`, compramos `add_volume` de energía por una hora y lo cobramos de tu saldo. Consulta la [descripción general](/es/api-reference/auto-refill/overview) para ver cómo funcionan las comprobaciones, el coste y los estados.
 
-La solicitud solo crea la regla — no compra nada por sí misma. Requiere el alcance `buy_energy`. Para ver antes el precio de una recarga, usa [Cotización de recarga de energía](/api-reference/auto-refill/quote-energy-refill).
+La solicitud solo crea la regla — no compra nada por sí misma. Requiere el alcance `buy_energy`. Para ver antes el precio de una recarga, usa [Cotización de recarga de energía](/es/api-reference/auto-refill/quote-energy-refill).
 
 ### Cuerpo de la solicitud
 
@@ -21,7 +21,7 @@ La solicitud solo crea la regla — no compra nada por sí misma. Requiere el al
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  Energía que se compra en cada recarga. De 32,000 a 5,000,000. Mantenlo igual o por encima de `threshold_energy` — consulta la [advertencia de la descripción general](/api-reference/auto-refill/overview#choosing-the-numbers).
+  Energía que se compra en cada recarga. De 32,000 a 5,000,000. Mantenlo igual o por encima de `threshold_energy` — consulta la [advertencia de la descripción general](/es/api-reference/auto-refill/overview#cómo-elegir-los-valores).
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -34,7 +34,7 @@ La solicitud solo crea la regla — no compra nada por sí misma. Requiere el al
 
 ### Respuesta
 
-La nueva regla — con los mismos campos que en [Listar reglas de energía](/api-reference/auto-refill/list-energy-rules) — más dos campos sobre el estado actual de la dirección:
+La nueva regla — con los mismos campos que en [Listar reglas de energía](/es/api-reference/auto-refill/list-energy-rules) — más dos campos sobre el estado actual de la dirección:
 
 <ResponseField name="current_energy" type="number | null">
   Energía disponible en la dirección en el momento de crear la regla. `null` si no se pudo leer; la regla se crea de todos modos.
@@ -170,5 +170,5 @@ Un error de validación llega en el formato del framework, con `detail` como arr
 ```
 
 <Tip>
-Reintentar una creación tras agotarse el tiempo de espera es seguro. Si la primera solicitud se completó, el reintento devuelve `409 AUTOREFILL_ADDRESS_TAKEN` en lugar de crear una segunda regla; [lista tus reglas](/api-reference/auto-refill/list-energy-rules) para obtener su `id`.
+Reintentar una creación tras agotarse el tiempo de espera es seguro. Si la primera solicitud se completó, el reintento devuelve `409 AUTOREFILL_ADDRESS_TAKEN` en lugar de crear una segunda regla; [lista tus reglas](/es/api-reference/auto-refill/list-energy-rules) para obtener su `id`.
 </Tip>

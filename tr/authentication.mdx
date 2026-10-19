@@ -25,11 +25,12 @@ Ek guvenlik icin API anahtarinizi belirli IP adresleriyle sinirlandirabilirsini.
 
 ### Anahtar izinleri
 
-Her API anahtari, hesabinizin API islemlerine tam erisime sahiptir:
-- Enerji ve bant genisligi satin alma
-- Akilli Mod aboneliklerini yonetme
-- Fatura olusturma
-- Bakiye ve islem gecmisini kontrol etme
+Her API anahtarı **kapsamlar** (scopes) taşır — anahtarın yapabileceği işlemler. Bunları kontrol
+panelinde anahtarı oluştururken veya düzenlerken seçersiniz. Yeni bir anahtar tüm okuma ve yazma
+kapsamlarını alır (enerji ve bant genişliği satın alma, Smart Mode, bakiye ve geçmişi görüntüleme ve
+diğerleri), `withdraw` hariç: bu kapsam ayrıca etkinleştirilir ve 2FA ile IP beyaz listesi gerektirir.
+Anahtarın kapsamları dışındaki bir istek HTTP `403` ile reddedilir. Tam liste:
+[API Anahtarı Kapsamlarını Listele](/tr/api-reference/account/api-key-scopes).
 
 <Warning>
   API anahtarinizi gizli tutun. Istemci tarafli kodda, herkese acik depolarda veya URL'lerde ifsa etmeyin.
@@ -49,7 +50,7 @@ API anahtarıyla doğrulanan her istek 7 gün boyunca kaydedilir: yöntem, yol, 
 
 ## Hiz Sinirlari
 
-Hiz siniri anahtar basina degil, hesap basina sayilir: bir hesabin tum anahtarlari tek bir butceyi paylasir. Ayrintilar icin [Hiz Sinirlari](/resources/rate-limits) sayfasina bakin.
+Hiz siniri anahtar basina degil, hesap basina sayilir: bir hesabin tum anahtarlari tek bir butceyi paylasir. Ayrintilar icin [Hiz Sinirlari](/tr/resources/rate-limits) sayfasina bakin.
 
 ## Hatalar
 

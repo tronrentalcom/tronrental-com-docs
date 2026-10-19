@@ -33,7 +33,7 @@ description: "您账户中的全部能量自动补充规则"
       每次补充的租赁时长——始终为 `1h`
     </ResponseField>
     <ResponseField name="status" type="string">
-      `active`、`paused` 或 `stopped_insufficient_balance`——参见[规则状态](/api-reference/auto-refill/overview#rule-status)
+      `active`、`paused` 或 `stopped_insufficient_balance`——参见[规则状态](/zh/api-reference/auto-refill/overview#规则状态)
     </ResponseField>
     <ResponseField name="stopped_reason" type="string | null">
       规则被暂停或停止的原因：`insufficient_balance`、`order_failed`、`activation_failed` 或 `invalid_params`。没有原因时为 `null`。
@@ -66,7 +66,7 @@ description: "您账户中的全部能量自动补充规则"
       按当前价格计算的您账户补充一次的全部价格，已包含固定手续费。如需激活地址，激活费用另行收取。价格暂时不可用时为 `null`。
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      当 `add_volume` 小于 `threshold_energy` 时为 `true`。此时一次补充可能无法让地址回到阈值以上，规则会在每次消耗后再次购买——参见[概述中的警告](/api-reference/auto-refill/overview#choosing-the-numbers)。
+      当 `add_volume` 小于 `threshold_energy` 时为 `true`。此时一次补充可能无法让地址回到阈值以上，规则会在每次消耗后再次购买——参见[概述中的警告](/zh/api-reference/auto-refill/overview#选择数值)。
     </ResponseField>
   </Expandable>
 </ResponseField>

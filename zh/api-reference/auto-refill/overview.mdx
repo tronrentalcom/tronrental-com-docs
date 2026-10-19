@@ -50,7 +50,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 
 ### 费用
 
-每次补充都是一笔普通订单：按您的费率计算的租赁费，加上**固定手续费，每次补充都会收取**。列表和创建响应中的 `estimated_cost_per_refill_trx` 是您的账户补充一次的全部价格，已包含固定手续费。如需在创建规则之前查看该价格，请使用报价端点：[能量](/api-reference/auto-refill/quote-energy-refill)、[带宽](/api-reference/auto-refill/quote-bandwidth-refill)。较小的 `add_volume` 补充得频繁，要多次支付固定手续费；较大的则支付次数更少。
+每次补充都是一笔普通订单：按您的费率计算的租赁费，加上**固定手续费，每次补充都会收取**。列表和创建响应中的 `estimated_cost_per_refill_trx` 是您的账户补充一次的全部价格，已包含固定手续费。如需在创建规则之前查看该价格，请使用报价端点：[能量](/zh/api-reference/auto-refill/quote-energy-refill)、[带宽](/zh/api-reference/auto-refill/quote-bandwidth-refill)。较小的 `add_volume` 补充得频繁，要多次支付固定手续费；较大的则支付次数更少。
 
 通过 API 密钥创建的规则，按使用该 API 密钥购买的价格计费；在网站上创建的规则，按网站购买的价格计费。`estimated_cost_per_refill_trx` 已反映这一点。
 
@@ -60,9 +60,9 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 
 ### 订单与 Webhook
 
-每次补充都会出现在您的订单历史中（[订单列表](/api-reference/orders/list-orders)），并带有 `source: "autorefill"`。如只需列出补充订单，请调用 `GET /orders?source=autorefill`；如需将其导出为文件，请使用 `autorefill` [报表](/api-reference/account/reports)。
+每次补充都会出现在您的订单历史中（[订单列表](/zh/api-reference/orders/list-orders)），并带有 `source: "autorefill"`。如只需列出补充订单，请调用 `GET /orders?source=autorefill`；如需将其导出为文件，请使用 `autorefill` [报表](/api-reference/account/reports)。
 
-通过 API 密钥创建的规则会为其补充订单发送 [`order.updated` Webhook](/api-reference/webhooks/overview)，与您通过 API 下的订单相同。未使用 API 密钥创建的规则不会发送。
+通过 API 密钥创建的规则会为其补充订单发送 [`order.updated` Webhook](/zh/api-reference/webhooks/overview)，与您通过 API 下的订单相同。未使用 API 密钥创建的规则不会发送。
 
 ### 规则状态
 
@@ -91,7 +91,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 - 一个账户中**每个地址每种资源只能有一条规则**。为同一地址创建第二条能量规则（或第二条带宽规则）会返回 `409 AUTOREFILL_ADDRESS_TAKEN`——请改为编辑现有规则。
 - 每个账户最多 **20 条能量规则和 20 条带宽规则**。已删除的规则不计入。超出上限时返回 `409 AUTOREFILL_LIMIT_REACHED`。
 - **不支持合约地址**，例如 USDT 代币合约：TRON 不允许向其委托资源。
-- **创建规则**的请求每个账户每分钟限 10 次，两种资源分别计算。参见[速率限制](/resources/rate-limits)。
+- **创建规则**的请求每个账户每分钟限 10 次，两种资源分别计算。参见[速率限制](/zh/resources/rate-limits)。
 
 ### 编辑与删除
 
@@ -99,7 +99,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 
 ### 与智能模式和自动续费租赁的比较
 
-| | 自动补充 | [智能模式](/api-reference/smart-mode/overview) | [自动续费租赁](/api-reference/bandwidth-rentals/create-rental) |
+| | 自动补充 | [智能模式](/zh/api-reference/smart-mode/overview) | [自动续费租赁](/zh/api-reference/bandwidth-rentals/create-rental) |
 |---|---|---|---|
 | 资源 | 能量或带宽 | 能量，外加可选的带宽 | 带宽 |
 | 何时提供 | 可用量低于您的阈值时 | 每次转出 USDT 时 | 一次性委托，并在租赁期间一直保持 |
@@ -110,8 +110,8 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 
 | 操作 | 能量 | 带宽 |
 |---|---|---|
-| 一次补充的价格 | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
-| 创建规则 | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
-| 列出规则 | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
-| 编辑、暂停、恢复 | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
-| 删除 | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |
+| 一次补充的价格 | [`GET /energy/auto-refill/quote`](/zh/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/zh/api-reference/auto-refill/quote-bandwidth-refill) |
+| 创建规则 | [`POST /energy/auto-refill`](/zh/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/zh/api-reference/auto-refill/create-bandwidth-rule) |
+| 列出规则 | [`GET /energy/auto-refill`](/zh/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/zh/api-reference/auto-refill/list-bandwidth-rules) |
+| 编辑、暂停、恢复 | [`PATCH /energy/auto-refill/{rule_id}`](/zh/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/zh/api-reference/auto-refill/update-bandwidth-rule) |
+| 删除 | [`DELETE /energy/auto-refill/{rule_id}`](/zh/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/zh/api-reference/auto-refill/delete-bandwidth-rule) |

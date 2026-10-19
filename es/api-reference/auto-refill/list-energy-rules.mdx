@@ -33,7 +33,7 @@ Devuelve todas las reglas de Recarga automática de energía de tu cuenta, de la
       Duración del alquiler de cada recarga — siempre `1h`
     </ResponseField>
     <ResponseField name="status" type="string">
-      `active`, `paused` o `stopped_insufficient_balance` — ver [Estado de la regla](/api-reference/auto-refill/overview#rule-status)
+      `active`, `paused` o `stopped_insufficient_balance` — ver [Estado de la regla](/es/api-reference/auto-refill/overview#estado-de-la-regla)
     </ResponseField>
     <ResponseField name="stopped_reason" type="string | null">
       Por qué se pausó o se detuvo la regla: `insufficient_balance`, `order_failed`, `activation_failed` o `invalid_params`. `null` si no hay ningún motivo.
@@ -66,7 +66,7 @@ Devuelve todas las reglas de Recarga automática de energía de tu cuenta, de la
       Precio completo de una recarga para tu cuenta a los precios actuales, comisión fija incluida. La activación de la dirección, cuando hace falta, se cobra aparte. `null` si el precio no está disponible temporalmente.
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `true` cuando `add_volume` es menor que `threshold_energy`. En ese caso, una recarga puede no subir la dirección por encima del umbral, y la regla vuelve a comprar después de cada gasto — consulta la [advertencia de la descripción general](/api-reference/auto-refill/overview#choosing-the-numbers).
+      `true` cuando `add_volume` es menor que `threshold_energy`. En ese caso, una recarga puede no subir la dirección por encima del umbral, y la regla vuelve a comprar después de cada gasto — consulta la [advertencia de la descripción general](/es/api-reference/auto-refill/overview#cómo-elegir-los-valores).
     </ResponseField>
   </Expandable>
 </ResponseField>

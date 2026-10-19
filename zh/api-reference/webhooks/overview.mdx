@@ -5,7 +5,7 @@ description: "实时接收账户事件通知"
 
 ## Webhook
 
-每个账户只有**一个 Webhook URL**，所有事件都发送到该地址。可在 [Dashboard → API](https://tronrental.com/dashboard/api) 中设置，或使用[配置 Webhook](/api-reference/webhooks/configure)。
+每个账户只有**一个 Webhook URL**，所有事件都发送到该地址。可在 [Dashboard → API](https://tronrental.com/dashboard/api) 中设置，或使用[配置 Webhook](/zh/api-reference/webhooks/configure)。
 
 ### 事件
 
@@ -184,7 +184,7 @@ description: "实时接收账户事件通知"
 每个 `package.*` 事件的 `data` 中都包含以下字段：
 
 <ResponseField name="package_id" type="number">
-  套餐 ID——即[套餐列表](/api-reference/transfer-packages/list)中的 `id`。
+  套餐 ID——即[套餐列表](/zh/api-reference/transfer-packages/list)中的 `id`。
 </ResponseField>
 
 <ResponseField name="address" type="string">
@@ -208,7 +208,7 @@ description: "实时接收账户事件通知"
 </Warning>
 
 <Note>
-  `remaining` 也可能在没有事件的情况下减少。多次转账套餐每天扣除一次转账作为每日订阅——第一次在激活时扣除，因此 500 次转账的套餐从 `remaining: 499` 开始——这笔扣除不会单独通知。同一地址在同一区块中的两笔转账可能报告相同的 `remaining`。请把 `remaining` 当作参考，把[套餐列表](/api-reference/transfer-packages/list)当作准确来源。
+  `remaining` 也可能在没有事件的情况下减少。多次转账套餐每天扣除一次转账作为每日订阅——第一次在激活时扣除，因此 500 次转账的套餐从 `remaining: 499` 开始——这笔扣除不会单独通知。同一地址在同一区块中的两笔转账可能报告相同的 `remaining`。请把 `remaining` 当作参考，把[套餐列表](/zh/api-reference/transfer-packages/list)当作准确来源。
 </Note>
 
 识别重发时，`package.transfer` 请使用 `(package_id, tx_hash)`，其他事件使用 `(event, package_id)`：重发的请求体、`timestamp` 和签名都相同。
@@ -320,7 +320,7 @@ description: "实时接收账户事件通知"
 - 每次尝试超时 **10 秒**。
 - 我们接受任何 **`2xx`**。其他一律视为失败尝试。
 - **不跟随重定向。** `301`/`302` 是一次失败尝试，而不是跳转。
-- 错过的事件**不会**补发。三次尝试都失败，该事件就丢失了；请用[查询订单](/api-reference/orders/get-order)或[套餐列表](/api-reference/transfer-packages/list)对账，而不是等待重发。
+- 错过的事件**不会**补发。三次尝试都失败，该事件就丢失了；请用[查询订单](/zh/api-reference/orders/get-order)或[套餐列表](/zh/api-reference/transfer-packages/list)对账，而不是等待重发。
 
 您的 URL 必须解析到**公网**地址。回环、私有和链路本地地址段会被拒绝，无法解析的主机同样如此——这两种情况下都不会发送任何请求，也不会写入日志。
 

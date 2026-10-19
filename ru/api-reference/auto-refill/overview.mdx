@@ -50,7 +50,7 @@ description: "Энергия или bandwidth на адресе не опуск�
 
 ### Стоимость
 
-Каждое пополнение — обычный заказ: аренда по вашей ставке плюс **фиксированная комиссия, которая берётся за каждое пополнение**. `estimated_cost_per_refill_trx` в ответах списка и создания — полная цена одного пополнения для вашего аккаунта, включая фиксированную комиссию. Чтобы узнать эту цену до создания правила, используйте эндпоинт расчёта цены: [энергия](/api-reference/auto-refill/quote-energy-refill), [bandwidth](/api-reference/auto-refill/quote-bandwidth-refill). Маленький `add_volume` с частыми пополнениями платит фиксированную комиссию много раз; крупный — реже.
+Каждое пополнение — обычный заказ: аренда по вашей ставке плюс **фиксированная комиссия, которая берётся за каждое пополнение**. `estimated_cost_per_refill_trx` в ответах списка и создания — полная цена одного пополнения для вашего аккаунта, включая фиксированную комиссию. Чтобы узнать эту цену до создания правила, используйте эндпоинт расчёта цены: [энергия](/ru/api-reference/auto-refill/quote-energy-refill), [bandwidth](/ru/api-reference/auto-refill/quote-bandwidth-refill). Маленький `add_volume` с частыми пополнениями платит фиксированную комиссию много раз; крупный — реже.
 
 Правило, созданное с API-ключом, тарифицируется как покупка через этот API-ключ; правило, созданное на сайте, — как покупка на сайте. `estimated_cost_per_refill_trx` это уже учитывает.
 
@@ -60,9 +60,9 @@ description: "Энергия или bandwidth на адресе не опуск�
 
 ### Заказы и вебхуки
 
-Каждое пополнение появляется в истории заказов ([Список заказов](/api-reference/orders/list-orders)) с `source: "autorefill"`. Чтобы получить только заказы пополнения, вызовите `GET /orders?source=autorefill`; чтобы выгрузить их файлом, используйте [отчёт](/api-reference/account/reports) `autorefill`.
+Каждое пополнение появляется в истории заказов ([Список заказов](/ru/api-reference/orders/list-orders)) с `source: "autorefill"`. Чтобы получить только заказы пополнения, вызовите `GET /orders?source=autorefill`; чтобы выгрузить их файлом, используйте [отчёт](/api-reference/account/reports) `autorefill`.
 
-Правила, созданные с API-ключом, отправляют [вебхуки `order.updated`](/api-reference/webhooks/overview) по своим заказам пополнения — так же, как заказы, оформленные через API. Правила, созданные без API-ключа, их не отправляют.
+Правила, созданные с API-ключом, отправляют [вебхуки `order.updated`](/ru/api-reference/webhooks/overview) по своим заказам пополнения — так же, как заказы, оформленные через API. Правила, созданные без API-ключа, их не отправляют.
 
 ### Статус правила
 
@@ -91,7 +91,7 @@ description: "Энергия или bandwidth на адресе не опуск�
 - **Одно правило на адрес и ресурс** в аккаунте. Попытка создать второе правило для энергии (или второе правило для bandwidth) на тот же адрес вернёт `409 AUTOREFILL_ADDRESS_TAKEN` — вместо этого измените существующее правило.
 - **20 правил для энергии и 20 правил для bandwidth** на аккаунт. Удалённые правила не считаются. Сверх лимита: `409 AUTOREFILL_LIMIT_REACHED`.
 - **Адреса контрактов не принимаются**, например контракт токена USDT: TRON не позволяет делегировать им ресурсы.
-- **Создание правил** ограничено 10 запросами в минуту на аккаунт, для каждого ресурса отдельно. См. [Лимиты запросов](/resources/rate-limits).
+- **Создание правил** ограничено 10 запросами в минуту на аккаунт, для каждого ресурса отдельно. См. [Лимиты запросов](/ru/resources/rate-limits).
 
 ### Изменение и удаление
 
@@ -99,7 +99,7 @@ description: "Энергия или bandwidth на адресе не опуск�
 
 ### Сравнение со Smart Mode и арендой с автопродлением
 
-| | Автопополнение | [Smart Mode](/api-reference/smart-mode/overview) | [Аренда с автопродлением](/api-reference/bandwidth-rentals/create-rental) |
+| | Автопополнение | [Smart Mode](/ru/api-reference/smart-mode/overview) | [Аренда с автопродлением](/ru/api-reference/bandwidth-rentals/create-rental) |
 |---|---|---|---|
 | Ресурс | Энергия или bandwidth | Энергия, плюс bandwidth по желанию | Bandwidth |
 | Когда доставляет | Когда уровень падает ниже вашего порога | При каждом исходящем переводе USDT | Делегируется один раз и держится, пока идёт аренда |
@@ -110,8 +110,8 @@ description: "Энергия или bandwidth на адресе не опуск�
 
 | Действие | Энергия | Bandwidth |
 |---|---|---|
-| Цена одного пополнения | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
-| Создать правило | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
-| Список правил | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
-| Изменить, приостановить, возобновить | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
-| Удалить | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |
+| Цена одного пополнения | [`GET /energy/auto-refill/quote`](/ru/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/ru/api-reference/auto-refill/quote-bandwidth-refill) |
+| Создать правило | [`POST /energy/auto-refill`](/ru/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/ru/api-reference/auto-refill/create-bandwidth-rule) |
+| Список правил | [`GET /energy/auto-refill`](/ru/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/ru/api-reference/auto-refill/list-bandwidth-rules) |
+| Изменить, приостановить, возобновить | [`PATCH /energy/auto-refill/{rule_id}`](/ru/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/ru/api-reference/auto-refill/update-bandwidth-rule) |
+| Удалить | [`DELETE /energy/auto-refill/{rule_id}`](/ru/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/ru/api-reference/auto-refill/delete-bandwidth-rule) |

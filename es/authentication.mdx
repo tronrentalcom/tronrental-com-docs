@@ -25,11 +25,12 @@ Puedes restringir tu clave API a direcciones IP especificas para mayor seguridad
 
 ### Permisos de la clave
 
-Cada clave API tiene acceso completo a las operaciones de la API de tu cuenta:
-- Comprar energia y ancho de banda
-- Gestionar suscripciones de Smart Mode
-- Crear facturas
-- Consultar saldo e historial de transacciones
+Cada clave API lleva **alcances** (scopes): las operaciones que puede realizar. Los eliges en el panel
+al crear o editar una clave. Una clave nueva recibe todos los alcances de lectura y escritura (comprar
+energía y ancho de banda, Smart Mode, consultar el saldo y el historial, entre otros) salvo `withdraw`:
+ese alcance se activa por separado y requiere 2FA y una lista blanca de IP. Una solicitud fuera de los
+alcances de la clave se rechaza con HTTP `403`. La lista completa:
+[Listar alcances de clave API](/es/api-reference/account/api-key-scopes).
 
 <Warning>
   Mantiene tu clave API en secreto. No la expongas en codigo del lado del cliente, repositorios publicos o URLs.
@@ -49,7 +50,7 @@ Cada solicitud autenticada con una clave API se guarda durante 7 días: método,
 
 ## Limites de tasa
 
-El limite de tasa se cuenta por cuenta, no por clave: todas las claves de una cuenta comparten un unico presupuesto. Consulta [Limites de tasa](/resources/rate-limits) para mas detalles.
+El limite de tasa se cuenta por cuenta, no por clave: todas las claves de una cuenta comparten un unico presupuesto. Consulta [Limites de tasa](/es/resources/rate-limits) para mas detalles.
 
 ## Errores
 

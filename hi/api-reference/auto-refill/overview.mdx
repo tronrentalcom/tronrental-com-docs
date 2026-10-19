@@ -50,7 +50,7 @@ description: "किसी एड्रेस पर एनर्जी या �
 
 ### लागत
 
-हर रिफिल एक सामान्य ऑर्डर है: आपकी दर पर किराया और साथ में **फिक्स्ड शुल्क, जो हर रिफिल पर लिया जाता है**। सूची और नियम बनाने के रिस्पॉन्स में `estimated_cost_per_refill_trx` आपके खाते के लिए एक रिफिल की पूरी कीमत है, फिक्स्ड शुल्क सहित। नियम बनाने से पहले यह कीमत देखने के लिए मूल्य अनुमान एंडपॉइंट का उपयोग करें: [एनर्जी](/api-reference/auto-refill/quote-energy-refill), [बैंडविड्थ](/api-reference/auto-refill/quote-bandwidth-refill)। बार-बार रिफिल होने वाला छोटा `add_volume` फिक्स्ड शुल्क कई बार चुकाता है; बड़ा वाला उसे कम बार चुकाता है।
+हर रिफिल एक सामान्य ऑर्डर है: आपकी दर पर किराया और साथ में **फिक्स्ड शुल्क, जो हर रिफिल पर लिया जाता है**। सूची और नियम बनाने के रिस्पॉन्स में `estimated_cost_per_refill_trx` आपके खाते के लिए एक रिफिल की पूरी कीमत है, फिक्स्ड शुल्क सहित। नियम बनाने से पहले यह कीमत देखने के लिए मूल्य अनुमान एंडपॉइंट का उपयोग करें: [एनर्जी](/hi/api-reference/auto-refill/quote-energy-refill), [बैंडविड्थ](/hi/api-reference/auto-refill/quote-bandwidth-refill)। बार-बार रिफिल होने वाला छोटा `add_volume` फिक्स्ड शुल्क कई बार चुकाता है; बड़ा वाला उसे कम बार चुकाता है।
 
 API कुंजी से बनाए गए नियम की कीमत उस API कुंजी से की गई खरीद जैसी होती है; वेबसाइट पर बनाए गए नियम की कीमत वेबसाइट पर की गई खरीद जैसी। `estimated_cost_per_refill_trx` में यह पहले से शामिल है।
 
@@ -60,9 +60,9 @@ API कुंजी से बनाए गए नियम की कीमत 
 
 ### ऑर्डर और वेबहुक
 
-हर रिफिल आपके ऑर्डर इतिहास ([ऑर्डर सूची](/api-reference/orders/list-orders)) में `source: "autorefill"` के साथ दिखता है। केवल रिफिल ऑर्डर की सूची पाने के लिए `GET /orders?source=autorefill` कॉल करें; उन्हें फ़ाइल के रूप में एक्सपोर्ट करने के लिए `autorefill` [रिपोर्ट](/api-reference/account/reports) का उपयोग करें।
+हर रिफिल आपके ऑर्डर इतिहास ([ऑर्डर सूची](/hi/api-reference/orders/list-orders)) में `source: "autorefill"` के साथ दिखता है। केवल रिफिल ऑर्डर की सूची पाने के लिए `GET /orders?source=autorefill` कॉल करें; उन्हें फ़ाइल के रूप में एक्सपोर्ट करने के लिए `autorefill` [रिपोर्ट](/api-reference/account/reports) का उपयोग करें।
 
-API कुंजी से बनाए गए नियम अपने रिफिल ऑर्डर के लिए [`order.updated` वेबहुक](/api-reference/webhooks/overview) भेजते हैं, ठीक वैसे ही जैसे API से दिए गए ऑर्डर के लिए। API कुंजी के बिना बनाए गए नियम ये नहीं भेजते।
+API कुंजी से बनाए गए नियम अपने रिफिल ऑर्डर के लिए [`order.updated` वेबहुक](/hi/api-reference/webhooks/overview) भेजते हैं, ठीक वैसे ही जैसे API से दिए गए ऑर्डर के लिए। API कुंजी के बिना बनाए गए नियम ये नहीं भेजते।
 
 ### नियम की स्थिति
 
@@ -91,7 +91,7 @@ API कुंजी से बनाए गए नियम अपने रि�
 - खाते पर **प्रति एड्रेस और संसाधन एक नियम**। उसी एड्रेस के लिए दूसरा एनर्जी नियम (या दूसरा बैंडविड्थ नियम) बनाने पर `409 AUTOREFILL_ADDRESS_TAKEN` मिलता है — इसके बजाय मौजूदा नियम बदलें।
 - प्रति खाता **20 एनर्जी नियम और 20 बैंडविड्थ नियम**। हटाए गए नियम नहीं गिने जाते। सीमा से ऊपर: `409 AUTOREFILL_LIMIT_REACHED`।
 - **कॉन्ट्रैक्ट एड्रेस नहीं**, जैसे USDT टोकन कॉन्ट्रैक्ट: TRON उन्हें संसाधन डेलिगेट करने की अनुमति नहीं देता।
-- **नियम बनाना** हर संसाधन के लिए प्रति खाता 10 अनुरोध प्रति मिनट तक सीमित है। देखें [रेट लिमिट](/resources/rate-limits)।
+- **नियम बनाना** हर संसाधन के लिए प्रति खाता 10 अनुरोध प्रति मिनट तक सीमित है। देखें [रेट लिमिट](/hi/resources/rate-limits)।
 
 ### बदलना और हटाना
 
@@ -99,7 +99,7 @@ API कुंजी से बनाए गए नियम अपने रि�
 
 ### Smart Mode और ऑटो-रिन्यू रेंटल से तुलना
 
-| | ऑटो रिफिल | [Smart Mode](/api-reference/smart-mode/overview) | [ऑटो-रिन्यू रेंटल](/api-reference/bandwidth-rentals/create-rental) |
+| | ऑटो रिफिल | [Smart Mode](/hi/api-reference/smart-mode/overview) | [ऑटो-रिन्यू रेंटल](/hi/api-reference/bandwidth-rentals/create-rental) |
 |---|---|---|---|
 | संसाधन | एनर्जी या बैंडविड्थ | एनर्जी, साथ में वैकल्पिक बैंडविड्थ | बैंडविड्थ |
 | कब डिलीवर करता है | जब स्तर आपके थ्रेशोल्ड से नीचे गिरता है | हर आउटगोइंग USDT ट्रांसफर पर | एक बार डेलिगेट होता है और रेंटल चलने तक बना रहता है |
@@ -110,8 +110,8 @@ API कुंजी से बनाए गए नियम अपने रि�
 
 | कार्रवाई | एनर्जी | बैंडविड्थ |
 |---|---|---|
-| एक रिफिल की कीमत | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
-| नियम बनाएं | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
-| नियमों की सूची | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
-| बदलें, रोकें, फिर से शुरू करें | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
-| हटाएं | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |
+| एक रिफिल की कीमत | [`GET /energy/auto-refill/quote`](/hi/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/hi/api-reference/auto-refill/quote-bandwidth-refill) |
+| नियम बनाएं | [`POST /energy/auto-refill`](/hi/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/hi/api-reference/auto-refill/create-bandwidth-rule) |
+| नियमों की सूची | [`GET /energy/auto-refill`](/hi/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/hi/api-reference/auto-refill/list-bandwidth-rules) |
+| बदलें, रोकें, फिर से शुरू करें | [`PATCH /energy/auto-refill/{rule_id}`](/hi/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/hi/api-reference/auto-refill/update-bandwidth-rule) |
+| हटाएं | [`DELETE /energy/auto-refill/{rule_id}`](/hi/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/hi/api-reference/auto-refill/delete-bandwidth-rule) |
