@@ -26,11 +26,11 @@ Node API 密钥不能调用此端点——REST API 会以 `403 NODE_API_KEY_ONLY
 </ResponseField>
 
 <ResponseField name="enabled" type="boolean">
-  账户级速率限制是否已开启
+  账户级速率限制是否生效。为 `false` 时，它既不计数也不拒绝请求
 </ResponseField>
 
 <ResponseField name="observe_only" type="boolean">
-  为 `true` 时，超出限制的请求只计数、不拒绝
+  仅在 `enabled` 为 `true` 时有意义。为 `true` 时，超出账户级限制的请求只计数，仍会被处理；为 `false` 时，这些请求会以 `429 RATE_LIMIT_EXCEEDED` 被拒绝，并带有 `Retry-After` 头
 </ResponseField>
 
 <ResponseField name="key_count" type="number">

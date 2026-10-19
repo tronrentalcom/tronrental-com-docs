@@ -30,11 +30,14 @@ Node API não pode chamar este endpoint — a API REST responde com `403 NODE_AP
 </ResponseField>
 
 <ResponseField name="enabled" type="boolean">
-  Se o limite de taxa no nível da conta está ativado
+  Se o limite de taxa no nível da conta está em vigor. Quando `false`, ele não conta nem recusa
+  requisições
 </ResponseField>
 
 <ResponseField name="observe_only" type="boolean">
-  Quando `true`, as requisições acima do limite são contadas, mas não recusadas
+  Só importa enquanto `enabled` for `true`. Quando `true`, as requisições acima do limite da conta são
+  contadas, mas continuam sendo atendidas; quando `false`, são recusadas com `429 RATE_LIMIT_EXCEEDED` e
+  o cabeçalho `Retry-After`
 </ResponseField>
 
 <ResponseField name="key_count" type="number">

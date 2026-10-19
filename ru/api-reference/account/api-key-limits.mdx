@@ -30,11 +30,13 @@ REST API отвечает на него `403 NODE_API_KEY_ONLY`.
 </ResponseField>
 
 <ResponseField name="enabled" type="boolean">
-  Включён ли лимит запросов уровня аккаунта
+  Действует ли лимит запросов уровня аккаунта. При `false` он не считает и не отклоняет запросы
 </ResponseField>
 
 <ResponseField name="observe_only" type="boolean">
-  При `true` запросы сверх лимита учитываются, но не отклоняются
+  Имеет значение, только пока `enabled` равно `true`. При `true` запросы сверх лимита уровня аккаунта
+  учитываются, но обслуживаются; при `false` они отклоняются с `429 RATE_LIMIT_EXCEEDED` и заголовком
+  `Retry-After`
 </ResponseField>
 
 <ResponseField name="key_count" type="number">

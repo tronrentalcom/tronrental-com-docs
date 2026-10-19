@@ -30,11 +30,13 @@ Node API एंडपॉइंट भी एक API कुंजी है: Node
 </ResponseField>
 
 <ResponseField name="enabled" type="boolean">
-  खाता-स्तरीय रेट लिमिट चालू है या नहीं
+  खाता-स्तरीय रेट लिमिट लागू है या नहीं। `false` होने पर यह न अनुरोध गिनती है, न उन्हें अस्वीकार करती है
 </ResponseField>
 
 <ResponseField name="observe_only" type="boolean">
-  `true` होने पर सीमा से ऊपर के अनुरोध गिने जाते हैं, पर अस्वीकार नहीं किए जाते
+  इसका अर्थ तभी है जब `enabled` `true` हो। `true` होने पर खाता-स्तरीय सीमा से ऊपर के अनुरोध गिने जाते
+  हैं, पर फिर भी पूरे किए जाते हैं; `false` होने पर वे `429 RATE_LIMIT_EXCEEDED` और `Retry-After` हेडर
+  के साथ अस्वीकार किए जाते हैं
 </ResponseField>
 
 <ResponseField name="key_count" type="number">

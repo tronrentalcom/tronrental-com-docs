@@ -30,11 +30,14 @@ noktayı çağıramaz — REST API ona `403 NODE_API_KEY_ONLY` ile yanıt verir.
 </ResponseField>
 
 <ResponseField name="enabled" type="boolean">
-  Hesap düzeyindeki hız sınırının açık olup olmadığı
+  Hesap düzeyindeki hız sınırının yürürlükte olup olmadığı. `false` olduğunda istekleri ne sayar ne de
+  reddeder
 </ResponseField>
 
 <ResponseField name="observe_only" type="boolean">
-  `true` olduğunda sınırın üzerindeki istekler sayılır ama reddedilmez
+  Yalnızca `enabled` `true` iken anlam taşır. `true` olduğunda hesap düzeyindeki sınırın üzerindeki
+  istekler sayılır ama yine de karşılanır; `false` olduğunda `429 RATE_LIMIT_EXCEEDED` ve `Retry-After`
+  başlığıyla reddedilir
 </ResponseField>
 
 <ResponseField name="key_count" type="number">

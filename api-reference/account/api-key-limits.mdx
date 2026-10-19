@@ -30,11 +30,14 @@ endpoint — the REST API answers it with `403 NODE_API_KEY_ONLY`.
 </ResponseField>
 
 <ResponseField name="enabled" type="boolean">
-  Whether the account-level rate limit is switched on
+  Whether the account-level rate limit is in effect. When `false`, it neither counts nor refuses
+  requests
 </ResponseField>
 
 <ResponseField name="observe_only" type="boolean">
-  When `true`, requests above the limit are counted but not refused
+  Matters only while `enabled` is `true`. When `true`, requests above the account-level limit are
+  counted but still served; when `false`, they are refused with `429 RATE_LIMIT_EXCEEDED` and a
+  `Retry-After` header
 </ResponseField>
 
 <ResponseField name="key_count" type="number">
