@@ -6,9 +6,9 @@ description: "每当地址的带宽低于阈值时为其补充带宽"
 
 ## 创建带宽规则
 
-为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用带宽低于 `threshold_bandwidth`，我们就会按所选的 `duration` 购买 `add_volume` 带宽，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/api-reference/auto-refill/overview)。
+为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用带宽低于 `threshold_bandwidth`，我们就会按所选的 `duration` 购买 `add_volume` 带宽，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/zh/api-reference/auto-refill/overview)。
 
-该请求只创建规则——本身不会购买任何东西。需要 `buy_bandwidth` 权限。如需先查看一次补充的价格，请使用[带宽补充报价](/api-reference/auto-refill/quote-bandwidth-refill)。
+该请求只创建规则——本身不会购买任何东西。需要 `buy_bandwidth` 权限。如需先查看一次补充的价格，请使用[带宽补充报价](/zh/api-reference/auto-refill/quote-bandwidth-refill)。
 
 <Info>
 可用带宽计入地址可用于支付交易的**全部**带宽：每天免费的 600，加上任何质押或委托的带宽。阈值为 600 或更低时，在地址用完免费额度之前，仅凭免费额度就已达到阈值。
@@ -25,7 +25,7 @@ description: "每当地址的带宽低于阈值时为其补充带宽"
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  每次补充购买的带宽。范围 350 至 100,000。请让它不低于 `threshold_bandwidth`——参见[概述中的警告](/api-reference/auto-refill/overview#choosing-the-numbers)。
+  每次补充购买的带宽。范围 350 至 100,000。请让它不低于 `threshold_bandwidth`——参见[概述中的警告](/zh/api-reference/auto-refill/overview#选择数值)。
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -38,7 +38,7 @@ description: "每当地址的带宽低于阈值时为其补充带宽"
 
 ### 响应
 
-新建的规则——字段与[列出带宽规则](/api-reference/auto-refill/list-bandwidth-rules)中的相同——另加两个反映地址当前状态的字段：
+新建的规则——字段与[列出带宽规则](/zh/api-reference/auto-refill/list-bandwidth-rules)中的相同——另加两个反映地址当前状态的字段：
 
 <ResponseField name="current_bandwidth" type="number | null">
   创建规则时该地址的可用带宽，包括免费带宽。无法读取时为 `null`；无论如何规则都会创建。
@@ -162,5 +162,5 @@ console.log(await resp.json());
 ```
 
 <Tip>
-超时后重试创建请求是安全的。如果第一次请求已经成功，重试会返回 `409 AUTOREFILL_ADDRESS_TAKEN`，而不会创建第二条规则；[列出您的规则](/api-reference/auto-refill/list-bandwidth-rules)即可获取其 `id`。
+超时后重试创建请求是安全的。如果第一次请求已经成功，重试会返回 `409 AUTOREFILL_ADDRESS_TAKEN`，而不会创建第二条规则；[列出您的规则](/zh/api-reference/auto-refill/list-bandwidth-rules)即可获取其 `id`。
 </Tip>

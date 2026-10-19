@@ -5,7 +5,7 @@ description: "Hesap olaylarını gerçek zamanlı bildirimlerle alın"
 
 ## Webhook'lar
 
-Hesabınızın **tek bir webhook URL'si** vardır ve tüm olaylar oraya gider. [Dashboard → API](https://tronrental.com/dashboard/api) sayfasından veya [Webhook yapılandırma](/api-reference/webhooks/configure) ile ayarlayın.
+Hesabınızın **tek bir webhook URL'si** vardır ve tüm olaylar oraya gider. [Dashboard → API](https://tronrental.com/dashboard/api) sayfasından veya [Webhook yapılandırma](/tr/api-reference/webhooks/configure) ile ayarlayın.
 
 ### Olaylar
 
@@ -184,7 +184,7 @@ Dört `package.*` olayı **paketin sahibi olan** hesaba gönderilir. Oturum açm
 Her `package.*` olayı `data` içinde şu alanları taşır:
 
 <ResponseField name="package_id" type="number">
-  Paket kimliği — [Paketleri Listele](/api-reference/transfer-packages/list) yanıtındaki `id`.
+  Paket kimliği — [Paketleri Listele](/tr/api-reference/transfer-packages/list) yanıtındaki `id`.
 </ResponseField>
 
 <ResponseField name="address" type="string">
@@ -208,7 +208,7 @@ Her `package.*` olayı `data` içinde şu alanları taşır:
 </Warning>
 
 <Note>
-  `remaining` olay olmadan da azalabilir. Çok transferli bir paket, günlük abonelik olarak günde bir transfer düşer — ilki etkinleştirmede, bu yüzden 500 transferlik bir paket `remaining: 499` ile başlar — ve bu kesinti bildirilmez. Aynı adresten aynı blokta yapılan iki transfer aynı `remaining` değerini bildirebilir. `remaining` değerini bir ipucu, [Paketleri Listele](/api-reference/transfer-packages/list) yanıtını ise doğruluk kaynağı olarak kabul edin.
+  `remaining` olay olmadan da azalabilir. Çok transferli bir paket, günlük abonelik olarak günde bir transfer düşer — ilki etkinleştirmede, bu yüzden 500 transferlik bir paket `remaining: 499` ile başlar — ve bu kesinti bildirilmez. Aynı adresten aynı blokta yapılan iki transfer aynı `remaining` değerini bildirebilir. `remaining` değerini bir ipucu, [Paketleri Listele](/tr/api-reference/transfer-packages/list) yanıtını ise doğruluk kaynağı olarak kabul edin.
 </Note>
 
 Bir yeniden denemeyi tanımak için `package.transfer` olayında `(package_id, tx_hash)`, diğerlerinde `(event, package_id)` kullanın: yeniden deneme aynı gövdeyi, aynı `timestamp` değerini ve aynı imzayı taşır.
@@ -320,7 +320,7 @@ Bir paketin faturası 30 dakikalık süresi içinde ödenmedi. Hiçbir ücret al
 - Deneme başına **10 saniye** zaman aşımı.
 - Herhangi bir **`2xx`** bekleriz. Bunun dışındaki her şey başarısız deneme sayılır.
 - **Yönlendirmeler izlenmez.** `301`/`302` bir sıçrama değil, başarısız bir denemedir.
-- Kaçan olaylar sonradan **yeniden gönderilmez**. Üç deneme de başarısız olursa o olay kaybolur; tekrar beklemek yerine [Sipariş sorgulama](/api-reference/orders/get-order) veya [Paketleri Listele](/api-reference/transfer-packages/list) ile mutabakat yapın.
+- Kaçan olaylar sonradan **yeniden gönderilmez**. Üç deneme de başarısız olursa o olay kaybolur; tekrar beklemek yerine [Sipariş sorgulama](/tr/api-reference/orders/get-order) veya [Paketleri Listele](/tr/api-reference/transfer-packages/list) ile mutabakat yapın.
 
 URL'niz **genel** bir adrese çözümlenmelidir. Loopback, özel ve link-local aralıklar reddedilir; hiç çözümlenmeyen bir host da öyle — her iki durumda da hiçbir şey gönderilmez ve günlüğe satır yazılmaz.
 

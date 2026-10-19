@@ -5,7 +5,7 @@ description: "Reciba notificaciones en tiempo real de los eventos de su cuenta"
 
 ## Webhooks
 
-Su cuenta tiene **una sola URL de webhook** y todos los eventos se envían a ella. Configúrela en [Dashboard → API](https://tronrental.com/dashboard/api) o mediante [Configurar webhook](/api-reference/webhooks/configure).
+Su cuenta tiene **una sola URL de webhook** y todos los eventos se envían a ella. Configúrela en [Dashboard → API](https://tronrental.com/dashboard/api) o mediante [Configurar webhook](/es/api-reference/webhooks/configure).
 
 ### Eventos
 
@@ -184,7 +184,7 @@ Los cuatro eventos `package.*` se envían a la cuenta **propietaria del paquete*
 Cada evento `package.*` incluye estos campos en `data`:
 
 <ResponseField name="package_id" type="number">
-  ID del paquete: el `id` en [Listar paquetes](/api-reference/transfer-packages/list).
+  ID del paquete: el `id` en [Listar paquetes](/es/api-reference/transfer-packages/list).
 </ResponseField>
 
 <ResponseField name="address" type="string">
@@ -208,7 +208,7 @@ Cada evento `package.*` incluye estos campos en `data`:
 </Warning>
 
 <Note>
-  `remaining` también puede bajar sin evento. Un paquete de varias transferencias consume una transferencia al día como suscripción diaria —la primera al activarse, por eso un paquete de 500 transferencias empieza con `remaining: 499`— y ese cargo no se notifica. Dos transferencias desde la misma dirección en el mismo bloque pueden informar el mismo `remaining`. Tome `remaining` como una indicación y [Listar paquetes](/api-reference/transfer-packages/list) como la fuente de verdad.
+  `remaining` también puede bajar sin evento. Un paquete de varias transferencias consume una transferencia al día como suscripción diaria —la primera al activarse, por eso un paquete de 500 transferencias empieza con `remaining: 499`— y ese cargo no se notifica. Dos transferencias desde la misma dirección en el mismo bloque pueden informar el mismo `remaining`. Tome `remaining` como una indicación y [Listar paquetes](/es/api-reference/transfer-packages/list) como la fuente de verdad.
 </Note>
 
 Para reconocer un reintento, use `(package_id, tx_hash)` en `package.transfer` y `(event, package_id)` en los demás: un reintento trae el mismo cuerpo, el mismo `timestamp` y la misma firma.
@@ -320,7 +320,7 @@ La factura de un paquete no se pagó dentro de su plazo de 30 minutos. No se cob
 - Tiempo de espera de **10 segundos** por intento.
 - Esperamos cualquier **`2xx`**. Cualquier otra cosa cuenta como intento fallido.
 - **No se siguen las redirecciones.** Un `301`/`302` es un intento fallido, no un salto.
-- Los eventos perdidos **no** se reenvían después. Si fallan los tres intentos, ese evento se pierde; concilie con [Consultar pedido](/api-reference/orders/get-order) o [Listar paquetes](/api-reference/transfer-packages/list) en lugar de esperar una repetición.
+- Los eventos perdidos **no** se reenvían después. Si fallan los tres intentos, ese evento se pierde; concilie con [Consultar pedido](/es/api-reference/orders/get-order) o [Listar paquetes](/es/api-reference/transfer-packages/list) en lugar de esperar una repetición.
 
 Su URL debe resolverse a una dirección **pública**. Se rechazan los rangos loopback, privados y link-local, y también un host que no resuelve: en ambos casos no se envía nada y no se escribe ninguna fila en el registro.
 

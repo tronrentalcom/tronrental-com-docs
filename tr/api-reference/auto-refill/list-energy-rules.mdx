@@ -33,7 +33,7 @@ Hesabınızdaki tüm enerji Otomatik Dolum kurallarını en eskiden başlayarak 
       Her dolumun kiralama süresi — her zaman `1h`
     </ResponseField>
     <ResponseField name="status" type="string">
-      `active`, `paused` veya `stopped_insufficient_balance` — bkz. [Kural durumu](/api-reference/auto-refill/overview#rule-status)
+      `active`, `paused` veya `stopped_insufficient_balance` — bkz. [Kural durumu](/tr/api-reference/auto-refill/overview#kural-durumu)
     </ResponseField>
     <ResponseField name="stopped_reason" type="string | null">
       Kuralın neden duraklatıldığı veya durdurulduğu: `insufficient_balance`, `order_failed`, `activation_failed` veya `invalid_params`. Neden yoksa `null`.
@@ -66,7 +66,7 @@ Hesabınızdaki tüm enerji Otomatik Dolum kurallarını en eskiden başlayarak 
       Güncel fiyatlarla hesabınız için bir dolumun sabit ücret dahil tam fiyatı. Gerektiğinde adres aktivasyonu ayrıca ücretlendirilir. Fiyat geçici olarak alınamıyorsa `null`.
     </ResponseField>
     <ResponseField name="volume_below_threshold" type="boolean">
-      `add_volume`, `threshold_energy` değerinden küçük olduğunda `true`. Bu durumda tek bir dolum adresi eşiğin üzerine çıkarmayabilir ve kural her harcamadan sonra yeniden satın alır — bkz. [genel bakıştaki uyarı](/api-reference/auto-refill/overview#choosing-the-numbers).
+      `add_volume`, `threshold_energy` değerinden küçük olduğunda `true`. Bu durumda tek bir dolum adresi eşiğin üzerine çıkarmayabilir ve kural her harcamadan sonra yeniden satın alır — bkz. [genel bakıştaki uyarı](/tr/api-reference/auto-refill/overview#sayıları-seçmek).
     </ResponseField>
   </Expandable>
 </ResponseField>

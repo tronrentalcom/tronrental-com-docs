@@ -5,7 +5,7 @@ description: "Receba notificações em tempo real dos eventos da sua conta"
 
 ## Webhooks
 
-Sua conta tem **uma única URL de webhook**, e todos os eventos vão para ela. Defina-a em [Dashboard → API](https://tronrental.com/dashboard/api) ou por meio de [Configurar webhook](/api-reference/webhooks/configure).
+Sua conta tem **uma única URL de webhook**, e todos os eventos vão para ela. Defina-a em [Dashboard → API](https://tronrental.com/dashboard/api) ou por meio de [Configurar webhook](/pt/api-reference/webhooks/configure).
 
 ### Eventos
 
@@ -184,7 +184,7 @@ Os quatro eventos `package.*` vão para a conta **dona do pacote**. Um pacote co
 Todo evento `package.*` traz estes campos em `data`:
 
 <ResponseField name="package_id" type="number">
-  ID do pacote — o `id` em [Listar Pacotes](/api-reference/transfer-packages/list).
+  ID do pacote — o `id` em [Listar Pacotes](/pt/api-reference/transfer-packages/list).
 </ResponseField>
 
 <ResponseField name="address" type="string">
@@ -208,7 +208,7 @@ Todo evento `package.*` traz estes campos em `data`:
 </Warning>
 
 <Note>
-  `remaining` também pode diminuir sem evento. Um pacote de várias transferências consome uma transferência por dia como assinatura diária — a primeira na ativação, por isso um pacote de 500 transferências começa com `remaining: 499` — e essa cobrança não é anunciada. Duas transferências do mesmo endereço no mesmo bloco podem informar o mesmo `remaining`. Trate `remaining` como uma indicação e [Listar Pacotes](/api-reference/transfer-packages/list) como a fonte da verdade.
+  `remaining` também pode diminuir sem evento. Um pacote de várias transferências consome uma transferência por dia como assinatura diária — a primeira na ativação, por isso um pacote de 500 transferências começa com `remaining: 499` — e essa cobrança não é anunciada. Duas transferências do mesmo endereço no mesmo bloco podem informar o mesmo `remaining`. Trate `remaining` como uma indicação e [Listar Pacotes](/pt/api-reference/transfer-packages/list) como a fonte da verdade.
 </Note>
 
 Para reconhecer uma nova tentativa, use `(package_id, tx_hash)` em `package.transfer` e `(event, package_id)` nos demais: a nova tentativa traz o mesmo corpo, o mesmo `timestamp` e a mesma assinatura.
@@ -320,7 +320,7 @@ A fatura de um pacote não foi paga dentro do prazo de 30 minutos. Nada foi cobr
 - Tempo limite de **10 segundos** por tentativa.
 - Esperamos qualquer **`2xx`**. Qualquer outra coisa conta como tentativa falha.
 - **Redirecionamentos não são seguidos.** Um `301`/`302` é uma tentativa falha, não um salto.
-- Eventos perdidos **não** são reenviados depois. Se as três tentativas falharem, aquele evento se perdeu; reconcilie com [Consultar pedido](/api-reference/orders/get-order) ou [Listar Pacotes](/api-reference/transfer-packages/list) em vez de esperar uma repetição.
+- Eventos perdidos **não** são reenviados depois. Se as três tentativas falharem, aquele evento se perdeu; reconcilie com [Consultar pedido](/pt/api-reference/orders/get-order) ou [Listar Pacotes](/pt/api-reference/transfer-packages/list) em vez de esperar uma repetição.
 
 Sua URL precisa resolver para um endereço **público**. Faixas de loopback, privadas e link-local são recusadas, assim como um host que não resolve — em ambos os casos nada é enviado e nenhuma linha de registro é escrita.
 

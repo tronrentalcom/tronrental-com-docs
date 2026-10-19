@@ -50,7 +50,7 @@ Bir USDT transferi, alıcıda zaten USDT varsa yaklaşık 65.000, yoksa yaklaş�
 
 ### Maliyet
 
-Her dolum normal bir sipariştir: sizin tarifenizle kiralama bedeli artı **her dolumda alınan sabit ücret**. Liste ve oluşturma yanıtlarındaki `estimated_cost_per_refill_trx`, hesabınız için bir dolumun sabit ücret dahil tam fiyatıdır. Bu fiyatı kural oluşturmadan önce görmek için fiyat sorgulama uç noktasını kullanın: [enerji](/api-reference/auto-refill/quote-energy-refill), [bant genişliği](/api-reference/auto-refill/quote-bandwidth-refill). Sık doldurulan küçük bir `add_volume` sabit ücreti birçok kez öder; daha büyüğü daha seyrek öder.
+Her dolum normal bir sipariştir: sizin tarifenizle kiralama bedeli artı **her dolumda alınan sabit ücret**. Liste ve oluşturma yanıtlarındaki `estimated_cost_per_refill_trx`, hesabınız için bir dolumun sabit ücret dahil tam fiyatıdır. Bu fiyatı kural oluşturmadan önce görmek için fiyat sorgulama uç noktasını kullanın: [enerji](/tr/api-reference/auto-refill/quote-energy-refill), [bant genişliği](/tr/api-reference/auto-refill/quote-bandwidth-refill). Sık doldurulan küçük bir `add_volume` sabit ücreti birçok kez öder; daha büyüğü daha seyrek öder.
 
 API anahtarıyla oluşturulan bir kural, o API anahtarıyla yapılan bir alım gibi fiyatlandırılır; web sitesinde oluşturulan bir kural ise web sitesinden yapılan bir alım gibi. `estimated_cost_per_refill_trx` bunu zaten yansıtır.
 
@@ -60,9 +60,9 @@ Günlük harcama sınırı yoktur: seviye eşiğin altında olduğu ve bakiyeniz
 
 ### Siparişler ve webhook'lar
 
-Her dolum, sipariş geçmişinizde ([Siparişleri Listele](/api-reference/orders/list-orders)) `source: "autorefill"` ile görünür. Yalnızca dolum siparişlerini listelemek için `GET /orders?source=autorefill` çağırın; bunları dosya olarak dışa aktarmak için `autorefill` [raporunu](/api-reference/account/reports) kullanın.
+Her dolum, sipariş geçmişinizde ([Siparişleri Listele](/tr/api-reference/orders/list-orders)) `source: "autorefill"` ile görünür. Yalnızca dolum siparişlerini listelemek için `GET /orders?source=autorefill` çağırın; bunları dosya olarak dışa aktarmak için `autorefill` [raporunu](/api-reference/account/reports) kullanın.
 
-API anahtarıyla oluşturulan kurallar, dolum siparişleri için API üzerinden verdiğiniz siparişlerde olduğu gibi [`order.updated` webhook'ları](/api-reference/webhooks/overview) gönderir. API anahtarı olmadan oluşturulan kurallar göndermez.
+API anahtarıyla oluşturulan kurallar, dolum siparişleri için API üzerinden verdiğiniz siparişlerde olduğu gibi [`order.updated` webhook'ları](/tr/api-reference/webhooks/overview) gönderir. API anahtarı olmadan oluşturulan kurallar göndermez.
 
 ### Kural durumu
 
@@ -91,7 +91,7 @@ Telegram hesabınız bağlıysa, bir kuralın ilk dolumunda ve bir kural durakla
 - Bir hesapta **adres ve kaynak başına bir kural**. Aynı adres için ikinci bir enerji kuralı (veya ikinci bir bant genişliği kuralı) oluşturmak `409 AUTOREFILL_ADDRESS_TAKEN` döndürür — bunun yerine mevcut kuralı düzenleyin.
 - Hesap başına **20 enerji kuralı ve 20 bant genişliği kuralı**. Silinmiş kurallar sayılmaz. Sınır aşıldığında: `409 AUTOREFILL_LIMIT_REACHED`.
 - USDT token sözleşmesi gibi **sözleşme adresleri kabul edilmez**: TRON onlara kaynak devredilmesine izin vermez.
-- **Kural oluşturma**, her kaynak için hesap başına dakikada 10 istekle sınırlıdır. Bkz. [Hız Sınırları](/resources/rate-limits).
+- **Kural oluşturma**, her kaynak için hesap başına dakikada 10 istekle sınırlıdır. Bkz. [Hız Sınırları](/tr/resources/rate-limits).
 
 ### Düzenleme ve silme
 
@@ -99,7 +99,7 @@ Değişiklikler bir sonraki kontrolden itibaren geçerli olur. Kural için bir d
 
 ### Akıllı Mod ve otomatik yenilenen kiralamalarla karşılaştırma
 
-| | Otomatik Dolum | [Akıllı Mod](/api-reference/smart-mode/overview) | [Otomatik yenilenen kiralama](/api-reference/bandwidth-rentals/create-rental) |
+| | Otomatik Dolum | [Akıllı Mod](/tr/api-reference/smart-mode/overview) | [Otomatik yenilenen kiralama](/tr/api-reference/bandwidth-rentals/create-rental) |
 |---|---|---|---|
 | Kaynak | Enerji veya bant genişliği | Enerji, isteğe bağlı olarak bant genişliği | Bant genişliği |
 | Ne zaman teslim edilir | Seviye eşiğinizin altına düştüğünde | Her giden USDT transferinde | Bir kez devredilir ve kiralama sürdükçe korunur |
@@ -110,8 +110,8 @@ Değişiklikler bir sonraki kontrolden itibaren geçerli olur. Kural için bir d
 
 | İşlem | Enerji | Bant genişliği |
 |---|---|---|
-| Bir dolumun fiyatı | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
-| Kural oluşturma | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
-| Kuralları listeleme | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
-| Düzenleme, duraklatma, devam ettirme | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
-| Silme | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |
+| Bir dolumun fiyatı | [`GET /energy/auto-refill/quote`](/tr/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/tr/api-reference/auto-refill/quote-bandwidth-refill) |
+| Kural oluşturma | [`POST /energy/auto-refill`](/tr/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/tr/api-reference/auto-refill/create-bandwidth-rule) |
+| Kuralları listeleme | [`GET /energy/auto-refill`](/tr/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/tr/api-reference/auto-refill/list-bandwidth-rules) |
+| Düzenleme, duraklatma, devam ettirme | [`PATCH /energy/auto-refill/{rule_id}`](/tr/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/tr/api-reference/auto-refill/update-bandwidth-rule) |
+| Silme | [`DELETE /energy/auto-refill/{rule_id}`](/tr/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/tr/api-reference/auto-refill/delete-bandwidth-rule) |

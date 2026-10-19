@@ -58,7 +58,7 @@ biçimde o bir nesne, doğrulama hatasında ise bir dizidir.
 | `404` | Bulunamadı |
 | `409` | Çatışma — tekrarlanan istek veya kaynak çatışması |
 | `422` | Doğrulama hatası — istek gövdesini kontrol edin |
-| `429` | Hız sınırı aşıldı — bkz. [Hız Sınırları](/resources/rate-limits) |
+| `429` | Hız sınırı aşıldı — bkz. [Hız Sınırları](/tr/resources/rate-limits) |
 | `500` | Sunucu hatası |
 | `503` | Geçici olarak kullanılamıyor — kısa süre sonra tekrar deneyin |
 
@@ -78,7 +78,7 @@ Standart biçimde, `detail.error.code` altında döndürülür:
 | `INVALID_VOLUME` | `400` | İstenen miktar izin verilen aralığın dışında |
 | `INVALID_DURATION` | `400` | Süre, kabul edilen değerlerden biri değil |
 | `ORDER_NOT_FOUND` | `404` | Sipariş kimliği mevcut değil |
-| `RATE_LIMIT_EXCEEDED` | `429` | Çok fazla istek — bkz. [Hız Sınırları](/resources/rate-limits) |
+| `RATE_LIMIT_EXCEEDED` | `429` | Çok fazla istek — bkz. [Hız Sınırları](/tr/resources/rate-limits) |
 
 <Note>
 Node API'nin (`node.tronrental.com`) farklı bir biçimde kendi hata kodları vardır — bkz.
@@ -94,7 +94,7 @@ koda bakarak tespit etmeyin.
 
 ## Otomatik Dolum kodları
 
-[Otomatik Dolum](/api-reference/auto-refill/overview) uç noktaları bu kodları standart biçimde döndürür:
+[Otomatik Dolum](/tr/api-reference/auto-refill/overview) uç noktaları bu kodları standart biçimde döndürür:
 
 | Kod | Durum | Açıklama |
 |------|--------|-------------|
@@ -122,7 +122,7 @@ olacak şekilde döndürür; aynı uç noktanın diğer hataları standart biçi
 
 `5xx` yanıtlarını üstel geri çekilmeyle yeniden deneyin. `429` için, yanıtta varsa `Retry-After`
 başlığını tercih edin ve önce gövdeyi okuyun — her `429` bir hız sınırı değildir
-(bkz. [Hız Sınırları](/resources/rate-limits)).
+(bkz. [Hız Sınırları](/tr/resources/rate-limits)).
 
 ```python
 import time

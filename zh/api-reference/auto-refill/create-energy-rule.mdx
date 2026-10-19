@@ -6,9 +6,9 @@ description: "每当地址的能量低于阈值时为其补充能量"
 
 ## 创建能量规则
 
-为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用能量低于 `threshold_energy`，我们就会购买一小时的 `add_volume` 能量，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/api-reference/auto-refill/overview)。
+为一个地址创建自动补充规则。从下一次检查起，每当该地址的可用能量低于 `threshold_energy`，我们就会购买一小时的 `add_volume` 能量，并从您的余额中扣费。检查、费用和状态的工作方式参见[概述](/zh/api-reference/auto-refill/overview)。
 
-该请求只创建规则——本身不会购买任何东西。需要 `buy_energy` 权限。如需先查看一次补充的价格，请使用[能量补充报价](/api-reference/auto-refill/quote-energy-refill)。
+该请求只创建规则——本身不会购买任何东西。需要 `buy_energy` 权限。如需先查看一次补充的价格，请使用[能量补充报价](/zh/api-reference/auto-refill/quote-energy-refill)。
 
 ### 请求体
 
@@ -21,7 +21,7 @@ description: "每当地址的能量低于阈值时为其补充能量"
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  每次补充购买的能量。范围 32,000 至 5,000,000。请让它不低于 `threshold_energy`——参见[概述中的警告](/api-reference/auto-refill/overview#choosing-the-numbers)。
+  每次补充购买的能量。范围 32,000 至 5,000,000。请让它不低于 `threshold_energy`——参见[概述中的警告](/zh/api-reference/auto-refill/overview#选择数值)。
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -34,7 +34,7 @@ description: "每当地址的能量低于阈值时为其补充能量"
 
 ### 响应
 
-新建的规则——字段与[列出能量规则](/api-reference/auto-refill/list-energy-rules)中的相同——另加两个反映地址当前状态的字段：
+新建的规则——字段与[列出能量规则](/zh/api-reference/auto-refill/list-energy-rules)中的相同——另加两个反映地址当前状态的字段：
 
 <ResponseField name="current_energy" type="number | null">
   创建规则时该地址的可用能量。无法读取时为 `null`；无论如何规则都会创建。
@@ -170,5 +170,5 @@ console.log(await resp.json());
 ```
 
 <Tip>
-超时后重试创建请求是安全的。如果第一次请求已经成功，重试会返回 `409 AUTOREFILL_ADDRESS_TAKEN`，而不会创建第二条规则；[列出您的规则](/api-reference/auto-refill/list-energy-rules)即可获取其 `id`。
+超时后重试创建请求是安全的。如果第一次请求已经成功，重试会返回 `409 AUTOREFILL_ADDRESS_TAKEN`，而不会创建第二条规则；[列出您的规则](/zh/api-reference/auto-refill/list-energy-rules)即可获取其 `id`。
 </Tip>

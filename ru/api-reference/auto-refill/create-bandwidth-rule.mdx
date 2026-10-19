@@ -6,9 +6,9 @@ description: "Пополнение bandwidth на адресе, как толь�
 
 ## Создать правило для bandwidth
 
-Создаёт правило автопополнения для одного адреса. Начиная со следующей проверки, всякий раз, когда доступного bandwidth на адресе меньше `threshold_bandwidth`, мы покупаем `add_volume` bandwidth на выбранный срок `duration` и списываем стоимость с вашего баланса. Как устроены проверки, стоимость и статусы, — в [обзоре](/api-reference/auto-refill/overview).
+Создаёт правило автопополнения для одного адреса. Начиная со следующей проверки, всякий раз, когда доступного bandwidth на адресе меньше `threshold_bandwidth`, мы покупаем `add_volume` bandwidth на выбранный срок `duration` и списываем стоимость с вашего баланса. Как устроены проверки, стоимость и статусы, — в [обзоре](/ru/api-reference/auto-refill/overview).
 
-Запрос только создаёт правило — сам он ничего не покупает. Нужен скоуп `buy_bandwidth`. Чтобы сначала узнать цену одного пополнения, см. [Рассчитать цену пополнения bandwidth](/api-reference/auto-refill/quote-bandwidth-refill).
+Запрос только создаёт правило — сам он ничего не покупает. Нужен скоуп `buy_bandwidth`. Чтобы сначала узнать цену одного пополнения, см. [Рассчитать цену пополнения bandwidth](/ru/api-reference/auto-refill/quote-bandwidth-refill).
 
 <Info>
 Доступный bandwidth учитывает **всё**, чем адрес может оплатить транзакцию: бесплатные 600 в сутки плюс любой застейканный или делегированный bandwidth. Порог 600 или ниже выполняется за счёт одного лишь бесплатного лимита, пока адрес его не израсходует.
@@ -25,7 +25,7 @@ description: "Пополнение bandwidth на адресе, как толь�
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  Сколько bandwidth покупать за одно пополнение. От 350 до 100 000. Держите значение не ниже `threshold_bandwidth` — см. [предупреждение в обзоре](/api-reference/auto-refill/overview#choosing-the-numbers).
+  Сколько bandwidth покупать за одно пополнение. От 350 до 100 000. Держите значение не ниже `threshold_bandwidth` — см. [предупреждение в обзоре](/ru/api-reference/auto-refill/overview#как-выбрать-значения).
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -38,7 +38,7 @@ description: "Пополнение bandwidth на адресе, как толь�
 
 ### Ответ
 
-Новое правило — с теми же полями, что в [Списке правил для bandwidth](/api-reference/auto-refill/list-bandwidth-rules), — плюс два поля о текущем состоянии адреса:
+Новое правило — с теми же полями, что в [Списке правил для bandwidth](/ru/api-reference/auto-refill/list-bandwidth-rules), — плюс два поля о текущем состоянии адреса:
 
 <ResponseField name="current_bandwidth" type="number | null">
   Bandwidth, доступный на адресе в момент создания правила, включая бесплатный. `null`, если его не удалось прочитать; правило создаётся в любом случае.
@@ -162,5 +162,5 @@ console.log(await resp.json());
 ```
 
 <Tip>
-Повторять создание после таймаута безопасно. Если первый запрос прошёл, повтор вернёт `409 AUTOREFILL_ADDRESS_TAKEN`, а не создаст второе правило; чтобы узнать его `id`, [запросите список правил](/api-reference/auto-refill/list-bandwidth-rules).
+Повторять создание после таймаута безопасно. Если первый запрос прошёл, повтор вернёт `409 AUTOREFILL_ADDRESS_TAKEN`, а не создаст второе правило; чтобы узнать его `id`, [запросите список правил](/ru/api-reference/auto-refill/list-bandwidth-rules).
 </Tip>

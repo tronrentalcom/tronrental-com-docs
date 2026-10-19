@@ -50,7 +50,7 @@ Una transferencia USDT consume unos 65,000 de energía cuando el destinatario ya
 
 ### Coste
 
-Cada recarga es una orden normal: el alquiler a tu tarifa más la **comisión fija, que se cobra en cada recarga**. `estimated_cost_per_refill_trx` en las respuestas de listado y de creación es el precio completo de una recarga para tu cuenta, comisión fija incluida. Para ver ese precio antes de crear una regla, usa el endpoint de cotización: [energía](/api-reference/auto-refill/quote-energy-refill), [ancho de banda](/api-reference/auto-refill/quote-bandwidth-refill). Un `add_volume` pequeño que se recarga a menudo paga la comisión fija muchas veces; uno más grande la paga con menos frecuencia.
+Cada recarga es una orden normal: el alquiler a tu tarifa más la **comisión fija, que se cobra en cada recarga**. `estimated_cost_per_refill_trx` en las respuestas de listado y de creación es el precio completo de una recarga para tu cuenta, comisión fija incluida. Para ver ese precio antes de crear una regla, usa el endpoint de cotización: [energía](/es/api-reference/auto-refill/quote-energy-refill), [ancho de banda](/es/api-reference/auto-refill/quote-bandwidth-refill). Un `add_volume` pequeño que se recarga a menudo paga la comisión fija muchas veces; uno más grande la paga con menos frecuencia.
 
 Una regla creada con una clave API tiene el precio de una compra hecha con esa clave API; una regla creada en el sitio web tiene el precio de una compra en el sitio web. `estimated_cost_per_refill_trx` ya lo tiene en cuenta.
 
@@ -60,9 +60,9 @@ No hay un tope de gasto diario: una regla compra siempre que el nivel esté por 
 
 ### Órdenes y webhooks
 
-Cada recarga aparece en tu historial de órdenes ([Listar órdenes](/api-reference/orders/list-orders)) con `source: "autorefill"`. Para listar solo las órdenes de recarga, llama a `GET /orders?source=autorefill`; para exportarlas como archivo, usa el [informe](/api-reference/account/reports) `autorefill`.
+Cada recarga aparece en tu historial de órdenes ([Listar órdenes](/es/api-reference/orders/list-orders)) con `source: "autorefill"`. Para listar solo las órdenes de recarga, llama a `GET /orders?source=autorefill`; para exportarlas como archivo, usa el [informe](/api-reference/account/reports) `autorefill`.
 
-Las reglas creadas con una clave API envían [webhooks `order.updated`](/api-reference/webhooks/overview) por sus órdenes de recarga, igual que las órdenes que creas a través de la API. Las reglas creadas sin clave API no los envían.
+Las reglas creadas con una clave API envían [webhooks `order.updated`](/es/api-reference/webhooks/overview) por sus órdenes de recarga, igual que las órdenes que creas a través de la API. Las reglas creadas sin clave API no los envían.
 
 ### Estado de la regla
 
@@ -91,7 +91,7 @@ Si tu cuenta de Telegram está vinculada, recibes un mensaje en la primera recar
 - **Una regla por dirección y recurso** en cada cuenta. Crear una segunda regla de energía (o una segunda regla de ancho de banda) para la misma dirección devuelve `409 AUTOREFILL_ADDRESS_TAKEN` — edita la regla existente en su lugar.
 - **20 reglas de energía y 20 reglas de ancho de banda** por cuenta. Las reglas eliminadas no cuentan. Por encima del límite: `409 AUTOREFILL_LIMIT_REACHED`.
 - **Sin direcciones de contrato**, como el contrato del token USDT: TRON no permite delegarles recursos.
-- **La creación de reglas** está limitada a 10 solicitudes por minuto por cuenta, para cada recurso. Ver [Límites de tasa](/resources/rate-limits).
+- **La creación de reglas** está limitada a 10 solicitudes por minuto por cuenta, para cada recurso. Ver [Límites de tasa](/es/resources/rate-limits).
 
 ### Edición y eliminación
 
@@ -99,7 +99,7 @@ Los cambios se aplican desde la siguiente comprobación. Mientras se compra una 
 
 ### Comparación con Smart Mode y los alquileres con renovación automática
 
-| | Recarga automática | [Smart Mode](/api-reference/smart-mode/overview) | [Alquiler con renovación automática](/api-reference/bandwidth-rentals/create-rental) |
+| | Recarga automática | [Smart Mode](/es/api-reference/smart-mode/overview) | [Alquiler con renovación automática](/es/api-reference/bandwidth-rentals/create-rental) |
 |---|---|---|---|
 | Recurso | Energía o ancho de banda | Energía, más ancho de banda opcional | Ancho de banda |
 | Cuándo entrega | Cuando el nivel cae por debajo de tu umbral | En cada transferencia USDT saliente | Se delega una vez y se mantiene mientras dura el alquiler |
@@ -110,8 +110,8 @@ Los cambios se aplican desde la siguiente comprobación. Mientras se compra una 
 
 | Acción | Energía | Ancho de banda |
 |---|---|---|
-| Precio de una recarga | [`GET /energy/auto-refill/quote`](/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/api-reference/auto-refill/quote-bandwidth-refill) |
-| Crear una regla | [`POST /energy/auto-refill`](/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/api-reference/auto-refill/create-bandwidth-rule) |
-| Listar reglas | [`GET /energy/auto-refill`](/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/api-reference/auto-refill/list-bandwidth-rules) |
-| Editar, pausar, reanudar | [`PATCH /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/update-bandwidth-rule) |
-| Eliminar | [`DELETE /energy/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/api-reference/auto-refill/delete-bandwidth-rule) |
+| Precio de una recarga | [`GET /energy/auto-refill/quote`](/es/api-reference/auto-refill/quote-energy-refill) | [`GET /bandwidth/auto-refill/quote`](/es/api-reference/auto-refill/quote-bandwidth-refill) |
+| Crear una regla | [`POST /energy/auto-refill`](/es/api-reference/auto-refill/create-energy-rule) | [`POST /bandwidth/auto-refill`](/es/api-reference/auto-refill/create-bandwidth-rule) |
+| Listar reglas | [`GET /energy/auto-refill`](/es/api-reference/auto-refill/list-energy-rules) | [`GET /bandwidth/auto-refill`](/es/api-reference/auto-refill/list-bandwidth-rules) |
+| Editar, pausar, reanudar | [`PATCH /energy/auto-refill/{rule_id}`](/es/api-reference/auto-refill/update-energy-rule) | [`PATCH /bandwidth/auto-refill/{rule_id}`](/es/api-reference/auto-refill/update-bandwidth-rule) |
+| Eliminar | [`DELETE /energy/auto-refill/{rule_id}`](/es/api-reference/auto-refill/delete-energy-rule) | [`DELETE /bandwidth/auto-refill/{rule_id}`](/es/api-reference/auto-refill/delete-bandwidth-rule) |

@@ -6,9 +6,9 @@ description: "Reabasteça a largura de banda de um endereço sempre que ela cair
 
 ## Criar regra de largura de banda
 
-Cria uma regra de Recarga automática para um endereço. A partir da verificação seguinte, sempre que o endereço tiver menos largura de banda disponível do que `threshold_bandwidth`, compramos `add_volume` de largura de banda pela `duration` escolhida e cobramos do seu saldo. Veja a [visão geral](/api-reference/auto-refill/overview) para entender como funcionam as verificações, o custo e os status.
+Cria uma regra de Recarga automática para um endereço. A partir da verificação seguinte, sempre que o endereço tiver menos largura de banda disponível do que `threshold_bandwidth`, compramos `add_volume` de largura de banda pela `duration` escolhida e cobramos do seu saldo. Veja a [visão geral](/pt/api-reference/auto-refill/overview) para entender como funcionam as verificações, o custo e os status.
 
-A requisição apenas cria a regra — ela mesma não compra nada. Exige o escopo `buy_bandwidth`. Para ver antes o preço de uma recarga, use [Cotação de recarga de largura de banda](/api-reference/auto-refill/quote-bandwidth-refill).
+A requisição apenas cria a regra — ela mesma não compra nada. Exige o escopo `buy_bandwidth`. Para ver antes o preço de uma recarga, use [Cotação de recarga de largura de banda](/pt/api-reference/auto-refill/quote-bandwidth-refill).
 
 <Info>
 A largura de banda disponível conta **tudo** com que o endereço pode pagar uma transação: as 600 gratuitas por dia, mais qualquer largura de banda em stake ou delegada. Um limiar de 600 ou menos é atendido só pela cota gratuita, até que o endereço a gaste.
@@ -25,7 +25,7 @@ A largura de banda disponível conta **tudo** com que o endereço pode pagar uma
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  Largura de banda a comprar por recarga. De 350 a 100.000. Mantenha-o igual ou acima de `threshold_bandwidth` — veja o [aviso na visão geral](/api-reference/auto-refill/overview#choosing-the-numbers).
+  Largura de banda a comprar por recarga. De 350 a 100.000. Mantenha-o igual ou acima de `threshold_bandwidth` — veja o [aviso na visão geral](/pt/api-reference/auto-refill/overview#escolhendo-os-números).
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -38,7 +38,7 @@ A largura de banda disponível conta **tudo** com que o endereço pode pagar uma
 
 ### Resposta
 
-A nova regra — com os mesmos campos de [Listar regras de largura de banda](/api-reference/auto-refill/list-bandwidth-rules) — mais dois campos sobre o estado atual do endereço:
+A nova regra — com os mesmos campos de [Listar regras de largura de banda](/pt/api-reference/auto-refill/list-bandwidth-rules) — mais dois campos sobre o estado atual do endereço:
 
 <ResponseField name="current_bandwidth" type="number | null">
   Largura de banda disponível no endereço no momento em que a regra foi criada, incluindo a gratuita. `null` se não foi possível lê-la; a regra é criada de qualquer forma.
@@ -162,5 +162,5 @@ Um erro de validação vem no formato do framework, com `detail` como array:
 ```
 
 <Tip>
-Repetir uma criação após um timeout é seguro. Se a primeira requisição foi processada, a repetição retorna `409 AUTOREFILL_ADDRESS_TAKEN` em vez de criar uma segunda regra; [liste as suas regras](/api-reference/auto-refill/list-bandwidth-rules) para obter o `id` dela.
+Repetir uma criação após um timeout é seguro. Se a primeira requisição foi processada, a repetição retorna `409 AUTOREFILL_ADDRESS_TAKEN` em vez de criar uma segunda regra; [liste as suas regras](/pt/api-reference/auto-refill/list-bandwidth-rules) para obter o `id` dela.
 </Tip>

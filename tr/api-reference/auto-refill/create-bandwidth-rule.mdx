@@ -6,9 +6,9 @@ description: "Bir adresteki bant genişliği eşiğin altına düştüğünde on
 
 ## Bant Genişliği Kuralı Oluştur
 
-Bir adres için bir Otomatik Dolum kuralı oluşturur. Bir sonraki kontrolden itibaren adresteki kullanılabilir bant genişliği `threshold_bandwidth` değerinin altına her düştüğünde, seçilen `duration` süresi için `add_volume` kadar bant genişliği satın alır ve bakiyenizden ücret alırız. Kontrollerin, maliyetin ve durumların nasıl işlediği için [genel bakışa](/api-reference/auto-refill/overview) bakın.
+Bir adres için bir Otomatik Dolum kuralı oluşturur. Bir sonraki kontrolden itibaren adresteki kullanılabilir bant genişliği `threshold_bandwidth` değerinin altına her düştüğünde, seçilen `duration` süresi için `add_volume` kadar bant genişliği satın alır ve bakiyenizden ücret alırız. Kontrollerin, maliyetin ve durumların nasıl işlediği için [genel bakışa](/tr/api-reference/auto-refill/overview) bakın.
 
-İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_bandwidth` kapsamını gerektirir. Önce bir dolumun fiyatını görmek için [Bant Genişliği Dolum Fiyatı](/api-reference/auto-refill/quote-bandwidth-refill) uç noktasını kullanın.
+İstek yalnızca kuralı oluşturur — kendisi hiçbir şey satın almaz. `buy_bandwidth` kapsamını gerektirir. Önce bir dolumun fiyatını görmek için [Bant Genişliği Dolum Fiyatı](/tr/api-reference/auto-refill/quote-bandwidth-refill) uç noktasını kullanın.
 
 <Info>
 Kullanılabilir bant genişliği, adresin bir işlemin bedelini ödemek için kullanabileceği **her şeyi** sayar: günlük ücretsiz 600 ile stake edilmiş veya devredilmiş bant genişliği. 600 veya daha düşük bir eşik, adres bu ücretsiz payı harcayana kadar yalnızca onunla karşılanır.
@@ -25,7 +25,7 @@ Kullanılabilir bant genişliği, adresin bir işlemin bedelini ödemek için ku
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  Dolum başına satın alınacak bant genişliği. 350 ile 100.000 arasında. Bu değeri `threshold_bandwidth` ile aynı veya ondan yüksek tutun — bkz. [genel bakıştaki uyarı](/api-reference/auto-refill/overview#choosing-the-numbers).
+  Dolum başına satın alınacak bant genişliği. 350 ile 100.000 arasında. Bu değeri `threshold_bandwidth` ile aynı veya ondan yüksek tutun — bkz. [genel bakıştaki uyarı](/tr/api-reference/auto-refill/overview#sayıları-seçmek).
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -38,7 +38,7 @@ Kullanılabilir bant genişliği, adresin bir işlemin bedelini ödemek için ku
 
 ### Yanıt
 
-Yeni kural — [Bant Genişliği Kurallarını Listele](/api-reference/auto-refill/list-bandwidth-rules) ile aynı alanlar — ve adresin şu anki durumuna dair iki alan:
+Yeni kural — [Bant Genişliği Kurallarını Listele](/tr/api-reference/auto-refill/list-bandwidth-rules) ile aynı alanlar — ve adresin şu anki durumuna dair iki alan:
 
 <ResponseField name="current_bandwidth" type="number | null">
   Kural oluşturulduğu anda adreste kullanılabilir olan bant genişliği, ücretsiz bant genişliği dahil. Okunamadıysa `null`; kural her durumda oluşturulur.
@@ -162,5 +162,5 @@ Doğrulama hatası, çerçevenin kendi biçiminde ve `detail` bir dizi olarak ge
 ```
 
 <Tip>
-Zaman aşımından sonra oluşturma isteğini yeniden denemek güvenlidir. İlk istek başarılı olduysa yeniden deneme ikinci bir kural oluşturmaz, `409 AUTOREFILL_ADDRESS_TAKEN` döndürür; kuralın `id` değerini almak için [kurallarınızı listeleyin](/api-reference/auto-refill/list-bandwidth-rules).
+Zaman aşımından sonra oluşturma isteğini yeniden denemek güvenlidir. İlk istek başarılı olduysa yeniden deneme ikinci bir kural oluşturmaz, `409 AUTOREFILL_ADDRESS_TAKEN` döndürür; kuralın `id` değerini almak için [kurallarınızı listeleyin](/tr/api-reference/auto-refill/list-bandwidth-rules).
 </Tip>
