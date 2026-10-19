@@ -1,0 +1,62 @@
+---
+title: API कुंजी स्कोप की सूची
+api: GET /api/v1/auth/api-keys/scopes
+description: "API कुंजी में हो सकने वाले स्कोप, प्रकार के अनुसार समूहों में"
+---
+
+## API कुंजी स्कोप की सूची
+
+API कुंजी स्कोप का कैटलॉग लौटाता है, उसी तरह समूहों में बँटा हुआ जैसे डैशबोर्ड उन्हें दिखाता है। मान्य
+स्कोप नाम जानने के लिए इसका उपयोग करें।
+
+Node API कुंजियाँ एक अलग तरह की कुंजी हैं: उनमें केवल `node_api` स्कोप होता है, कभी भी अन्य स्कोप के साथ
+नहीं, और वे केवल `node.tronrental.com` पर काम करती हैं। आप उन्हें
+[डैशबोर्ड → Node API](https://tronrental.com/dashboard/node-api) में एंडपॉइंट के रूप में बनाते हैं; आपके
+पास कितनी हो सकती हैं, यह आपके Node API प्लान पर निर्भर करता है। Node API कुंजी इस एंडपॉइंट को कॉल नहीं
+कर सकती — REST API उसका जवाब `403 NODE_API_KEY_ONLY` से देता है। देखें
+[Node API → एंडपॉइंट और कुंजियाँ](/hi/node-api/authentication)।
+
+### रिस्पॉन्स
+
+<ResponseField name="read" type="string[]">
+  पढ़ने वाले स्कोप: `view`, `deposit_view`
+</ResponseField>
+
+<ResponseField name="node" type="string[]">
+  Node API स्कोप: `node_api`। इस स्कोप वाली कुंजी में कोई अन्य स्कोप नहीं होता
+</ResponseField>
+
+<ResponseField name="write" type="string[]">
+  ऐसे स्कोप जो बैलेंस खर्च करते हैं या सेवाएँ बदलते हैं: `buy_energy`, `buy_bandwidth`, `smart_mode`,
+  `transfer_packages`, `energy_resale`
+</ResponseField>
+
+<ResponseField name="danger" type="string[]">
+  `withdraw`। किसी कुंजी पर इसे सक्षम करने के लिए 2FA और गैर-खाली IP श्वेतसूची आवश्यक है
+</ResponseField>
+
+<ResponseField name="default" type="string[]">
+  कोई स्कोप न चुने जाने पर नई REST API कुंजी को मिलने वाले स्कोप: पढ़ने और लिखने वाले सभी स्कोप, `withdraw` के बिना
+</ResponseField>
+
+<ResponseField name="locked" type="string[]">
+  ऐसे स्कोप जो हर REST API कुंजी में हमेशा होते हैं: `view`
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/scopes \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "read": ["view", "deposit_view"],
+  "node": ["node_api"],
+  "write": ["buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "danger": ["withdraw"],
+  "default": ["view", "deposit_view", "buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "locked": ["view"]
+}
+```

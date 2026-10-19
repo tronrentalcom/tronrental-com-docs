@@ -1,0 +1,87 @@
+---
+title: API कुंजी सीमाएँ प्राप्त करें
+api: GET /api/v1/auth/api-keys/limits
+description: "आपकी खाता-स्तरीय रेट लिमिट और खाता कितनी API कुंजियाँ रख सकता है"
+---
+
+## API कुंजी सीमाएँ प्राप्त करें
+
+आपके अनुरोधों पर लागू होने वाली रेट लिमिट और खाते का API कुंजी कोटा लौटाता है, जिसमें Node API प्लान के
+एंडपॉइंट भी शामिल हैं। रेट लिमिट के टियर
+[रेट लिमिट](/hi/resources/rate-limits) में बताए गए हैं।
+
+Node API एंडपॉइंट भी एक API कुंजी है: Node API प्लान अपने एंडपॉइंट की अनुमत संख्या खाते की कुंजी सीमा में
+जोड़ता है, और `node_api` वाली कुंजियाँ दोनों में गिनी जाती हैं। Node API कुंजी इस एंडपॉइंट को कॉल नहीं
+कर सकती — REST API उसका जवाब `403 NODE_API_KEY_ONLY` से देता है।
+
+### रिस्पॉन्स
+
+<ResponseField name="tier" type="string">
+  आपका रेट लिमिट टियर: `paying` (पिछली खरीद या सब्सक्रिप्शन वाला खाता, या 10 TRX या उससे अधिक का
+  बैलेंस) या `zero` (कोई भी अन्य खाता)
+</ResponseField>
+
+<ResponseField name="limit_per_min" type="number">
+  इस समय आपके लिए अनुमत प्रति मिनट अनुरोध
+</ResponseField>
+
+<ResponseField name="custom_rate_limit" type="number | null">
+  आपकी व्यक्तिगत रेट लिमिट, यदि हमने आपके खाते के लिए कोई सेट की है; अन्यथा `null`
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  खाता-स्तरीय रेट लिमिट चालू है या नहीं
+</ResponseField>
+
+<ResponseField name="observe_only" type="boolean">
+  `true` होने पर सीमा से ऊपर के अनुरोध गिने जाते हैं, पर अस्वीकार नहीं किए जाते
+</ResponseField>
+
+<ResponseField name="key_count" type="number">
+  खाते में इस समय मौजूद API कुंजियाँ, Node API एंडपॉइंट सहित (बंद कुंजियाँ गिनी जाती हैं, हटाई गई
+  कुंजियाँ नहीं)
+</ResponseField>
+
+<ResponseField name="key_limit" type="number">
+  खाता कितनी API कुंजियाँ रख सकता है: खाते की अपनी अनुमत संख्या और साथ में `node_endpoint_limit`
+</ResponseField>
+
+<ResponseField name="custom_key_limit" type="number | null">
+  खाते के लिए कुंजियों की व्यक्तिगत अनुमत संख्या, यदि हमने कोई सेट की है; `null` का अर्थ है डिफ़ॉल्ट
+</ResponseField>
+
+<ResponseField name="can_create" type="boolean">
+  जब तक `key_count` `key_limit` से कम है, तब तक `true`
+</ResponseField>
+
+<ResponseField name="node_endpoint_limit" type="number">
+  खाते का सबसे हाल का Node API प्लान कितने Node API एंडपॉइंट की अनुमति देता है; यदि खाते के पास कभी कोई
+  प्लान नहीं रहा, तो `0`
+</ResponseField>
+
+<ResponseField name="node_endpoint_count" type="number">
+  `node_api` वाली कुंजियाँ — खाते के Node API एंडपॉइंट, बंद एंडपॉइंट सहित
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/limits \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tier": "paying",
+  "limit_per_min": 1000,
+  "custom_rate_limit": null,
+  "enabled": true,
+  "observe_only": false,
+  "key_count": 3,
+  "key_limit": 6,
+  "custom_key_limit": null,
+  "can_create": true,
+  "node_endpoint_limit": 3,
+  "node_endpoint_count": 1
+}
+```

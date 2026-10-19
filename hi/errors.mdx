@@ -70,6 +70,7 @@ description: "API त्रुटि कोड और हैंडलिंग"
 | `INVALID_TOKEN` | `401` | API कुंजी गायब, अज्ञात या अक्षम |
 | `ACCOUNT_BLOCKED` | `403` | इस खाते के लिए API पहुंच अवरुद्ध है |
 | `FORBIDDEN` | `403` | कुंजी के पास इस एंडपॉइंट के लिए आवश्यक स्कोप नहीं है, या अनुरोध का IP कुंजी की श्वेतसूची में नहीं है |
+| `NODE_API_KEY_ONLY` | `403` | इस API को Node API कुंजी भेजी गई — वह केवल `node.tronrental.com` पर काम करती है |
 | `INSUFFICIENT_BALANCE` | `402` | इस कार्रवाई के लिए खाते की शेष राशि पर्याप्त नहीं |
 | `INVALID_ADDRESS` | `400` | मान्य TRON पता नहीं है |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | लक्ष्य एक स्मार्ट कॉन्ट्रैक्ट है — TRON उस पर संसाधन प्रत्यायोजित करने की अनुमति नहीं देता |
@@ -77,6 +78,11 @@ description: "API त्रुटि कोड और हैंडलिंग"
 | `INVALID_DURATION` | `400` | अवधि स्वीकृत मानों में से नहीं है |
 | `ORDER_NOT_FOUND` | `404` | ऑर्डर ID मौजूद नहीं है |
 | `RATE_LIMIT_EXCEEDED` | `429` | बहुत अधिक अनुरोध — देखें [रेट लिमिट](/resources/rate-limits) |
+
+<Note>
+Node API (`node.tronrental.com`) के अपने त्रुटि कोड हैं, एक अलग प्रारूप में — देखें
+[Node API → सीमाएँ और त्रुटियाँ](/hi/node-api/errors)।
+</Note>
 
 <Warning>
 `INSUFFICIENT_BALANCE` हर जगह इस्तेमाल नहीं होता। `POST /api/v1/smart-mode/activate` और

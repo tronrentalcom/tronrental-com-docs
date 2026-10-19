@@ -1,0 +1,78 @@
+---
+title: "gRPC"
+description: "通过 gRPC 调用 TRON 节点：地址、密钥、.proto 文件、状态码"
+---
+
+## 连接
+
+| 设置 | 值 |
+|---|---|
+| 地址 | `node.tronrental.com:443` |
+| 传输 | 443 端口上的 TLS |
+| 服务 | `protocol.Wallet`（全节点）和 `protocol.WalletSolidity`（已确认数据） |
+| 方法 | 这两个服务的一元方法 |
+| 密钥 | 每次调用的 `tron-pro-api-key` 元数据（`x-api-key` 和 `authorization: Bearer <YOUR_KEY>` 也可以） |
+
+配额、限制和价格与 HTTP 相同。调用按其 protobuf 响应的大小、以相同的公式计量——参见[配额单位](/zh/node-api/quota-units)。
+
+## .proto 文件
+
+服务器不提供反射：您的客户端需要 TRON 的 `.proto` 文件。这些文件发布在 [tronprotocol/protocol](https://github.com/tronprotocol/protocol) 仓库中；服务定义在 `api/api.proto` 中。
+
+```bash
+git clone https://github.com/tronprotocol/protocol
+```
+
+使用 grpcurl 时，将 `-import-path` 指向克隆下来的目录，将 `-proto` 指向 `api/api.proto`：
+
+```bash
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  node.tronrental.com:443 protocol.Wallet/GetNowBlock2
+```
+
+在代码中，用您所用语言的 gRPC 工具从相同的文件生成桩代码，打开到 `node.tronrental.com:443` 的 TLS 通道，并在每次调用的元数据中传递密钥。
+
+## 方法名与字节
+
+- **方法名区分大小写**，与 `.proto` 中一致：`protocol.Wallet/GetAccount`，而不是 `getAccount`。节点没有的方法会以 `UNIMPLEMENTED`、`x-node-api-reason: method_not_found` 和 `x-node-api-wu: 0` 结束——不计费。
+- **地址和 ID 是字节。** 在 grpcurl 的 JSON 中，字节以 base64 表示。TRON 地址为 21 字节：`41` 后跟 20 字节。将其十六进制形式转换为 base64：
+
+  ```bash
+  echo 41a614f803b6fd780986a42c78ec9c7f77e6ded13c | xxd -r -p | base64
+  # QaYU+AO2/XgJhqQseOycf3fm3tE8
+  ```
+
+- **请求消息最大 512 KB。** 更大的消息会在处理之前以 `RESOURCE_EXHAUSTED` 被拒绝。
+
+## 尾部元数据
+
+| 键 | 何时出现 | 含义 |
+|---|---|---|
+| `x-node-api-wu` | 已应答的调用，以及 `method_not_found` | 本次调用消耗的配额单位 |
+| `x-node-api-mode` | 降级模式下已应答的调用 | `degraded` |
+| `x-node-api-reason` | 拒绝 | 拒绝代码，与 HTTP 的 `code` 相同 |
+| `retry-after` | 部分拒绝 | 重试前需等待的秒数 |
+
+## 状态码
+
+拒绝按其 HTTP 状态映射为 gRPC 状态。代码本身位于 `x-node-api-reason` 中；完整列表见[限制与错误](/zh/node-api/errors)。
+
+| HTTP 状态 | gRPC 状态 | 代码 |
+|---|---|---|
+| `400` | `INVALID_ARGUMENT` | `key_conflict`、`bad_request` |
+| `401` | `UNAUTHENTICATED` | `no_key`、`unknown_key` |
+| `403` | `PERMISSION_DENIED` | `key_disabled`、`ip_not_allowed`、`no_plan`、`account_blocked`、`plan_expired` |
+| `404` | `UNIMPLEMENTED` | `not_found`、`method_not_found` |
+| `429` | `RESOURCE_EXHAUSTED` | `quota`、`overage_budget`、`rate_read`、`rate_block`、`rate_write`、`trials` |
+| `502`、`503` | `UNAVAILABLE` | `node_error`、`no_snapshot`、`no_node`、`degraded`、`capacity`、`capacity_write`、`busy` |
+
+节点自身返回的错误（例如格式错误的交易返回 `INVALID_ARGUMENT`）会原样传给您，并消耗 1 WU：节点已经完成了这份工作。如果节点没有响应，调用会以 `UNAVAILABLE` 和 `x-node-api-reason: node_error` 结束，不计费。
+
+<Note>
+不带 `x-node-api-reason` 的 `RESOURCE_EXHAUSTED` 来自 gRPC 服务器本身：要么请求消息超过 512 KB，要么服务器同时持有的调用过多。对于第二种情况，请稍等片刻后重试。
+</Note>
+
+## 重试与广播
+
+调用绝不会在您不知情的情况下转到另一个节点上重复执行：`UNAVAILABLE` 可能意味着连接是在节点收到请求之后才断开的。将同一笔已签名交易重新发送到 `BroadcastTransaction` 是安全的——网络对同一个交易 ID 只执行一次。

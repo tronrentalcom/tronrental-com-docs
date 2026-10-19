@@ -1,0 +1,117 @@
+---
+title: "端点与密钥"
+description: "Node API 密钥的工作方式，以及如何通过 HTTP 和 gRPC 传递密钥"
+---
+
+## 端点
+
+端点就是一个 Node API 密钥。拥有套餐或试用后，您可以在[控制台 → Node API](https://tronrental.com/dashboard/node-api) 中创建端点。
+每个端点都有：
+
+- 独立的密钥；
+- 独立的 IP 白名单；
+- 独立的用量计数器——本周期的 WU 和调用次数，显示在控制台中。
+
+配额和每秒限制属于您的套餐，并**由套餐下的所有端点共享**：第二个端点给您的是另一个密钥和计数器，而不是更高的吞吐量。
+可拥有的端点数量取决于套餐——参见[套餐与计费](/zh/node-api/plans)。
+
+密钥**仅在创建端点时显示一次**。如果丢失，请删除该端点并新建一个。在控制台中，您还可以编辑端点的 IP 白名单、停用和启用端点，以及删除端点：
+
+| 端点状态 | 使用其密钥的请求 |
+|---|---|
+| 已停用 | `403 key_disabled`，直到您重新启用 |
+| 已删除 | `401 unknown_key`；密钥无法恢复 |
+
+<Note>
+在控制台中所做的更改——新建端点、新的 IP 白名单、停用或删除端点、续费付款——会在大约 30 秒内同步到节点网关。在此期间，刚创建的密钥可能会得到 `401 unknown_key`。
+</Note>
+
+### Node API 密钥与 REST API 密钥
+
+Node API 密钥是一种独立的密钥类型。端点密钥只能在 `node.tronrental.com` 使用；TronRental REST API（`api.tronrental.com`）会以 `403 NODE_API_KEY_ONLY` 拒绝它。
+反过来，您的 REST API 密钥也不能在节点上使用，在那里会得到 `401 unknown_key`。
+
+## 通过 HTTP 传递密钥
+
+在以下位置中的**一处**发送密钥：
+
+| 位置 | 示例 |
+|---|---|
+| `TRON-PRO-API-KEY` 请求头 | `TRON-PRO-API-KEY: <YOUR_KEY>` |
+| `X-API-Key` 请求头 | `X-API-Key: <YOUR_KEY>` |
+| `Authorization` 请求头 | `Authorization: Bearer <YOUR_KEY>` |
+| 路径的第一段 | `https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount` |
+
+请求头名称不区分大小写。路径中的密钥会在请求转发给节点之前被移除，因此节点永远看不到它。
+
+<CodeGroup>
+```bash 密钥在请求头
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash 密钥在路径
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+</CodeGroup>
+
+一个请求只携带一个密钥。同一个密钥发送两次（例如同时放在路径和请求头中）没有问题；两个**不同**的密钥会以 `400 key_conflict` 被拒绝，因为我们无法判断应由哪一个付费。
+
+<Warning>
+路径中的密钥是 URL 的一部分，因此会出现在所有记录 URL 的地方：代理和应用日志、监控系统、浏览器历史记录。如果您的客户端允许设置请求头，请优先使用请求头。
+</Warning>
+
+### 库
+
+**TronWeb** 会发送您提供给它的请求头：
+
+```javascript
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+```
+
+**tronpy** 只会把 `api_key=` 发给它的默认地址，因此使用我们的地址时，它根本不会发送密钥。请自行在 provider 的会话上设置请求头——或者把密钥放在路径中，并**带上末尾的斜杠**：没有斜杠时，tronpy 会丢掉地址的最后一段，密钥也随之丢失。
+
+```python
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+
+# 或将密钥放在路径中 — 末尾必须带斜杠
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+## 通过 gRPC 传递密钥
+
+在每次调用的 `tron-pro-api-key` 元数据中发送密钥（`x-api-key` 和 `authorization: Bearer <YOUR_KEY>` 也可以）。gRPC 没有可以携带密钥的路径。参见 [gRPC](/zh/node-api/grpc)。
+
+## IP 白名单
+
+每个端点都可以限定为一组 IP 地址——IPv4 或 IPv6，精确地址，不支持地址段。列表为空时，密钥可从任意地址使用。设置列表后，来自其他地址的请求会得到 `403 ip_not_allowed`。
+以 IPv6 形式书写的 IPv4 地址（`::ffff:203.0.113.7`）视同该 IPv4 地址本身。
+
+## 浏览器应用（CORS）
+
+Node API 响应来自任意来源的浏览器请求，因此 dApp 可以直接调用它：
+
+| 响应头 | 值 |
+|---|---|
+| `Access-Control-Allow-Origin` | `*` |
+| `Access-Control-Allow-Methods` | `GET, POST, OPTIONS` |
+| `Access-Control-Allow-Headers` | `Content-Type, TRON-PRO-API-KEY, X-API-Key, Authorization` |
+| `Access-Control-Expose-Headers` | `X-Node-API-WU, X-Node-API-Mode, Retry-After` |
+| `Access-Control-Max-Age` | `86400` |
+
+<Warning>
+浏览器代码中的密钥对打开您应用的每个人都可见，任何复制了它的人都会消耗您的配额。IP 白名单在这里帮不上忙——您用户的地址无法事先知道。
+请为浏览器单独创建一个端点，留意它的计数器，一旦被滥用就将其删除：您服务器上的密钥仍可正常使用。
+</Warning>

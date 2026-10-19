@@ -1,0 +1,61 @@
+---
+title: List API Key Scopes
+api: GET /api/v1/auth/api-keys/scopes
+description: "The scopes an API key can carry, grouped by kind"
+---
+
+## List API Key Scopes
+
+Returns the catalog of API key scopes, grouped the way the dashboard shows them. Use it to discover
+the valid scope names.
+
+Node API keys are a separate kind of key: they carry only the `node_api` scope, never together with
+the other scopes, and work only at `node.tronrental.com`. You create them as endpoints in
+[Dashboard → Node API](https://tronrental.com/dashboard/node-api); how many you can have depends on
+your Node API plan. A Node API key cannot call this endpoint — the REST API answers it with
+`403 NODE_API_KEY_ONLY`. See [Node API → Endpoints and keys](/node-api/authentication).
+
+### Response
+
+<ResponseField name="read" type="string[]">
+  Read scopes: `view`, `deposit_view`
+</ResponseField>
+
+<ResponseField name="node" type="string[]">
+  The Node API scope: `node_api`. A key with it carries no other scope
+</ResponseField>
+
+<ResponseField name="write" type="string[]">
+  Scopes that spend the balance or change services: `buy_energy`, `buy_bandwidth`, `smart_mode`,
+  `transfer_packages`, `energy_resale`
+</ResponseField>
+
+<ResponseField name="danger" type="string[]">
+  `withdraw`. Enabling it on a key requires 2FA and a non-empty IP whitelist
+</ResponseField>
+
+<ResponseField name="default" type="string[]">
+  Scopes a new REST API key gets when none are chosen: every read and write scope, without `withdraw`
+</ResponseField>
+
+<ResponseField name="locked" type="string[]">
+  Scopes every REST API key always has: `view`
+</ResponseField>
+
+### Example
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/scopes \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "read": ["view", "deposit_view"],
+  "node": ["node_api"],
+  "write": ["buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "danger": ["withdraw"],
+  "default": ["view", "deposit_view", "buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "locked": ["view"]
+}
+```

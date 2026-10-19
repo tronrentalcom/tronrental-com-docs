@@ -1,0 +1,57 @@
+---
+title: 列出 API 密钥权限
+api: GET /api/v1/auth/api-keys/scopes
+description: "API 密钥可拥有的权限，按类型分组"
+---
+
+## 列出 API 密钥权限
+
+返回 API 密钥权限的目录，按控制台中的显示方式分组。可用它来查询有效的权限名称。
+
+Node API 密钥是一种独立的密钥类型：它们只拥有 `node_api` 权限，绝不会与其他权限同时存在，并且只能在 `node.tronrental.com` 使用。
+您可以在[控制台 → Node API](https://tronrental.com/dashboard/node-api) 中以端点的形式创建它们；可拥有的数量取决于您的 Node API 套餐。
+Node API 密钥不能调用此端点——REST API 会以 `403 NODE_API_KEY_ONLY` 拒绝它。参见 [Node API → 端点与密钥](/zh/node-api/authentication)。
+
+### 响应
+
+<ResponseField name="read" type="string[]">
+  读取权限：`view`、`deposit_view`
+</ResponseField>
+
+<ResponseField name="node" type="string[]">
+  Node API 权限：`node_api`。拥有该权限的密钥不带任何其他权限
+</ResponseField>
+
+<ResponseField name="write" type="string[]">
+  会花费余额或更改服务的权限：`buy_energy`、`buy_bandwidth`、`smart_mode`、`transfer_packages`、`energy_resale`
+</ResponseField>
+
+<ResponseField name="danger" type="string[]">
+  `withdraw`。在密钥上启用它需要 2FA 和非空的 IP 白名单
+</ResponseField>
+
+<ResponseField name="default" type="string[]">
+  未选择权限时，新 REST API 密钥获得的权限：所有读取和写入权限，不含 `withdraw`
+</ResponseField>
+
+<ResponseField name="locked" type="string[]">
+  每个 REST API 密钥始终拥有的权限：`view`
+</ResponseField>
+
+### 示例
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/scopes \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "read": ["view", "deposit_view"],
+  "node": ["node_api"],
+  "write": ["buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "danger": ["withdraw"],
+  "default": ["view", "deposit_view", "buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "locked": ["view"]
+}
+```

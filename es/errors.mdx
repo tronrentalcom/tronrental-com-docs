@@ -72,6 +72,7 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `INVALID_TOKEN` | `401` | Clave API ausente, desconocida o deshabilitada |
 | `ACCOUNT_BLOCKED` | `403` | Acceso a la API bloqueado para esta cuenta |
 | `FORBIDDEN` | `403` | La clave carece del alcance que exige este endpoint, o la IP de la solicitud no está en la lista permitida de la clave |
+| `NODE_API_KEY_ONLY` | `403` | Se envió una clave de Node API a esta API — solo funciona en `node.tronrental.com` |
 | `INSUFFICIENT_BALANCE` | `402` | Saldo de la cuenta insuficiente para esta operación |
 | `INVALID_ADDRESS` | `400` | Dirección TRON no válida |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | El destino es un contrato inteligente — TRON prohíbe delegarle recursos |
@@ -79,6 +80,11 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `INVALID_DURATION` | `400` | La duración no es uno de los valores aceptados |
 | `ORDER_NOT_FOUND` | `404` | El ID de orden no existe |
 | `RATE_LIMIT_EXCEEDED` | `429` | Demasiadas solicitudes — ver [Límites de tasa](/resources/rate-limits) |
+
+<Note>
+Node API (`node.tronrental.com`) tiene sus propios códigos de error, en otro formato — consulta
+[Node API → Límites y errores](/es/node-api/errors).
+</Note>
 
 <Warning>
 `INSUFFICIENT_BALANCE` no se usa en todas partes. `POST /api/v1/smart-mode/activate` y

@@ -1,0 +1,119 @@
+---
+title: "Node API"
+description: "TRON tam düğümlerine HTTP ve gRPC üzerinden abonelikle erişim"
+---
+
+## Node API nedir
+
+Node API, backend'inize TRON tam düğümlerimize erişim sağlar. Bu, java-tron düğümünün kendi
+API'sidir: `/wallet/*` ve `/walletsolidity/*` altındaki aynı HTTP yöntemleri ve aynı gRPC servisleri;
+bir anahtarın arkasında, planınızın belirlediği bir kota ve saniye başına limitlerle.
+
+İşlemleri düğüm üzerinden oluşturup yayınlayın, kendi tarafınızda imzalayın. Özel anahtarınız
+sunucunuzdan hiç çıkmaz.
+
+## Adresler
+
+| Protokol | Adres |
+|---|---|
+| HTTP, tam düğüm | `https://node.tronrental.com/wallet/<method>` |
+| HTTP, onaylanmış veriler | `https://node.tronrental.com/walletsolidity/<method>` |
+| gRPC | `node.tronrental.com:443`, TLS — `protocol.Wallet` ve `protocol.WalletSolidity` servisleri |
+
+`/walletsolidity/*`, java-tron'da olduğu gibi yalnızca kesinleşmiş (onaylanmış) bloklardan yanıt
+verir. Düğümün bu iki yolda sunduğu her yöntem kullanılabilir. HTTP `GET` ve `POST` kabul eder: `GET`
+ile düğüm sorgu dizesini, `POST` ile JSON gövdesini okur — asla ikisini birden değil. Yöntem adları
+java-tron'daki gibi büyük/küçük harfe duyarlıdır: `/wallet/getaccount`, ama `/wallet/getReward`.
+
+1 KB ve üzeri yanıtlar, istek `Accept-Encoding: gzip` taşıdığında gzip ile sıkıştırılır. Çoğu HTTP
+kütüphanesi bu başlığı varsayılan olarak gönderir; curl ile `--compressed` ekleyin.
+
+## Anahtar alın
+
+<Steps>
+  <Step title="Oturum açın">
+    [tronrental.com](https://tronrental.com/auth/register) adresinde kaydolun veya oturum açın.
+  </Step>
+  <Step title="Bir plan seçin">
+    [Kontrol Paneli → Node API](https://tronrental.com/dashboard/node-api) sayfasını açın. 7 günlük
+    ücretsiz denemeyi başlatın ($5 yatırımdan sonra açılır) ya da hesap bakiyenizden ödenen bir plan
+    satın alın. Bkz. [Planlar ve faturalandırma](/tr/node-api/plans).
+  </Step>
+  <Step title="Bir uç nokta oluşturun">
+    Bir uç nokta ekleyin: bir ad ve isteğe bağlı olarak bir IP beyaz listesi. Her uç nokta ayrı bir
+    anahtardır. Anahtar yalnızca bir kez gösterilir — kopyalayıp güvenli bir yerde saklayın. Bkz.
+    [Uç noktalar ve anahtarlar](/tr/node-api/authentication).
+  </Step>
+  <Step title="İlk çağrıyı yapın">
+    Anahtarı `TRON-PRO-API-KEY` başlığında gönderin.
+  </Step>
+</Steps>
+
+```bash
+curl -i -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "visible": true}'
+```
+
+Yanıt, düğümün kendi JSON'udur. `X-Node-API-WU` yanıt başlığı çağrının kaç kota birimi tuttuğunu
+gösterir — bu çağrı için `1`. Bkz. [Kota birimleri](/tr/node-api/quota-units).
+
+## Neler dahil
+
+- `/wallet/*` ve `/walletsolidity/*` altındaki tüm düğüm yöntemleri ile `protocol.Wallet` ve
+  `protocol.WalletSolidity` gRPC servislerinin unary yöntemleri.
+- Anahtar bir başlıkta, URL yolunda ya da gRPC meta verisinde.
+- Plana bağlı olarak, her biri kendi anahtarına, IP beyaz listesine ve kullanım sayacına sahip 10'a
+  kadar uç nokta.
+- Sabit fiyatlı yeni bloklar: zincir ucundan en fazla 20 blok gerideki bir blok, boyutu ne olursa olsun
+  3 WU, makbuzları ise 2 WU tutar.
+- Start, Growth ve Pro planlarında esnek limit: kota dolduğunda istekler çalışmaya devam eder, kotanın
+  üstündeki kullanım ise aşım olarak faturalandırılır.
+- CORS: tarayıcı uygulamaları düğümü doğrudan çağırabilir.
+
+## Neler dahil değil
+
+Bunlar düğüm API'sinin parçası değildir, bu yüzden Node API bunları sunmaz:
+
+- **Adres geçmişi ve indekslenmiş veriler** — bir adresin transferleri, adrese göre TRC-20
+  transferleri, kontrat olayı sorguları (`/v1/...` ve `/event/...` gibi yollar). Bunlara yapılan
+  istekler `404 not_found` alır. Transferleri izlemek için blokları ve makbuzlarını okuyun —
+  [Kod örnekleri](/tr/node-api/examples) sayfasındaki USDT izleme örneğine bakın.
+- **JSON-RPC** (`/jsonrpc`, `eth_*` yöntemleri) açık değildir.
+- **Özel anahtar alan yöntemler**, örneğin `gettransactionsign` veya `easytransferbyprivate`. Düğüm
+  bunları sunmaz; `404 method_not_found` alırlar ve hiçbir ücrete tabi değildir. İmzalamayı kendi
+  tarafınızda yapın.
+- **Diğer gRPC servisleri** ve gRPC sunucu yansıması (reflection). Bkz. [gRPC](/tr/node-api/grpc).
+
+<Tip>
+Bir kontrat çağrısının ne kadar enerji kullanacağını tahmin etmek için aynı parametrelerle
+`triggerconstantcontract` çağırın ve yanıttaki `energy_used` değerini okuyun.
+</Tip>
+
+## Yanıt başlıkları
+
+| Başlık | Anlam |
+|---|---|
+| `X-Node-API-WU` | Bu çağrının tuttuğu kota birimi. Düğümde böyle bir yöntem yoksa `0` |
+| `X-Node-API-Mode` | Servis yedek bir düğümde çalışırken `degraded` — bkz. [Limitler ve hatalar](/tr/node-api/errors) |
+| `Retry-After` | `429` ve `503` yanıtlarında: yeniden denemeden önce beklenecek saniye |
+
+gRPC üzerinden aynı değerler sondaki meta veride gelir: `x-node-api-wu`, `x-node-api-mode`,
+`retry-after` ve reddedilen çağrılarda `x-node-api-reason`.
+
+## Sonraki adımlar
+
+<CardGroup cols={2}>
+  <Card title="Uç noktalar ve anahtarlar" icon="key" href="/tr/node-api/authentication">
+    Anahtar nasıl iletilir, IP beyaz listeleri, tarayıcı uygulamaları.
+  </Card>
+  <Card title="Kod örnekleri" icon="code" href="/tr/node-api/examples">
+    TronWeb, tronpy, curl ve grpcurl ile bağlanma, USDT gönderme ve USDT izleme.
+  </Card>
+  <Card title="Planlar ve faturalandırma" icon="credit-card" href="/tr/node-api/plans">
+    Kotalar, limitler, aşım, deneme ve yenileme.
+  </Card>
+  <Card title="Limitler ve hatalar" icon="triangle-exclamation" href="/tr/node-api/errors">
+    Tüm ret kodları, gRPC durumları ve kısıtlı mod.
+  </Card>
+</CardGroup>

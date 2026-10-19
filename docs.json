@@ -139,7 +139,9 @@
                   "api-reference/account/get-profile",
                   "api-reference/account/deposits",
                   "api-reference/account/withdrawals",
-                  "api-reference/account/reports"
+                  "api-reference/account/reports",
+                  "api-reference/account/api-key-scopes",
+                  "api-reference/account/api-key-limits"
                 ]
               },
               {
@@ -148,6 +150,28 @@
                   "api-reference/webhooks/overview",
                   "api-reference/webhooks/configure",
                   "api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Node API",
+            "groups": [
+              {
+                "group": "Node API",
+                "pages": [
+                  "node-api/overview",
+                  "node-api/authentication",
+                  "node-api/examples",
+                  "node-api/grpc"
+                ]
+              },
+              {
+                "group": "Quotas & Billing",
+                "pages": [
+                  "node-api/quota-units",
+                  "node-api/plans",
+                  "node-api/errors"
                 ]
               }
             ]
@@ -269,7 +293,9 @@
                   "ru/api-reference/account/history",
                   "ru/api-reference/account/get-profile",
                   "ru/api-reference/account/deposits",
-                  "ru/api-reference/account/withdrawals"
+                  "ru/api-reference/account/withdrawals",
+                  "ru/api-reference/account/api-key-scopes",
+                  "ru/api-reference/account/api-key-limits"
                 ]
               },
               {
@@ -278,6 +304,28 @@
                   "ru/api-reference/webhooks/overview",
                   "ru/api-reference/webhooks/configure",
                   "ru/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Node API",
+            "groups": [
+              {
+                "group": "Node API",
+                "pages": [
+                  "ru/node-api/overview",
+                  "ru/node-api/authentication",
+                  "ru/node-api/examples",
+                  "ru/node-api/grpc"
+                ]
+              },
+              {
+                "group": "Квоты и оплата",
+                "pages": [
+                  "ru/node-api/quota-units",
+                  "ru/node-api/plans",
+                  "ru/node-api/errors"
                 ]
               }
             ]
@@ -399,7 +447,9 @@
                   "zh/api-reference/account/history",
                   "zh/api-reference/account/get-profile",
                   "zh/api-reference/account/deposits",
-                  "zh/api-reference/account/withdrawals"
+                  "zh/api-reference/account/withdrawals",
+                  "zh/api-reference/account/api-key-scopes",
+                  "zh/api-reference/account/api-key-limits"
                 ]
               },
               {
@@ -408,6 +458,28 @@
                   "zh/api-reference/webhooks/overview",
                   "zh/api-reference/webhooks/configure",
                   "zh/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Node API",
+            "groups": [
+              {
+                "group": "Node API",
+                "pages": [
+                  "zh/node-api/overview",
+                  "zh/node-api/authentication",
+                  "zh/node-api/examples",
+                  "zh/node-api/grpc"
+                ]
+              },
+              {
+                "group": "配额与计费",
+                "pages": [
+                  "zh/node-api/quota-units",
+                  "zh/node-api/plans",
+                  "zh/node-api/errors"
                 ]
               }
             ]
@@ -529,7 +601,9 @@
                   "es/api-reference/account/history",
                   "es/api-reference/account/get-profile",
                   "es/api-reference/account/deposits",
-                  "es/api-reference/account/withdrawals"
+                  "es/api-reference/account/withdrawals",
+                  "es/api-reference/account/api-key-scopes",
+                  "es/api-reference/account/api-key-limits"
                 ]
               },
               {
@@ -538,6 +612,28 @@
                   "es/api-reference/webhooks/overview",
                   "es/api-reference/webhooks/configure",
                   "es/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Node API",
+            "groups": [
+              {
+                "group": "Node API",
+                "pages": [
+                  "es/node-api/overview",
+                  "es/node-api/authentication",
+                  "es/node-api/examples",
+                  "es/node-api/grpc"
+                ]
+              },
+              {
+                "group": "Cuotas y facturación",
+                "pages": [
+                  "es/node-api/quota-units",
+                  "es/node-api/plans",
+                  "es/node-api/errors"
                 ]
               }
             ]
@@ -659,7 +755,9 @@
                   "tr/api-reference/account/history",
                   "tr/api-reference/account/get-profile",
                   "tr/api-reference/account/deposits",
-                  "tr/api-reference/account/withdrawals"
+                  "tr/api-reference/account/withdrawals",
+                  "tr/api-reference/account/api-key-scopes",
+                  "tr/api-reference/account/api-key-limits"
                 ]
               },
               {
@@ -668,6 +766,28 @@
                   "tr/api-reference/webhooks/overview",
                   "tr/api-reference/webhooks/configure",
                   "tr/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Node API",
+            "groups": [
+              {
+                "group": "Node API",
+                "pages": [
+                  "tr/node-api/overview",
+                  "tr/node-api/authentication",
+                  "tr/node-api/examples",
+                  "tr/node-api/grpc"
+                ]
+              },
+              {
+                "group": "Kota ve faturalandırma",
+                "pages": [
+                  "tr/node-api/quota-units",
+                  "tr/node-api/plans",
+                  "tr/node-api/errors"
                 ]
               }
             ]
@@ -789,7 +909,9 @@
                   "pt/api-reference/account/history",
                   "pt/api-reference/account/get-profile",
                   "pt/api-reference/account/deposits",
-                  "pt/api-reference/account/withdrawals"
+                  "pt/api-reference/account/withdrawals",
+                  "pt/api-reference/account/api-key-scopes",
+                  "pt/api-reference/account/api-key-limits"
                 ]
               },
               {
@@ -798,6 +920,28 @@
                   "pt/api-reference/webhooks/overview",
                   "pt/api-reference/webhooks/configure",
                   "pt/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Node API",
+            "groups": [
+              {
+                "group": "Node API",
+                "pages": [
+                  "pt/node-api/overview",
+                  "pt/node-api/authentication",
+                  "pt/node-api/examples",
+                  "pt/node-api/grpc"
+                ]
+              },
+              {
+                "group": "Cotas e cobrança",
+                "pages": [
+                  "pt/node-api/quota-units",
+                  "pt/node-api/plans",
+                  "pt/node-api/errors"
                 ]
               }
             ]
@@ -919,7 +1063,9 @@
                   "hi/api-reference/account/history",
                   "hi/api-reference/account/get-profile",
                   "hi/api-reference/account/deposits",
-                  "hi/api-reference/account/withdrawals"
+                  "hi/api-reference/account/withdrawals",
+                  "hi/api-reference/account/api-key-scopes",
+                  "hi/api-reference/account/api-key-limits"
                 ]
               },
               {
@@ -928,6 +1074,28 @@
                   "hi/api-reference/webhooks/overview",
                   "hi/api-reference/webhooks/configure",
                   "hi/api-reference/webhooks/events"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Node API",
+            "groups": [
+              {
+                "group": "Node API",
+                "pages": [
+                  "hi/node-api/overview",
+                  "hi/node-api/authentication",
+                  "hi/node-api/examples",
+                  "hi/node-api/grpc"
+                ]
+              },
+              {
+                "group": "कोटा और बिलिंग",
+                "pages": [
+                  "hi/node-api/quota-units",
+                  "hi/node-api/plans",
+                  "hi/node-api/errors"
                 ]
               }
             ]

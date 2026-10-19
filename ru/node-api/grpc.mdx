@@ -1,0 +1,93 @@
+---
+title: "gRPC"
+description: "Вызовы ноды TRON по gRPC: адрес, ключ, файлы .proto, статусы"
+---
+
+## Подключение
+
+| Параметр | Значение |
+|---|---|
+| Адрес | `node.tronrental.com:443` |
+| Транспорт | TLS на порту 443 |
+| Сервисы | `protocol.Wallet` (полная нода) и `protocol.WalletSolidity` (подтверждённые данные) |
+| Методы | унарные методы этих двух сервисов |
+| Ключ | метаданные `tron-pro-api-key` в каждом вызове (`x-api-key` и `authorization: Bearer <YOUR_KEY>` тоже работают) |
+
+Квота, лимиты и цены — те же, что по HTTP. Вызов взвешивается по размеру его protobuf-ответа по той
+же формуле — см. [Единицы квоты](/ru/node-api/quota-units).
+
+## Файлы .proto
+
+Reflection на сервере нет: вашему клиенту нужны `.proto`-файлы TRON. Они опубликованы в репозитории
+[tronprotocol/protocol](https://github.com/tronprotocol/protocol); сервисы находятся в
+`api/api.proto`.
+
+```bash
+git clone https://github.com/tronprotocol/protocol
+```
+
+В grpcurl укажите в `-import-path` путь к клону, а в `-proto` — `api/api.proto`:
+
+```bash
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  node.tronrental.com:443 protocol.Wallet/GetNowBlock2
+```
+
+В коде сгенерируйте стабы из тех же файлов инструментами gRPC для вашего языка, откройте TLS-канал к
+`node.tronrental.com:443` и передавайте ключ в метаданных каждого вызова.
+
+## Имена методов и байты
+
+- **Имена методов чувствительны к регистру**, как в `.proto`: `protocol.Wallet/GetAccount`, а не
+  `getAccount`. Вызов метода, которого у ноды нет, завершается с `UNIMPLEMENTED`,
+  `x-node-api-reason: method_not_found` и `x-node-api-wu: 0` — он ничего не стоит.
+- **Адреса и ID — это байты.** В JSON для grpcurl байты передаются в base64. Адрес TRON — 21 байт:
+  `41`, за которым идут 20 байт. Чтобы перевести его hex-форму в base64:
+
+  ```bash
+  echo 41a614f803b6fd780986a42c78ec9c7f77e6ded13c | xxd -r -p | base64
+  # QaYU+AO2/XgJhqQseOycf3fm3tE8
+  ```
+
+- **Сообщение запроса — не больше 512 KB.** Более крупное отклоняется с `RESOURCE_EXHAUSTED` ещё до
+  обработки.
+
+## Завершающие метаданные
+
+| Ключ | Когда | Значение |
+|---|---|---|
+| `x-node-api-wu` | вызовы с ответом, а также `method_not_found` | сколько единиц квоты стоил вызов |
+| `x-node-api-mode` | вызовы с ответом в режиме деградации | `degraded` |
+| `x-node-api-reason` | отказы | код отказа, тот же, что `code` в HTTP |
+| `retry-after` | некоторые отказы | сколько секунд подождать перед повтором |
+
+## Коды статусов
+
+Отказы сопоставляются со статусами gRPC по их HTTP-статусу. Сам код — в `x-node-api-reason`; полный
+список — в разделе [Лимиты и ошибки](/ru/node-api/errors).
+
+| HTTP-статус | Статус gRPC | Коды |
+|---|---|---|
+| `400` | `INVALID_ARGUMENT` | `key_conflict`, `bad_request` |
+| `401` | `UNAUTHENTICATED` | `no_key`, `unknown_key` |
+| `403` | `PERMISSION_DENIED` | `key_disabled`, `ip_not_allowed`, `no_plan`, `account_blocked`, `plan_expired` |
+| `404` | `UNIMPLEMENTED` | `not_found`, `method_not_found` |
+| `429` | `RESOURCE_EXHAUSTED` | `quota`, `overage_budget`, `rate_read`, `rate_block`, `rate_write`, `trials` |
+| `502`, `503` | `UNAVAILABLE` | `node_error`, `no_snapshot`, `no_node`, `degraded`, `capacity`, `capacity_write`, `busy` |
+
+Ошибка, которую возвращает сама нода (например, `INVALID_ARGUMENT` для некорректной транзакции),
+передаётся вам как есть и стоит 1 WU: нода выполнила работу. Если нода не отвечает, вызов завершается
+с `UNAVAILABLE` и `x-node-api-reason: node_error` и ничего не стоит.
+
+<Note>
+`RESOURCE_EXHAUSTED` без `x-node-api-reason` приходит от самого gRPC-сервера: сообщение запроса больше
+512 KB или сервер держит слишком много вызовов одновременно. Во втором случае повторите после короткой
+паузы.
+</Note>
+
+## Повторы и отправка транзакций
+
+Вызов никогда не повторяется на другой ноде без вашего ведома: `UNAVAILABLE` может означать, что
+соединение оборвалось уже после того, как нода получила запрос. Повторно отправить ту же подписанную
+транзакцию в `BroadcastTransaction` безопасно — сеть исполняет ID транзакции только один раз.

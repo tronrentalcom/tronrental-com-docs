@@ -1,0 +1,139 @@
+---
+title: "Uç Noktalar ve Anahtarlar"
+description: "Node API anahtarları nasıl çalışır ve HTTP ile gRPC üzerinden nasıl iletilir"
+---
+
+## Uç noktalar
+
+Uç nokta, bir Node API anahtarıdır. Bir planınız veya denemeniz olduğunda uç noktaları
+[Kontrol Paneli → Node API](https://tronrental.com/dashboard/node-api) sayfasında oluşturursunuz.
+Her uç noktanın şunları vardır:
+
+- kendi anahtarı;
+- kendi IP beyaz listesi;
+- kendi kullanım sayacı — mevcut dönemin WU ve çağrı sayısı, kontrol panelinde gösterilir.
+
+Kota ve saniye başına limitler planınıza aittir ve **planın tüm uç noktaları tarafından paylaşılır**:
+ikinci bir uç nokta size daha fazla kapasite değil, ayrı bir anahtar ve sayaç verir. Kaç uç noktanız
+olabileceği plana bağlıdır — bkz. [Planlar ve faturalandırma](/tr/node-api/plans).
+
+Anahtar **yalnızca bir kez**, uç nokta oluşturulurken gösterilir. Kaybederseniz uç noktayı silip
+yenisini oluşturun. Kontrol panelinde ayrıca bir uç noktanın IP beyaz listesini düzenleyebilir, onu
+kapatıp açabilir ve silebilirsiniz:
+
+| Uç nokta durumu | Anahtarıyla yapılan istekler |
+|---|---|
+| Kapalı | Yeniden açana kadar `403 key_disabled` |
+| Silinmiş | `401 unknown_key`; anahtar geri yüklenemez |
+
+<Note>
+Kontrol panelinde yapılan değişiklikler — yeni bir uç nokta, yeni bir IP beyaz listesi, kapatılan
+veya silinen bir uç nokta, ödenmiş bir yenileme — düğüm ağ geçidine yaklaşık 30 saniye içinde ulaşır.
+Yeni oluşturduğunuz bir anahtar bu süre içinde `401 unknown_key` alabilir.
+</Note>
+
+### Node API anahtarları ve REST API anahtarları
+
+Node API anahtarları ayrı bir anahtar türüdür. Bir uç nokta anahtarı yalnızca `node.tronrental.com`
+adresinde çalışır; TronRental REST API (`api.tronrental.com`) onu `403 NODE_API_KEY_ONLY` ile reddeder.
+REST API anahtarlarınız da düğümde çalışmaz ve orada `401 unknown_key` alır.
+
+## Anahtarı HTTP üzerinden iletme
+
+Anahtarı şu yerlerden **birinde** gönderin:
+
+| Nerede | Örnek |
+|---|---|
+| `TRON-PRO-API-KEY` başlığı | `TRON-PRO-API-KEY: <YOUR_KEY>` |
+| `X-API-Key` başlığı | `X-API-Key: <YOUR_KEY>` |
+| `Authorization` başlığı | `Authorization: Bearer <YOUR_KEY>` |
+| Yolun ilk segmenti | `https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount` |
+
+Başlık adları büyük/küçük harfe duyarlı değildir. Yoldaki anahtar, istek düğüme iletilmeden önce
+kaldırılır; böylece düğüm onu hiç görmez.
+
+<CodeGroup>
+```bash Anahtar başlıkta
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash Anahtar yolda
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+</CodeGroup>
+
+Bir istek tek bir anahtar taşır. Aynı anahtarın iki kez gönderilmesi (örneğin yolda ve bir başlıkta)
+sorun değildir; iki **farklı** anahtar ise `400 key_conflict` ile reddedilir, çünkü hangisinin
+ödeyeceğini ayırt edemeyiz.
+
+<Warning>
+Yoldaki anahtar URL'nin parçasıdır, bu yüzden URL'lerin kaydedildiği her yere düşer: proxy ve
+uygulama günlükleri, izleme sistemleri, tarayıcı geçmişi. İstemciniz başlık ayarlamanıza izin
+veriyorsa başlığı tercih edin.
+</Warning>
+
+### Kütüphaneler
+
+**TronWeb** ona verdiğiniz başlıkları gönderir:
+
+```javascript
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+```
+
+**tronpy**, `api_key=` değerini yalnızca kendi varsayılan adresine gönderir; bu yüzden bizim adresimizle
+hiç anahtar göndermez. Başlığı sağlayıcının oturumunda kendiniz ayarlayın — ya da anahtarı yola
+koyun, **sonda eğik çizgiyle**: o olmadan tronpy adresin son segmentini, onunla birlikte de anahtarı
+düşürür.
+
+```python
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+
+# ya da anahtar yolda — sondaki eğik çizgiyi koruyun
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+## Anahtarı gRPC üzerinden iletme
+
+Anahtarı her çağrının `tron-pro-api-key` meta verisinde gönderin (`x-api-key` ve
+`authorization: Bearer <YOUR_KEY>` de çalışır). gRPC'de anahtarı taşıyacak bir yol yoktur. Bkz.
+[gRPC](/tr/node-api/grpc).
+
+## IP beyaz listesi
+
+Her uç nokta bir IP adresleri listesiyle sınırlandırılabilir — IPv4 veya IPv6; aralıklar değil, tam
+adresler. Liste boşsa anahtar her adresten çalışır. Liste doluysa başka herhangi bir adresten gelen
+istekler `403 ip_not_allowed` alır. IPv6 biçiminde yazılmış bir IPv4 adresi (`::ffff:203.0.113.7`)
+IPv4 adresinin kendisi sayılır.
+
+## Tarayıcı uygulamaları (CORS)
+
+Node API her origin'den gelen tarayıcı isteklerine yanıt verir; böylece bir dApp onu doğrudan
+çağırabilir:
+
+| Başlık | Değer |
+|---|---|
+| `Access-Control-Allow-Origin` | `*` |
+| `Access-Control-Allow-Methods` | `GET, POST, OPTIONS` |
+| `Access-Control-Allow-Headers` | `Content-Type, TRON-PRO-API-KEY, X-API-Key, Authorization` |
+| `Access-Control-Expose-Headers` | `X-Node-API-WU, X-Node-API-Mode, Retry-After` |
+| `Access-Control-Max-Age` | `86400` |
+
+<Warning>
+Tarayıcı kodundaki bir anahtarı uygulamanızı açan herkes görebilir ve onu kopyalayan herkes kotanızı
+harcar. IP beyaz listesi burada işe yaramaz — kullanıcılarınızın adresleri önceden bilinmez. Tarayıcıya
+ayrı bir uç nokta verin, sayacını takip edin ve kötüye kullanılırsa silin: sunucu anahtarlarınız
+çalışmaya devam eder.
+</Warning>

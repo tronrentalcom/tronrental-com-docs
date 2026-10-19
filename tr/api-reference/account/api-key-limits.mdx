@@ -1,0 +1,87 @@
+---
+title: API Anahtarı Limitlerini Al
+api: GET /api/v1/auth/api-keys/limits
+description: "Hesap düzeyindeki hız sınırınız ve hesabın sahip olabileceği API anahtarı sayısı"
+---
+
+## API Anahtarı Limitlerini Al
+
+İsteklerinize uygulanan hız sınırını ve hesabın API anahtarı kotasını, bir Node API planının uç
+noktaları dahil olmak üzere döndürür. Hız sınırı kademeleri [Hız Sınırları](/tr/resources/rate-limits)
+sayfasında açıklanmıştır.
+
+Bir Node API uç noktası da bir API anahtarıdır: Node API planı, kendi uç nokta hakkını hesabın anahtar
+limitine ekler ve `node_api` taşıyan anahtarlar her iki limite de sayılır. Bir Node API anahtarı bu uç
+noktayı çağıramaz — REST API ona `403 NODE_API_KEY_ONLY` ile yanıt verir.
+
+### Yanıt
+
+<ResponseField name="tier" type="string">
+  Hız sınırı kademeniz: `paying` (geçmişte alımı veya aboneliği olan ya da 10 TRX veya üzeri bakiyesi
+  olan hesap) veya `zero` (diğer tüm hesaplar)
+</ResponseField>
+
+<ResponseField name="limit_per_min" type="number">
+  Şu anda size izin verilen dakikalık istek sayısı
+</ResponseField>
+
+<ResponseField name="custom_rate_limit" type="number | null">
+  Hesabınız için belirlediysek bireysel hız sınırınız; aksi hâlde `null`
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  Hesap düzeyindeki hız sınırının açık olup olmadığı
+</ResponseField>
+
+<ResponseField name="observe_only" type="boolean">
+  `true` olduğunda sınırın üzerindeki istekler sayılır ama reddedilmez
+</ResponseField>
+
+<ResponseField name="key_count" type="number">
+  Hesabın şu anda sahip olduğu API anahtarları, Node API uç noktaları dahil (kapatılmış anahtarlar
+  sayılır, silinmiş anahtarlar sayılmaz)
+</ResponseField>
+
+<ResponseField name="key_limit" type="number">
+  Hesabın sahip olabileceği API anahtarı sayısı: hesabın kendi hakkı artı `node_endpoint_limit`
+</ResponseField>
+
+<ResponseField name="custom_key_limit" type="number | null">
+  Belirlediysek hesabın bireysel anahtar hakkı; `null` varsayılan değer anlamına gelir
+</ResponseField>
+
+<ResponseField name="can_create" type="boolean">
+  `key_count`, `key_limit` değerinin altında olduğu sürece `true`
+</ResponseField>
+
+<ResponseField name="node_endpoint_limit" type="number">
+  Hesabın en son Node API planının izin verdiği Node API uç noktası sayısı; hesabın hiç planı olmadıysa
+  `0`
+</ResponseField>
+
+<ResponseField name="node_endpoint_count" type="number">
+  `node_api` taşıyan anahtarlar — hesabın Node API uç noktaları, kapatılmış olanlar dahil
+</ResponseField>
+
+### Örnek
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/limits \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tier": "paying",
+  "limit_per_min": 1000,
+  "custom_rate_limit": null,
+  "enabled": true,
+  "observe_only": false,
+  "key_count": 3,
+  "key_limit": 6,
+  "custom_key_limit": null,
+  "can_create": true,
+  "node_endpoint_limit": 3,
+  "node_endpoint_count": 1
+}
+```

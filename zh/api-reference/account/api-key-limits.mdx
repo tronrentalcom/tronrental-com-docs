@@ -1,0 +1,81 @@
+---
+title: 获取 API 密钥限制
+api: GET /api/v1/auth/api-keys/limits
+description: "您账户级的速率限制，以及账户可持有的 API 密钥数量"
+---
+
+## 获取 API 密钥限制
+
+返回适用于您请求的速率限制以及账户的 API 密钥配额，包括 Node API 套餐的端点。速率限制档位详见[速率限制](/zh/resources/rate-limits)。
+
+Node API 端点也是 API 密钥：Node API 套餐会把其端点额度加到账户的密钥上限中，带有 `node_api` 的密钥同时计入两者。
+Node API 密钥不能调用此端点——REST API 会以 `403 NODE_API_KEY_ONLY` 拒绝它。
+
+### 响应
+
+<ResponseField name="tier" type="string">
+  您的速率限制档位：`paying`（有过购买或订阅记录，或余额不低于 10 TRX 的账户）或 `zero`（其他任何账户）
+</ResponseField>
+
+<ResponseField name="limit_per_min" type="number">
+  当前允许您每分钟发出的请求数
+</ResponseField>
+
+<ResponseField name="custom_rate_limit" type="number | null">
+  您的个人速率限制（如果我们为您的账户设置了）；否则为 `null`
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  账户级速率限制是否已开启
+</ResponseField>
+
+<ResponseField name="observe_only" type="boolean">
+  为 `true` 时，超出限制的请求只计数、不拒绝
+</ResponseField>
+
+<ResponseField name="key_count" type="number">
+  账户当前持有的 API 密钥数，包括 Node API 端点（已停用的密钥计入，已删除的不计入）
+</ResponseField>
+
+<ResponseField name="key_limit" type="number">
+  账户可持有的 API 密钥数量：账户自身的额度加上 `node_endpoint_limit`
+</ResponseField>
+
+<ResponseField name="custom_key_limit" type="number | null">
+  账户的个人密钥额度（如果我们设置了）；`null` 表示使用默认值
+</ResponseField>
+
+<ResponseField name="can_create" type="boolean">
+  当 `key_count` 低于 `key_limit` 时为 `true`
+</ResponseField>
+
+<ResponseField name="node_endpoint_limit" type="number">
+  账户最近一个 Node API 套餐允许的 Node API 端点数；账户从未有过套餐时为 `0`
+</ResponseField>
+
+<ResponseField name="node_endpoint_count" type="number">
+  带有 `node_api` 的密钥——即账户的 Node API 端点，包括已停用的
+</ResponseField>
+
+### 示例
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/limits \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tier": "paying",
+  "limit_per_min": 1000,
+  "custom_rate_limit": null,
+  "enabled": true,
+  "observe_only": false,
+  "key_count": 3,
+  "key_limit": 6,
+  "custom_key_limit": null,
+  "can_create": true,
+  "node_endpoint_limit": 3,
+  "node_endpoint_count": 1
+}
+```

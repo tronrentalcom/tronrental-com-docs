@@ -1,0 +1,93 @@
+---
+title: "Unidades de cota (WU)"
+description: "Como o Node API pesa uma chamada: a fórmula, os fatores de bloco e os blocos recentes"
+---
+
+## O que é um WU
+
+Um WU é a unidade de uso do Node API. A cota do seu plano e o seu limite de leitura são contados em WU.
+Uma chamada custa WU de acordo com o tamanho da resposta do nó: quanto mais dados o nó retorna, mais
+trabalho ele fez. A maioria das chamadas — uma conta, seus recursos, uma chamada de contrato, montar ou
+transmitir uma transação — custa 1 WU.
+
+Toda chamada respondida informa o seu custo: o cabeçalho de resposta `X-Node-API-WU` no HTTP, os
+metadados finais `x-node-api-wu` no gRPC. O painel mostra o seu uso por dia.
+
+## A fórmula
+
+```
+WU = max(1, round((1.5 + 0.11 × KB) / 3.5 × factor))
+```
+
+- **KB** — o tamanho da resposta do nó em kilobytes (bytes ÷ 1024), antes da compactação. O gzip
+  economiza tráfego, não WU.
+- **round** — para o inteiro mais próximo; metades são arredondadas para cima.
+- **factor** — depende do tipo de chamada:
+
+| Chamada | Fator |
+|---|---|
+| Blocos inteiros: `getnowblock`, `getblockbynum`, `getblockbyid`, `getblock` com `"detail": true`, e os intervalos `getblockbylimitnext` e `getblockbylatestnum` | `0.65` |
+| Recibos de um bloco inteiro: `gettransactioninfobyblocknum` | `1.6` |
+| Todo o resto, incluindo `getblock` com `"detail": false` (só o cabeçalho) | `1` |
+
+As mesmas regras valem para `/walletsolidity/*` e para o gRPC, em que a resposta é medida em protobuf
+e os equivalentes gRPC desses métodos (`GetNowBlock2`, `GetBlockByNum2`, `GetBlock`, …) contam como os
+mesmos tipos de chamada.
+
+| Tamanho da resposta | Fator `1` | Blocos, `0.65` | Recibos, `1.6` |
+|---|---|---|---|
+| 10 KB | 1 | 1 | 1 |
+| 50 KB | 2 | 1 | 3 |
+| 100 KB | 4 | 2 | 6 |
+| 200 KB | 7 | 4 | 11 |
+| 500 KB | 16 | 10 | 26 |
+| 800 KB | 26 | 17 | 41 |
+
+Com fator `1`, respostas de até cerca de 34 KB custam 1 WU.
+
+## Blocos recentes
+
+Um bloco a até **20 da ponta** da rede — mais ou menos o último minuto — custa um valor fixo de
+**3 WU**, e seus recibos **2 WU**, seja qual for o tamanho. Um bloco que ainda não foi produzido custa o
+que a sua resposta (vazia) custa: 1 WU. Blocos mais antigos e seus recibos são cobrados pela fórmula.
+
+Os intervalos (`getblockbylimitnext`, `getblockbylatestnum`) são sempre cobrados pela fórmula, sobre a
+resposta inteira, e retornam no máximo 10 blocos por chamada.
+
+## Exemplos medidos
+
+| Chamada | Resposta | WU |
+|---|---|---|
+| `getaccount`, `triggerconstantcontract`, `getnodeinfo` | alguns KB | 1 |
+| `getblock` com `"detail": false` | 0.5 KB | 1 |
+| `getnowblock` | 600–800 KB | 3 |
+| `gettransactioninfobyblocknum`, bloco recente | 230–290 KB | 2 |
+| `getblockbynum`, bloco mais antigo | 236 KB | 5 |
+| `getblockbynum`, bloco mais antigo | 783 KB | 16 |
+| `gettransactioninfobyblocknum`, bloco mais antigo | 110 KB | 6 |
+| `gettransactioninfobyblocknum`, bloco mais antigo | 179 KB | 10 |
+| `getblockbylatestnum` com `"num": 3` | 1.6 MB | 34 |
+
+## O que não custa nada
+
+- **Recusas.** Uma requisição recusada com um `code` de erro (veja [Limites e erros](/pt/node-api/errors))
+  não é cobrada e não traz `X-Node-API-WU`.
+- **Um método que o nó não tem** — `404 method_not_found`, com `X-Node-API-WU: 0`. Ainda assim conta
+  como uma chamada no seu limite por segundo, então um loop de erros de digitação é desacelerado, não
+  cobrado.
+- **Nenhuma resposta do nó** — `502 node_error`.
+
+Um erro retornado pelo próprio nó é uma resposta: o java-tron informa a maioria dos erros em JSON
+(`{"Error": "…"}`), muitas vezes com status `200`, e eles são cobrados pelo tamanho como qualquer
+resposta — no mínimo 1 WU.
+
+## Estimando o seu uso
+
+- Acompanhar todos os blocos da rede — o cabeçalho (1 WU) mais os recibos do bloco recente (2 WU) —
+  custa 3 WU por bloco: cerca de 86400 WU por dia, ou cerca de 2.6M WU em 30 dias.
+- Uma transferência USDT montada e transmitida pelo nó custa 2 WU.
+- Ler blocos antigos é a parte cara: um bloco antigo de 600–800 KB custa 13–17 WU.
+
+A cota é gasta em WU; os limites por segundo são contados por classe de chamada — WU de leitura por
+segundo, requisições de blocos por segundo, transações enviadas por segundo. Veja
+[Limites e erros](/pt/node-api/errors) e os números de cada plano em [Planos e cobrança](/pt/node-api/plans).

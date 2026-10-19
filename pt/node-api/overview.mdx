@@ -1,0 +1,118 @@
+---
+title: "Node API"
+description: "Acesso por assinatura a nós completos TRON via HTTP e gRPC"
+---
+
+## O que é o Node API
+
+O Node API dá ao seu backend acesso aos nossos nós completos TRON. É a API do próprio nó java-tron:
+os mesmos métodos HTTP em `/wallet/*` e `/walletsolidity/*` e os mesmos serviços gRPC, protegidos por
+uma chave, com a cota e os limites por segundo definidos pelo seu plano.
+
+Monte e transmita as transações pelo nó e assine-as do seu lado. Sua chave privada nunca sai do seu
+servidor.
+
+## Endereços
+
+| Protocolo | Endereço |
+|---|---|
+| HTTP, nó completo | `https://node.tronrental.com/wallet/<method>` |
+| HTTP, dados confirmados | `https://node.tronrental.com/walletsolidity/<method>` |
+| gRPC | `node.tronrental.com:443`, TLS — serviços `protocol.Wallet` e `protocol.WalletSolidity` |
+
+`/walletsolidity/*` responde apenas com base em blocos solidificados (confirmados), como no java-tron.
+Todos os métodos que o nó atende nesses dois caminhos estão disponíveis. O HTTP aceita `GET` e `POST`:
+com `GET` o nó lê a query string, com `POST` o corpo JSON — nunca os dois. Os nomes dos métodos
+diferenciam maiúsculas de minúsculas, como no java-tron: `/wallet/getaccount`, mas `/wallet/getReward`.
+
+Respostas de 1 KB ou mais são compactadas com gzip quando a requisição traz `Accept-Encoding: gzip`. A
+maioria das bibliotecas HTTP envia esse cabeçalho por padrão; no curl, adicione `--compressed`.
+
+## Obtenha uma chave
+
+<Steps>
+  <Step title="Entre na sua conta">
+    Cadastre-se ou entre em [tronrental.com](https://tronrental.com/auth/register).
+  </Step>
+  <Step title="Escolha um plano">
+    Abra [Painel → Node API](https://tronrental.com/dashboard/node-api). Comece o teste grátis de 7 dias
+    (liberado após $5 em depósitos) ou assine um plano, pago com o saldo da sua conta. Veja
+    [Planos e cobrança](/pt/node-api/plans).
+  </Step>
+  <Step title="Crie um endpoint">
+    Adicione um endpoint: um nome e, opcionalmente, uma lista de IPs permitidos. Cada endpoint é uma
+    chave própria. A chave é mostrada uma única vez — copie-a e guarde-a em local seguro. Veja
+    [Endpoints e chaves](/pt/node-api/authentication).
+  </Step>
+  <Step title="Faça a primeira chamada">
+    Envie a chave no cabeçalho `TRON-PRO-API-KEY`.
+  </Step>
+</Steps>
+
+```bash
+curl -i -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "visible": true}'
+```
+
+A resposta é o JSON do próprio nó. O cabeçalho de resposta `X-Node-API-WU` informa quantas unidades de
+cota a chamada custou — `1` nesta. Veja [Unidades de cota](/pt/node-api/quota-units).
+
+## O que está incluído
+
+- Todos os métodos do nó em `/wallet/*` e `/walletsolidity/*`, e os métodos unários dos serviços gRPC
+  `protocol.Wallet` e `protocol.WalletSolidity`.
+- A chave em um cabeçalho, no caminho da URL ou nos metadados gRPC.
+- Até 10 endpoints, conforme o plano, cada um com sua própria chave, lista de IPs permitidos e
+  contador de uso.
+- Blocos recentes a preço fixo: um bloco a até 20 da ponta custa 3 WU e seus recibos 2 WU, seja qual
+  for o tamanho.
+- Limite flexível nos planos Start, Growth e Pro: quando a cota acaba, as requisições continuam
+  funcionando, e o uso acima dela é cobrado como excedente.
+- CORS, para que aplicações no navegador chamem o nó diretamente.
+
+## O que não está incluído
+
+Isto não faz parte da API do nó, então o Node API não oferece:
+
+- **Histórico de endereços e dados indexados** — transferências de um endereço, transferências TRC-20
+  por endereço, consultas de eventos de contratos (caminhos como `/v1/...` e `/event/...`). As
+  requisições a eles recebem `404 not_found`. Para acompanhar transferências, leia os blocos e seus
+  recibos — veja o exemplo Monitorar USDT em [Exemplos de código](/pt/node-api/examples).
+- **JSON-RPC** (`/jsonrpc`, métodos `eth_*`) não está ativado.
+- **Métodos que recebem uma chave privada**, como `gettransactionsign` ou `easytransferbyprivate`. O
+  nó não os atende; eles recebem `404 method_not_found` e não custam nada. Assine do seu lado.
+- **Outros serviços gRPC** e a reflexão do servidor gRPC. Veja [gRPC](/pt/node-api/grpc).
+
+<Tip>
+Para estimar a energia que uma chamada de contrato vai usar, chame `triggerconstantcontract` com os
+mesmos parâmetros e leia `energy_used` na resposta.
+</Tip>
+
+## Cabeçalhos de resposta
+
+| Cabeçalho | Significado |
+|---|---|
+| `X-Node-API-WU` | Unidades de cota que esta chamada custou. `0` quando o nó não tem esse método |
+| `X-Node-API-Mode` | `degraded` enquanto o serviço funciona em um nó de reserva — veja [Limites e erros](/pt/node-api/errors) |
+| `Retry-After` | Em `429` e `503`: segundos de espera antes de tentar novamente |
+
+No gRPC, os mesmos valores chegam nos metadados finais (trailing metadata): `x-node-api-wu`,
+`x-node-api-mode`, `retry-after` e, em uma recusa, `x-node-api-reason`.
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Endpoints e chaves" icon="key" href="/pt/node-api/authentication">
+    Como passar a chave, listas de IPs permitidos, aplicações no navegador.
+  </Card>
+  <Card title="Exemplos de código" icon="code" href="/pt/node-api/examples">
+    Conectar, enviar USDT e monitorar USDT com TronWeb, tronpy, curl e grpcurl.
+  </Card>
+  <Card title="Planos e cobrança" icon="credit-card" href="/pt/node-api/plans">
+    Cotas, limites, excedente, teste e renovação.
+  </Card>
+  <Card title="Limites e erros" icon="triangle-exclamation" href="/pt/node-api/errors">
+    Todos os códigos de recusa, status gRPC e modo degradado.
+  </Card>
+</CardGroup>

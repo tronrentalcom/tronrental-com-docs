@@ -1,0 +1,94 @@
+---
+title: "Unidades de cuota (WU)"
+description: "Cómo pondera Node API una llamada: la fórmula, los factores de bloque y los bloques recientes"
+---
+
+## Qué es un WU
+
+Un WU es la unidad de uso de Node API. La cuota de tu plan y su límite de lectura se cuentan en WU. Una
+llamada cuesta WU según el tamaño de la respuesta del nodo: cuantos más datos devuelve el nodo, más
+trabajo ha hecho. La mayoría de las llamadas — una cuenta, sus recursos, una llamada a un contrato,
+construir o transmitir una transacción — cuestan 1 WU.
+
+Cada llamada respondida te indica su coste: el encabezado de respuesta `X-Node-API-WU` por HTTP y los
+metadatos finales `x-node-api-wu` por gRPC. El panel muestra tu uso por día.
+
+## La fórmula
+
+```
+WU = max(1, round((1.5 + 0.11 × KB) / 3.5 × factor))
+```
+
+- **KB** — el tamaño de la respuesta del nodo en kilobytes (bytes ÷ 1024), antes de la compresión. gzip
+  ahorra tráfico, no WU.
+- **round** — al entero más cercano; las mitades se redondean hacia arriba.
+- **factor** — depende del tipo de llamada:
+
+| Llamada | Factor |
+|---|---|
+| Bloques completos: `getnowblock`, `getblockbynum`, `getblockbyid`, `getblock` con `"detail": true`, y los rangos `getblockbylimitnext` y `getblockbylatestnum` | `0.65` |
+| Recibos de un bloque completo: `gettransactioninfobyblocknum` | `1.6` |
+| Todo lo demás, incluido `getblock` con `"detail": false` (solo el encabezado) | `1` |
+
+Las mismas reglas se aplican a `/walletsolidity/*` y a gRPC, donde la respuesta se mide en protobuf y
+los equivalentes gRPC de estos métodos (`GetNowBlock2`, `GetBlockByNum2`, `GetBlock`, …) cuentan como
+los mismos tipos de llamada.
+
+| Tamaño de la respuesta | Factor `1` | Bloques, `0.65` | Recibos, `1.6` |
+|---|---|---|---|
+| 10 KB | 1 | 1 | 1 |
+| 50 KB | 2 | 1 | 3 |
+| 100 KB | 4 | 2 | 6 |
+| 200 KB | 7 | 4 | 11 |
+| 500 KB | 16 | 10 | 26 |
+| 800 KB | 26 | 17 | 41 |
+
+Con el factor `1`, las respuestas de hasta unos 34 KB cuestan 1 WU.
+
+## Bloques recientes
+
+Un bloque a **20 o menos de la cabeza** de la red — aproximadamente el último minuto — cuesta un precio
+fijo de **3 WU**, y sus recibos **2 WU**, sea cual sea su tamaño. Un bloque que aún no se ha producido
+cuesta lo que cuesta su respuesta (vacía): 1 WU. Los bloques más antiguos y sus recibos se cobran según
+la fórmula.
+
+Los rangos (`getblockbylimitnext`, `getblockbylatestnum`) se cobran siempre según la fórmula, sobre la
+respuesta completa, y devuelven como máximo 10 bloques por llamada.
+
+## Ejemplos medidos
+
+| Llamada | Respuesta | WU |
+|---|---|---|
+| `getaccount`, `triggerconstantcontract`, `getnodeinfo` | unos pocos KB | 1 |
+| `getblock` con `"detail": false` | 0.5 KB | 1 |
+| `getnowblock` | 600–800 KB | 3 |
+| `gettransactioninfobyblocknum`, bloque reciente | 230–290 KB | 2 |
+| `getblockbynum`, bloque antiguo | 236 KB | 5 |
+| `getblockbynum`, bloque antiguo | 783 KB | 16 |
+| `gettransactioninfobyblocknum`, bloque antiguo | 110 KB | 6 |
+| `gettransactioninfobyblocknum`, bloque antiguo | 179 KB | 10 |
+| `getblockbylatestnum` con `"num": 3` | 1.6 MB | 34 |
+
+## Qué no cuesta nada
+
+- **Los rechazos.** Una solicitud rechazada con un `code` de error (consulta
+  [Límites y errores](/es/node-api/errors)) no se cobra y no lleva `X-Node-API-WU`.
+- **Un método que el nodo no tiene** — `404 method_not_found`, con `X-Node-API-WU: 0`. Aun así cuenta
+  como una llamada para tu límite por segundo, de modo que un bucle de erratas se frena, no se factura.
+- **Ninguna respuesta del nodo** — `502 node_error`.
+
+Un error que devuelve el propio nodo es una respuesta: java-tron informa de la mayoría de los errores
+como JSON (`{"Error": "…"}`), a menudo con el estado `200`, y se cobran por tamaño como cualquier
+respuesta — al menos 1 WU.
+
+## Estimar tu uso
+
+- Seguir cada bloque de la cadena — el encabezado (1 WU) más los recibos del bloque reciente (2 WU) —
+  son 3 WU por bloque: unos 86400 WU al día, o unos 2.6M WU en 30 días.
+- Una transferencia USDT construida y transmitida a través del nodo cuesta 2 WU.
+- Leer bloques antiguos es la parte cara: un bloque antiguo de 600–800 KB cuesta 13–17 WU.
+
+La cuota se gasta en WU; los límites por segundo se cuentan por clase de llamada — WU de lectura por
+segundo, solicitudes de bloques por segundo, envíos de transacciones por segundo. Consulta
+[Límites y errores](/es/node-api/errors) y las cifras de cada plan en
+[Planes y facturación](/es/node-api/plans).

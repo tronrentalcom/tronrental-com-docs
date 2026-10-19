@@ -1,0 +1,212 @@
+---
+title: "Kod Örnekleri"
+description: "TronWeb, tronpy, curl ve grpcurl ile bağlanma, USDT gönderme ve USDT transferlerini izleme"
+---
+
+Dört istemciyle üç yaygın görev. `<YOUR_KEY>` yerine uç noktalarınızdan birinin anahtarını, `TXYZ…`
+yerine gerçek bir adres yazın. Yorumlardaki WU değerleri, Node API'nin tam olarak bu çağrılar için
+tahsil ettiği miktardır.
+
+## Bağlanma
+
+İlk çağrı hesap verilerini okur — 1 WU.
+
+<CodeGroup>
+```javascript TronWeb
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+
+const account = await tronWeb.trx.getAccount('TXYZ…');
+```
+
+```python tronpy
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+# tronpy api_key= değerini yalnızca kendi varsayılan adresine gönderir — başlığı kendiniz ayarlayın
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+account = client.get_account('TXYZ…')
+
+# ya da anahtar yolda — sonda eğik çizgiyle, yoksa tronpy anahtarı düşürür
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+```bash curl
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+
+# ya da anahtar yolda
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash grpcurl
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  -d '{"address": "QZ…"}' \
+  node.tronrental.com:443 protocol.Wallet/GetAccount
+# adres — base64'te 21 bayt
+```
+</CodeGroup>
+
+grpcurl, TRON `.proto` dosyalarına ihtiyaç duyar ve adresleri base64 baytları olarak alır — bkz.
+[gRPC](/tr/node-api/grpc).
+
+## USDT gönderme
+
+İşlemi düğüm üzerinden oluşturun, kendi tarafınızda imzalayın, düğüm üzerinden yayınlayın. Özel
+anahtarınız sunucunuzdan hiç çıkmaz. Bir transfer 2 WU tutar; tronpy ile 3 WU, ayrıca kontratı
+yüklemek için bir kez 2 WU.
+
+Bu örneklerde `from` (`sender`) ve `to` gönderenin ve alıcının adresleridir, `amount` tokenin en küçük
+biriminde verilir (USDT'nin 6 ondalık basamağı vardır: 1 USDT = `1000000`) ve `PRIVATE_KEY`
+gönderenin özel anahtarıdır. `fee_limit`, transferin yakabileceği en fazla TRX miktarıdır, sun
+cinsinden: `30000000`, 30 TRX'tir.
+
+<CodeGroup>
+```javascript TronWeb
+const USDT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+
+// 1. düğüm üzerinden oluşturma — 1 WU
+const { transaction } = await tronWeb.transactionBuilder.triggerSmartContract(
+  USDT, 'transfer(address,uint256)', { feeLimit: 30_000_000 },
+  [{ type: 'address', value: to }, { type: 'uint256', value: amount }],
+  from,
+);
+// 2. kendi tarafınızda imza — anahtar sunucunuzda kalır
+const signed = await tronWeb.trx.sign(transaction, PRIVATE_KEY);
+// 3. düğüm üzerinden yayın — 1 WU
+const result = await tronWeb.trx.sendRawTransaction(signed);
+```
+
+```python tronpy
+from tronpy.keys import PrivateKey
+
+# ABI'siyle USDT kontratı — 2 WU, bir kez
+usdt = client.get_contract('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+# 1. oluşturma: düğümden referans blok ve txID — 2 WU
+txn = (usdt.functions.transfer(to, amount)
+       .with_owner(sender).fee_limit(30_000_000).build())
+# 2. kendi tarafınızda imza — anahtar sunucunuzda kalır
+signed = txn.sign(PrivateKey(bytes.fromhex(PRIVATE_KEY)))
+# 3. düğüm üzerinden yayın — 1 WU
+result = signed.broadcast()
+```
+
+```bash curl
+# 1. düğüm üzerinden oluşturma — 1 WU
+curl -X POST https://node.tronrental.com/wallet/triggersmartcontract \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"owner_address": "TFrom…", "visible": true,
+       "contract_address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+       "function_selector": "transfer(address,uint256)",
+       "parameter": "<abi>", "fee_limit": 30000000}'
+# 2. kendi tarafınızda imza — anahtar sunucunuzda kalır
+# 3. düğüm üzerinden yayın — 1 WU
+curl -X POST https://node.tronrental.com/wallet/broadcasttransaction \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d @signed.json
+```
+
+```bash grpcurl
+# 1. düğüm üzerinden oluşturma — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/TriggerContract < call.json
+# 2. kendi tarafınızda imza — anahtar sunucunuzda kalır
+# 3. düğüm üzerinden yayın — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/BroadcastTransaction < signed.json
+```
+</CodeGroup>
+
+**curl ile** `parameter`, `transfer(address,uint256)` argümanlarının hex olarak ABI kodlamasıdır:
+alıcının 20 baytlık adresi (başındaki `41` olmadan hex biçimi) soldan sıfırlarla 64 hex karaktere
+tamamlanır, ardından yine 64 karaktere tamamlanmış miktar gelir. Düğüm imzasız bir `transaction` ve
+onun `txID` değeriyle yanıt verir. `txID` değerini gönderenin özel anahtarıyla imzalayın, imzayı
+işleme `"signature": ["<hex>"]` olarak ekleyin ve bu işlem nesnesini `signed.json` olarak gönderin.
+
+**grpcurl ile** `call.json` bir `TriggerSmartContract` mesajıdır: `owner_address`, `contract_address`
+ve `data` (4 baytlık fonksiyon seçicisi ve ardından ABI kodlu argümanlar), hepsi base64 baytları
+olarak. Mesajda ücret limiti alanı yoktur: dönen işlemde `raw_data.fee_limit` değerini ayarlayın,
+ardından yeni `raw_data` değerinin SHA-256 özetini imzalayın — bu değişiklikten sonra dönen `txid`
+artık eşleşmez. Bkz. [gRPC](/tr/node-api/grpc).
+
+<Tip>
+Aynı imzalı işlemi yeniden göndermek güvenlidir: ağ bir işlem kimliğini yalnızca bir kez yürütür ve
+tekrarlanan yayın `DUP_TRANSACTION_ERROR` olarak döner. Süresi dolmuş bir işlemin yeniden
+oluşturulması ve imzalanması gerekir.
+</Tip>
+
+## USDT transferlerini izleme
+
+En yeni blok başlığını, ardından o bloğun makbuzlarını okuyun ve USDT ile ilgili olanları ayırın.
+Başlık 1 WU, yeni bir bloğun makbuzları 2 WU tutar — blok başına 3 WU. Zincirin her bloğunu bu
+şekilde takip etmek ayda yaklaşık 2.6M WU eder.
+
+<CodeGroup>
+```javascript TronWeb
+// blok başlığı — 1 WU
+const head = await tronWeb.fullNode.request('wallet/getblock', { detail: false }, 'post');
+const num = head.block_header.raw_data.number;
+// yeni blok makbuzları — 2 WU
+const infos = await tronWeb.fullNode.request(
+  'wallet/gettransactioninfobyblocknum', { num }, 'post');
+// USDT transferleri — log içindeki Transfer olayları
+const usdt = infos.filter(i => i.contract_address === '41a614f803b6fd780986a42c78ec9c7f77e6ded13c');
+```
+
+```python tronpy
+# blok başlığı — 1 WU
+head = client.provider.make_request('wallet/getblock', {'detail': False})
+num = head['block_header']['raw_data']['number']
+# yeni blok makbuzları — 2 WU
+infos = client.provider.make_request(
+    'wallet/gettransactioninfobyblocknum', {'num': num})
+# USDT transferleri — log içindeki Transfer olayları
+usdt = [i for i in infos if i.get('contract_address') == '41a614f803b6fd780986a42c78ec9c7f77e6ded13c']
+```
+
+```bash curl
+# blok başlığı — 1 WU
+NUM=$(curl -s -X POST https://node.tronrental.com/wallet/getblock \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d '{"detail": false}' \
+  | jq '.block_header.raw_data.number')
+# yeni blok makbuzları — 2 WU
+curl -X POST https://node.tronrental.com/wallet/gettransactioninfobyblocknum \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d "{\"num\": $NUM}"
+```
+
+```bash grpcurl
+# blok başlığı — 1 WU
+NUM=$(grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d '{"detail": false}' \
+  node.tronrental.com:443 protocol.Wallet/GetBlock | jq -r '.blockHeader.rawData.number')
+# yeni blok makbuzları — 2 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d "{\"num\": $NUM}" \
+  node.tronrental.com:443 protocol.Wallet/GetTransactionInfoByBlockNum
+```
+</CodeGroup>
+
+Bir USDT çağrısının her makbuzu, tokenin `Transfer` olaylarını `log` içinde taşır. Bir olayda
+`topics[0]` değeri `ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef` olur, `topics[1]`
+ve `topics[2]` gönderen ve alıcıdır (son 40 hex karakter, `41` öneki olmadan adrestir) ve `data`
+miktardır. Gerçekleşen bir transferde `receipt.result` değeri `SUCCESS` olur. Yukarıdaki filtre USDT
+kontratına yapılan doğrudan çağrıları tutar; başka kontratların aktardığı USDT'yi de yakalamak için
+bunun yerine her log kaydının `address` alanını kontrol edin — USDT için
+`a614f803b6fd780986a42c78ec9c7f77e6ded13c`.
+
+<Note>
+Yaklaşık her 3 saniyede yeni bir blok gelir. İşlediğiniz son bloğu hatırlayın ve ondan sonraki her
+numara için makbuzları alın; böylece yavaş bir sorgulama döngüsü hiçbir bloğu atlamaz. Zincir ucundan
+20 bloktan daha geride olan bir bloğun makbuzları artık yeni sayılmaz ve boyutlarına göre
+ücretlendirilir — bkz. [Kota birimleri](/tr/node-api/quota-units).
+</Note>

@@ -1,0 +1,114 @@
+---
+title: "Planlar ve Faturalandırma"
+description: "Node API planları, limitler, aşım, deneme, yenileme ve ödemenin işleyişi"
+---
+
+## Planlar
+
+| Plan | Fiyat | Dönem | Kota | Okuma | Blok istekleri | İşlem gönderimi | Uç noktalar | Kota üstü |
+|---|---|---|---|---|---|---|---|---|
+| Deneme | ücretsiz | 7 gün | 5M WU | 20 WU/s | 1/s | 2/s | 1 | `429` ile ret |
+| Start | 19.90 USDT | 30 gün | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 1M WU başına 0.80 USDT |
+| Growth | 49 USDT | 30 gün | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 1M WU başına 0.70 USDT |
+| Pro | 149 USDT | 30 gün | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 1M WU başına 0.60 USDT |
+| Düğüm slotu | 1 WU/s başına 1.50 USDT | 30 gün | kota yok | 50–300 WU/s | 5/s | 30/s | 10 | — |
+
+- **Okuma** — ne blok ne de işlem gönderimi olan her çağrı; saniyedeki WU ile sınırlıdır.
+- **Blok istekleri** — tam bloklar, blok makbuzları ve blok aralıkları; saniyedeki çağrı sayısıyla
+  sınırlıdır.
+- **İşlem gönderimi** — `broadcasttransaction`, `broadcasthex` ve gRPC `BroadcastTransaction`;
+  saniyedeki işlem sayısıyla sınırlıdır.
+
+Kota ve limitler plana aittir ve planın tüm uç noktaları tarafından paylaşılır. Limitlerin nasıl
+uygulandığı ve bir retin neye benzediği: [Limitler ve hatalar](/tr/node-api/errors). Bir çağrının
+nasıl ölçüldüğü: [Kota birimleri](/tr/node-api/quota-units).
+
+Güncel fiyatlar ve limitler, bu sayfanın sonundaki plan kataloğundan anahtar olmadan her zaman
+alınabilir. Bu tablodan farklı olurlarsa katalog ve kontrol paneli esas alınır.
+
+### Düğüm slotu
+
+Düğüm slotunun kotası yoktur: 50 ile 300 WU/s arasında sabit bir okuma hızı satın alırsınız ve dönem
+boyunca bu hızın izin verdiği kadar istek yaparsınız. Fiyat 1 WU/s başına 1.50 USDT'dir — örneğin
+100 WU/s, 30 gün için 150 USDT tutar. Blok istekleri, işlem gönderimi ve uç noktalar Pro'daki gibidir.
+
+### Deneme
+
+Deneme ücretsizdir: 7 gün, 5M WU, 20 WU/s ve bir uç nokta. Hesabınızdaki onaylanmış yatırımlar $5'a
+ulaştığında açılır — USDT nominal değerinden, TRX yatırım kurundan sayılır; para bakiyenizde kalır.
+Hesap başına bir deneme ve yalnızca hesabın ilk planından önce.
+
+Denemede aşım yoktur: kotası dolduğunda istekler `429 quota` alır. 7 gün bittiğinde anahtar
+çalışmayı durdurur (`403 plan_expired`). Kesintisiz devam etmek için bir plan satın alın — plan hemen
+başlar, kullanılmayan deneme süresi aktarılmaz.
+
+<Note>
+Tüm denemeler ortak bir kapasiteyi paylaşır. Yoğun anlarda bir deneme isteği `429 trials` alabilir;
+`Retry-After` kadar saniye sonra yeniden deneyin. Ücretli planlar bundan etkilenmez.
+</Note>
+
+## Ödeme
+
+Fiyatlar ABD doları (USDT) cinsindendir. Bunları TronRental bakiyenizden TRX olarak, her tahsilat
+anındaki kurdan tahsil ederiz — USDT yatırımlarındakiyle aynı kur. Bu nedenle bir yenilemenin TRX
+tutarı daha önce ödediğinizden farklı olabilir. Her tahsilat, USDT fiyatı, kuru ve TRX tutarıyla
+birlikte [Kontrol Paneli → Node API](https://tronrental.com/dashboard/node-api) sayfasındaki
+**Tahsilatlar** bölümünde listelenir. Yalnızca hesap sahibi plan satın alabilir.
+
+**Enerji alıcılarına indirim.** Hesap son 30 günde 3000 TRX veya daha fazla değerinde enerji satın
+aldıysa her plan 19.90 USDT daha ucuzdur (asla sıfırın altına inmez). Bunu her satın almada ve her
+yenilemede kontrol ederiz.
+
+## Kota ve aşım
+
+Kota dönem başınadır. Start, Growth ve Pro'da kota esnek bir limittir: dolduğunda istekler planın aynı
+saniye başına limitleri içinde karşılanmaya devam eder. Kotanın üstünde kullanılan WU'lar **aşım** olarak
+sayılır ve yukarıdaki tablodaki planın aşım fiyatıyla WU başına faturalandırılır: kotanın üstündeki
+250000 WU, 1M WU fiyatının dörtte biri tutar.
+
+- Aşım bakiyenizden **günde bir kez, 00:00 UTC'de**, önceki UTC günü için tahsil edilir.
+- Kota üstü isteklere yalnızca bakiyeniz bunların aşımını karşıladığı sürece izin verilir.
+  Karşılamadığı anda bakiye yükleyene kadar `429 overage_budget` ile reddedilir; yükleme bu istekleri
+  yaklaşık bir dakika içinde yeniden açar.
+- Bakiye bir günün aşımının yalnızca bir kısmını karşılıyorsa kalanı bir sonraki yüklemenizden sonra
+  tahsil edilir. Ödenmemiş aşım abonelik bittikten sonra da borç olarak kalır ve bir sonraki
+  yüklemeden tahsil edilir.
+
+Düğüm slotunun kotası ve aşımı yoktur. Denemenin kotası vardır, aşımı yoktur.
+
+## Yenileme
+
+Ücretli bir plan 30 gün sürer. **Otomatik yenileme** açıkken (kontrol panelinden satın aldığınızda
+varsayılan), plan dönem sonunda fiyatı üzerinden, o günün kuruyla TRX olarak yenilenir. Otomatik
+yenileme kapalıyken abonelik dönemle birlikte sona erer.
+
+**Planı değiştirme.** Yeni plan bir sonraki yenilemede geçerli olur; o zamana kadar mevcut planınız
+devam eder. Uç noktalar korunur. Yeni plan, açık uç noktalarınızın sayısından daha azına izin
+veriyorsa yenilemede dönemin en az kullanılanlarını kapatırız (`403 key_disabled`) — kendiniz seçmek
+için fazla uç noktaları önceden silin. Kapatılan uç noktalar planın limiti dahilinde yeniden
+açılabilir.
+
+## Yenileme ödenemediğinde
+
+| Durum | Ne olur | Anahtarlarınız |
+|---|---|---|
+| Ödenmedi | Bakiye yenilemeyi karşılamadı. Her dakika yeniden deneriz; bakiye yüklendikten sonra plan ödeme anından itibaren yenilenir ve erişimsiz geçen günler ücretlendirilmez | `403 plan_expired` ile reddedilir |
+| Sona erdi | Yedi gün ödeme yapılmadı, otomatik yenileme kapalıydı ya da deneme bitti. Devam etmek için bir plan satın alın | `403 plan_expired` ile reddedilir; uç noktalar korunur ve bir plan satın aldıktan sonra yeniden çalışır |
+
+Bir yenileme başarısız olduğunda, ödenmemiş bir abonelik sona erdiğinde ve bakiye artık aşımı
+karşılamadığında sizi e-posta ve Telegram ile bilgilendiririz.
+
+## Plan kataloğu
+
+Plan kataloğu herkese açıktır ve anahtar gerektirmez:
+
+```bash
+curl https://api.tronrental.com/v1/node-api/plans
+```
+
+Yanıtta `sales_enabled`, `plans` listesi (her plan için: `plan`, `usdt` ve `trx` cinsinden `price` ve
+`final_price`, `period_days`, `quota_wu`, `read_wu_s`, `block_rps`, `write_tps`, `overage_per_1m_wu`,
+`endpoints`), `slot` içinde düğüm slotu teklifi (`price_per_wu_s`, `min_wu_s`, `max_wu_s`, `block_rps`,
+`write_tps`, `endpoints` ve fiyatlandırılmış `options`), güncel `rate_usd_per_trx` ve bir `discount`
+bloğu döner. TRX tutarları güncel kurdan hesaplanır ve kurla birlikte değişir. `X-API-Key` içinde
+REST API anahtarınızla çağrıldığında `final_price` ve `discount` hesabınızın indirimini gösterir.

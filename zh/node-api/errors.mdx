@@ -1,0 +1,106 @@
+---
+title: "限制与错误"
+description: "Node API 每秒限制、拒绝代码、降级模式和重试"
+---
+
+## 每秒限制
+
+每个调用都属于三个类别之一。它会消耗您的配额以及所属类别的每秒限制：
+
+| 类别 | 调用 | 限制单位 |
+|---|---|---|
+| 区块 | `getnowblock`、`getblockbynum`、`getblockbyid`、带 `"detail": true` 的 `getblock`、`getblockbylimitnext`、`getblockbylatestnum`、`gettransactioninfobyblocknum`，以及它们对应的 gRPC 方法 | 每秒调用次数 |
+| 广播 | `broadcasttransaction`、`broadcasthex`、gRPC `BroadcastTransaction` | 每秒交易数 |
+| 读取 | 其他所有调用 | 每秒 WU |
+
+具体数值取决于套餐——参见[套餐与计费](/zh/node-api/plans)。限制属于套餐，由套餐下的所有端点共享。
+
+每个限制最多容纳一秒的量。例如在 30 WU/s 下，最多 30 WU 可以同时通过，之后限制以每秒 30 WU 的速度恢复。
+只要读取限制还有剩余空间，读取请求就会被放行，其费用在响应之后扣除：一次重型读取可能把限制推到零以下，后续读取需等待限制恢复。区块区间每次调用最多返回 10 个区块。
+
+## 错误格式
+
+拒绝是一个 JSON，`Error` 中为消息，另有机器可读的 `code`：
+
+```json
+{"Error": "read limit (WU/s) exceeded", "code": "rate_read"}
+```
+
+请使用 `code`；消息可能会变化。拒绝总是带有 `code`。节点自身的错误则没有：java-tron 返回不带 `code` 的 `{"Error": "…"}`，状态码通常为 `200`，这种响应与其他响应一样计费——参见[配额单位](/zh/node-api/quota-units)。
+
+拒绝不计费，也不带 `X-Node-API-WU`；`method_not_found` 例外，它带有 `X-Node-API-WU: 0`。`429` 和 `503` 拒绝通常带有 `Retry-After`。
+
+## 拒绝代码
+
+| 状态 | `code` | 含义 | 处理方式 |
+|---|---|---|---|
+| `400` | `key_conflict` | 一个请求中有两个不同的密钥 | 只发送一个密钥 |
+| `400` | `bad_request` | 无法按节点的方式解析请求：区间超过 10 个区块、区块号不是整数、同一参数给出两次、区块参数同时出现在查询字符串和请求体中、区块方法的请求体中有未知字段、`detail` 不是 `true` 或 `false` | 修正请求 |
+| `401` | `no_key` | 请求中没有密钥 | 添加密钥 |
+| `401` | `unknown_key` | 没有这个密钥：输入错误、已删除、是 REST API 密钥，或创建不到约 30 秒 | 检查密钥 |
+| `403` | `key_disabled` | 端点已停用——由您停用，或在续费时因套餐的端点上限被停用 | 在控制台中启用 |
+| `403` | `ip_not_allowed` | 请求的 IP 地址不在端点的白名单中 | 添加该地址 |
+| `403` | `no_plan` | 账户没有 Node API 套餐 | 购买套餐 |
+| `403` | `plan_expired` | 订阅未生效：续费未支付、订阅已结束或试用已结束 | 充值或购买套餐 |
+| `403` | `account_blocked` | 账户的 API 访问已被暂停 | 联系客服 |
+| `404` | `not_found` | 不是节点方法的路径：位于 `/wallet/*` 和 `/walletsolidity/*` 之外（例如 `/v1/...` 或 `/jsonrpc`），或方法名包含字母和数字以外的字符 | 检查路径 |
+| `404` | `method_not_found` | 节点没有这个方法。方法名区分大小写，与 java-tron 一致：`getaccount`，但 `getReward`。消耗 0 WU | 检查拼写 |
+| `405` | `method_not_allowed` | 使用了 `GET` 或 `POST` 以外的 HTTP 方法 | 使用 `GET` 或 `POST` |
+| `413` | `body_too_large` | 请求体超过 512 KB | 发送更小的请求体 |
+| `429` | `rate_read` | 达到读取限制（每秒 WU） | 等待 `Retry-After` |
+| `429` | `rate_block` | 达到区块请求限制（每秒调用次数） | 等待 `Retry-After` |
+| `429` | `rate_write` | 达到广播限制（每秒交易数） | 等待 `Retry-After` |
+| `429` | `trials` | 所有试用共享的容量已满 | 等待 `Retry-After` |
+| `429` | `quota` | 在没有超额用量的套餐（试用）上配额已用完 | 购买套餐 |
+| `429` | `overage_budget` | 配额已用完，且余额不再足以支付超额用量 | 充值余额 |
+| `502` | `node_error` | 节点没有响应，或未在 30 秒内响应 | 重试 |
+| `503` | `degraded` | 降级模式期间请求了旧区块、其回执或区块区间 | 稍后重试——见下文 |
+| `503` | `capacity` | 服务的共享容量已满 | 等待 `Retry-After` |
+| `503` | `capacity_write` | 服务的共享广播容量已满 | 等待 `Retry-After` |
+| `503` | `busy` | 2 秒内没有可用的节点连接 | 等待 `Retry-After` |
+| `503` | `no_node` | 当前没有可用节点 | 等待 `Retry-After` |
+| `503` | `no_snapshot` | 服务当前无法校验密钥 | 等待 `Retry-After` |
+
+通过 gRPC 时，相同的代码位于 `x-node-api-reason` 尾部元数据中，并以 gRPC 状态代替 HTTP 状态——参见 [gRPC](/zh/node-api/grpc)。
+
+## 降级模式
+
+当我们用于 Node API 的主节点不可用或落后于网络时，服务会在备用节点上继续运行。在此期间：
+
+- 已应答的调用带有 `X-Node-API-Mode: degraded` 响应头（gRPC 下为尾部元数据 `x-node-api-mode: degraded`）；
+- 您以每秒 WU 计的读取限制减半；区块请求和广播限制保持不变；
+- 新区块（距链头 20 个以内）及其回执照常提供，而旧区块、其回执和区块区间会以 `503 degraded` 被拒绝；
+- 共享容量更小，因此更可能出现 `503 capacity`。
+
+广播永远不会被削减。正常模式会自动恢复，您无需做任何操作。如果您的应用读取旧区块，请在该响应头出现期间暂停这部分工作，待它消失后再恢复。
+
+## 重试
+
+- `429 rate_read`、`rate_block`、`rate_write`、`trials` 以及所有 `503`：等待 `Retry-After` 中给出的秒数，然后重试。
+- `429 quota` 和 `429 overage_budget`：等待无济于事。请充值余额或更换套餐。
+- `502 node_error`：重试。重复发送同一笔已签名交易是安全的——网络对同一个交易 ID 只执行一次。
+- 其他 `4xx`：修正请求；原样重复只会得到相同的响应。
+
+```python
+import time
+import requests
+
+NODE = "https://node.tronrental.com"
+HEADERS = {"TRON-PRO-API-KEY": "<YOUR_KEY>"}
+STOP = {"quota", "overage_budget"}  # 等待无济于事
+
+def node_call(method, body=None, attempts=5):
+    for attempt in range(attempts):
+        resp = requests.post(f"{NODE}/wallet/{method}", json=body or {}, headers=HEADERS)
+        if resp.status_code in (429, 502, 503):
+            try:
+                code = resp.json().get("code")
+            except ValueError:
+                code = None  # 不是我们的 JSON，例如代理的错误页面
+            if code in STOP:
+                raise RuntimeError(f"Node API: {code}")
+            time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+            continue
+        return resp
+    raise RuntimeError("Node API: retries exhausted")
+```

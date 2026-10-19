@@ -1,0 +1,63 @@
+---
+title: API Anahtarı Kapsamlarını Listele
+api: GET /api/v1/auth/api-keys/scopes
+description: "Bir API anahtarının taşıyabileceği kapsamlar, türe göre gruplanmış"
+---
+
+## API Anahtarı Kapsamlarını Listele
+
+API anahtarı kapsamlarının kataloğunu, kontrol panelinde gösterildiği gibi gruplanmış olarak döndürür.
+Geçerli kapsam adlarını öğrenmek için kullanın.
+
+Node API anahtarları ayrı bir anahtar türüdür: yalnızca `node_api` kapsamını taşırlar, asla diğer
+kapsamlarla birlikte değil, ve yalnızca `node.tronrental.com` adresinde çalışırlar. Bunları
+[Kontrol Paneli → Node API](https://tronrental.com/dashboard/node-api) sayfasında uç nokta olarak
+oluşturursunuz; kaç tane olabileceği Node API planınıza bağlıdır. Bir Node API anahtarı bu uç noktayı
+çağıramaz — REST API ona `403 NODE_API_KEY_ONLY` ile yanıt verir. Bkz.
+[Node API → Uç noktalar ve anahtarlar](/tr/node-api/authentication).
+
+### Yanıt
+
+<ResponseField name="read" type="string[]">
+  Okuma kapsamları: `view`, `deposit_view`
+</ResponseField>
+
+<ResponseField name="node" type="string[]">
+  Node API kapsamı: `node_api`. Bu kapsama sahip bir anahtar başka hiçbir kapsam taşımaz
+</ResponseField>
+
+<ResponseField name="write" type="string[]">
+  Bakiye harcayan veya hizmetlerde değişiklik yapan kapsamlar: `buy_energy`, `buy_bandwidth`, `smart_mode`,
+  `transfer_packages`, `energy_resale`
+</ResponseField>
+
+<ResponseField name="danger" type="string[]">
+  `withdraw`. Bir anahtarda etkinleştirilmesi için 2FA ve boş olmayan bir IP beyaz listesi gerekir
+</ResponseField>
+
+<ResponseField name="default" type="string[]">
+  Hiçbiri seçilmediğinde yeni bir REST API anahtarının aldığı kapsamlar: `withdraw` hariç tüm okuma ve
+  yazma kapsamları
+</ResponseField>
+
+<ResponseField name="locked" type="string[]">
+  Her REST API anahtarında her zaman bulunan kapsamlar: `view`
+</ResponseField>
+
+### Örnek
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/scopes \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "read": ["view", "deposit_view"],
+  "node": ["node_api"],
+  "write": ["buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "danger": ["withdraw"],
+  "default": ["view", "deposit_view", "buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "locked": ["view"]
+}
+```

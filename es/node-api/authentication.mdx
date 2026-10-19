@@ -1,0 +1,139 @@
+---
+title: "Endpoints y claves"
+description: "Cómo funcionan las claves de Node API y cómo enviarlas por HTTP y gRPC"
+---
+
+## Endpoints
+
+Un endpoint es una clave de Node API. Los endpoints se crean en
+[Panel → Node API](https://tronrental.com/dashboard/node-api) una vez que tienes un plan o una prueba.
+Cada endpoint tiene:
+
+- su propia clave;
+- su propia lista blanca de IP;
+- su propio contador de uso — WU y llamadas del periodo actual, visibles en el panel.
+
+La cuota y los límites por segundo pertenecen a tu plan y **los comparten todos sus endpoints**: un
+segundo endpoint te da una clave y un contador aparte, no más capacidad. Cuántos endpoints puedes tener
+depende del plan — consulta [Planes y facturación](/es/node-api/plans).
+
+La clave se muestra **una sola vez**, al crear el endpoint. Si la pierdes, elimina el endpoint y crea
+uno nuevo. En el panel también puedes editar la lista blanca de IP de un endpoint, desactivarlo y
+volver a activarlo, y eliminarlo:
+
+| Estado del endpoint | Solicitudes con su clave |
+|---|---|
+| Desactivado | `403 key_disabled` hasta que lo vuelvas a activar |
+| Eliminado | `401 unknown_key`; la clave no se puede recuperar |
+
+<Note>
+Los cambios hechos en el panel — un endpoint nuevo, una nueva lista blanca de IP, un endpoint
+desactivado o eliminado, una renovación pagada — llegan a la pasarela del nodo en unos 30 segundos.
+Una clave recién creada puede recibir `401 unknown_key` durante ese tiempo.
+</Note>
+
+### Claves de Node API y claves de la API REST
+
+Las claves de Node API son un tipo de clave aparte. Una clave de endpoint solo funciona en
+`node.tronrental.com`; la API REST de TronRental (`api.tronrental.com`) la rechaza con
+`403 NODE_API_KEY_ONLY`. A su vez, tus claves de la API REST no funcionan en el nodo y allí reciben
+`401 unknown_key`.
+
+## Enviar la clave por HTTP
+
+Envía la clave en **uno** de estos lugares:
+
+| Dónde | Ejemplo |
+|---|---|
+| Encabezado `TRON-PRO-API-KEY` | `TRON-PRO-API-KEY: <YOUR_KEY>` |
+| Encabezado `X-API-Key` | `X-API-Key: <YOUR_KEY>` |
+| Encabezado `Authorization` | `Authorization: Bearer <YOUR_KEY>` |
+| Primer segmento de la ruta | `https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount` |
+
+Los nombres de los encabezados no distinguen mayúsculas y minúsculas. La clave en la ruta se elimina
+antes de pasar la solicitud al nodo, así que el nodo nunca la ve.
+
+<CodeGroup>
+```bash Clave en el encabezado
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash Clave en la ruta
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+</CodeGroup>
+
+Una solicitud lleva una sola clave. La misma clave enviada dos veces (por ejemplo, en la ruta y en un
+encabezado) está bien; dos claves **distintas** se rechazan con `400 key_conflict`, porque no podemos
+saber cuál de ellas debe pagar.
+
+<Warning>
+Una clave en la ruta forma parte de la URL, así que acaba allí donde se registran las URL: logs de
+proxies y de aplicaciones, monitorización, historial del navegador. Prefiere un encabezado cuando tu
+cliente permita configurarlo.
+</Warning>
+
+### Bibliotecas
+
+**TronWeb** envía los encabezados que le indiques:
+
+```javascript
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+```
+
+**tronpy** envía `api_key=` solo a su host por defecto, así que con nuestra dirección no enviaría
+ninguna clave. Configura tú mismo el encabezado en la sesión del proveedor — o pon la clave en la ruta,
+**con la barra final**: sin ella, tronpy descarta el último segmento de la dirección, y la clave con él.
+
+```python
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+
+# o la clave en la ruta — conserva la barra final
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+## Enviar la clave por gRPC
+
+Envía la clave en los metadatos `tron-pro-api-key` de cada llamada (`x-api-key` y
+`authorization: Bearer <YOUR_KEY>` también funcionan). gRPC no tiene una ruta donde llevar la clave.
+Consulta [gRPC](/es/node-api/grpc).
+
+## Lista blanca de IP
+
+Cada endpoint puede limitarse a una lista de direcciones IP — IPv4 o IPv6, direcciones exactas, no
+rangos. Con la lista vacía, la clave funciona desde cualquier dirección. Con una lista, las solicitudes
+desde cualquier otra dirección reciben `403 ip_not_allowed`. Una dirección IPv4 escrita en forma IPv6
+(`::ffff:203.0.113.7`) cuenta como la propia dirección IPv4.
+
+## Aplicaciones de navegador (CORS)
+
+Node API responde a las solicitudes del navegador desde cualquier origen, así que una dApp puede
+llamarla directamente:
+
+| Encabezado | Valor |
+|---|---|
+| `Access-Control-Allow-Origin` | `*` |
+| `Access-Control-Allow-Methods` | `GET, POST, OPTIONS` |
+| `Access-Control-Allow-Headers` | `Content-Type, TRON-PRO-API-KEY, X-API-Key, Authorization` |
+| `Access-Control-Expose-Headers` | `X-Node-API-WU, X-Node-API-Mode, Retry-After` |
+| `Access-Control-Max-Age` | `86400` |
+
+<Warning>
+Una clave en el código del navegador es visible para cualquiera que abra tu aplicación, y quien la
+copie gasta tu cuota. Una lista blanca de IP no sirve aquí — las direcciones de tus usuarios no se
+conocen de antemano. Dale al navegador su propio endpoint, vigila su contador y elimínalo si se abusa
+de él: las claves de tus servidores siguen funcionando.
+</Warning>

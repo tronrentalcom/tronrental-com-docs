@@ -1,0 +1,120 @@
+---
+title: "Limits and Errors"
+description: "Node API per-second limits, refusal codes, degraded mode and retries"
+---
+
+## Per-second limits
+
+Every call belongs to one of three classes. It spends your quota and the per-second limit of its
+class:
+
+| Class | Calls | Limited in |
+|---|---|---|
+| Block | `getnowblock`, `getblockbynum`, `getblockbyid`, `getblock` with `"detail": true`, `getblockbylimitnext`, `getblockbylatestnum`, `gettransactioninfobyblocknum`, and their gRPC twins | calls per second |
+| Broadcast | `broadcasttransaction`, `broadcasthex`, gRPC `BroadcastTransaction` | transactions per second |
+| Read | everything else | WU per second |
+
+The numbers depend on the plan — see [Plans and billing](/node-api/plans). The limits belong to the
+plan and are shared by all its endpoints.
+
+Each limit holds one second's worth. With 30 WU/s, for example, up to 30 WU go through at once, and the
+limit then refills at 30 WU per second. A read is let in while the read limit has any room left, and
+its cost is taken after the answer: one heavy read can push the limit below zero, and the next reads
+wait until it has refilled. A block range returns at most 10 blocks per call.
+
+## Error format
+
+A refusal is JSON with a message in `Error` and a machine-readable `code`:
+
+```json
+{"Error": "read limit (WU/s) exceeded", "code": "rate_read"}
+```
+
+Use `code`; the message may change. A refusal always has a `code`. The node's own errors do not: java-tron
+answers `{"Error": "…"}` without a `code`, usually with status `200`, and such an answer is charged like
+any other — see [Quota units](/node-api/quota-units).
+
+Refusals are not charged and carry no `X-Node-API-WU`, except `method_not_found`, which carries
+`X-Node-API-WU: 0`. `429` and `503` refusals usually carry `Retry-After`.
+
+## Refusal codes
+
+| Status | `code` | Meaning | What to do |
+|---|---|---|---|
+| `400` | `key_conflict` | Two different keys in one request | Send one key |
+| `400` | `bad_request` | The request cannot be read the way the node would read it: more than 10 blocks in a range, a block number that is not an integer, a parameter given twice, block parameters both in the query and in the body, unknown fields in the body of a block method, `detail` that is not `true` or `false` | Fix the request |
+| `401` | `no_key` | No key in the request | Add the key |
+| `401` | `unknown_key` | No such key: mistyped, deleted, a REST API key, or created less than about 30 seconds ago | Check the key |
+| `403` | `key_disabled` | The endpoint is switched off — by you, or at renewal by the plan's endpoint limit | Switch it on in the dashboard |
+| `403` | `ip_not_allowed` | The request's IP address is not on the endpoint's allowlist | Add the address |
+| `403` | `no_plan` | The account has no Node API plan | Buy a plan |
+| `403` | `plan_expired` | The subscription is not active: the renewal is unpaid, the subscription has ended, or the trial is over | Top up or buy a plan |
+| `403` | `account_blocked` | API access for the account is suspended | Contact support |
+| `404` | `not_found` | Not a node method path: outside `/wallet/*` and `/walletsolidity/*` (for example `/v1/...` or `/jsonrpc`), or a method name with characters other than letters and digits | Check the path |
+| `404` | `method_not_found` | The node has no such method. Method names are case-sensitive, as in java-tron: `getaccount`, but `getReward`. Costs 0 WU | Check the spelling |
+| `405` | `method_not_allowed` | An HTTP method other than `GET` or `POST` | Use `GET` or `POST` |
+| `413` | `body_too_large` | The request body is above 512 KB | Send a smaller body |
+| `429` | `rate_read` | Read limit (WU per second) reached | Wait `Retry-After` |
+| `429` | `rate_block` | Block call limit (calls per second) reached | Wait `Retry-After` |
+| `429` | `rate_write` | Broadcast limit (transactions per second) reached | Wait `Retry-After` |
+| `429` | `trials` | The capacity shared by all trials is busy | Wait `Retry-After` |
+| `429` | `quota` | The quota is used up on a plan without overage (the trial) | Buy a plan |
+| `429` | `overage_budget` | The quota is used up and the balance no longer covers overage | Top up the balance |
+| `502` | `node_error` | The node did not answer, or did not answer within 30 seconds | Retry |
+| `503` | `degraded` | An older block, its receipts or a block range during degraded mode | Retry later — see below |
+| `503` | `capacity` | The shared capacity of the service is full | Wait `Retry-After` |
+| `503` | `capacity_write` | The shared broadcast capacity of the service is full | Wait `Retry-After` |
+| `503` | `busy` | No free connection to the node within 2 seconds | Wait `Retry-After` |
+| `503` | `no_node` | No node is available right now | Wait `Retry-After` |
+| `503` | `no_snapshot` | The service cannot check keys right now | Wait `Retry-After` |
+
+Over gRPC the same codes come in the `x-node-api-reason` trailing metadata, with a gRPC status instead
+of the HTTP one — see [gRPC](/node-api/grpc).
+
+## Degraded mode
+
+When our primary node for Node API is unavailable or falls behind the network, the service keeps
+running on a reserve node. While it does:
+
+- answered calls carry the header `X-Node-API-Mode: degraded` (over gRPC, the trailing metadata
+  `x-node-api-mode: degraded`);
+- your read limit in WU per second is halved; block call and broadcast limits stay as they are;
+- fresh blocks — within 20 of the head — and their receipts are served as usual, while older blocks,
+  their receipts and block ranges are refused with `503 degraded`;
+- the shared capacity is smaller, so `503 capacity` is more likely.
+
+Broadcasts are never cut. The normal mode comes back by itself; you do not need to do anything. If your
+app reads old blocks, pause that work while the header is present and resume when it is gone.
+
+## Retrying
+
+- `429 rate_read`, `rate_block`, `rate_write`, `trials` and every `503`: wait the number of seconds in
+  `Retry-After`, then retry.
+- `429 quota` and `429 overage_budget`: waiting does not help. Top up the balance or change the plan.
+- `502 node_error`: retry. Re-sending the same signed transaction is safe — the network executes a
+  transaction ID only once.
+- Other `4xx`: fix the request; repeating it gives the same answer.
+
+```python
+import time
+import requests
+
+NODE = "https://node.tronrental.com"
+HEADERS = {"TRON-PRO-API-KEY": "<YOUR_KEY>"}
+STOP = {"quota", "overage_budget"}  # waiting will not help
+
+def node_call(method, body=None, attempts=5):
+    for attempt in range(attempts):
+        resp = requests.post(f"{NODE}/wallet/{method}", json=body or {}, headers=HEADERS)
+        if resp.status_code in (429, 502, 503):
+            try:
+                code = resp.json().get("code")
+            except ValueError:
+                code = None  # not our JSON, e.g. a proxy error page
+            if code in STOP:
+                raise RuntimeError(f"Node API: {code}")
+            time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+            continue
+        return resp
+    raise RuntimeError("Node API: retries exhausted")
+```

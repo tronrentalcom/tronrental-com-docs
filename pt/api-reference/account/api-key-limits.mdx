@@ -1,0 +1,87 @@
+---
+title: Consultar limites de chaves de API
+api: GET /api/v1/auth/api-keys/limits
+description: "O limite de taxa no nível da sua conta e quantas chaves de API a conta pode ter"
+---
+
+## Consultar limites de chaves de API
+
+Retorna o limite de taxa que se aplica às suas requisições e a cota de chaves de API da conta,
+incluindo os endpoints de um plano do Node API. Os níveis de limite de taxa estão descritos em
+[Limites de Taxa](/pt/resources/rate-limits).
+
+Um endpoint do Node API também é uma chave de API: um plano do Node API soma a sua franquia de
+endpoints ao limite de chaves da conta, e as chaves com `node_api` contam para os dois. Uma chave do
+Node API não pode chamar este endpoint — a API REST responde com `403 NODE_API_KEY_ONLY`.
+
+### Resposta
+
+<ResponseField name="tier" type="string">
+  O seu nível de limite de taxa: `paying` (uma conta com compra ou assinatura anterior, ou saldo de
+  10 TRX ou mais) ou `zero` (qualquer outra conta)
+</ResponseField>
+
+<ResponseField name="limit_per_min" type="number">
+  Requisições por minuto permitidas para você agora
+</ResponseField>
+
+<ResponseField name="custom_rate_limit" type="number | null">
+  O seu limite de taxa individual, se definirmos um para a sua conta; `null` caso contrário
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  Se o limite de taxa no nível da conta está ativado
+</ResponseField>
+
+<ResponseField name="observe_only" type="boolean">
+  Quando `true`, as requisições acima do limite são contadas, mas não recusadas
+</ResponseField>
+
+<ResponseField name="key_count" type="number">
+  Chaves de API que a conta tem agora, incluindo os endpoints do Node API (chaves desativadas contam,
+  chaves excluídas não)
+</ResponseField>
+
+<ResponseField name="key_limit" type="number">
+  Quantas chaves de API a conta pode ter: a franquia própria da conta mais `node_endpoint_limit`
+</ResponseField>
+
+<ResponseField name="custom_key_limit" type="number | null">
+  A franquia individual de chaves da conta, se definirmos uma; `null` significa o padrão
+</ResponseField>
+
+<ResponseField name="can_create" type="boolean">
+  `true` enquanto `key_count` estiver abaixo de `key_limit`
+</ResponseField>
+
+<ResponseField name="node_endpoint_limit" type="number">
+  Quantos endpoints do Node API o plano do Node API mais recente da conta permite; `0` se a conta nunca
+  teve um
+</ResponseField>
+
+<ResponseField name="node_endpoint_count" type="number">
+  Chaves com `node_api` — os endpoints do Node API da conta, incluindo os desativados
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/limits \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tier": "paying",
+  "limit_per_min": 1000,
+  "custom_rate_limit": null,
+  "enabled": true,
+  "observe_only": false,
+  "key_count": 3,
+  "key_limit": 6,
+  "custom_key_limit": null,
+  "can_create": true,
+  "node_endpoint_limit": 3,
+  "node_endpoint_count": 1
+}
+```

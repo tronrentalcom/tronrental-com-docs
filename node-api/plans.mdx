@@ -1,0 +1,112 @@
+---
+title: "Plans and Billing"
+description: "Node API plans, limits, overage, trial, renewal and how payment works"
+---
+
+## Plans
+
+| Plan | Price | Period | Quota | Reads | Block calls | Broadcasts | Endpoints | Over quota |
+|---|---|---|---|---|---|---|---|---|
+| Trial | free | 7 days | 5M WU | 20 WU/s | 1/s | 2/s | 1 | refused with `429` |
+| Start | 19.90 USDT | 30 days | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.80 USDT per 1M WU |
+| Growth | 49 USDT | 30 days | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.70 USDT per 1M WU |
+| Pro | 149 USDT | 30 days | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.60 USDT per 1M WU |
+| Node slot | 1.50 USDT per 1 WU/s | 30 days | no quota | 50–300 WU/s | 5/s | 30/s | 10 | — |
+
+- **Reads** — every call that is neither a block nor a broadcast, limited in WU per second.
+- **Block calls** — whole blocks, block receipts and block ranges, limited in calls per second.
+- **Broadcasts** — `broadcasttransaction`, `broadcasthex` and gRPC `BroadcastTransaction`, limited in
+  transactions per second.
+
+The quota and the limits belong to the plan and are shared by all its endpoints. How the limits are
+applied and what a refusal looks like: [Limits and errors](/node-api/errors). How a call is weighed:
+[Quota units](/node-api/quota-units).
+
+The current prices and limits are always available without a key from the plan catalog at the end of
+this page. If they ever differ from this table, the catalog and the dashboard are right.
+
+### Node slot
+
+A node slot has no quota: you buy a fixed read rate from 50 to 300 WU/s and make as many requests as
+that rate allows, all period long. The price is 1.50 USDT per 1 WU/s — for example, 100 WU/s costs
+150 USDT for 30 days. Block calls, broadcasts and endpoints are as on Pro.
+
+### Trial
+
+The trial is free: 7 days, 5M WU, 20 WU/s and one endpoint. It unlocks once the confirmed deposits on
+your account reach $5 — USDT at face value, TRX at the deposit rate; the money stays on your balance.
+One trial per account, and only before the account's first plan.
+
+The trial has no overage: when its quota is used up, requests get `429 quota`. When the 7 days end,
+the key stops working (`403 plan_expired`). To continue without a break, buy a plan — it starts right
+away, and unused trial time does not carry over.
+
+<Note>
+All trials together share a common capacity. At busy moments a trial request may get `429 trials`;
+retry after the `Retry-After` seconds. Paid plans are not affected.
+</Note>
+
+## Paying
+
+Prices are in US dollars (USDT). We charge them in TRX from your TronRental balance, at the rate at the
+moment of each charge — the same rate as for USDT deposits. The TRX amount of a renewal can therefore
+differ from the one you paid before. Every charge, with its USDT price, rate and TRX amount, is listed
+under **Charges** in [Dashboard → Node API](https://tronrental.com/dashboard/node-api). Only the account
+owner can buy a plan.
+
+**Discount for energy buyers.** If the account bought energy for 3,000 TRX or more in the last 30
+days, any plan costs 19.90 USDT less (never below zero). We check this at every purchase and every
+renewal.
+
+## Quota and overage
+
+The quota is per period. On Start, Growth and Pro the quota is a soft limit: when it is used up,
+requests keep being served within the same per-second limits of the plan. The WU used above the quota
+are **overage**, billed per WU at the plan's overage price from the table above: 250,000 WU above the
+quota cost a quarter of the price per 1M WU.
+
+- Overage is charged from your balance **once a day, at 00:00 UTC**, for the previous UTC day.
+- Requests above the quota are allowed only while your balance covers their overage. When it no
+  longer does, they are refused with `429 overage_budget` until you top up; a top-up opens them again
+  within about a minute.
+- If the balance covers only part of a day's overage, the rest is charged after your next top-up. Unpaid
+  overage stays owed after the subscription ends and is charged from the next top-up.
+
+A node slot has no quota and no overage. The trial has a quota and no overage.
+
+## Renewal
+
+A paid plan lasts 30 days. With **auto-renew** on (the default when you buy in the dashboard), the plan
+renews at the end of the period for its price in TRX at that day's rate. With auto-renew off, the
+subscription ends with the period.
+
+**Changing the plan.** A new plan takes effect at the next renewal; until then your current plan
+stays. Endpoints are kept. If the new plan allows fewer endpoints than you have switched on, at renewal
+we switch off the least used ones of the period (`403 key_disabled`) — delete the extra endpoints
+beforehand to choose yourself. Switched-off endpoints can be switched on again within the plan's
+limit.
+
+## When a renewal cannot be paid
+
+| Status | What happens | Your keys |
+|---|---|---|
+| Unpaid | The balance did not cover the renewal. We try again every minute; after a top-up the plan renews from the moment of payment, and the days without access are not charged | Refused with `403 plan_expired` |
+| Ended | Seven days without payment, auto-renew off, or the trial is over. Buy a plan to continue | Refused with `403 plan_expired`; endpoints are kept and work again after you buy a plan |
+
+We notify you by email and Telegram when a renewal fails, when an unpaid subscription ends, and when the
+balance no longer covers overage.
+
+## Plan catalog
+
+The plan catalog is public and needs no key:
+
+```bash
+curl https://api.tronrental.com/v1/node-api/plans
+```
+
+It returns `sales_enabled`, the list `plans` (for each: `plan`, `price` and `final_price` in `usdt` and
+`trx`, `period_days`, `quota_wu`, `read_wu_s`, `block_rps`, `write_tps`, `overage_per_1m_wu`,
+`endpoints`), the node slot offer in `slot` (`price_per_wu_s`, `min_wu_s`, `max_wu_s`, `block_rps`,
+`write_tps`, `endpoints` and priced `options`), the current `rate_usd_per_trx` and a `discount` block.
+TRX amounts are at the current rate and change with it. Called with your REST API key in `X-API-Key`,
+`final_price` and `discount` show your account's discount.

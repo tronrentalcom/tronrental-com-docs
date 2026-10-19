@@ -1,0 +1,95 @@
+---
+title: "gRPC"
+description: "TRON düğümünü gRPC üzerinden çağırma: adres, anahtar, .proto dosyaları, durum kodları"
+---
+
+## Bağlantı
+
+| Ayar | Değer |
+|---|---|
+| Adres | `node.tronrental.com:443` |
+| Aktarım | 443 portunda TLS |
+| Servisler | `protocol.Wallet` (tam düğüm) ve `protocol.WalletSolidity` (onaylanmış veriler) |
+| Yöntemler | bu iki servisin unary yöntemleri |
+| Anahtar | her çağrıda `tron-pro-api-key` meta verisi (`x-api-key` ve `authorization: Bearer <YOUR_KEY>` de çalışır) |
+
+Kota, limitler ve fiyatlar HTTP ile aynıdır. Bir çağrının maliyeti, protobuf yanıtının boyutuna göre
+aynı formülle hesaplanır — bkz. [Kota birimleri](/tr/node-api/quota-units).
+
+## .proto dosyaları
+
+Sunucuda reflection yoktur: istemcinizin TRON `.proto` dosyalarına ihtiyacı vardır. Bu dosyalar
+[tronprotocol/protocol](https://github.com/tronprotocol/protocol) deposunda yayımlanır; servisler
+`api/api.proto` içindedir.
+
+```bash
+git clone https://github.com/tronprotocol/protocol
+```
+
+grpcurl ile `-import-path` seçeneğini klonlanan dizine, `-proto` seçeneğini `api/api.proto` dosyasına
+yönlendirin:
+
+```bash
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  node.tronrental.com:443 protocol.Wallet/GetNowBlock2
+```
+
+Kodda, dilinizin gRPC araçlarıyla aynı dosyalardan stub'ları üretin, `node.tronrental.com:443`
+adresine bir TLS kanalı açın ve anahtarı her çağrının meta verisinde iletin.
+
+## Yöntem adları ve baytlar
+
+- **Yöntem adları büyük/küçük harfe duyarlıdır**, `.proto` dosyasındaki gibi:
+  `protocol.Wallet/GetAccount`, `getAccount` değil. Düğümde olmayan bir yöntem `UNIMPLEMENTED`,
+  `x-node-api-reason: method_not_found` ve `x-node-api-wu: 0` ile sona erer — hiçbir ücrete tabi değildir.
+- **Adresler ve kimlikler bayttır.** grpcurl JSON'unda baytlar base64 olarak yazılır. Bir TRON adresi
+  21 bayttır: `41` ve ardından 20 bayt. Hex biçimini base64'e çevirmek için:
+
+  ```bash
+  echo 41a614f803b6fd780986a42c78ec9c7f77e6ded13c | xxd -r -p | base64
+  # QaYU+AO2/XgJhqQseOycf3fm3tE8
+  ```
+
+- **Bir istek mesajı en fazla 512 KB olabilir.** Daha büyüğü işlenmeden önce `RESOURCE_EXHAUSTED` ile
+  reddedilir.
+
+## Sondaki meta veri (trailing metadata)
+
+| Anahtar | Ne zaman | Anlam |
+|---|---|---|
+| `x-node-api-wu` | yanıtlanan çağrılar ve `method_not_found` | çağrının tuttuğu kota birimi |
+| `x-node-api-mode` | kısıtlı modda yanıtlanan çağrılar | `degraded` |
+| `x-node-api-reason` | retler | ret kodu, HTTP `code` ile aynı |
+| `retry-after` | bazı retler | yeniden denemeden önce beklenecek saniye |
+
+## Durum kodları
+
+Retler, HTTP durumlarına göre gRPC durumlarına eşlenir. Kodun kendisi `x-node-api-reason` içindedir;
+tam liste [Limitler ve hatalar](/tr/node-api/errors) sayfasındadır.
+
+| HTTP durumu | gRPC durumu | Kodlar |
+|---|---|---|
+| `400` | `INVALID_ARGUMENT` | `key_conflict`, `bad_request` |
+| `401` | `UNAUTHENTICATED` | `no_key`, `unknown_key` |
+| `403` | `PERMISSION_DENIED` | `key_disabled`, `ip_not_allowed`, `no_plan`, `account_blocked`, `plan_expired` |
+| `404` | `UNIMPLEMENTED` | `not_found`, `method_not_found` |
+| `429` | `RESOURCE_EXHAUSTED` | `quota`, `overage_budget`, `rate_read`, `rate_block`, `rate_write`, `trials` |
+| `502`, `503` | `UNAVAILABLE` | `node_error`, `no_snapshot`, `no_node`, `degraded`, `capacity`, `capacity_write`, `busy` |
+
+Düğümün kendisinin döndürdüğü bir hata (örneğin hatalı biçimlendirilmiş bir işlem için
+`INVALID_ARGUMENT`) size olduğu gibi iletilir ve 1 WU tutar: işi düğüm yapmıştır. Düğüm yanıt
+vermezse çağrı `UNAVAILABLE` ve `x-node-api-reason: node_error` ile sona erer ve hiçbir ücrete tabi
+değildir.
+
+<Note>
+`x-node-api-reason` olmadan gelen bir `RESOURCE_EXHAUSTED` gRPC sunucusunun kendisinden gelir: ya
+istek mesajı 512 KB sınırını aşıyordur ya da sunucu aynı anda çok fazla çağrı tutuyordur. İkinci
+durumda kısa bir aradan sonra yeniden deneyin.
+</Note>
+
+## Yeniden denemeler ve yayınlar
+
+Bir çağrı sizden habersiz başka bir düğümde asla tekrarlanmaz: `UNAVAILABLE`, bağlantının düğüm
+isteği aldıktan sonra koptuğu anlamına gelebilir. Aynı imzalı işlemi `BroadcastTransaction`
+yöntemine yeniden göndermek güvenlidir — ağ bir işlem kimliğini yalnızca bir kez yürütür.
