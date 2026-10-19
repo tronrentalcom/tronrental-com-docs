@@ -1,0 +1,92 @@
+---
+title: "Quota Units (WU)"
+description: "How Node API weighs a call: the formula, block factors and fresh blocks"
+---
+
+## What a WU is
+
+A WU is the unit of Node API usage. Your plan's quota and its read limit are counted in WU. A call
+costs WU according to the size of the node's answer: the more data the node returns, the more work it
+did. Most calls — an account, its resources, a contract call, building or broadcasting a transaction —
+cost 1 WU.
+
+Every answered call tells you its cost: the `X-Node-API-WU` response header over HTTP, the
+`x-node-api-wu` trailing metadata over gRPC. The dashboard shows your usage by day.
+
+## The formula
+
+```
+WU = max(1, round((1.5 + 0.11 × KB) / 3.5 × factor))
+```
+
+- **KB** — the size of the node's answer in kilobytes (bytes ÷ 1024), before compression. gzip saves
+  traffic, not WU.
+- **round** — to the nearest whole number; halves round up.
+- **factor** — depends on the kind of call:
+
+| Call | Factor |
+|---|---|
+| Whole blocks: `getnowblock`, `getblockbynum`, `getblockbyid`, `getblock` with `"detail": true`, and the ranges `getblockbylimitnext` and `getblockbylatestnum` | `0.65` |
+| Receipts of a whole block: `gettransactioninfobyblocknum` | `1.6` |
+| Everything else, including `getblock` with `"detail": false` (the header only) | `1` |
+
+The same rules apply to `/walletsolidity/*` and to gRPC, where the answer is measured in protobuf and
+the gRPC twins of these methods (`GetNowBlock2`, `GetBlockByNum2`, `GetBlock`, …) count as the same
+kinds of call.
+
+| Answer size | Factor `1` | Blocks, `0.65` | Receipts, `1.6` |
+|---|---|---|---|
+| 10 KB | 1 | 1 | 1 |
+| 50 KB | 2 | 1 | 3 |
+| 100 KB | 4 | 2 | 6 |
+| 200 KB | 7 | 4 | 11 |
+| 500 KB | 16 | 10 | 26 |
+| 800 KB | 26 | 17 | 41 |
+
+With factor `1`, answers up to about 34 KB cost 1 WU.
+
+## Fresh blocks
+
+A block within **20 of the head** of the network — about the last minute — costs a flat **3 WU**, and
+its receipts **2 WU**, whatever their size. A block that has not been produced yet costs what its
+(empty) answer costs: 1 WU. Older blocks and their receipts are charged by the formula.
+
+Ranges (`getblockbylimitnext`, `getblockbylatestnum`) are always charged by the formula, on the whole
+answer, and return at most 10 blocks per call.
+
+## Measured examples
+
+| Call | Answer | WU |
+|---|---|---|
+| `getaccount`, `triggerconstantcontract`, `getnodeinfo` | a few KB | 1 |
+| `getblock` with `"detail": false` | 0.5 KB | 1 |
+| `getnowblock` | 600–800 KB | 3 |
+| `gettransactioninfobyblocknum`, fresh block | 230–290 KB | 2 |
+| `getblockbynum`, older block | 236 KB | 5 |
+| `getblockbynum`, older block | 783 KB | 16 |
+| `gettransactioninfobyblocknum`, older block | 110 KB | 6 |
+| `gettransactioninfobyblocknum`, older block | 179 KB | 10 |
+| `getblockbylatestnum` with `"num": 3` | 1.6 MB | 34 |
+
+## What costs nothing
+
+- **Refusals.** A request refused with an error `code` (see [Limits and errors](/node-api/errors)) is
+  not charged and carries no `X-Node-API-WU`.
+- **A method the node does not have** — `404 method_not_found`, with `X-Node-API-WU: 0`. It still
+  counts as one call against your per-second limit, so a loop of typos is slowed down, not billed.
+- **No answer from the node** — `502 node_error`.
+
+An error the node itself returns is an answer: java-tron reports most errors as JSON
+(`{"Error": "…"}`), often with status `200`, and they are charged by size like any answer — at least
+1 WU.
+
+## Estimating your usage
+
+- Following every block of the chain — the header (1 WU) plus the receipts of the fresh block (2 WU) —
+  is 3 WU per block: about 86,400 WU a day, or about 2.6M WU in 30 days.
+- A USDT transfer built and broadcast through the node is 2 WU.
+- Reading old blocks is the expensive part: an old block of 600–800 KB is 13–17 WU.
+
+Quota is spent by WU; the per-second limits are counted per class of call — read WU per second, block
+calls per second, broadcasts per second. See [Limits and errors](/node-api/errors) and the numbers for
+each plan in [Plans and billing](/node-api/plans).

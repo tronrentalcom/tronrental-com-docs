@@ -1,0 +1,123 @@
+---
+title: "Limitler ve Hatalar"
+description: "Node API saniye başına limitleri, ret kodları, kısıtlı mod ve yeniden denemeler"
+---
+
+## Saniye başına limitler
+
+Her çağrı üç sınıftan birine aittir. Çağrı kotanızdan ve kendi sınıfının saniye başına limitinden
+harcar:
+
+| Sınıf | Çağrılar | Sınırlama birimi |
+|---|---|---|
+| Blok | `getnowblock`, `getblockbynum`, `getblockbyid`, `"detail": true` ile `getblock`, `getblockbylimitnext`, `getblockbylatestnum`, `gettransactioninfobyblocknum` ve bunların gRPC karşılıkları | saniyedeki çağrı |
+| İşlem gönderimi | `broadcasttransaction`, `broadcasthex`, gRPC `BroadcastTransaction` | saniyedeki işlem |
+| Okuma | diğer her şey | saniyedeki WU |
+
+Değerler plana bağlıdır — bkz. [Planlar ve faturalandırma](/tr/node-api/plans). Limitler plana aittir
+ve planın tüm uç noktaları tarafından paylaşılır.
+
+Her limit bir saniyelik miktarı tutar. Örneğin 30 WU/s ile bir anda en fazla 30 WU geçer, ardından
+limit saniyede 30 WU hızla yeniden dolar. Okuma limitinde biraz bile yer kaldığı sürece okuma isteği
+kabul edilir ve maliyeti yanıttan sonra düşülür: tek bir ağır okuma limiti sıfırın altına itebilir ve
+sonraki okumalar limit yeniden dolana kadar bekler. Bir blok aralığı çağrı başına en fazla 10 blok
+döndürür.
+
+## Hata formatı
+
+Ret, `Error` içinde bir mesaj ve makine tarafından okunabilir bir `code` içeren bir JSON'dur:
+
+```json
+{"Error": "read limit (WU/s) exceeded", "code": "rate_read"}
+```
+
+`code` alanını kullanın; mesaj değişebilir. Bir retin her zaman bir `code` alanı vardır. Düğümün kendi
+hatalarında yoktur: java-tron `code` olmadan, genellikle `200` durumuyla `{"Error": "…"}` yanıtı verir
+ve böyle bir yanıt diğer tüm yanıtlar gibi ücretlendirilir — bkz. [Kota birimleri](/tr/node-api/quota-units).
+
+Retler ücretlendirilmez ve `X-Node-API-WU` taşımaz; tek istisna `X-Node-API-WU: 0` taşıyan
+`method_not_found` kodudur. `429` ve `503` retleri genellikle `Retry-After` taşır.
+
+## Ret kodları
+
+| Durum | `code` | Anlam | Ne yapmalı |
+|---|---|---|---|
+| `400` | `key_conflict` | Tek istekte iki farklı anahtar | Tek bir anahtar gönderin |
+| `400` | `bad_request` | İstek, düğümün okuyacağı şekilde okunamıyor: bir aralıkta 10'dan fazla blok, tam sayı olmayan bir blok numarası, iki kez verilmiş bir parametre, hem sorgu dizesinde hem gövdede blok parametreleri, bir blok yönteminin gövdesinde bilinmeyen alanlar, `true` veya `false` olmayan bir `detail` | İsteği düzeltin |
+| `401` | `no_key` | İstekte anahtar yok | Anahtarı ekleyin |
+| `401` | `unknown_key` | Böyle bir anahtar yok: yanlış yazılmış, silinmiş, bir REST API anahtarı ya da yaklaşık 30 saniyeden daha kısa süre önce oluşturulmuş | Anahtarı kontrol edin |
+| `403` | `key_disabled` | Uç nokta kapalı — sizin tarafınızdan ya da yenilemede planın uç nokta limiti nedeniyle | Kontrol panelinden açın |
+| `403` | `ip_not_allowed` | İsteğin IP adresi uç noktanın beyaz listesinde değil | Adresi ekleyin |
+| `403` | `no_plan` | Hesabın Node API planı yok | Bir plan satın alın |
+| `403` | `plan_expired` | Abonelik aktif değil: yenileme ödenmedi, abonelik sona erdi ya da deneme bitti | Bakiye yükleyin veya bir plan satın alın |
+| `403` | `account_blocked` | Hesabın API erişimi askıya alındı | Destekle iletişime geçin |
+| `404` | `not_found` | Bir düğüm yöntemi yolu değil: `/wallet/*` ve `/walletsolidity/*` dışında (örneğin `/v1/...` veya `/jsonrpc`) ya da harf ve rakam dışında karakter içeren bir yöntem adı | Yolu kontrol edin |
+| `404` | `method_not_found` | Düğümde böyle bir yöntem yok. Yöntem adları java-tron'daki gibi büyük/küçük harfe duyarlıdır: `getaccount`, ama `getReward`. 0 WU tutar | Yazımı kontrol edin |
+| `405` | `method_not_allowed` | `GET` veya `POST` dışında bir HTTP yöntemi | `GET` veya `POST` kullanın |
+| `413` | `body_too_large` | İstek gövdesi 512 KB sınırını aşıyor | Daha küçük bir gövde gönderin |
+| `429` | `rate_read` | Okuma limitine (saniyedeki WU) ulaşıldı | `Retry-After` kadar bekleyin |
+| `429` | `rate_block` | Blok isteği limitine (saniyedeki çağrı) ulaşıldı | `Retry-After` kadar bekleyin |
+| `429` | `rate_write` | İşlem gönderimi limitine (saniyedeki işlem) ulaşıldı | `Retry-After` kadar bekleyin |
+| `429` | `trials` | Tüm denemelerin paylaştığı kapasite dolu | `Retry-After` kadar bekleyin |
+| `429` | `quota` | Aşımı olmayan bir planda (deneme) kota doldu | Bir plan satın alın |
+| `429` | `overage_budget` | Kota doldu ve bakiye artık aşımı karşılamıyor | Bakiye yükleyin |
+| `502` | `node_error` | Düğüm yanıt vermedi ya da 30 saniye içinde yanıt vermedi | Yeniden deneyin |
+| `503` | `degraded` | Kısıtlı mod sırasında daha eski bir blok, makbuzları veya bir blok aralığı | Daha sonra yeniden deneyin — aşağıya bakın |
+| `503` | `capacity` | Servisin ortak kapasitesi dolu | `Retry-After` kadar bekleyin |
+| `503` | `capacity_write` | Servisin ortak işlem gönderimi kapasitesi dolu | `Retry-After` kadar bekleyin |
+| `503` | `busy` | 2 saniye içinde düğüme boş bağlantı bulunamadı | `Retry-After` kadar bekleyin |
+| `503` | `no_node` | Şu anda kullanılabilir düğüm yok | `Retry-After` kadar bekleyin |
+| `503` | `no_snapshot` | Servis şu anda anahtarları kontrol edemiyor | `Retry-After` kadar bekleyin |
+
+gRPC üzerinden aynı kodlar, HTTP durumu yerine bir gRPC durumuyla birlikte `x-node-api-reason` sondaki
+meta verisinde gelir — bkz. [gRPC](/tr/node-api/grpc).
+
+## Kısıtlı mod
+
+Node API için ana düğümümüz kullanılamaz hale geldiğinde veya ağın gerisinde kaldığında servis yedek
+bir düğümde çalışmaya devam eder. Bu sırada:
+
+- yanıtlanan çağrılar `X-Node-API-Mode: degraded` başlığını taşır (gRPC üzerinden
+  `x-node-api-mode: degraded` sondaki meta verisi);
+- saniyedeki WU cinsinden okuma limitiniz yarıya iner; blok isteği ve işlem gönderimi limitleri
+  olduğu gibi kalır;
+- yeni bloklar — zincir ucundan en fazla 20 blok geride olanlar — ve makbuzları her zamanki gibi
+  sunulur; daha eski bloklar, makbuzları ve blok aralıkları ise `503 degraded` ile reddedilir;
+- ortak kapasite daha küçüktür, bu yüzden `503 capacity` olasılığı daha yüksektir.
+
+İşlem gönderimi asla kısıtlanmaz. Normal mod kendiliğinden geri döner; bir şey yapmanız gerekmez.
+Uygulamanız eski blokları okuyorsa, başlık mevcutken bu işi duraklatın ve başlık kaybolduğunda devam
+edin.
+
+## Yeniden deneme
+
+- `429 rate_read`, `rate_block`, `rate_write`, `trials` ve tüm `503` yanıtları: `Retry-After`
+  içindeki saniye kadar bekleyin, ardından yeniden deneyin.
+- `429 quota` ve `429 overage_budget`: beklemek işe yaramaz. Bakiye yükleyin veya planı değiştirin.
+- `502 node_error`: yeniden deneyin. Aynı imzalı işlemi yeniden göndermek güvenlidir — ağ bir işlem
+  kimliğini yalnızca bir kez yürütür.
+- Diğer `4xx` yanıtları: isteği düzeltin; tekrarlamak aynı yanıtı verir.
+
+```python
+import time
+import requests
+
+NODE = "https://node.tronrental.com"
+HEADERS = {"TRON-PRO-API-KEY": "<YOUR_KEY>"}
+STOP = {"quota", "overage_budget"}  # beklemek işe yaramaz
+
+def node_call(method, body=None, attempts=5):
+    for attempt in range(attempts):
+        resp = requests.post(f"{NODE}/wallet/{method}", json=body or {}, headers=HEADERS)
+        if resp.status_code in (429, 502, 503):
+            try:
+                code = resp.json().get("code")
+            except ValueError:
+                code = None  # bizim JSON'umuz değil, ör. bir proxy hata sayfası
+            if code in STOP:
+                raise RuntimeError(f"Node API: {code}")
+            time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+            continue
+        return resp
+    raise RuntimeError("Node API: retries exhausted")
+```

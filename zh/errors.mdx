@@ -67,6 +67,7 @@ description: "API 错误代码及处理方式"
 | `INVALID_TOKEN` | `401` | API 密钥缺失、未知或已禁用 |
 | `ACCOUNT_BLOCKED` | `403` | 该账户的 API 访问已被封禁 |
 | `FORBIDDEN` | `403` | 密钥缺少该端点所需的权限，或请求 IP 不在该密钥的白名单中 |
+| `NODE_API_KEY_ONLY` | `403` | 向本 API 发送了 Node API 密钥——它只能在 `node.tronrental.com` 使用 |
 | `INSUFFICIENT_BALANCE` | `402` | 账户余额不足以完成此操作 |
 | `INVALID_ADDRESS` | `400` | 不是有效的 TRON 地址 |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | 目标是智能合约——TRON 禁止向其代理资源 |
@@ -74,6 +75,10 @@ description: "API 错误代码及处理方式"
 | `INVALID_DURATION` | `400` | 时长不在允许的取值之内 |
 | `ORDER_NOT_FOUND` | `404` | 订单 ID 不存在 |
 | `RATE_LIMIT_EXCEEDED` | `429` | 请求过多——参见[速率限制](/resources/rate-limits) |
+
+<Note>
+Node API（`node.tronrental.com`）有自己的错误代码，格式也不同——参见 [Node API → 限制与错误](/zh/node-api/errors)。
+</Note>
 
 <Warning>
 `INSUFFICIENT_BALANCE` 并非处处适用。`POST /api/v1/smart-mode/activate` 和

@@ -1,0 +1,94 @@
+---
+title: "gRPC"
+description: "gRPC पर TRON नोड को कॉल करना: पता, कुंजी, .proto फ़ाइलें, स्टेटस"
+---
+
+## कनेक्शन
+
+| सेटिंग | मान |
+|---|---|
+| पता | `node.tronrental.com:443` |
+| ट्रांसपोर्ट | पोर्ट 443 पर TLS |
+| सेवाएँ | `protocol.Wallet` (फ़ुल नोड) और `protocol.WalletSolidity` (पुष्ट डेटा) |
+| मेथड | इन दोनों सेवाओं के यूनरी मेथड |
+| कुंजी | हर कॉल पर मेटाडेटा `tron-pro-api-key` (`x-api-key` और `authorization: Bearer <YOUR_KEY>` भी काम करते हैं) |
+
+कोटा, सीमाएँ और कीमतें HTTP जैसी ही हैं। किसी कॉल को उसी फ़ॉर्मूले से उसके protobuf रिस्पॉन्स के आकार
+के हिसाब से तौला जाता है — देखें [कोटा इकाइयाँ](/hi/node-api/quota-units)।
+
+## .proto फ़ाइलें
+
+सर्वर में रिफ़्लेक्शन नहीं है: आपके क्लाइंट को TRON की `.proto` फ़ाइलें चाहिए। ये
+[tronprotocol/protocol](https://github.com/tronprotocol/protocol) रिपॉज़िटरी में प्रकाशित हैं; सेवाएँ
+`api/api.proto` में हैं।
+
+```bash
+git clone https://github.com/tronprotocol/protocol
+```
+
+grpcurl में `-import-path` को क्लोन की गई डायरेक्टरी पर और `-proto` को `api/api.proto` पर सेट करें:
+
+```bash
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  node.tronrental.com:443 protocol.Wallet/GetNowBlock2
+```
+
+कोड में, अपनी भाषा के gRPC टूल से इन्हीं फ़ाइलों से स्टब जनरेट करें, `node.tronrental.com:443` तक TLS
+चैनल खोलें, और हर कॉल के मेटाडेटा में कुंजी भेजें।
+
+## मेथड के नाम और बाइट
+
+- **मेथड के नाम केस-सेंसिटिव हैं**, जैसे `.proto` में: `protocol.Wallet/GetAccount`, न कि
+  `getAccount`। जो मेथड नोड में नहीं है, वह कॉल `UNIMPLEMENTED`,
+  `x-node-api-reason: method_not_found` और `x-node-api-wu: 0` के साथ खत्म होती है — इसका कोई शुल्क नहीं लगता।
+- **पते और ID बाइट हैं।** grpcurl JSON में बाइट base64 होते हैं। TRON पता 21 बाइट का होता है: `41`
+  और उसके बाद 20 बाइट। उसके hex रूप को base64 में बदलने के लिए:
+
+  ```bash
+  echo 41a614f803b6fd780986a42c78ec9c7f77e6ded13c | xxd -r -p | base64
+  # QaYU+AO2/XgJhqQseOycf3fm3tE8
+  ```
+
+- **रिक्वेस्ट संदेश अधिकतम 512 KB का हो सकता है।** इससे बड़ा संदेश प्रोसेस होने से पहले ही
+  `RESOURCE_EXHAUSTED` के साथ अस्वीकार हो जाता है।
+
+## ट्रेलिंग मेटाडेटा
+
+| कुंजी | कब | अर्थ |
+|---|---|---|
+| `x-node-api-wu` | जवाब दी गई कॉल, और `method_not_found` | कॉल पर लगी कोटा इकाइयाँ |
+| `x-node-api-mode` | डिग्रेडेड मोड में जवाब दी गई कॉल | `degraded` |
+| `x-node-api-reason` | अस्वीकृतियाँ | अस्वीकृति कोड, HTTP `code` जैसा ही |
+| `retry-after` | कुछ अस्वीकृतियाँ | दोबारा कोशिश करने से पहले इंतज़ार के सेकंड |
+
+## स्टेटस कोड
+
+अस्वीकृतियाँ अपने HTTP स्टेटस के आधार पर gRPC स्टेटस में बदली जाती हैं। कोड खुद `x-node-api-reason`
+में होता है; पूरी सूची [सीमाएँ और त्रुटियाँ](/hi/node-api/errors) में है।
+
+| HTTP स्टेटस | gRPC स्टेटस | कोड |
+|---|---|---|
+| `400` | `INVALID_ARGUMENT` | `key_conflict`, `bad_request` |
+| `401` | `UNAUTHENTICATED` | `no_key`, `unknown_key` |
+| `403` | `PERMISSION_DENIED` | `key_disabled`, `ip_not_allowed`, `no_plan`, `account_blocked`, `plan_expired` |
+| `404` | `UNIMPLEMENTED` | `not_found`, `method_not_found` |
+| `429` | `RESOURCE_EXHAUSTED` | `quota`, `overage_budget`, `rate_read`, `rate_block`, `rate_write`, `trials` |
+| `502`, `503` | `UNAVAILABLE` | `node_error`, `no_snapshot`, `no_node`, `degraded`, `capacity`, `capacity_write`, `busy` |
+
+नोड खुद जो त्रुटि लौटाता है (उदाहरण के लिए, गलत बने ट्रांज़ैक्शन पर `INVALID_ARGUMENT`), वह आपको जैसी
+की तैसी भेजी जाती है और उसकी कीमत 1 WU है: काम नोड ने किया। अगर नोड जवाब नहीं देता, तो कॉल
+`UNAVAILABLE` और `x-node-api-reason: node_error` के साथ खत्म होती है और इसका कोई शुल्क नहीं लगता।
+
+<Note>
+`x-node-api-reason` के बिना `RESOURCE_EXHAUSTED` खुद gRPC सर्वर से आता है: रिक्वेस्ट संदेश 512 KB से
+बड़ा है, या सर्वर एक साथ बहुत ज़्यादा कॉल संभाल रहा है। दूसरी स्थिति में थोड़ा रुककर दोबारा कोशिश
+करें।
+</Note>
+
+## दोबारा कोशिश और ब्रॉडकास्ट
+
+कोई कॉल आपकी जानकारी के बिना किसी दूसरे नोड पर कभी दोहराई नहीं जाती: `UNAVAILABLE` का मतलब यह हो
+सकता है कि नोड को रिक्वेस्ट मिलने के बाद कनेक्शन टूट गया। वही साइन किया हुआ ट्रांज़ैक्शन
+`BroadcastTransaction` पर दोबारा भेजना सुरक्षित है — नेटवर्क किसी ट्रांज़ैक्शन ID को केवल एक बार
+निष्पादित करता है।

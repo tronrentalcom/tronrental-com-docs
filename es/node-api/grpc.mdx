@@ -1,0 +1,93 @@
+---
+title: "gRPC"
+description: "Llamar al nodo TRON por gRPC: dirección, clave, archivos .proto, estados"
+---
+
+## Conexión
+
+| Parámetro | Valor |
+|---|---|
+| Dirección | `node.tronrental.com:443` |
+| Transporte | TLS en el puerto 443 |
+| Servicios | `protocol.Wallet` (nodo completo) y `protocol.WalletSolidity` (datos confirmados) |
+| Métodos | los métodos unarios de estos dos servicios |
+| Clave | metadatos `tron-pro-api-key` en cada llamada (`x-api-key` y `authorization: Bearer <YOUR_KEY>` también funcionan) |
+
+La cuota, los límites y los precios son los mismos que por HTTP. Una llamada se pondera por el tamaño
+de su respuesta protobuf con la misma fórmula — consulta [Unidades de cuota](/es/node-api/quota-units).
+
+## Archivos .proto
+
+El servidor no tiene reflexión: tu cliente necesita los archivos `.proto` de TRON. Están publicados en
+el repositorio [tronprotocol/protocol](https://github.com/tronprotocol/protocol); los servicios están
+en `api/api.proto`.
+
+```bash
+git clone https://github.com/tronprotocol/protocol
+```
+
+Con grpcurl, apunta `-import-path` al clon y `-proto` a `api/api.proto`:
+
+```bash
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  node.tronrental.com:443 protocol.Wallet/GetNowBlock2
+```
+
+En el código, genera los stubs a partir de los mismos archivos con las herramientas gRPC de tu
+lenguaje, abre un canal TLS a `node.tronrental.com:443` y pasa la clave en los metadatos de cada llamada.
+
+## Nombres de métodos y bytes
+
+- **Los nombres de los métodos distinguen mayúsculas y minúsculas**, como en el `.proto`:
+  `protocol.Wallet/GetAccount`, no `getAccount`. Un método que el nodo no tiene termina con
+  `UNIMPLEMENTED`, `x-node-api-reason: method_not_found` y `x-node-api-wu: 0` — no cuesta nada.
+- **Las direcciones y los ID son bytes.** En el JSON de grpcurl, los bytes van en base64. Una dirección
+  TRON tiene 21 bytes: `41` seguido de 20 bytes. Para pasar su forma hex a base64:
+
+  ```bash
+  echo 41a614f803b6fd780986a42c78ec9c7f77e6ded13c | xxd -r -p | base64
+  # QaYU+AO2/XgJhqQseOycf3fm3tE8
+  ```
+
+- **Un mensaje de solicitud ocupa como máximo 512 KB.** Uno mayor se rechaza con `RESOURCE_EXHAUSTED`
+  antes de procesarse.
+
+## Metadatos finales
+
+| Clave | Cuándo | Significado |
+|---|---|---|
+| `x-node-api-wu` | llamadas respondidas, y `method_not_found` | unidades de cuota que costó la llamada |
+| `x-node-api-mode` | llamadas respondidas en modo degradado | `degraded` |
+| `x-node-api-reason` | rechazos | el código de rechazo, el mismo que el `code` de HTTP |
+| `retry-after` | algunos rechazos | segundos de espera antes de reintentar |
+
+## Códigos de estado
+
+Los rechazos se corresponden con estados gRPC según su estado HTTP. El código en sí va en
+`x-node-api-reason`; la lista completa está en [Límites y errores](/es/node-api/errors).
+
+| Estado HTTP | Estado gRPC | Códigos |
+|---|---|---|
+| `400` | `INVALID_ARGUMENT` | `key_conflict`, `bad_request` |
+| `401` | `UNAUTHENTICATED` | `no_key`, `unknown_key` |
+| `403` | `PERMISSION_DENIED` | `key_disabled`, `ip_not_allowed`, `no_plan`, `account_blocked`, `plan_expired` |
+| `404` | `UNIMPLEMENTED` | `not_found`, `method_not_found` |
+| `429` | `RESOURCE_EXHAUSTED` | `quota`, `overage_budget`, `rate_read`, `rate_block`, `rate_write`, `trials` |
+| `502`, `503` | `UNAVAILABLE` | `node_error`, `no_snapshot`, `no_node`, `degraded`, `capacity`, `capacity_write`, `busy` |
+
+Un error que devuelve el propio nodo (por ejemplo, `INVALID_ARGUMENT` por una transacción mal formada)
+se te pasa tal cual y cuesta 1 WU: el nodo hizo el trabajo. Si el nodo no responde, la llamada termina
+con `UNAVAILABLE` y `x-node-api-reason: node_error` y no cuesta nada.
+
+<Note>
+Un `RESOURCE_EXHAUSTED` sin `x-node-api-reason` proviene del propio servidor gRPC: el mensaje de
+solicitud supera los 512 KB, o el servidor está atendiendo demasiadas llamadas a la vez. En el segundo
+caso, reintenta tras una breve pausa.
+</Note>
+
+## Reintentos y transmisiones
+
+Una llamada nunca se repite en otro nodo a tus espaldas: un `UNAVAILABLE` puede significar que la
+conexión se cortó después de que el nodo recibiera la solicitud. Reenviar la misma transacción firmada
+a `BroadcastTransaction` es seguro — la red ejecuta un ID de transacción una sola vez.

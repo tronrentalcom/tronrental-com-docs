@@ -72,6 +72,7 @@ description: "Коды ошибок API и их обработка"
 | `INVALID_TOKEN` | `401` | API-ключ отсутствует, неизвестен или отключён |
 | `ACCOUNT_BLOCKED` | `403` | Доступ к API для этого аккаунта заблокирован |
 | `FORBIDDEN` | `403` | У ключа нет разрешения, которого требует эндпоинт, либо IP запроса отсутствует в белом списке ключа |
+| `NODE_API_KEY_ONLY` | `403` | В этот API передан ключ Node API — он работает только на `node.tronrental.com` |
 | `INSUFFICIENT_BALANCE` | `402` | Недостаточно средств на балансе для этой операции |
 | `INVALID_ADDRESS` | `400` | Некорректный TRON-адрес |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Адрес назначения — смарт-контракт; TRON запрещает делегировать ресурсы на такие адреса |
@@ -79,6 +80,11 @@ description: "Коды ошибок API и их обработка"
 | `INVALID_DURATION` | `400` | Длительность не входит в список допустимых значений |
 | `ORDER_NOT_FOUND` | `404` | Заказ с таким ID не существует |
 | `RATE_LIMIT_EXCEEDED` | `429` | Слишком много запросов — см. [Лимиты запросов](/resources/rate-limits) |
+
+<Note>
+У Node API (`node.tronrental.com`) свои коды ошибок в другом формате — см.
+[Node API → Лимиты и ошибки](/ru/node-api/errors).
+</Note>
 
 <Warning>
 `INSUFFICIENT_BALANCE` используется не везде. `POST /api/v1/smart-mode/activate` и

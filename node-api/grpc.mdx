@@ -1,0 +1,93 @@
+---
+title: "gRPC"
+description: "Calling the TRON node over gRPC: address, key, .proto files, statuses"
+---
+
+## Connection
+
+| Setting | Value |
+|---|---|
+| Address | `node.tronrental.com:443` |
+| Transport | TLS on port 443 |
+| Services | `protocol.Wallet` (full node) and `protocol.WalletSolidity` (confirmed data) |
+| Methods | the unary methods of these two services |
+| Key | metadata `tron-pro-api-key` on every call (`x-api-key` and `authorization: Bearer <YOUR_KEY>` work too) |
+
+Quota, limits and prices are the same as over HTTP. A call is weighed by the size of its protobuf
+answer with the same formula — see [Quota units](/node-api/quota-units).
+
+## .proto files
+
+The server has no reflection: your client needs the TRON `.proto` files. They are published in the
+[tronprotocol/protocol](https://github.com/tronprotocol/protocol) repository; the services are in
+`api/api.proto`.
+
+```bash
+git clone https://github.com/tronprotocol/protocol
+```
+
+With grpcurl, point `-import-path` at the clone and `-proto` at `api/api.proto`:
+
+```bash
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  node.tronrental.com:443 protocol.Wallet/GetNowBlock2
+```
+
+In code, generate the stubs from the same files with your language's gRPC tools, open a TLS channel to
+`node.tronrental.com:443`, and pass the key in the metadata of every call.
+
+## Method names and bytes
+
+- **Method names are case-sensitive**, as in the `.proto`: `protocol.Wallet/GetAccount`, not
+  `getAccount`. A method the node does not have ends with `UNIMPLEMENTED`,
+  `x-node-api-reason: method_not_found` and `x-node-api-wu: 0` — it costs nothing.
+- **Addresses and IDs are bytes.** In grpcurl JSON, bytes are base64. A TRON address is 21 bytes: `41`
+  followed by 20 bytes. To turn its hex form into base64:
+
+  ```bash
+  echo 41a614f803b6fd780986a42c78ec9c7f77e6ded13c | xxd -r -p | base64
+  # QaYU+AO2/XgJhqQseOycf3fm3tE8
+  ```
+
+- **A request message is at most 512 KB.** A larger one is refused with `RESOURCE_EXHAUSTED` before it
+  is processed.
+
+## Trailing metadata
+
+| Key | When | Meaning |
+|---|---|---|
+| `x-node-api-wu` | answered calls, and `method_not_found` | quota units the call cost |
+| `x-node-api-mode` | answered calls in degraded mode | `degraded` |
+| `x-node-api-reason` | refusals | the refusal code, the same as the HTTP `code` |
+| `retry-after` | some refusals | seconds to wait before retrying |
+
+## Status codes
+
+Refusals map to gRPC statuses by their HTTP status. The code itself is in `x-node-api-reason`; the full
+list is in [Limits and errors](/node-api/errors).
+
+| HTTP status | gRPC status | Codes |
+|---|---|---|
+| `400` | `INVALID_ARGUMENT` | `key_conflict`, `bad_request` |
+| `401` | `UNAUTHENTICATED` | `no_key`, `unknown_key` |
+| `403` | `PERMISSION_DENIED` | `key_disabled`, `ip_not_allowed`, `no_plan`, `account_blocked`, `plan_expired` |
+| `404` | `UNIMPLEMENTED` | `not_found`, `method_not_found` |
+| `429` | `RESOURCE_EXHAUSTED` | `quota`, `overage_budget`, `rate_read`, `rate_block`, `rate_write`, `trials` |
+| `502`, `503` | `UNAVAILABLE` | `node_error`, `no_snapshot`, `no_node`, `degraded`, `capacity`, `capacity_write`, `busy` |
+
+An error the node itself returns (for example `INVALID_ARGUMENT` for a malformed transaction) is passed
+to you as is and costs 1 WU: the node did the work. If the node does not answer, the call ends with
+`UNAVAILABLE` and `x-node-api-reason: node_error` and costs nothing.
+
+<Note>
+A `RESOURCE_EXHAUSTED` without `x-node-api-reason` comes from the gRPC server itself: the request message
+is above 512 KB, or the server is holding too many calls at once. Retry the second case after a short
+pause.
+</Note>
+
+## Retries and broadcasts
+
+A call is never repeated on another node behind your back: an `UNAVAILABLE` can mean that the
+connection broke after the node received the request. Re-sending the same signed transaction to
+`BroadcastTransaction` is safe — the network executes a transaction ID only once.

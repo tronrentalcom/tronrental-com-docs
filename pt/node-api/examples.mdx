@@ -1,0 +1,213 @@
+---
+title: "Exemplos de código"
+description: "Conectar, enviar USDT e monitorar transferências USDT com TronWeb, tronpy, curl e grpcurl"
+---
+
+Três tarefas comuns com quatro clientes. Substitua `<YOUR_KEY>` pela chave de um dos seus endpoints e
+`TXYZ…` por um endereço real. Os WU nos comentários são o que o Node API cobra exatamente por essas
+chamadas.
+
+## Conectar
+
+A primeira chamada lê os dados da conta — 1 WU.
+
+<CodeGroup>
+```javascript TronWeb
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+
+const account = await tronWeb.trx.getAccount('TXYZ…');
+```
+
+```python tronpy
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+# o tronpy envia api_key= só para o host padrão dele — defina o cabeçalho você mesmo
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+account = client.get_account('TXYZ…')
+
+# ou a chave no caminho — com a barra no final, senão o tronpy perde a chave
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+```bash curl
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+
+# ou a chave no caminho
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash grpcurl
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  -d '{"address": "QZ…"}' \
+  node.tronrental.com:443 protocol.Wallet/GetAccount
+# endereço — 21 bytes em base64
+```
+</CodeGroup>
+
+O grpcurl precisa dos arquivos `.proto` da TRON e recebe endereços como bytes em base64 — veja
+[gRPC](/pt/node-api/grpc).
+
+## Enviar USDT
+
+Monte a transação pelo nó, assine-a do seu lado e transmita-a pelo nó. Sua chave privada nunca sai do
+seu servidor. Uma transferência custa 2 WU; com tronpy, 3 WU, mais 2 WU uma única vez para carregar o
+contrato.
+
+Nestes exemplos, `from` (`sender`) e `to` são os endereços do remetente e do destinatário, `amount`
+está na menor unidade do token (o USDT tem 6 casas decimais: 1 USDT = `1000000`) e `PRIVATE_KEY` é a
+chave privada do remetente. `fee_limit` é o máximo de TRX, em sun, que a transferência pode queimar:
+`30000000` são 30 TRX.
+
+<CodeGroup>
+```javascript TronWeb
+const USDT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+
+// 1. montar pelo nó — 1 WU
+const { transaction } = await tronWeb.transactionBuilder.triggerSmartContract(
+  USDT, 'transfer(address,uint256)', { feeLimit: 30_000_000 },
+  [{ type: 'address', value: to }, { type: 'uint256', value: amount }],
+  from,
+);
+// 2. assinar do seu lado — a chave fica no seu servidor
+const signed = await tronWeb.trx.sign(transaction, PRIVATE_KEY);
+// 3. transmitir pelo nó — 1 WU
+const result = await tronWeb.trx.sendRawTransaction(signed);
+```
+
+```python tronpy
+from tronpy.keys import PrivateKey
+
+# contrato USDT com a ABI — 2 WU, uma única vez
+usdt = client.get_contract('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+# 1. montar: bloco de referência e txID do nó — 2 WU
+txn = (usdt.functions.transfer(to, amount)
+       .with_owner(sender).fee_limit(30_000_000).build())
+# 2. assinar do seu lado — a chave fica no seu servidor
+signed = txn.sign(PrivateKey(bytes.fromhex(PRIVATE_KEY)))
+# 3. transmitir pelo nó — 1 WU
+result = signed.broadcast()
+```
+
+```bash curl
+# 1. montar pelo nó — 1 WU
+curl -X POST https://node.tronrental.com/wallet/triggersmartcontract \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"owner_address": "TFrom…", "visible": true,
+       "contract_address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+       "function_selector": "transfer(address,uint256)",
+       "parameter": "<abi>", "fee_limit": 30000000}'
+# 2. assinar do seu lado — a chave fica no seu servidor
+# 3. transmitir pelo nó — 1 WU
+curl -X POST https://node.tronrental.com/wallet/broadcasttransaction \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d @signed.json
+```
+
+```bash grpcurl
+# 1. montar pelo nó — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/TriggerContract < call.json
+# 2. assinar do seu lado — a chave fica no seu servidor
+# 3. transmitir pelo nó — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/BroadcastTransaction < signed.json
+```
+</CodeGroup>
+
+**Com curl**, `parameter` são os argumentos de `transfer(address,uint256)` codificados em ABI, em hex:
+o endereço de 20 bytes do destinatário (sua forma hex sem o `41` inicial) completado com zeros à
+esquerda até 64 caracteres hex, seguido do valor, também completado até 64. O nó responde com uma
+`transaction` não assinada e o seu `txID`. Assine o `txID` com a chave privada do remetente, adicione
+a assinatura à transação como `"signature": ["<hex>"]` e envie esse objeto de transação como
+`signed.json`.
+
+**Com grpcurl**, `call.json` é uma mensagem `TriggerSmartContract`: `owner_address`, `contract_address`
+e `data` (o seletor de função de 4 bytes seguido dos argumentos codificados em ABI), todos como bytes em
+base64. A mensagem não tem campo para o limite de taxa da transação: defina `raw_data.fee_limit` na
+transação retornada e então assine o SHA-256 do novo `raw_data` — o `txid` que veio na resposta deixa
+de corresponder depois dessa alteração. Veja [gRPC](/pt/node-api/grpc).
+
+<Tip>
+Reenviar a mesma transação assinada é seguro: a rede executa um ID de transação apenas uma vez, e uma
+transmissão repetida volta como `DUP_TRANSACTION_ERROR`. Uma transação que expirou precisa ser montada
+e assinada novamente.
+</Tip>
+
+## Monitorar transferências USDT
+
+Leia o cabeçalho do bloco mais recente, depois os recibos desse bloco, e fique com os de USDT. O
+cabeçalho custa 1 WU e os recibos de um bloco recente 2 WU — 3 WU por bloco. Acompanhar assim todos os
+blocos da rede custa cerca de 2.6M WU por mês.
+
+<CodeGroup>
+```javascript TronWeb
+// cabeçalho do bloco — 1 WU
+const head = await tronWeb.fullNode.request('wallet/getblock', { detail: false }, 'post');
+const num = head.block_header.raw_data.number;
+// recibos do bloco recente — 2 WU
+const infos = await tronWeb.fullNode.request(
+  'wallet/gettransactioninfobyblocknum', { num }, 'post');
+// transferências USDT — eventos Transfer no log
+const usdt = infos.filter(i => i.contract_address === '41a614f803b6fd780986a42c78ec9c7f77e6ded13c');
+```
+
+```python tronpy
+# cabeçalho do bloco — 1 WU
+head = client.provider.make_request('wallet/getblock', {'detail': False})
+num = head['block_header']['raw_data']['number']
+# recibos do bloco recente — 2 WU
+infos = client.provider.make_request(
+    'wallet/gettransactioninfobyblocknum', {'num': num})
+# transferências USDT — eventos Transfer no log
+usdt = [i for i in infos if i.get('contract_address') == '41a614f803b6fd780986a42c78ec9c7f77e6ded13c']
+```
+
+```bash curl
+# cabeçalho do bloco — 1 WU
+NUM=$(curl -s -X POST https://node.tronrental.com/wallet/getblock \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d '{"detail": false}' \
+  | jq '.block_header.raw_data.number')
+# recibos do bloco recente — 2 WU
+curl -X POST https://node.tronrental.com/wallet/gettransactioninfobyblocknum \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d "{\"num\": $NUM}"
+```
+
+```bash grpcurl
+# cabeçalho do bloco — 1 WU
+NUM=$(grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d '{"detail": false}' \
+  node.tronrental.com:443 protocol.Wallet/GetBlock | jq -r '.blockHeader.rawData.number')
+# recibos do bloco recente — 2 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d "{\"num\": $NUM}" \
+  node.tronrental.com:443 protocol.Wallet/GetTransactionInfoByBlockNum
+```
+</CodeGroup>
+
+Cada recibo de uma chamada ao USDT traz os eventos `Transfer` do token em `log`. Em um evento,
+`topics[0]` é `ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`, `topics[1]` e
+`topics[2]` são o remetente e o destinatário (os últimos 40 caracteres hex são o endereço sem o prefixo
+`41`) e `data` é o valor. `receipt.result` é `SUCCESS` para uma transferência que foi concluída. O
+filtro acima fica com as chamadas diretas ao contrato USDT; para pegar também USDT movimentado por
+outros contratos, verifique em vez disso o `address` de cada entrada do log —
+`a614f803b6fd780986a42c78ec9c7f77e6ded13c` para o USDT.
+
+<Note>
+Um novo bloco chega a cada 3 segundos, aproximadamente. Guarde o último bloco que você processou e
+busque os recibos de cada número depois dele, para que uma consulta lenta nunca pule um bloco. Os
+recibos de um bloco a mais de 20 abaixo da ponta já não são recentes e são cobrados pelo tamanho —
+veja [Unidades de cota](/pt/node-api/quota-units).
+</Note>

@@ -35,6 +35,14 @@ Cada clave API tiene acceso completo a las operaciones de la API de tu cuenta:
   Mantiene tu clave API en secreto. No la expongas en codigo del lado del cliente, repositorios publicos o URLs.
 </Warning>
 
+## Claves de Node API
+
+[Node API](/es/node-api/overview) — acceso a nodos completos de TRON en `node.tronrental.com` — tiene
+claves propias. Se crean como endpoints en [Panel → Node API](https://tronrental.com/dashboard/node-api).
+Una clave de Node API solo funciona en el nodo: esta API la rechaza con `403 NODE_API_KEY_ONLY`. Las
+claves API descritas en esta página tampoco funcionan en el nodo. Consulta
+[Node API → Endpoints y claves](/es/node-api/authentication).
+
 ## Uso de la clave y registro de solicitudes
 
 Cada solicitud autenticada con una clave API se guarda durante 7 días: método, ruta, código de estado, latencia e IP del cliente. Los parámetros de consulta no se muestran en esta vista. Abra [Dashboard → API Keys](https://tronrental.com/dashboard/api) y despliegue una clave para ver sus solicitudes recientes; la columna **Last Used** muestra la llamada más reciente (la marca de autenticación se actualiza como máximo una vez cada 5 minutos; el registro es exacto). El registro solo está disponible desde el panel: una clave API no puede leer su propio registro.

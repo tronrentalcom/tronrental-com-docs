@@ -1,0 +1,98 @@
+---
+title: "Node API"
+description: "按订阅通过 HTTP 和 gRPC 访问 TRON 全节点"
+---
+
+## 什么是 Node API
+
+Node API 让您的后端可以访问我们的 TRON 全节点。它就是 java-tron 节点本身的 API：`/wallet/*` 和 `/walletsolidity/*` 下相同的 HTTP 方法，以及相同的 gRPC 服务，通过密钥访问，配额和每秒限制由您的套餐决定。
+
+通过节点构建和广播交易，在您这边签名。您的私钥始终不离开您的服务器。
+
+## 地址
+
+| 协议 | 地址 |
+|---|---|
+| HTTP，全节点 | `https://node.tronrental.com/wallet/<method>` |
+| HTTP，已确认数据 | `https://node.tronrental.com/walletsolidity/<method>` |
+| gRPC | `node.tronrental.com:443`，TLS — 服务 `protocol.Wallet` 和 `protocol.WalletSolidity` |
+
+与 java-tron 一样，`/walletsolidity/*` 只根据已固化（已确认）的区块作答。节点在这两个路径下提供的每个方法均可使用。
+HTTP 接受 `GET` 和 `POST`：使用 `GET` 时节点读取查询字符串，使用 `POST` 时读取 JSON 请求体——二者不会同时读取。
+方法名区分大小写，与 java-tron 一致：`/wallet/getaccount`，但 `/wallet/getReward`。
+
+当请求带有 `Accept-Encoding: gzip` 时，1 KB 及以上的响应会以 gzip 压缩。大多数 HTTP 库默认会发送该请求头；使用 curl 时，请加上 `--compressed`。
+
+## 获取密钥
+
+<Steps>
+  <Step title="登录">
+    在 [tronrental.com](https://tronrental.com/auth/register) 注册或登录。
+  </Step>
+  <Step title="选择套餐">
+    打开[控制台 → Node API](https://tronrental.com/dashboard/node-api)。开通 7 天免费试用（充值满 $5 后解锁），或购买套餐，费用从您的账户余额中支付。参见[套餐与计费](/zh/node-api/plans)。
+  </Step>
+  <Step title="创建端点">
+    添加端点：填写名称，并可选设置 IP 白名单。每个端点就是一个独立的密钥。密钥只显示一次——请复制并妥善保存。参见[端点与密钥](/zh/node-api/authentication)。
+  </Step>
+  <Step title="发起第一次调用">
+    在 `TRON-PRO-API-KEY` 请求头中发送密钥。
+  </Step>
+</Steps>
+
+```bash
+curl -i -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "visible": true}'
+```
+
+响应就是节点自身的 JSON。`X-Node-API-WU` 响应头表示本次调用消耗了多少配额单位——这次为 `1`。参见[配额单位](/zh/node-api/quota-units)。
+
+## 包含内容
+
+- `/wallet/*` 和 `/walletsolidity/*` 下的全部节点方法，以及 gRPC 服务 `protocol.Wallet` 和 `protocol.WalletSolidity` 的一元方法。
+- 密钥可放在请求头、URL 路径或 gRPC 元数据中。
+- 最多 10 个端点（视套餐而定），每个都有独立的密钥、IP 白名单和用量计数器。
+- 新区块固定计价：距链头 20 个以内的区块无论大小均为 3 WU，其回执为 2 WU。
+- Start、Growth 和 Pro 套餐为软限制：配额用完后，请求仍可正常使用，超出配额的用量按超额用量计费。
+- 支持 CORS，浏览器应用可以直接调用节点。
+
+## 不包含的内容
+
+以下内容不属于节点 API，因此 Node API 不提供：
+
+- **地址历史和索引数据**——某个地址的转账、按地址查询的 TRC-20 转账、合约事件查询（如 `/v1/...` 和 `/event/...` 这类路径）。对它们的请求会得到 `404 not_found`。要跟踪转账，请读取区块及其回执——参见[代码示例](/zh/node-api/examples)中的“监听 USDT”示例。
+- **JSON-RPC**（`/jsonrpc`、`eth_*` 方法）未开启。
+- **需要私钥的方法**，如 `gettransactionsign` 或 `easytransferbyprivate`。节点不提供这些方法；对它们的请求会得到 `404 method_not_found`，且不计费。请在您这边签名。
+- **其他 gRPC 服务**以及 gRPC 服务器反射。参见 [gRPC](/zh/node-api/grpc)。
+
+<Tip>
+要估算一次合约调用将消耗的能量，请用相同的参数调用 `triggerconstantcontract`，并读取响应中的 `energy_used`。
+</Tip>
+
+## 响应头
+
+| 响应头 | 含义 |
+|---|---|
+| `X-Node-API-WU` | 本次调用消耗的配额单位。节点没有该方法时为 `0` |
+| `X-Node-API-Mode` | 服务在备用节点上运行期间为 `degraded`——参见[限制与错误](/zh/node-api/errors) |
+| `Retry-After` | 出现 `429` 和 `503` 时：重试前需等待的秒数 |
+
+通过 gRPC 时，相同的值位于尾部元数据中：`x-node-api-wu`、`x-node-api-mode`、`retry-after`，被拒绝时还有 `x-node-api-reason`。
+
+## 后续步骤
+
+<CardGroup cols={2}>
+  <Card title="端点与密钥" icon="key" href="/zh/node-api/authentication">
+    如何传递密钥、IP 白名单、浏览器应用。
+  </Card>
+  <Card title="代码示例" icon="code" href="/zh/node-api/examples">
+    使用 TronWeb、tronpy、curl 和 grpcurl 接入、发送 USDT 和监听 USDT。
+  </Card>
+  <Card title="套餐与计费" icon="credit-card" href="/zh/node-api/plans">
+    配额、限制、超额用量、试用和续费。
+  </Card>
+  <Card title="限制与错误" icon="triangle-exclamation" href="/zh/node-api/errors">
+    所有拒绝代码、gRPC 状态和降级模式。
+  </Card>
+</CardGroup>

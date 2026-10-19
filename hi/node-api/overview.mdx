@@ -1,0 +1,116 @@
+---
+title: "Node API"
+description: "HTTP और gRPC पर TRON फ़ुल नोड्स तक सब्सक्रिप्शन पहुँच"
+---
+
+## Node API क्या है
+
+Node API आपके बैकएंड को हमारे TRON फ़ुल नोड्स तक पहुँच देता है। यह खुद java-tron नोड का API है:
+`/wallet/*` और `/walletsolidity/*` के तहत वही HTTP मेथड और वही gRPC सेवाएँ — कुंजी के पीछे, आपके
+प्लान द्वारा तय कोटा और प्रति सेकंड सीमाओं के साथ।
+
+ट्रांज़ैक्शन नोड के ज़रिए बनाएँ और ब्रॉडकास्ट करें, और साइन अपनी तरफ़ करें। आपकी निजी कुंजी कभी आपके
+सर्वर से बाहर नहीं जाती।
+
+## पते
+
+| प्रोटोकॉल | पता |
+|---|---|
+| HTTP, फ़ुल नोड | `https://node.tronrental.com/wallet/<method>` |
+| HTTP, पुष्ट डेटा | `https://node.tronrental.com/walletsolidity/<method>` |
+| gRPC | `node.tronrental.com:443`, TLS — सेवाएँ `protocol.Wallet` और `protocol.WalletSolidity` |
+
+`/walletsolidity/*` केवल सॉलिडिफ़ाइड (पुष्ट) ब्लॉकों से जवाब देता है, जैसा java-tron करता है। इन दोनों
+पाथ पर नोड जो भी मेथड देता है, वह सब उपलब्ध है। HTTP `GET` और `POST` स्वीकार करता है: `GET` के साथ नोड
+क्वेरी स्ट्रिंग पढ़ता है, `POST` के साथ JSON बॉडी — दोनों एक साथ कभी नहीं। मेथड के नाम केस-सेंसिटिव
+हैं, जैसे java-tron में: `/wallet/getaccount`, लेकिन `/wallet/getReward`।
+
+1 KB और उससे बड़े रिस्पॉन्स gzip से कम्प्रेस किए जाते हैं, जब रिक्वेस्ट में `Accept-Encoding: gzip` हो।
+ज़्यादातर HTTP लाइब्रेरी इसे डिफ़ॉल्ट रूप से भेजती हैं; curl के साथ `--compressed` जोड़ें।
+
+## कुंजी पाएँ
+
+<Steps>
+  <Step title="साइन इन करें">
+    [tronrental.com](https://tronrental.com/auth/register) पर साइन अप या साइन इन करें।
+  </Step>
+  <Step title="प्लान चुनें">
+    [डैशबोर्ड → Node API](https://tronrental.com/dashboard/node-api) खोलें। 7 दिन का मुफ़्त ट्रायल शुरू
+    करें (यह $5 जमा करने के बाद खुलता है) या अपने खाते के बैलेंस से भुगतान करके प्लान लें। देखें
+    [प्लान और बिलिंग](/hi/node-api/plans)।
+  </Step>
+  <Step title="एंडपॉइंट बनाएँ">
+    एंडपॉइंट जोड़ें: एक नाम और, वैकल्पिक रूप से, IP अनुमति सूची। हर एंडपॉइंट अपनी अलग कुंजी है। कुंजी
+    एक बार दिखाई जाती है — उसे कॉपी करके सुरक्षित जगह रखें। देखें [एंडपॉइंट और कुंजियाँ](/hi/node-api/authentication)।
+  </Step>
+  <Step title="पहली कॉल करें">
+    कुंजी `TRON-PRO-API-KEY` हेडर में भेजें।
+  </Step>
+</Steps>
+
+```bash
+curl -i -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "visible": true}'
+```
+
+जवाब खुद नोड का JSON है। `X-Node-API-WU` रिस्पॉन्स हेडर बताता है कि कॉल पर कितनी कोटा इकाइयाँ लगीं —
+इस कॉल के लिए `1`। देखें [कोटा इकाइयाँ](/hi/node-api/quota-units)।
+
+## क्या शामिल है
+
+- `/wallet/*` और `/walletsolidity/*` के तहत हर नोड मेथड, और gRPC सेवाओं `protocol.Wallet` और
+  `protocol.WalletSolidity` के यूनरी मेथड।
+- कुंजी हेडर में, URL पाथ में या gRPC मेटाडेटा में।
+- प्लान के अनुसार अधिकतम 10 एंडपॉइंट, हर एक की अपनी कुंजी, IP अनुमति सूची और उपयोग काउंटर।
+- ताज़ा ब्लॉक तय कीमत पर: हेड से 20 के भीतर का ब्लॉक 3 WU का है और उसकी रसीदें 2 WU की, आकार चाहे
+  जो हो।
+- Start, Growth और Pro प्लान पर सॉफ़्ट लिमिट: कोटा खत्म होने पर रिक्वेस्ट चलती रहती हैं, और उससे ऊपर का
+  उपयोग अतिरिक्त उपयोग के रूप में बिल होता है।
+- CORS, ताकि ब्राउज़र ऐप सीधे नोड को कॉल कर सकें।
+
+## क्या शामिल नहीं है
+
+ये नोड API का हिस्सा नहीं हैं, इसलिए Node API इन्हें नहीं देता:
+
+- **पते का इतिहास और इंडेक्स किया गया डेटा** — किसी पते के ट्रांसफ़र, पते के हिसाब से TRC-20 ट्रांसफ़र,
+  कॉन्ट्रैक्ट इवेंट की क्वेरी (`/v1/...` और `/event/...` जैसे पाथ)। इन पर रिक्वेस्ट को
+  `404 not_found` मिलता है। ट्रांसफ़र पर नज़र रखने के लिए ब्लॉक और उनकी रसीदें पढ़ें — देखें
+  [कोड उदाहरण](/hi/node-api/examples) में “USDT पर नज़र” वाला उदाहरण।
+- **JSON-RPC** (`/jsonrpc`, `eth_*` मेथड) चालू नहीं है।
+- **निजी कुंजी लेने वाले मेथड**, जैसे `gettransactionsign` या `easytransferbyprivate`। नोड इन्हें नहीं
+  देता; इन्हें `404 method_not_found` मिलता है और इनका कोई शुल्क नहीं लगता। साइन अपनी तरफ़ करें।
+- **अन्य gRPC सेवाएँ** और gRPC सर्वर रिफ़्लेक्शन। देखें [gRPC](/hi/node-api/grpc)।
+
+<Tip>
+किसी कॉन्ट्रैक्ट कॉल में लगने वाली एनर्जी का अनुमान लगाने के लिए उन्हीं पैरामीटर के साथ
+`triggerconstantcontract` कॉल करें और जवाब से `energy_used` पढ़ें।
+</Tip>
+
+## रिस्पॉन्स हेडर
+
+| हेडर | अर्थ |
+|---|---|
+| `X-Node-API-WU` | इस कॉल पर लगी कोटा इकाइयाँ। जब नोड में ऐसा कोई मेथड न हो, तो `0` |
+| `X-Node-API-Mode` | जब तक सेवा रिज़र्व नोड पर चल रही है, `degraded` — देखें [सीमाएँ और त्रुटियाँ](/hi/node-api/errors) |
+| `Retry-After` | `429` और `503` पर: दोबारा कोशिश करने से पहले इंतज़ार के सेकंड |
+
+gRPC पर यही मान ट्रेलिंग मेटाडेटा में आते हैं: `x-node-api-wu`, `x-node-api-mode`,
+`retry-after`, और अस्वीकृति पर `x-node-api-reason`।
+
+## अगले कदम
+
+<CardGroup cols={2}>
+  <Card title="एंडपॉइंट और कुंजियाँ" icon="key" href="/hi/node-api/authentication">
+    कुंजी कैसे भेजें, IP अनुमति सूचियाँ, ब्राउज़र ऐप।
+  </Card>
+  <Card title="कोड उदाहरण" icon="code" href="/hi/node-api/examples">
+    TronWeb, tronpy, curl और grpcurl के साथ कनेक्ट करें, USDT भेजें और USDT पर नज़र रखें।
+  </Card>
+  <Card title="प्लान और बिलिंग" icon="credit-card" href="/hi/node-api/plans">
+    कोटा, सीमाएँ, अतिरिक्त उपयोग, ट्रायल और रिन्यूअल।
+  </Card>
+  <Card title="सीमाएँ और त्रुटियाँ" icon="triangle-exclamation" href="/hi/node-api/errors">
+    हर अस्वीकृति कोड, gRPC स्टेटस और डिग्रेडेड मोड।
+  </Card>
+</CardGroup>

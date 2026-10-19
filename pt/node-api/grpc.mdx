@@ -1,0 +1,93 @@
+---
+title: "gRPC"
+description: "Chamando o nó TRON via gRPC: endereço, chave, arquivos .proto, status"
+---
+
+## Conexão
+
+| Configuração | Valor |
+|---|---|
+| Endereço | `node.tronrental.com:443` |
+| Transporte | TLS na porta 443 |
+| Serviços | `protocol.Wallet` (nó completo) e `protocol.WalletSolidity` (dados confirmados) |
+| Métodos | os métodos unários desses dois serviços |
+| Chave | metadados `tron-pro-api-key` em cada chamada (`x-api-key` e `authorization: Bearer <YOUR_KEY>` também funcionam) |
+
+Cota, limites e preços são os mesmos do HTTP. Uma chamada é pesada pelo tamanho da sua resposta
+protobuf, com a mesma fórmula — veja [Unidades de cota](/pt/node-api/quota-units).
+
+## Arquivos .proto
+
+O servidor não tem reflexão: o seu cliente precisa dos arquivos `.proto` da TRON. Eles estão
+publicados no repositório [tronprotocol/protocol](https://github.com/tronprotocol/protocol); os
+serviços ficam em `api/api.proto`.
+
+```bash
+git clone https://github.com/tronprotocol/protocol
+```
+
+Com o grpcurl, aponte `-import-path` para o clone e `-proto` para `api/api.proto`:
+
+```bash
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  node.tronrental.com:443 protocol.Wallet/GetNowBlock2
+```
+
+No código, gere os stubs a partir dos mesmos arquivos com as ferramentas gRPC da sua linguagem, abra
+um canal TLS para `node.tronrental.com:443` e passe a chave nos metadados de cada chamada.
+
+## Nomes de métodos e bytes
+
+- **Os nomes dos métodos diferenciam maiúsculas de minúsculas**, como no `.proto`:
+  `protocol.Wallet/GetAccount`, não `getAccount`. Um método que o nó não tem termina com
+  `UNIMPLEMENTED`, `x-node-api-reason: method_not_found` e `x-node-api-wu: 0` — não custa nada.
+- **Endereços e IDs são bytes.** No JSON do grpcurl, bytes são base64. Um endereço TRON tem 21 bytes:
+  `41` seguido de 20 bytes. Para converter sua forma hex em base64:
+
+  ```bash
+  echo 41a614f803b6fd780986a42c78ec9c7f77e6ded13c | xxd -r -p | base64
+  # QaYU+AO2/XgJhqQseOycf3fm3tE8
+  ```
+
+- **Uma mensagem de requisição tem no máximo 512 KB.** Uma maior é recusada com `RESOURCE_EXHAUSTED`
+  antes de ser processada.
+
+## Metadados finais
+
+| Chave | Quando | Significado |
+|---|---|---|
+| `x-node-api-wu` | chamadas respondidas, e `method_not_found` | unidades de cota que a chamada custou |
+| `x-node-api-mode` | chamadas respondidas em modo degradado | `degraded` |
+| `x-node-api-reason` | recusas | o código da recusa, o mesmo do `code` no HTTP |
+| `retry-after` | algumas recusas | segundos de espera antes de tentar novamente |
+
+## Códigos de status
+
+As recusas são mapeadas para status gRPC conforme o seu status HTTP. O código em si está em
+`x-node-api-reason`; a lista completa está em [Limites e erros](/pt/node-api/errors).
+
+| Status HTTP | Status gRPC | Códigos |
+|---|---|---|
+| `400` | `INVALID_ARGUMENT` | `key_conflict`, `bad_request` |
+| `401` | `UNAUTHENTICATED` | `no_key`, `unknown_key` |
+| `403` | `PERMISSION_DENIED` | `key_disabled`, `ip_not_allowed`, `no_plan`, `account_blocked`, `plan_expired` |
+| `404` | `UNIMPLEMENTED` | `not_found`, `method_not_found` |
+| `429` | `RESOURCE_EXHAUSTED` | `quota`, `overage_budget`, `rate_read`, `rate_block`, `rate_write`, `trials` |
+| `502`, `503` | `UNAVAILABLE` | `node_error`, `no_snapshot`, `no_node`, `degraded`, `capacity`, `capacity_write`, `busy` |
+
+Um erro retornado pelo próprio nó (por exemplo, `INVALID_ARGUMENT` para uma transação malformada) é
+repassado a você como está e custa 1 WU: o nó fez o trabalho. Se o nó não responde, a chamada termina
+com `UNAVAILABLE` e `x-node-api-reason: node_error` e não custa nada.
+
+<Note>
+Um `RESOURCE_EXHAUSTED` sem `x-node-api-reason` vem do próprio servidor gRPC: a mensagem de requisição
+passa de 512 KB, ou o servidor está segurando chamadas demais ao mesmo tempo. No segundo caso, tente
+novamente após uma breve pausa.
+</Note>
+
+## Novas tentativas e transmissões
+
+Uma chamada nunca é repetida em outro nó sem você saber: um `UNAVAILABLE` pode significar que a conexão
+caiu depois de o nó receber a requisição. Reenviar a mesma transação assinada para
+`BroadcastTransaction` é seguro — a rede executa um ID de transação apenas uma vez.

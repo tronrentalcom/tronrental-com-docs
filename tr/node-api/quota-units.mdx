@@ -1,0 +1,93 @@
+---
+title: "Kota Birimleri (WU)"
+description: "Node API bir çağrıyı nasıl ölçer: formül, blok katsayıları ve yeni bloklar"
+---
+
+## WU nedir
+
+WU, Node API'nin kullanım birimidir. Planınızın kotası ve okuma limiti WU cinsinden sayılır. Bir
+çağrının WU maliyeti düğümün yanıtının boyutuna göre belirlenir: düğüm ne kadar çok veri döndürürse o
+kadar çok iş yapmıştır. Çoğu çağrı — bir hesap, kaynakları, bir kontrat çağrısı, bir işlemin
+oluşturulması veya yayınlanması — 1 WU tutar.
+
+Yanıtlanan her çağrı maliyetini bildirir: HTTP üzerinden `X-Node-API-WU` yanıt başlığı, gRPC
+üzerinden `x-node-api-wu` sondaki meta verisi. Kontrol paneli kullanımınızı günlere göre gösterir.
+
+## Formül
+
+```
+WU = max(1, round((1.5 + 0.11 × KB) / 3.5 × factor))
+```
+
+- **KB** — düğümün yanıtının sıkıştırmadan önceki boyutu, kilobayt cinsinden (bayt ÷ 1024). gzip
+  WU'dan değil, trafikten tasarruf sağlar.
+- **round** — en yakın tam sayıya yuvarlama; yarımlar yukarı yuvarlanır.
+- **factor** — katsayı, çağrının türüne bağlıdır:
+
+| Çağrı | Katsayı |
+|---|---|
+| Tam bloklar: `getnowblock`, `getblockbynum`, `getblockbyid`, `"detail": true` ile `getblock` ve `getblockbylimitnext` ile `getblockbylatestnum` aralıkları | `0.65` |
+| Tam bir bloğun makbuzları: `gettransactioninfobyblocknum` | `1.6` |
+| Diğer her şey, `"detail": false` ile `getblock` (yalnızca başlık) dahil | `1` |
+
+Aynı kurallar `/walletsolidity/*` ve gRPC için de geçerlidir; gRPC'de yanıt protobuf olarak ölçülür ve
+bu yöntemlerin gRPC karşılıkları (`GetNowBlock2`, `GetBlockByNum2`, `GetBlock`, …) aynı çağrı
+türlerinden sayılır.
+
+| Yanıt boyutu | Katsayı `1` | Bloklar, `0.65` | Makbuzlar, `1.6` |
+|---|---|---|---|
+| 10 KB | 1 | 1 | 1 |
+| 50 KB | 2 | 1 | 3 |
+| 100 KB | 4 | 2 | 6 |
+| 200 KB | 7 | 4 | 11 |
+| 500 KB | 16 | 10 | 26 |
+| 800 KB | 26 | 17 | 41 |
+
+Katsayı `1` ile boyutu yaklaşık 34 KB'a kadar olan yanıtlar 1 WU tutar.
+
+## Yeni bloklar
+
+Ağın **zincir ucundan en fazla 20 blok** gerideki bir blok — yaklaşık son bir dakika — boyutu ne
+olursa olsun sabit **3 WU**, makbuzları ise **2 WU** tutar. Henüz üretilmemiş bir blok, (boş)
+yanıtının maliyeti kadar tutar: 1 WU. Daha eski bloklar ve makbuzları formüle göre ücretlendirilir.
+
+Aralıklar (`getblockbylimitnext`, `getblockbylatestnum`) her zaman yanıtın tamamı üzerinden formüle
+göre ücretlendirilir ve çağrı başına en fazla 10 blok döndürür.
+
+## Ölçülmüş örnekler
+
+| Çağrı | Yanıt | WU |
+|---|---|---|
+| `getaccount`, `triggerconstantcontract`, `getnodeinfo` | birkaç KB | 1 |
+| `"detail": false` ile `getblock` | 0.5 KB | 1 |
+| `getnowblock` | 600–800 KB | 3 |
+| `gettransactioninfobyblocknum`, yeni blok | 230–290 KB | 2 |
+| `getblockbynum`, eski blok | 236 KB | 5 |
+| `getblockbynum`, eski blok | 783 KB | 16 |
+| `gettransactioninfobyblocknum`, eski blok | 110 KB | 6 |
+| `gettransactioninfobyblocknum`, eski blok | 179 KB | 10 |
+| `"num": 3` ile `getblockbylatestnum` | 1.6 MB | 34 |
+
+## Ücretsiz olanlar
+
+- **Retler.** Bir hata `code` değeriyle reddedilen istek (bkz. [Limitler ve hatalar](/tr/node-api/errors))
+  ücretlendirilmez ve `X-Node-API-WU` taşımaz.
+- **Düğümde olmayan bir yöntem** — `X-Node-API-WU: 0` ile `404 method_not_found`. Yine de saniye
+  başına limitinizde bir çağrı olarak sayılır; böylece yazım hatalarıyla dönen bir döngü
+  faturalandırılmaz, yalnızca yavaşlatılır.
+- **Düğümden yanıt gelmemesi** — `502 node_error`.
+
+Düğümün kendisinin döndürdüğü bir hata da bir yanıttır: java-tron çoğu hatayı JSON olarak bildirir
+(`{"Error": "…"}`), çoğu zaman `200` durumuyla, ve bunlar her yanıt gibi boyutlarına göre
+ücretlendirilir — en az 1 WU.
+
+## Kullanımınızı tahmin etme
+
+- Zincirin her bloğunu takip etmek — başlık (1 WU) artı yeni bloğun makbuzları (2 WU) — blok başına
+  3 WU'dur: günde yaklaşık 86400 WU ya da 30 günde yaklaşık 2.6M WU.
+- Düğüm üzerinden oluşturulup yayınlanan bir USDT transferi 2 WU'dur.
+- Pahalı olan eski blokları okumaktır: 600–800 KB'lık eski bir blok 13–17 WU'dur.
+
+Kota WU ile harcanır; saniye başına limitler ise çağrı sınıfına göre sayılır — saniyedeki okuma WU'su,
+saniyedeki blok isteği, saniyedeki işlem gönderimi. Bkz. [Limitler ve hatalar](/tr/node-api/errors) ve
+her planın değerleri için [Planlar ve faturalandırma](/tr/node-api/plans).

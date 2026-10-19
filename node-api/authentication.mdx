@@ -1,0 +1,135 @@
+---
+title: "Endpoints and Keys"
+description: "How Node API keys work and how to pass them over HTTP and gRPC"
+---
+
+## Endpoints
+
+An endpoint is a Node API key. You create endpoints in
+[Dashboard → Node API](https://tronrental.com/dashboard/node-api) once you have a plan or a trial.
+Each endpoint has:
+
+- its own key;
+- its own IP allowlist;
+- its own usage counter — WU and calls for the current period, shown in the dashboard.
+
+The quota and the per-second limits belong to your plan and are **shared by all its endpoints**: a
+second endpoint gives you a separate key and counter, not more throughput. How many endpoints you can
+have depends on the plan — see [Plans and billing](/node-api/plans).
+
+The key is shown **only once**, when the endpoint is created. If you lose it, delete the endpoint and
+create a new one. In the dashboard you can also edit an endpoint's IP allowlist, switch it off and on,
+and delete it:
+
+| Endpoint state | Requests with its key |
+|---|---|
+| Switched off | `403 key_disabled` until you switch it on again |
+| Deleted | `401 unknown_key`; the key cannot be restored |
+
+<Note>
+Changes made in the dashboard — a new endpoint, a new IP allowlist, an endpoint switched off or
+deleted, a paid renewal — reach the node gateway within about 30 seconds. A key you have just created
+may get `401 unknown_key` during that time.
+</Note>
+
+### Node API keys and REST API keys
+
+Node API keys are a separate kind of key. An endpoint key works only at `node.tronrental.com`; the
+TronRental REST API (`api.tronrental.com`) refuses it with `403 NODE_API_KEY_ONLY`. Your REST API keys,
+in turn, do not work at the node and get `401 unknown_key` there.
+
+## Passing the key over HTTP
+
+Send the key in **one** of these places:
+
+| Where | Example |
+|---|---|
+| `TRON-PRO-API-KEY` header | `TRON-PRO-API-KEY: <YOUR_KEY>` |
+| `X-API-Key` header | `X-API-Key: <YOUR_KEY>` |
+| `Authorization` header | `Authorization: Bearer <YOUR_KEY>` |
+| First segment of the path | `https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount` |
+
+Header names are not case-sensitive. A key in the path is removed before the request is passed to the
+node, so the node never sees it.
+
+<CodeGroup>
+```bash Key in a header
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash Key in the path
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+</CodeGroup>
+
+One request carries one key. The same key sent twice (for example, in the path and in a header) is
+fine; two **different** keys are refused with `400 key_conflict`, because we cannot tell which of them
+should pay.
+
+<Warning>
+A key in the path is part of the URL, so it ends up wherever URLs are written down: proxy and
+application logs, monitoring, browser history. Prefer a header when your client lets you set one.
+</Warning>
+
+### Libraries
+
+**TronWeb** sends the headers you give it:
+
+```javascript
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+```
+
+**tronpy** sends `api_key=` only to its default host, so with our address it would send no key at
+all. Set the header on the provider's session yourself — or put the key in the path, **with the
+trailing slash**: without it tronpy drops the last segment of the address, and the key with it.
+
+```python
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+
+# or the key in the path — keep the trailing slash
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+## Passing the key over gRPC
+
+Send the key in the `tron-pro-api-key` metadata of every call (`x-api-key` and
+`authorization: Bearer <YOUR_KEY>` work too). gRPC has no path to carry a key. See [gRPC](/node-api/grpc).
+
+## IP allowlist
+
+Each endpoint can be limited to a list of IP addresses — IPv4 or IPv6, exact addresses, not ranges.
+With an empty list the key works from any address. With a list, requests from any other address get
+`403 ip_not_allowed`. An IPv4 address written in IPv6 form (`::ffff:203.0.113.7`) counts as the IPv4
+address itself.
+
+## Browser apps (CORS)
+
+Node API answers browser requests from any origin, so a dApp can call it directly:
+
+| Header | Value |
+|---|---|
+| `Access-Control-Allow-Origin` | `*` |
+| `Access-Control-Allow-Methods` | `GET, POST, OPTIONS` |
+| `Access-Control-Allow-Headers` | `Content-Type, TRON-PRO-API-KEY, X-API-Key, Authorization` |
+| `Access-Control-Expose-Headers` | `X-Node-API-WU, X-Node-API-Mode, Retry-After` |
+| `Access-Control-Max-Age` | `86400` |
+
+<Warning>
+A key in browser code is visible to everyone who opens your app, and anyone who copies it spends your
+quota. An IP allowlist does not help here — your users' addresses are not known in advance. Give the
+browser its own endpoint, keep an eye on its counter, and delete it if it is abused: your server keys
+keep working.
+</Warning>

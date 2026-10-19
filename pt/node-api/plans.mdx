@@ -1,0 +1,115 @@
+---
+title: "Planos e cobrança"
+description: "Planos do Node API, limites, excedente, teste, renovação e como funciona o pagamento"
+---
+
+## Planos
+
+| Plano | Preço | Período | Cota | Leituras | Requisições de blocos | Envio de transações | Endpoints | Acima da cota |
+|---|---|---|---|---|---|---|---|---|
+| Teste | grátis | 7 dias | 5M WU | 20 WU/s | 1/s | 2/s | 1 | recusa `429` |
+| Start | 19.90 USDT | 30 dias | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.80 USDT por 1M WU |
+| Growth | 49 USDT | 30 dias | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.70 USDT por 1M WU |
+| Pro | 149 USDT | 30 dias | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.60 USDT por 1M WU |
+| Slot de nó | 1.50 USDT por 1 WU/s | 30 dias | sem cota | 50–300 WU/s | 5/s | 30/s | 10 | — |
+
+- **Leituras** — toda chamada que não é de bloco nem de envio de transação, limitada em WU por segundo.
+- **Requisições de blocos** — blocos inteiros, recibos de blocos e intervalos de blocos, limitadas em
+  chamadas por segundo.
+- **Envio de transações** — `broadcasttransaction`, `broadcasthex` e `BroadcastTransaction` do gRPC,
+  limitado em transações por segundo.
+
+A cota e os limites pertencem ao plano e são compartilhados por todos os seus endpoints. Como os limites
+são aplicados e como é uma recusa: [Limites e erros](/pt/node-api/errors). Como uma chamada é pesada:
+[Unidades de cota](/pt/node-api/quota-units).
+
+Os preços e limites atuais estão sempre disponíveis, sem chave, no catálogo de planos no fim desta
+página. Se algum dia divergirem desta tabela, valem o catálogo e o painel.
+
+### Slot de nó
+
+Um slot de nó não tem cota: você compra uma velocidade de leitura fixa, de 50 a 300 WU/s, e faz quantas
+requisições essa velocidade permitir, durante todo o período. O preço é 1.50 USDT por 1 WU/s — por
+exemplo, 100 WU/s custam 150 USDT por 30 dias. Requisições de blocos, envio de transações e endpoints
+são como no Pro.
+
+### Teste
+
+O teste é grátis: 7 dias, 5M WU, 20 WU/s e um endpoint. Ele é liberado quando os depósitos confirmados
+na sua conta chegam a $5 — USDT pelo valor nominal, TRX pela cotação do depósito; o dinheiro fica no seu
+saldo. Um teste por conta, e só antes do primeiro plano da conta.
+
+O teste não tem excedente: quando a cota acaba, as requisições recebem `429 quota`. Quando os 7 dias
+terminam, a chave para de funcionar (`403 plan_expired`). Para continuar sem interrupção, assine um
+plano — ele começa na hora, e o tempo de teste não usado não é transferido.
+
+<Note>
+Todos os testes juntos compartilham uma capacidade comum. Em momentos de pico, uma requisição de teste
+pode receber `429 trials`; tente novamente após os segundos de `Retry-After`. Os planos pagos não são
+afetados.
+</Note>
+
+## Pagamento
+
+Os preços são em dólares americanos (USDT). Nós os cobramos em TRX do seu saldo na TronRental, pela
+cotação no momento de cada cobrança — a mesma cotação dos depósitos em USDT. Por isso, o valor em TRX de
+uma renovação pode ser diferente do que você pagou antes. Cada cobrança, com o preço em USDT, a cotação
+e o valor em TRX, aparece em **Cobranças** em [Painel → Node API](https://tronrental.com/dashboard/node-api).
+Só o proprietário da conta pode assinar um plano.
+
+**Desconto para quem compra energia.** Se a conta comprou energia por 3000 TRX ou mais nos últimos 30
+dias, qualquer plano custa 19.90 USDT a menos (nunca abaixo de zero). Verificamos isso a cada compra e a
+cada renovação.
+
+## Cota e excedente
+
+A cota vale por período. No Start, no Growth e no Pro, a cota é um limite flexível: quando ela acaba, as
+requisições continuam sendo atendidas dentro dos mesmos limites por segundo do plano. Os WU usados acima
+da cota são **excedente**, cobrado por WU pelo preço de excedente do plano na tabela acima: 250000 WU
+acima da cota custam um quarto do preço por 1M WU.
+
+- O excedente é cobrado do seu saldo **uma vez por dia, às 00:00 UTC**, referente ao dia UTC anterior.
+- As requisições acima da cota só são permitidas enquanto o seu saldo cobre o excedente delas. Quando
+  deixa de cobrir, elas são recusadas com `429 overage_budget` até você recarregar; uma recarga as
+  libera de novo em cerca de um minuto.
+- Se o saldo cobrir só parte do excedente de um dia, o restante é cobrado após a sua próxima recarga. O
+  excedente não pago continua devido depois que a assinatura termina e é cobrado na próxima recarga.
+
+Um slot de nó não tem cota nem excedente. O teste tem cota e não tem excedente.
+
+## Renovação
+
+Um plano pago dura 30 dias. Com a **renovação automática** ativada (o padrão quando você compra pelo
+painel), o plano é renovado no fim do período pelo seu preço em TRX, na cotação daquele dia. Com a
+renovação automática desativada, a assinatura termina junto com o período.
+
+**Mudança de plano.** O novo plano entra em vigor na próxima renovação; até lá, o seu plano atual
+continua. Os endpoints são mantidos. Se o novo plano permitir menos endpoints do que você tem ativados,
+na renovação desativamos os menos usados no período (`403 key_disabled`) — exclua os endpoints
+excedentes antes para escolher você mesmo. Endpoints desativados podem ser ativados de novo dentro do
+limite do plano.
+
+## Quando uma renovação não pode ser paga
+
+| Status | O que acontece | Suas chaves |
+|---|---|---|
+| Não paga | O saldo não cobriu a renovação. Tentamos de novo a cada minuto; após uma recarga, o plano é renovado a partir do momento do pagamento, e os dias sem acesso não são cobrados | Recusadas com `403 plan_expired` |
+| Encerrada | Sete dias sem pagamento, renovação automática desativada ou fim do teste. Assine um plano para continuar | Recusadas com `403 plan_expired`; os endpoints são mantidos e voltam a funcionar depois que você assina um plano |
+
+Avisamos você por e-mail e pelo Telegram quando uma renovação falha, quando uma assinatura não paga
+termina e quando o saldo deixa de cobrir o excedente.
+
+## Catálogo de planos
+
+O catálogo de planos é público e não exige chave:
+
+```bash
+curl https://api.tronrental.com/v1/node-api/plans
+```
+
+Ele retorna `sales_enabled`, a lista `plans` (para cada um: `plan`, `price` e `final_price` em `usdt` e
+`trx`, `period_days`, `quota_wu`, `read_wu_s`, `block_rps`, `write_tps`, `overage_per_1m_wu`,
+`endpoints`), a oferta de slot de nó em `slot` (`price_per_wu_s`, `min_wu_s`, `max_wu_s`, `block_rps`,
+`write_tps`, `endpoints` e as `options` com preço), a `rate_usd_per_trx` atual e um bloco `discount`.
+Os valores em TRX são pela cotação atual e mudam com ela. Quando chamado com a sua chave da API REST em
+`X-API-Key`, `final_price` e `discount` mostram o desconto da sua conta.

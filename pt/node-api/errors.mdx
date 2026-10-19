@@ -1,0 +1,123 @@
+---
+title: "Limites e erros"
+description: "Limites por segundo do Node API, códigos de recusa, modo degradado e novas tentativas"
+---
+
+## Limites por segundo
+
+Toda chamada pertence a uma de três classes. Ela gasta a sua cota e o limite por segundo da sua
+classe:
+
+| Classe | Chamadas | Limitada em |
+|---|---|---|
+| Bloco | `getnowblock`, `getblockbynum`, `getblockbyid`, `getblock` com `"detail": true`, `getblockbylimitnext`, `getblockbylatestnum`, `gettransactioninfobyblocknum` e os seus equivalentes gRPC | chamadas por segundo |
+| Envio de transações | `broadcasttransaction`, `broadcasthex`, `BroadcastTransaction` do gRPC | transações por segundo |
+| Leitura | todo o resto | WU por segundo |
+
+Os números dependem do plano — veja [Planos e cobrança](/pt/node-api/plans). Os limites pertencem ao
+plano e são compartilhados por todos os seus endpoints.
+
+Cada limite comporta o equivalente a um segundo. Com 30 WU/s, por exemplo, até 30 WU passam de uma vez,
+e depois o limite se recompõe a 30 WU por segundo. Uma leitura é admitida enquanto o limite de leitura
+tiver alguma folga, e o seu custo é descontado depois da resposta: uma leitura pesada pode levar o
+limite abaixo de zero, e as leituras seguintes esperam até ele se recompor. Um intervalo de blocos
+retorna no máximo 10 blocos por chamada.
+
+## Formato do erro
+
+Uma recusa é um JSON com uma mensagem em `Error` e um `code` legível por máquina:
+
+```json
+{"Error": "read limit (WU/s) exceeded", "code": "rate_read"}
+```
+
+Use o `code`; a mensagem pode mudar. Uma recusa sempre tem `code`. Os erros do próprio nó não têm: o
+java-tron responde `{"Error": "…"}` sem `code`, normalmente com status `200`, e uma resposta dessas é
+cobrada como qualquer outra — veja [Unidades de cota](/pt/node-api/quota-units).
+
+As recusas não são cobradas e não trazem `X-Node-API-WU`, exceto `method_not_found`, que traz
+`X-Node-API-WU: 0`. As recusas `429` e `503` normalmente trazem `Retry-After`.
+
+## Códigos de recusa
+
+| Status | `code` | Significado | O que fazer |
+|---|---|---|---|
+| `400` | `key_conflict` | Duas chaves diferentes em uma requisição | Envie uma chave |
+| `400` | `bad_request` | A requisição não pode ser lida do jeito que o nó a leria: mais de 10 blocos em um intervalo, um número de bloco que não é inteiro, um parâmetro informado duas vezes, parâmetros de bloco tanto na query quanto no corpo, campos desconhecidos no corpo de um método de bloco, `detail` diferente de `true` ou `false` | Corrija a requisição |
+| `401` | `no_key` | Nenhuma chave na requisição | Adicione a chave |
+| `401` | `unknown_key` | Essa chave não existe: digitada errado, excluída, uma chave da API REST ou criada há menos de cerca de 30 segundos | Verifique a chave |
+| `403` | `key_disabled` | O endpoint está desativado — por você ou, na renovação, pelo limite de endpoints do plano | Ative-o no painel |
+| `403` | `ip_not_allowed` | O endereço IP da requisição não está na lista de IPs permitidos do endpoint | Adicione o endereço |
+| `403` | `no_plan` | A conta não tem plano do Node API | Assine um plano |
+| `403` | `plan_expired` | A assinatura não está ativa: a renovação não foi paga, a assinatura terminou ou o teste acabou | Recarregue o saldo ou assine um plano |
+| `403` | `account_blocked` | O acesso à API da conta está suspenso | Fale com o suporte |
+| `404` | `not_found` | Não é um caminho de método do nó: fora de `/wallet/*` e `/walletsolidity/*` (por exemplo, `/v1/...` ou `/jsonrpc`), ou um nome de método com caracteres que não são letras e dígitos | Verifique o caminho |
+| `404` | `method_not_found` | O nó não tem esse método. Os nomes dos métodos diferenciam maiúsculas de minúsculas, como no java-tron: `getaccount`, mas `getReward`. Custa 0 WU | Verifique a grafia |
+| `405` | `method_not_allowed` | Um método HTTP diferente de `GET` ou `POST` | Use `GET` ou `POST` |
+| `413` | `body_too_large` | O corpo da requisição passa de 512 KB | Envie um corpo menor |
+| `429` | `rate_read` | Limite de leitura (WU por segundo) atingido | Aguarde `Retry-After` |
+| `429` | `rate_block` | Limite de requisições de blocos (chamadas por segundo) atingido | Aguarde `Retry-After` |
+| `429` | `rate_write` | Limite de envio de transações (transações por segundo) atingido | Aguarde `Retry-After` |
+| `429` | `trials` | A capacidade compartilhada por todos os testes está ocupada | Aguarde `Retry-After` |
+| `429` | `quota` | A cota acabou em um plano sem excedente (o teste) | Assine um plano |
+| `429` | `overage_budget` | A cota acabou e o saldo não cobre mais o excedente | Recarregue o saldo |
+| `502` | `node_error` | O nó não respondeu, ou não respondeu em 30 segundos | Tente novamente |
+| `503` | `degraded` | Um bloco mais antigo, seus recibos ou um intervalo de blocos durante o modo degradado | Tente mais tarde — veja abaixo |
+| `503` | `capacity` | A capacidade compartilhada do serviço está esgotada | Aguarde `Retry-After` |
+| `503` | `capacity_write` | A capacidade compartilhada de envio de transações do serviço está esgotada | Aguarde `Retry-After` |
+| `503` | `busy` | Nenhuma conexão livre com o nó em 2 segundos | Aguarde `Retry-After` |
+| `503` | `no_node` | Nenhum nó disponível no momento | Aguarde `Retry-After` |
+| `503` | `no_snapshot` | O serviço não consegue verificar chaves no momento | Aguarde `Retry-After` |
+
+No gRPC, os mesmos códigos chegam nos metadados finais `x-node-api-reason`, com um status gRPC no lugar
+do HTTP — veja [gRPC](/pt/node-api/grpc).
+
+## Modo degradado
+
+Quando o nosso nó principal do Node API está indisponível ou fica atrás da rede, o serviço continua
+funcionando em um nó de reserva. Enquanto isso:
+
+- as chamadas respondidas trazem o cabeçalho `X-Node-API-Mode: degraded` (no gRPC, os metadados finais
+  `x-node-api-mode: degraded`);
+- o seu limite de leitura em WU por segundo cai pela metade; os limites de requisições de blocos e de
+  envio de transações continuam como estão;
+- os blocos recentes — a até 20 da ponta — e seus recibos são servidos normalmente, enquanto blocos mais
+  antigos, seus recibos e intervalos de blocos são recusados com `503 degraded`;
+- a capacidade compartilhada é menor, então `503 capacity` fica mais provável.
+
+O envio de transações nunca é cortado. O modo normal volta sozinho; você não precisa fazer nada. Se a
+sua aplicação lê blocos antigos, pause esse trabalho enquanto o cabeçalho estiver presente e retome
+quando ele sumir.
+
+## Novas tentativas
+
+- `429 rate_read`, `rate_block`, `rate_write`, `trials` e todo `503`: aguarde o número de segundos de
+  `Retry-After` e tente novamente.
+- `429 quota` e `429 overage_budget`: esperar não ajuda. Recarregue o saldo ou mude de plano.
+- `502 node_error`: tente novamente. Reenviar a mesma transação assinada é seguro — a rede executa um
+  ID de transação apenas uma vez.
+- Outros `4xx`: corrija a requisição; repeti-la dá a mesma resposta.
+
+```python
+import time
+import requests
+
+NODE = "https://node.tronrental.com"
+HEADERS = {"TRON-PRO-API-KEY": "<YOUR_KEY>"}
+STOP = {"quota", "overage_budget"}  # esperar não vai ajudar
+
+def node_call(method, body=None, attempts=5):
+    for attempt in range(attempts):
+        resp = requests.post(f"{NODE}/wallet/{method}", json=body or {}, headers=HEADERS)
+        if resp.status_code in (429, 502, 503):
+            try:
+                code = resp.json().get("code")
+            except ValueError:
+                code = None  # não é o nosso JSON, p. ex. a página de erro de um proxy
+            if code in STOP:
+                raise RuntimeError(f"Node API: {code}")
+            time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+            continue
+        return resp
+    raise RuntimeError("Node API: retries exhausted")
+```

@@ -1,0 +1,207 @@
+---
+title: "कोड उदाहरण"
+description: "TronWeb, tronpy, curl और grpcurl के साथ कनेक्ट करें, USDT भेजें और USDT ट्रांसफ़र पर नज़र रखें"
+---
+
+चार क्लाइंट के साथ तीन आम काम। `<YOUR_KEY>` को अपने किसी एंडपॉइंट की कुंजी से और `TXYZ…` को असली पते
+से बदलें। टिप्पणियों में दिए गए WU वही हैं जो Node API ठीक इन्हीं कॉल के लिए लेता है।
+
+## कनेक्ट
+
+पहली कॉल खाते का डेटा पढ़ती है — 1 WU।
+
+<CodeGroup>
+```javascript TronWeb
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+
+const account = await tronWeb.trx.getAccount('TXYZ…');
+```
+
+```python tronpy
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+# tronpy api_key= सिर्फ़ अपने डिफ़ॉल्ट होस्ट को भेजता है — हेडर खुद सेट करें
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+account = client.get_account('TXYZ…')
+
+# या कुंजी पाथ में — आख़िर में स्लैश के साथ, वरना tronpy कुंजी छोड़ देगा
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+```bash curl
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+
+# या कुंजी पाथ में
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash grpcurl
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  -d '{"address": "QZ…"}' \
+  node.tronrental.com:443 protocol.Wallet/GetAccount
+# पता — base64 में 21 बाइट
+```
+</CodeGroup>
+
+grpcurl को TRON की `.proto` फ़ाइलें चाहिए और वह पते base64 बाइट के रूप में लेता है — देखें [gRPC](/hi/node-api/grpc)।
+
+## USDT भेजें
+
+ट्रांज़ैक्शन नोड के ज़रिए बनाएँ, अपनी तरफ़ साइन करें, नोड के ज़रिए ब्रॉडकास्ट करें। आपकी निजी कुंजी कभी
+आपके सर्वर से बाहर नहीं जाती। एक ट्रांसफ़र 2 WU का है; tronpy में 3 WU, और कॉन्ट्रैक्ट लोड करने के लिए
+एक बार 2 WU।
+
+इन उदाहरणों में `from` (`sender`) और `to` भेजने वाले और पाने वाले के पते हैं, `amount` टोकन की सबसे छोटी
+इकाई में है (USDT में 6 दशमलव स्थान हैं: 1 USDT = `1000000`), और `PRIVATE_KEY` भेजने वाले की निजी कुंजी
+है। `fee_limit` वह अधिकतम TRX है, sun में, जो ट्रांसफ़र बर्न कर सकता है: `30000000` यानी 30 TRX।
+
+<CodeGroup>
+```javascript TronWeb
+const USDT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+
+// 1. नोड के ज़रिए बनाएँ — 1 WU
+const { transaction } = await tronWeb.transactionBuilder.triggerSmartContract(
+  USDT, 'transfer(address,uint256)', { feeLimit: 30_000_000 },
+  [{ type: 'address', value: to }, { type: 'uint256', value: amount }],
+  from,
+);
+// 2. अपनी तरफ़ साइन करें — कुंजी आपके सर्वर पर रहती है
+const signed = await tronWeb.trx.sign(transaction, PRIVATE_KEY);
+// 3. नोड के ज़रिए ब्रॉडकास्ट — 1 WU
+const result = await tronWeb.trx.sendRawTransaction(signed);
+```
+
+```python tronpy
+from tronpy.keys import PrivateKey
+
+# ABI के साथ USDT कॉन्ट्रैक्ट — 2 WU, एक बार
+usdt = client.get_contract('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+# 1. बनाएँ: नोड से रेफ़रेंस ब्लॉक और txID — 2 WU
+txn = (usdt.functions.transfer(to, amount)
+       .with_owner(sender).fee_limit(30_000_000).build())
+# 2. अपनी तरफ़ साइन करें — कुंजी आपके सर्वर पर रहती है
+signed = txn.sign(PrivateKey(bytes.fromhex(PRIVATE_KEY)))
+# 3. नोड के ज़रिए ब्रॉडकास्ट — 1 WU
+result = signed.broadcast()
+```
+
+```bash curl
+# 1. नोड के ज़रिए बनाएँ — 1 WU
+curl -X POST https://node.tronrental.com/wallet/triggersmartcontract \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"owner_address": "TFrom…", "visible": true,
+       "contract_address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+       "function_selector": "transfer(address,uint256)",
+       "parameter": "<abi>", "fee_limit": 30000000}'
+# 2. अपनी तरफ़ साइन करें — कुंजी आपके सर्वर पर रहती है
+# 3. नोड के ज़रिए ब्रॉडकास्ट — 1 WU
+curl -X POST https://node.tronrental.com/wallet/broadcasttransaction \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d @signed.json
+```
+
+```bash grpcurl
+# 1. नोड के ज़रिए बनाएँ — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/TriggerContract < call.json
+# 2. अपनी तरफ़ साइन करें — कुंजी आपके सर्वर पर रहती है
+# 3. नोड के ज़रिए ब्रॉडकास्ट — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/BroadcastTransaction < signed.json
+```
+</CodeGroup>
+
+**curl के साथ**, `parameter` hex में `transfer(address,uint256)` के ABI-एन्कोडेड आर्गुमेंट हैं: पाने
+वाले का 20-बाइट पता (शुरुआती `41` के बिना उसका hex रूप), बाईं ओर शून्यों से 64 hex वर्णों तक भरा हुआ,
+फिर राशि, जिसे भी 64 तक भरा जाता है। नोड बिना साइन किए `transaction` और उसके `txID` के साथ जवाब देता
+है। `txID` को भेजने वाले की निजी कुंजी से साइन करें, सिग्नेचर को ट्रांज़ैक्शन में
+`"signature": ["<hex>"]` के रूप में जोड़ें, और उस ट्रांज़ैक्शन ऑब्जेक्ट को `signed.json` के रूप में भेजें।
+
+**grpcurl के साथ**, `call.json` एक `TriggerSmartContract` संदेश है: `owner_address`, `contract_address`
+और `data` (4-बाइट फ़ंक्शन सिलेक्टर और उसके बाद ABI-एन्कोडेड आर्गुमेंट), सभी base64 बाइट के रूप में।
+इस संदेश में फ़ी लिमिट का कोई फ़ील्ड नहीं है: लौटाए गए ट्रांज़ैक्शन पर `raw_data.fee_limit` सेट करें,
+फिर नए `raw_data` का SHA-256 साइन करें — इस बदलाव के बाद लौटा हुआ `txid` मेल नहीं खाता। देखें
+[gRPC](/hi/node-api/grpc)।
+
+<Tip>
+वही साइन किया हुआ ट्रांज़ैक्शन दोबारा भेजना सुरक्षित है: नेटवर्क किसी ट्रांज़ैक्शन ID को केवल एक बार
+निष्पादित करता है, और दोहराया गया ब्रॉडकास्ट `DUP_TRANSACTION_ERROR` के रूप में लौटता है। जिस
+ट्रांज़ैक्शन की समय-सीमा निकल चुकी है, उसे फिर से बनाना और साइन करना होगा।
+</Tip>
+
+## USDT ट्रांसफ़र पर नज़र रखें
+
+सबसे नया ब्लॉक हेडर पढ़ें, फिर उस ब्लॉक की रसीदें, और USDT वाली रसीदें रख लें। हेडर 1 WU का है और
+ताज़ा ब्लॉक की रसीदें 2 WU की — प्रति ब्लॉक 3 WU। इस तरह चेन के हर ब्लॉक पर नज़र रखने में महीने में
+लगभग 2.6M WU लगते हैं।
+
+<CodeGroup>
+```javascript TronWeb
+// ब्लॉक हेडर — 1 WU
+const head = await tronWeb.fullNode.request('wallet/getblock', { detail: false }, 'post');
+const num = head.block_header.raw_data.number;
+// ताज़ा ब्लॉक की रसीदें — 2 WU
+const infos = await tronWeb.fullNode.request(
+  'wallet/gettransactioninfobyblocknum', { num }, 'post');
+// USDT ट्रांसफ़र — log में Transfer इवेंट
+const usdt = infos.filter(i => i.contract_address === '41a614f803b6fd780986a42c78ec9c7f77e6ded13c');
+```
+
+```python tronpy
+# ब्लॉक हेडर — 1 WU
+head = client.provider.make_request('wallet/getblock', {'detail': False})
+num = head['block_header']['raw_data']['number']
+# ताज़ा ब्लॉक की रसीदें — 2 WU
+infos = client.provider.make_request(
+    'wallet/gettransactioninfobyblocknum', {'num': num})
+# USDT ट्रांसफ़र — log में Transfer इवेंट
+usdt = [i for i in infos if i.get('contract_address') == '41a614f803b6fd780986a42c78ec9c7f77e6ded13c']
+```
+
+```bash curl
+# ब्लॉक हेडर — 1 WU
+NUM=$(curl -s -X POST https://node.tronrental.com/wallet/getblock \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d '{"detail": false}' \
+  | jq '.block_header.raw_data.number')
+# ताज़ा ब्लॉक की रसीदें — 2 WU
+curl -X POST https://node.tronrental.com/wallet/gettransactioninfobyblocknum \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d "{\"num\": $NUM}"
+```
+
+```bash grpcurl
+# ब्लॉक हेडर — 1 WU
+NUM=$(grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d '{"detail": false}' \
+  node.tronrental.com:443 protocol.Wallet/GetBlock | jq -r '.blockHeader.rawData.number')
+# ताज़ा ब्लॉक की रसीदें — 2 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d "{\"num\": $NUM}" \
+  node.tronrental.com:443 protocol.Wallet/GetTransactionInfoByBlockNum
+```
+</CodeGroup>
+
+USDT कॉल की हर रसीद में `log` के अंदर टोकन के `Transfer` इवेंट होते हैं। किसी इवेंट में `topics[0]`
+`ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef` होता है, `topics[1]` और `topics[2]`
+भेजने वाला और पाने वाला हैं (आख़िरी 40 hex वर्ण `41` प्रीफ़िक्स के बिना पता हैं), और `data` राशि है।
+सफल ट्रांसफ़र के लिए `receipt.result` का मान `SUCCESS` होता है। ऊपर का फ़िल्टर USDT कॉन्ट्रैक्ट को सीधे
+की गई कॉल रखता है; दूसरे कॉन्ट्रैक्ट के ज़रिए भेजे गए USDT को भी पकड़ने के लिए, इसके बजाय हर log एंट्री
+का `address` जाँचें — USDT के लिए `a614f803b6fd780986a42c78ec9c7f77e6ded13c`।
+
+<Note>
+नया ब्लॉक लगभग हर 3 सेकंड में आता है। आख़िरी प्रोसेस किया गया ब्लॉक याद रखें और उसके बाद के हर नंबर की
+रसीदें लें, ताकि धीमी पोलिंग कभी कोई ब्लॉक न छोड़े। हेड से 20 से ज़्यादा नीचे के ब्लॉक की रसीदें ताज़ा
+नहीं रहतीं और उनका शुल्क आकार के हिसाब से लगता है — देखें [कोटा इकाइयाँ](/hi/node-api/quota-units)।
+</Note>

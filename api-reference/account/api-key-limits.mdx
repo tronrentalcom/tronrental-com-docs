@@ -1,0 +1,90 @@
+---
+title: Get API Key Limits
+api: GET /api/v1/auth/api-keys/limits
+description: "Your account-level rate limit and how many API keys the account may hold"
+---
+
+## Get API Key Limits
+
+Returns the rate limit that applies to your requests and the account's API key quota, including the
+endpoints of a Node API plan. The rate limit tiers are described in
+[Rate Limits](/resources/rate-limits).
+
+A Node API endpoint is an API key too: a Node API plan adds its endpoint allowance to the account's key
+limit, and the keys that carry `node_api` count against both. A Node API key cannot call this
+endpoint — the REST API answers it with `403 NODE_API_KEY_ONLY`.
+
+### Response
+
+<ResponseField name="tier" type="string">
+  Your rate limit tier: `paying` (an account with a past purchase or subscription, or a balance of
+  10 TRX or more) or `zero` (any other account)
+</ResponseField>
+
+<ResponseField name="limit_per_min" type="number">
+  Requests per minute allowed for you now
+</ResponseField>
+
+<ResponseField name="custom_rate_limit" type="number | null">
+  Your individual rate limit, if we set one for your account; `null` otherwise
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  Whether the account-level rate limit is in effect. When `false`, it neither counts nor refuses
+  requests
+</ResponseField>
+
+<ResponseField name="observe_only" type="boolean">
+  Matters only while `enabled` is `true`. When `true`, requests above the account-level limit are
+  counted but still served; when `false`, they are refused with `429 RATE_LIMIT_EXCEEDED` and a
+  `Retry-After` header
+</ResponseField>
+
+<ResponseField name="key_count" type="number">
+  API keys the account holds now, Node API endpoints included (switched-off keys count, deleted keys
+  do not)
+</ResponseField>
+
+<ResponseField name="key_limit" type="number">
+  How many API keys the account may hold: the account's own allowance plus `node_endpoint_limit`
+</ResponseField>
+
+<ResponseField name="custom_key_limit" type="number | null">
+  The account's individual key allowance, if we set one; `null` means the default
+</ResponseField>
+
+<ResponseField name="can_create" type="boolean">
+  `true` while `key_count` is below `key_limit`
+</ResponseField>
+
+<ResponseField name="node_endpoint_limit" type="number">
+  How many Node API endpoints the account's latest Node API plan allows; `0` if the account has never
+  had one
+</ResponseField>
+
+<ResponseField name="node_endpoint_count" type="number">
+  Keys that carry `node_api` — the account's Node API endpoints, switched-off ones included
+</ResponseField>
+
+### Example
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/limits \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tier": "paying",
+  "limit_per_min": 1000,
+  "custom_rate_limit": null,
+  "enabled": true,
+  "observe_only": false,
+  "key_count": 3,
+  "key_limit": 6,
+  "custom_key_limit": null,
+  "can_create": true,
+  "node_endpoint_limit": 3,
+  "node_endpoint_count": 1
+}
+```

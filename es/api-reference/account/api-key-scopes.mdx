@@ -1,0 +1,62 @@
+---
+title: Listar alcances de clave API
+api: GET /api/v1/auth/api-keys/scopes
+description: "Los alcances que puede llevar una clave API, agrupados por tipo"
+---
+
+## Listar alcances de clave API
+
+Devuelve el catálogo de alcances de las claves API, agrupados como los muestra el panel. Úsalo para
+conocer los nombres de alcance válidos.
+
+Las claves de Node API son un tipo de clave aparte: llevan solo el alcance `node_api`, nunca junto con
+los demás alcances, y solo funcionan en `node.tronrental.com`. Se crean como endpoints en
+[Panel → Node API](https://tronrental.com/dashboard/node-api); cuántas puedes tener depende de tu plan
+de Node API. Una clave de Node API no puede llamar a este endpoint — la API REST la rechaza con
+`403 NODE_API_KEY_ONLY`. Consulta [Node API → Endpoints y claves](/es/node-api/authentication).
+
+### Respuesta
+
+<ResponseField name="read" type="string[]">
+  Alcances de lectura: `view`, `deposit_view`
+</ResponseField>
+
+<ResponseField name="node" type="string[]">
+  El alcance de Node API: `node_api`. Una clave que lo lleva no lleva ningún otro alcance
+</ResponseField>
+
+<ResponseField name="write" type="string[]">
+  Alcances que gastan el saldo o modifican servicios: `buy_energy`, `buy_bandwidth`, `smart_mode`,
+  `transfer_packages`, `energy_resale`
+</ResponseField>
+
+<ResponseField name="danger" type="string[]">
+  `withdraw`. Activarlo en una clave requiere 2FA y una lista blanca de IP no vacía
+</ResponseField>
+
+<ResponseField name="default" type="string[]">
+  Alcances que recibe una nueva clave de la API REST cuando no se elige ninguno: todos los alcances de
+  lectura y escritura, sin `withdraw`
+</ResponseField>
+
+<ResponseField name="locked" type="string[]">
+  Alcances que toda clave de la API REST tiene siempre: `view`
+</ResponseField>
+
+### Ejemplo
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/scopes \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "read": ["view", "deposit_view"],
+  "node": ["node_api"],
+  "write": ["buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "danger": ["withdraw"],
+  "default": ["view", "deposit_view", "buy_energy", "buy_bandwidth", "smart_mode", "transfer_packages", "energy_resale"],
+  "locked": ["view"]
+}
+```

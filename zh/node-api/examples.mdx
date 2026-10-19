@@ -1,0 +1,188 @@
+---
+title: "代码示例"
+description: "使用 TronWeb、tronpy、curl 和 grpcurl 接入、发送 USDT 和监听 USDT 转账"
+---
+
+用四种客户端完成三个常见任务。将 `<YOUR_KEY>` 替换为您某个端点的密钥，将 `TXYZ…` 替换为真实地址。注释中的 WU 就是 Node API 对这些调用实际收取的费用。
+
+## 接入
+
+第一次调用读取账户数据——1 WU。
+
+<CodeGroup>
+```javascript TronWeb
+import { TronWeb } from 'tronweb';
+
+const tronWeb = new TronWeb({
+  fullHost: 'https://node.tronrental.com',
+  headers: { 'TRON-PRO-API-KEY': '<YOUR_KEY>' },
+});
+
+const account = await tronWeb.trx.getAccount('TXYZ…');
+```
+
+```python tronpy
+from tronpy import Tron
+from tronpy.providers import HTTPProvider
+
+# tronpy 只会把 api_key= 发给它的默认地址 — 请自行设置请求头
+provider = HTTPProvider('https://node.tronrental.com')
+provider.sess.headers['TRON-PRO-API-KEY'] = '<YOUR_KEY>'
+client = Tron(provider)
+account = client.get_account('TXYZ…')
+
+# 或将密钥放在路径中 — 末尾必须带斜杠，否则 tronpy 会丢掉密钥
+# client = Tron(HTTPProvider('https://node.tronrental.com/<YOUR_KEY>/'))
+```
+
+```bash curl
+curl -X POST https://node.tronrental.com/wallet/getaccount \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"address": "TXYZ…", "visible": true}'
+
+# 或将密钥放在路径中
+curl -X POST https://node.tronrental.com/<YOUR_KEY>/wallet/getaccount \
+  -d '{"address": "TXYZ…", "visible": true}'
+```
+
+```bash grpcurl
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' \
+  -d '{"address": "QZ…"}' \
+  node.tronrental.com:443 protocol.Wallet/GetAccount
+# 地址 — 21 字节 base64
+```
+</CodeGroup>
+
+grpcurl 需要 TRON 的 `.proto` 文件，并以 base64 字节的形式接收地址——参见 [gRPC](/zh/node-api/grpc)。
+
+## 发送 USDT
+
+通过节点构建交易，在您这边签名，再通过节点广播。您的私钥始终不离开您的服务器。一笔转账消耗 2 WU；使用 tronpy 时为 3 WU，另需一次性 2 WU 加载合约。
+
+在这些示例中，`from`（`sender`）和 `to` 分别是发送方和接收方的地址，`amount` 以代币的最小单位计（USDT 有 6 位小数：1 USDT = `1000000`），`PRIVATE_KEY` 是发送方的私钥。
+`fee_limit` 是这笔转账最多可燃烧的 TRX，以 sun 计：`30000000` 即 30 TRX。
+
+<CodeGroup>
+```javascript TronWeb
+const USDT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+
+// 1. 通过节点构建 — 1 WU
+const { transaction } = await tronWeb.transactionBuilder.triggerSmartContract(
+  USDT, 'transfer(address,uint256)', { feeLimit: 30_000_000 },
+  [{ type: 'address', value: to }, { type: 'uint256', value: amount }],
+  from,
+);
+// 2. 在本地签名 — 私钥留在您的服务器
+const signed = await tronWeb.trx.sign(transaction, PRIVATE_KEY);
+// 3. 通过节点广播 — 1 WU
+const result = await tronWeb.trx.sendRawTransaction(signed);
+```
+
+```python tronpy
+from tronpy.keys import PrivateKey
+
+# USDT 合约及其 ABI — 2 WU，仅一次
+usdt = client.get_contract('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+# 1. 构建：从节点获取参考区块和 txID — 2 WU
+txn = (usdt.functions.transfer(to, amount)
+       .with_owner(sender).fee_limit(30_000_000).build())
+# 2. 在本地签名 — 私钥留在您的服务器
+signed = txn.sign(PrivateKey(bytes.fromhex(PRIVATE_KEY)))
+# 3. 通过节点广播 — 1 WU
+result = signed.broadcast()
+```
+
+```bash curl
+# 1. 通过节点构建 — 1 WU
+curl -X POST https://node.tronrental.com/wallet/triggersmartcontract \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' \
+  -d '{"owner_address": "TFrom…", "visible": true,
+       "contract_address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+       "function_selector": "transfer(address,uint256)",
+       "parameter": "<abi>", "fee_limit": 30000000}'
+# 2. 在本地签名 — 私钥留在您的服务器
+# 3. 通过节点广播 — 1 WU
+curl -X POST https://node.tronrental.com/wallet/broadcasttransaction \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d @signed.json
+```
+
+```bash grpcurl
+# 1. 通过节点构建 — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/TriggerContract < call.json
+# 2. 在本地签名 — 私钥留在您的服务器
+# 3. 通过节点广播 — 1 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d @ \
+  node.tronrental.com:443 protocol.Wallet/BroadcastTransaction < signed.json
+```
+</CodeGroup>
+
+**使用 curl 时**，`parameter` 是 `transfer(address,uint256)` 参数的 ABI 编码（十六进制）：先是接收方的 20 字节地址（其十六进制形式去掉开头的 `41`），左侧补零至 64 个十六进制字符，然后是金额，同样补齐到 64 个字符。
+节点返回一个未签名的 `transaction` 及其 `txID`。用发送方的私钥对 `txID` 签名，将签名以 `"signature": ["<hex>"]` 的形式加入交易，再将该交易对象作为 `signed.json` 发送。
+
+**使用 grpcurl 时**，`call.json` 是一条 `TriggerSmartContract` 消息：`owner_address`、`contract_address` 和 `data`（4 字节函数选择器，后跟 ABI 编码的参数），均为 base64 字节。
+该消息没有手续费上限字段：请在返回的交易上设置 `raw_data.fee_limit`，然后对新 `raw_data` 的 SHA-256 签名——修改之后，返回的 `txid` 就不再匹配了。参见 [gRPC](/zh/node-api/grpc)。
+
+<Tip>
+重复发送同一笔已签名交易是安全的：网络对同一个交易 ID 只执行一次，重复广播会返回 `DUP_TRANSACTION_ERROR`。已过期的交易必须重新构建并签名。
+</Tip>
+
+## 监听 USDT 转账
+
+读取最新的区块头，再读取该区块的回执，从中保留 USDT 相关的回执。区块头 1 WU，新区块的回执 2 WU——每个区块 3 WU。以这种方式跟踪链上的每个区块，每月约 2.6M WU。
+
+<CodeGroup>
+```javascript TronWeb
+// 区块头 — 1 WU
+const head = await tronWeb.fullNode.request('wallet/getblock', { detail: false }, 'post');
+const num = head.block_header.raw_data.number;
+// 新区块回执 — 2 WU
+const infos = await tronWeb.fullNode.request(
+  'wallet/gettransactioninfobyblocknum', { num }, 'post');
+// USDT 转账 — log 中的 Transfer 事件
+const usdt = infos.filter(i => i.contract_address === '41a614f803b6fd780986a42c78ec9c7f77e6ded13c');
+```
+
+```python tronpy
+# 区块头 — 1 WU
+head = client.provider.make_request('wallet/getblock', {'detail': False})
+num = head['block_header']['raw_data']['number']
+# 新区块回执 — 2 WU
+infos = client.provider.make_request(
+    'wallet/gettransactioninfobyblocknum', {'num': num})
+# USDT 转账 — log 中的 Transfer 事件
+usdt = [i for i in infos if i.get('contract_address') == '41a614f803b6fd780986a42c78ec9c7f77e6ded13c']
+```
+
+```bash curl
+# 区块头 — 1 WU
+NUM=$(curl -s -X POST https://node.tronrental.com/wallet/getblock \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d '{"detail": false}' \
+  | jq '.block_header.raw_data.number')
+# 新区块回执 — 2 WU
+curl -X POST https://node.tronrental.com/wallet/gettransactioninfobyblocknum \
+  -H 'TRON-PRO-API-KEY: <YOUR_KEY>' -d "{\"num\": $NUM}"
+```
+
+```bash grpcurl
+# 区块头 — 1 WU
+NUM=$(grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d '{"detail": false}' \
+  node.tronrental.com:443 protocol.Wallet/GetBlock | jq -r '.blockHeader.rawData.number')
+# 新区块回执 — 2 WU
+grpcurl -import-path ./protocol -proto api/api.proto \
+  -H 'tron-pro-api-key: <YOUR_KEY>' -d "{\"num\": $NUM}" \
+  node.tronrental.com:443 protocol.Wallet/GetTransactionInfoByBlockNum
+```
+</CodeGroup>
+
+USDT 调用的每条回执都在 `log` 中携带该代币的 `Transfer` 事件。在一个事件中，`topics[0]` 为 `ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`，`topics[1]` 和 `topics[2]` 分别是发送方和接收方（最后 40 个十六进制字符即去掉 `41` 前缀的地址），`data` 是金额。
+转账成功时，`receipt.result` 为 `SUCCESS`。上面的过滤条件保留的是对 USDT 合约的直接调用；如果还要捕获由其他合约转移的 USDT，请改为检查每个 log 条目的 `address`——USDT 对应 `a614f803b6fd780986a42c78ec9c7f77e6ded13c`。
+
+<Note>
+大约每 3 秒产生一个新区块。请记住您处理过的最后一个区块，并为其后的每个区块号获取回执，这样即使轮询变慢也不会漏掉区块。
+比链头低 20 个以上的区块，其回执不再算作新区块回执，按大小计费——参见[配额单位](/zh/node-api/quota-units)。
+</Note>

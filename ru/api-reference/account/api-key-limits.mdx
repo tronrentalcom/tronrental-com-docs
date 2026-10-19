@@ -1,0 +1,89 @@
+---
+title: Получить лимиты API-ключей
+api: GET /api/v1/auth/api-keys/limits
+description: "Лимит запросов вашего аккаунта и сколько API-ключей может быть у аккаунта"
+---
+
+## Получить лимиты API-ключей
+
+Возвращает лимит запросов, который действует для вас, и лимит на число API-ключей аккаунта, включая
+эндпоинты тарифа Node API. Уровни лимита запросов описаны в разделе
+[Лимиты запросов](/ru/resources/rate-limits).
+
+Эндпоинт Node API — тоже API-ключ: тариф Node API добавляет свою норму эндпоинтов к лимиту ключей
+аккаунта, и ключи с `node_api` учитываются в обоих. Ключ Node API не может вызвать этот эндпоинт —
+REST API отвечает на него `403 NODE_API_KEY_ONLY`.
+
+### Ответ
+
+<ResponseField name="tier" type="string">
+  Ваш уровень лимита запросов: `paying` (аккаунт с прошлой покупкой или подпиской либо с балансом
+  от 10 TRX) или `zero` (любой другой аккаунт)
+</ResponseField>
+
+<ResponseField name="limit_per_min" type="number">
+  Сколько запросов в минуту вам разрешено сейчас
+</ResponseField>
+
+<ResponseField name="custom_rate_limit" type="number | null">
+  Ваш индивидуальный лимит запросов, если мы установили его для вашего аккаунта; иначе `null`
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  Действует ли лимит запросов уровня аккаунта. При `false` он не считает и не отклоняет запросы
+</ResponseField>
+
+<ResponseField name="observe_only" type="boolean">
+  Имеет значение, только пока `enabled` равно `true`. При `true` запросы сверх лимита уровня аккаунта
+  учитываются, но обслуживаются; при `false` они отклоняются с `429 RATE_LIMIT_EXCEEDED` и заголовком
+  `Retry-After`
+</ResponseField>
+
+<ResponseField name="key_count" type="number">
+  Сколько API-ключей у аккаунта сейчас, включая эндпоинты Node API (выключенные ключи учитываются,
+  удалённые — нет)
+</ResponseField>
+
+<ResponseField name="key_limit" type="number">
+  Сколько API-ключей может быть у аккаунта: собственная норма аккаунта плюс `node_endpoint_limit`
+</ResponseField>
+
+<ResponseField name="custom_key_limit" type="number | null">
+  Индивидуальная норма ключей аккаунта, если мы её установили; `null` означает значение по умолчанию
+</ResponseField>
+
+<ResponseField name="can_create" type="boolean">
+  `true`, пока `key_count` меньше `key_limit`
+</ResponseField>
+
+<ResponseField name="node_endpoint_limit" type="number">
+  Сколько эндпоинтов Node API допускает последний тариф Node API аккаунта; `0`, если у аккаунта его
+  никогда не было
+</ResponseField>
+
+<ResponseField name="node_endpoint_count" type="number">
+  Ключи с `node_api` — эндпоинты Node API аккаунта, включая выключенные
+</ResponseField>
+
+### Пример
+
+```bash
+curl https://api.tronrental.com/v1/auth/api-keys/limits \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "tier": "paying",
+  "limit_per_min": 1000,
+  "custom_rate_limit": null,
+  "enabled": true,
+  "observe_only": false,
+  "key_count": 3,
+  "key_limit": 6,
+  "custom_key_limit": null,
+  "can_create": true,
+  "node_endpoint_limit": 3,
+  "node_endpoint_count": 1
+}
+```
