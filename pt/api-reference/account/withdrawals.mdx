@@ -21,9 +21,26 @@ Saca TRX para qualquer endereço TRON. Taxa: 1 TRX.
   Valor a sacar em TRX
 </ParamField>
 
+<ParamField body="currency" type="string">
+  `TRX` (padrão) ou `USDT`. Com `USDT`, `amount_trx` contém o valor em USDT a enviar.
+</ParamField>
+
 <ParamField body="totp_code" type="string">
   Código 2FA (se o 2FA estiver ativado)
 </ParamField>
+
+### Cabeçalhos
+
+<ParamField header="Idempotency-Key" type="string">
+  Opcional, até 64 caracteres. Envie uma chave nova (um UUID, por exemplo) a cada novo saque e a mesma chave ao repetir uma requisição cuja resposta você não recebeu — a repetição devolve o primeiro saque em vez de criar um segundo.
+</ParamField>
+
+### Repetição segura
+
+- A mesma chave com os mesmos `to_address`, `amount_trx` e `currency` retorna `200` com o saque criado pela primeira requisição, no estado atual. Nada é cobrado duas vezes.
+- A mesma chave com outro corpo é recusada com `422` e o código `IDEMPOTENCY_KEY_REUSED`; uma chave com mais de 64 caracteres — com `422` e `IDEMPOTENCY_KEY_TOO_LONG`. As chaves valem dentro da sua conta e não expiram — nunca reutilize uma chave em outro saque.
+- Um saque não finalizado (`pending`, `scheduled` ou `processing`) por vez: outra requisição enquanto ele existir recebe `400` com `You already have a pending withdrawal`.
+- Depois de um saque criado com `Idempotency-Key`, o próximo pode ser criado em 5 segundos; sem o cabeçalho a pausa continua de 60 segundos (`429`, veja [Limites de requisições](/resources/rate-limits)).
 
 ### Exemplo
 
@@ -31,6 +48,7 @@ Saca TRX para qualquer endereço TRON. Taxa: 1 TRX.
 curl -X POST https://api.tronrental.com/v1/account/withdrawal \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 7f9c2b1e-5d4a-4c1e-9b3f-2a6d8e0c4f11" \
   -d '{
     "to_address": "TDestinationAddress...",
     "amount_trx": "100"

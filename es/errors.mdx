@@ -74,6 +74,8 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `FORBIDDEN` | `403` | La clave carece del alcance que exige este endpoint, o la IP de la solicitud no está en la lista permitida de la clave |
 | `NODE_API_KEY_ONLY` | `403` | Se envió una clave de Node API a esta API — solo funciona en `node.tronrental.com` |
 | `INSUFFICIENT_BALANCE` | `402` | Saldo de la cuenta insuficiente para esta operación |
+| `IDEMPOTENCY_KEY_REUSED` | `422` | Esta Idempotency-Key ya se usó con otro cuerpo de solicitud |
+| `IDEMPOTENCY_KEY_TOO_LONG` | `422` | La Idempotency-Key tiene más de 64 caracteres |
 | `INVALID_ADDRESS` | `400` | Dirección TRON no válida |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | El destino es un contrato inteligente — TRON prohíbe delegarle recursos |
 | `INVALID_VOLUME` | `400` | La cantidad solicitada está fuera del rango permitido |

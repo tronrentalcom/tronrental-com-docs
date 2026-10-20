@@ -42,7 +42,7 @@ la bloquean por completo durante treinta, con `Retry-After: 1800`. Las cuentas d
 | Endpoint | Límite | Se cuenta por |
 |---|---|---|
 | `POST /api/v1/invoices` | 10 solicitudes/minuto | dirección IP |
-| `POST /api/v1/account/withdrawal` | 1 solicitud/minuto | cuenta |
+| `POST /api/v1/account/withdrawal` | 5 s tras un retiro creado con `Idempotency-Key`, 60 s tras uno sin él | cuenta |
 | `POST /api/v1/energy/auto-refill` | 10 solicitudes/minuto | cuenta |
 | `POST /api/v1/bandwidth/auto-refill` | 10 solicitudes/minuto | cuenta |
 

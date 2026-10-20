@@ -40,7 +40,7 @@ description: "API रेट लिमिटिंग नीति"
 | एंडपॉइंट | सीमा | किसके हिसाब से |
 |---|---|---|
 | `POST /api/v1/invoices` | 10 अनुरोध/मिनट | IP पता |
-| `POST /api/v1/account/withdrawal` | 1 अनुरोध/मिनट | खाता |
+| `POST /api/v1/account/withdrawal` | `Idempotency-Key` के साथ बनी निकासी के बाद 5 सेकंड, उसके बिना बनी निकासी के बाद 60 सेकंड | खाता |
 | `POST /api/v1/energy/auto-refill` | 10 अनुरोध/मिनट | खाता |
 | `POST /api/v1/bandwidth/auto-refill` | 10 अनुरोध/मिनट | खाता |
 
