@@ -133,6 +133,7 @@ console.log(await resp.json());
 | `409` | `AUTOREFILL_LIMIT_REACHED` | 您的账户已有 20 条带宽规则；该上限也在 `error.limit` 中给出 |
 | `422` | — | 缺少字段或字段超出范围，或 `duration` 不是 `"1h"` 或 `"1d"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | 一分钟内的创建请求超过 10 次 |
+| `503` | `AUTOREFILL_DISABLED` | 带宽自动补充暂时关闭；未创建规则——请稍后重试 |
 
 ```json
 {
@@ -140,6 +141,17 @@ console.log(await resp.json());
     "error": {
       "code": "AUTOREFILL_ADDRESS_TAKEN",
       "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_DISABLED",
+      "message": "Auto-refill is temporarily unavailable; please try again later"
     }
   }
 }

@@ -129,6 +129,7 @@ console.log(await resp.json());
 | `409` | `AUTOREFILL_LIMIT_REACHED` | Your account already has 20 energy rules; the limit is also in `error.limit` |
 | `422` | — | A field is missing or out of range, or `duration` is not `"1h"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | More than 10 create requests in a minute |
+| `503` | `AUTOREFILL_DISABLED` | Auto Refill for energy is temporarily switched off; no rule was created — try again later |
 
 ```json
 {
@@ -148,6 +149,17 @@ console.log(await resp.json());
     "error": {
       "code": "AUTOREFILL_ADDRESS_TAKEN",
       "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_DISABLED",
+      "message": "Auto-refill is temporarily unavailable; please try again later"
     }
   }
 }

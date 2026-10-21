@@ -129,6 +129,7 @@ console.log(await resp.json());
 | `409` | `AUTOREFILL_LIMIT_REACHED` | Hesabınızda zaten 20 enerji kuralı var; sınır `error.limit` içinde de yer alır |
 | `422` | — | Bir alan eksik veya aralık dışında ya da `duration` değeri `"1h"` değil |
 | `429` | `RATE_LIMIT_EXCEEDED` | Bir dakika içinde 10'dan fazla oluşturma isteği |
+| `503` | `AUTOREFILL_DISABLED` | Enerji için Otomatik Dolum geçici olarak kapalı; kural oluşturulmadı — daha sonra yeniden deneyin |
 
 ```json
 {
@@ -148,6 +149,17 @@ console.log(await resp.json());
     "error": {
       "code": "AUTOREFILL_ADDRESS_TAKEN",
       "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_DISABLED",
+      "message": "Auto-refill is temporarily unavailable; please try again later"
     }
   }
 }
