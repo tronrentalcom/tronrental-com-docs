@@ -129,6 +129,7 @@ console.log(await resp.json());
 | `409` | `AUTOREFILL_LIMIT_REACHED` | आपके खाते में पहले से 20 एनर्जी नियम हैं; सीमा `error.limit` में भी दी जाती है |
 | `422` | — | कोई फ़ील्ड गायब है या सीमा से बाहर है, या `duration` `"1h"` नहीं है |
 | `429` | `RATE_LIMIT_EXCEEDED` | एक मिनट में नियम बनाने के 10 से अधिक अनुरोध |
+| `503` | `AUTOREFILL_DISABLED` | एनर्जी के लिए ऑटो रिफिल अस्थायी रूप से बंद है; कोई नियम नहीं बना — कुछ देर बाद पुनः प्रयास करें |
 
 ```json
 {
@@ -148,6 +149,17 @@ console.log(await resp.json());
     "error": {
       "code": "AUTOREFILL_ADDRESS_TAKEN",
       "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_DISABLED",
+      "message": "Auto-refill is temporarily unavailable; please try again later"
     }
   }
 }

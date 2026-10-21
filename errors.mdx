@@ -103,6 +103,7 @@ Returned in the standard shape by the [Auto Refill](/api-reference/auto-refill/o
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | The account already has a rule for this address and resource — edit that rule instead |
 | `AUTOREFILL_LIMIT_REACHED` | `409` | The account already has 20 rules for this resource; the limit is also in `error.limit` |
 | `AUTOREFILL_IN_PROGRESS` | `409` | A refill for the rule is being bought right now — retry the edit or delete in a minute |
+| `AUTOREFILL_DISABLED` | `503` | Auto Refill for this resource is temporarily switched off; returned only when creating a rule. No rule was created — try again later |
 | `NOT_FOUND` | `404` | No such rule on the account |
 
 ## Withdrawal verification codes

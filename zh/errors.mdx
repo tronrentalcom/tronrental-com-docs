@@ -97,6 +97,7 @@ Node API（`node.tronrental.com`）有自己的错误代码，格式也不同—
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | 账户中已有该地址和该资源的规则——请改为编辑那条规则 |
 | `AUTOREFILL_LIMIT_REACHED` | `409` | 账户中该资源的规则已达 20 条；该上限也在 `error.limit` 中给出 |
 | `AUTOREFILL_IN_PROGRESS` | `409` | 该规则的一次补充正在购买中——请一分钟后重试编辑或删除 |
+| `AUTOREFILL_DISABLED` | `503` | 该资源的自动补充暂时关闭；仅在创建规则时返回。未创建规则——请稍后重试 |
 | `NOT_FOUND` | `404` | 账户中没有该规则 |
 
 ## 提现验证代码

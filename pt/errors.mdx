@@ -104,6 +104,7 @@ Retornados no formato padrão pelos endpoints de [Recarga automática](/pt/api-r
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | A conta já tem uma regra para este endereço e recurso — edite essa regra |
 | `AUTOREFILL_LIMIT_REACHED` | `409` | A conta já tem 20 regras para este recurso; o limite também vem em `error.limit` |
 | `AUTOREFILL_IN_PROGRESS` | `409` | Uma recarga da regra está sendo comprada neste momento — repita a edição ou a exclusão em um minuto |
+| `AUTOREFILL_DISABLED` | `503` | A Recarga automática deste recurso está temporariamente desativada; retornado apenas ao criar uma regra. Nenhuma regra foi criada — tente novamente mais tarde |
 | `NOT_FOUND` | `404` | Não existe essa regra na conta |
 
 ## Códigos de verificação de saque

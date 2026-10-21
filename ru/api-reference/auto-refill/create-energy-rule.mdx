@@ -129,6 +129,7 @@ console.log(await resp.json());
 | `409` | `AUTOREFILL_LIMIT_REACHED` | В вашем аккаунте уже 20 правил для энергии; лимит также передаётся в `error.limit` |
 | `422` | — | Поле отсутствует или вне диапазона, либо `duration` — не `"1h"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | Больше 10 запросов на создание за минуту |
+| `503` | `AUTOREFILL_DISABLED` | Автопополнение энергии временно выключено; правило не создано — повторите позже |
 
 ```json
 {
@@ -148,6 +149,17 @@ console.log(await resp.json());
     "error": {
       "code": "AUTOREFILL_ADDRESS_TAKEN",
       "message": "Auto-refill for this address already exists"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTOREFILL_DISABLED",
+      "message": "Auto-refill is temporarily unavailable; please try again later"
     }
   }
 }
