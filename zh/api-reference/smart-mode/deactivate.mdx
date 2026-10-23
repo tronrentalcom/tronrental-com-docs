@@ -16,7 +16,7 @@ description: "永久停用智能模式订阅"
 
 ### 响应
 
-返回已停用的订阅对象。
+返回 `ok: true` 以及已停用订阅的 `address`。
 
 ### 示例
 
@@ -27,9 +27,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "status": "deactivated",
-  "message": "Subscription permanently deactivated"
+  "ok": true,
+  "address": "TYourAddress..."
 }
 ```

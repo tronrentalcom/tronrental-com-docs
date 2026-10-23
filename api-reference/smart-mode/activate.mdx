@@ -24,7 +24,7 @@ Starts automatic energy delivery for the specified address. The first daily fee 
 
 ### Response
 
-Returns the created subscription object with `id`, `address`, `status`, and fee details.
+Returns `subscription_id` — the ID of the created subscription. Read the subscription itself with [List Subscriptions](/api-reference/smart-mode/list-subscriptions).
 
 ### Example
 
@@ -41,14 +41,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "label": "Main wallet",
-  "status": "active",
-  "bw_guarantee": true,
-  "subscription_fee_trx": "3.0",
-  "transfer_fee_trx": "2.7",
-  "created_at": "2026-03-05T12:00:00Z"
+  "subscription_id": 42
 }
 ```
 

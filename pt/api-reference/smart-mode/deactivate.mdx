@@ -16,7 +16,7 @@ Desativa permanentemente uma assinatura do Smart Mode. Esta ação não pode ser
 
 ### Resposta
 
-Retorna o objeto da assinatura desativada.
+Retorna `ok: true` e o `address` da assinatura desativada.
 
 ### Exemplo
 
@@ -27,9 +27,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "status": "deactivated",
-  "message": "Subscription permanently deactivated"
+  "ok": true,
+  "address": "TYourAddress..."
 }
 ```

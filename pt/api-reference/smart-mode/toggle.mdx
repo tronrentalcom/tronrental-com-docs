@@ -16,22 +16,11 @@ Pausa uma assinatura ativa ou retoma uma pausada. Enquanto pausada, nenhuma taxa
 
 ### Resposta
 
-Retorna o objeto da assinatura atualizado com o novo `status`.
+Uma resposta `200` significa que a assinatura foi pausada ou retomada. O corpo da resposta não faz parte do contrato da API: o novo estado está no campo `paused` de [Listar Assinaturas](/pt/api-reference/smart-mode/list-subscriptions).
 
 ### Exemplo
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
   -H "X-API-Key: your_api_key"
-```
-
-```json Response
-{
-  "id": 42,
-  "address": "TYourAddress...",
-  "label": "Main wallet",
-  "status": "paused",
-  "bw_guarantee": true,
-  "created_at": "2026-03-05T12:00:00Z"
-}
 ```

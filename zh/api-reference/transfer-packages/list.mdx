@@ -10,16 +10,20 @@ description: "列出您的转账套餐"
 
 ### 响应
 
-套餐对象数组，包含 `id`、`address`、`total_transfers`、`remaining_transfers`、`status` 和 `created_at`。
+套餐对象数组。主要字段：`id`、`address`、`package_size`、`quota_total`（套餐内转账次数）、`quota_used`（已服务的转账）、`subscription_used`（每日订阅费占用的转账，每天一次）、`remaining`（`quota_total − quota_used − subscription_used`）、`bw_guarantee`、`status`、`created_at`。
 
 ### 套餐状态
 
 | 状态 | 描述 |
 |--------|-------------|
 | `pending_payment` | 等待账单付款 |
+| `provisioning` | 已用余额支付，正在激活 |
 | `active` | 正在监控地址，转账可用 |
 | `completed` | 所有转账已用完 |
 | `cancelled` | 已被用户取消 |
+| `expired` | 账单未按时支付 |
+| `manual_review` | 激活结果不明确，由客服核查，核查完成前款项暂扣 |
+| `failed_refunded` | 激活失败，费用已退回余额 |
 
 ### 示例
 
@@ -33,8 +37,11 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
   {
     "id": 101,
     "address": "TYourAddress...",
-    "total_transfers": 500,
-    "remaining_transfers": 312,
+    "package_size": 500,
+    "quota_total": 500,
+    "quota_used": 187,
+    "subscription_used": 1,
+    "remaining": 312,
     "bw_guarantee": true,
     "status": "active",
     "created_at": "2026-03-01T10:00:00Z"

@@ -16,7 +16,7 @@ Permanently deactivates a Smart Mode subscription. This action cannot be undone 
 
 ### Response
 
-Returns the deactivated subscription object.
+Returns `ok: true` and the `address` of the deactivated subscription.
 
 ### Example
 
@@ -27,9 +27,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "status": "deactivated",
-  "message": "Subscription permanently deactivated"
+  "ok": true,
+  "address": "TYourAddress..."
 }
 ```

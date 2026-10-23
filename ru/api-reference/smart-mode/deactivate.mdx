@@ -16,7 +16,7 @@ description: "Окончательная деактивация подписки
 
 ### Ответ
 
-Возвращает деактивированный объект подписки.
+Возвращает `ok: true` и `address` деактивированной подписки.
 
 ### Пример
 
@@ -27,9 +27,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "status": "deactivated",
-  "message": "Subscription permanently deactivated"
+  "ok": true,
+  "address": "TYourAddress..."
 }
 ```

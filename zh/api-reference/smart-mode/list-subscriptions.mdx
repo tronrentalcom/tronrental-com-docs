@@ -25,7 +25,11 @@ description: "列出您的活跃智能模式订阅"
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  `active` 或 `paused`
+  `active`——已停用的订阅不会列出
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  通过 [切换订阅状态](/zh/api-reference/smart-mode/toggle) 暂停订阅期间为 `true`：不收取费用，也不监控转账
 </ResponseField>
 
 <ResponseField name="bw_guarantee" type="boolean">
@@ -50,6 +54,7 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "address": "TYourAddress...",
     "label": "Main wallet",
     "status": "active",
+    "paused": false,
     "bw_guarantee": true,
     "created_at": "2026-03-05T12:00:00Z"
   },
@@ -57,7 +62,8 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "id": 43,
     "address": "TAnotherAddress...",
     "label": null,
-    "status": "paused",
+    "status": "active",
+    "paused": true,
     "bw_guarantee": false,
     "created_at": "2026-03-04T10:00:00Z"
   }
