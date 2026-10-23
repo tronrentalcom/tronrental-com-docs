@@ -24,7 +24,7 @@ Inicia la entrega automatica de energia para la direccion especificada. La prime
 
 ### Respuesta
 
-Devuelve el objeto de suscripcion creado con `id`, `address`, `status` y detalles de tarifas.
+Devuelve `subscription_id`, el ID de la suscripcion creada. La suscripcion completa se obtiene con [Listar suscripciones](/es/api-reference/smart-mode/list-subscriptions).
 
 ### Ejemplo
 
@@ -41,14 +41,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "label": "Main wallet",
-  "status": "active",
-  "bw_guarantee": true,
-  "subscription_fee_trx": "3.0",
-  "transfer_fee_trx": "2.7",
-  "created_at": "2026-03-05T12:00:00Z"
+  "subscription_id": 42
 }
 ```
 

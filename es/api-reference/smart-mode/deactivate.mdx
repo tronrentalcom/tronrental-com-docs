@@ -16,7 +16,7 @@ Desactiva permanentemente una suscripcion de Smart Mode. Esta accion no se puede
 
 ### Respuesta
 
-Devuelve el objeto de suscripcion desactivado.
+Devuelve `ok: true` y la `address` de la suscripcion desactivada.
 
 ### Ejemplo
 
@@ -27,9 +27,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "status": "deactivated",
-  "message": "Subscription permanently deactivated"
+  "ok": true,
+  "address": "TYourAddress..."
 }
 ```

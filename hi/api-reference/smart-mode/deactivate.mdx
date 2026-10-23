@@ -16,7 +16,7 @@ Smart Mode सब्सक्रिप्शन को स्थायी रू
 
 ### रिस्पॉन्स
 
-निष्क्रिय किया गया सब्सक्रिप्शन ऑब्जेक्ट लौटाता है।
+`ok: true` और निष्क्रिय किए गए सब्सक्रिप्शन का `address` लौटाता है।
 
 ### उदाहरण
 
@@ -27,9 +27,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/42/deactivate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "status": "deactivated",
-  "message": "Subscription permanently deactivated"
+  "ok": true,
+  "address": "TYourAddress..."
 }
 ```

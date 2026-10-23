@@ -25,7 +25,11 @@ Abonelik nesneleri dizisi:
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  `active` veya `paused`
+  `active` — devre disi birakilan abonelikler listelenmez
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Abonelik [Aboneligi Degistir](/tr/api-reference/smart-mode/toggle) ile duraklatildigi surece `true`: ucret alinmaz, transferler izlenmez
 </ResponseField>
 
 <ResponseField name="bw_guarantee" type="boolean">
@@ -50,6 +54,7 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "address": "TYourAddress...",
     "label": "Main wallet",
     "status": "active",
+    "paused": false,
     "bw_guarantee": true,
     "created_at": "2026-03-05T12:00:00Z"
   },
@@ -57,7 +62,8 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "id": 43,
     "address": "TAnotherAddress...",
     "label": null,
-    "status": "paused",
+    "status": "active",
+    "paused": true,
     "bw_guarantee": false,
     "created_at": "2026-03-04T10:00:00Z"
   }

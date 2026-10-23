@@ -25,7 +25,11 @@ description: "Список ваших активных подписок Smart Mo
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  `active` или `paused`
+  `active` — деактивированные подписки в список не попадают
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  `true`, пока подписка приостановлена через [Переключение подписки](/ru/api-reference/smart-mode/toggle): плата не взимается, переводы не отслеживаются
 </ResponseField>
 
 <ResponseField name="bw_guarantee" type="boolean">
@@ -50,6 +54,7 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "address": "TYourAddress...",
     "label": "Main wallet",
     "status": "active",
+    "paused": false,
     "bw_guarantee": true,
     "created_at": "2026-03-05T12:00:00Z"
   },
@@ -57,7 +62,8 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "id": 43,
     "address": "TAnotherAddress...",
     "label": null,
-    "status": "paused",
+    "status": "active",
+    "paused": true,
     "bw_guarantee": false,
     "created_at": "2026-03-04T10:00:00Z"
   }

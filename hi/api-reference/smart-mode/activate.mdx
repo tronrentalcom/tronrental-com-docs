@@ -24,7 +24,7 @@ description: "TRON एड्रेस के लिए Smart Mode सक्र�
 
 ### रिस्पॉन्स
 
-`id`, `address`, `status`, और शुल्क विवरण के साथ बनाया गया सब्सक्रिप्शन ऑब्जेक्ट लौटाता है।
+`subscription_id` लौटाता है — बनाए गए सब्सक्रिप्शन की ID। सब्सक्रिप्शन का पूरा विवरण [सब्सक्रिप्शन सूची](/hi/api-reference/smart-mode/list-subscriptions) से प्राप्त करें।
 
 ### उदाहरण
 
@@ -41,14 +41,7 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
 
 ```json Response
 {
-  "id": 42,
-  "address": "TYourAddress...",
-  "label": "Main wallet",
-  "status": "active",
-  "bw_guarantee": true,
-  "subscription_fee_trx": "3.0",
-  "transfer_fee_trx": "2.7",
-  "created_at": "2026-03-05T12:00:00Z"
+  "subscription_id": 42
 }
 ```
 

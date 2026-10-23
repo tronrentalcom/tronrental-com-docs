@@ -16,22 +16,11 @@ description: "Smart Mode सब्सक्रिप्शन को रोक�
 
 ### रिस्पॉन्स
 
-नए `status` के साथ अपडेटेड सब्सक्रिप्शन ऑब्जेक्ट लौटाता है।
+`200` रिस्पॉन्स का अर्थ है कि सब्सक्रिप्शन रोका या फिर से शुरू किया गया। रिस्पॉन्स बॉडी API अनुबंध का हिस्सा नहीं है: नई स्थिति [सब्सक्रिप्शन सूची](/hi/api-reference/smart-mode/list-subscriptions) में `paused` फ़ील्ड से पढ़ें।
 
 ### उदाहरण
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
   -H "X-API-Key: your_api_key"
-```
-
-```json Response
-{
-  "id": 42,
-  "address": "TYourAddress...",
-  "label": "Main wallet",
-  "status": "paused",
-  "bw_guarantee": true,
-  "created_at": "2026-03-05T12:00:00Z"
-}
 ```
