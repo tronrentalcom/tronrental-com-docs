@@ -16,11 +16,17 @@ Aktif bir aboneligi duraklatir veya duraklatilmis bir aboneligi devam ettirir. D
 
 ### Yanit
 
-`200` yaniti aboneligin duraklatildigi veya devam ettirildigi anlamina gelir. Yanit govdesi API sozlesmesinin parcasi degildir: yeni durumu [Abonelikleri Listele](/tr/api-reference/smart-mode/list-subscriptions) icindeki `paused` alanindan okuyun.
+`paused` doner: degisiklikten sonra aboneligin durumu — `true` simdi duraklatildi, `false` yeniden aktif. Ayni alan [Abonelikleri Listele](/tr/api-reference/smart-mode/list-subscriptions) icindeki her abonelikte bulunur.
 
 ### Ornek
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
   -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "paused": true
+}
 ```
