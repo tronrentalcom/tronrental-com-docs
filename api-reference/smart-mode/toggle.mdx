@@ -16,11 +16,17 @@ Pauses an active subscription or resumes a paused one. While paused, no fees are
 
 ### Response
 
-A `200` response means the subscription was paused or resumed. The response body is not part of the API contract: read the new state from the `paused` field in [List Subscriptions](/api-reference/smart-mode/list-subscriptions).
+Returns `paused`: the subscription state after the toggle — `true` if it is now paused, `false` if it is active again. The same field is in every subscription in [List Subscriptions](/api-reference/smart-mode/list-subscriptions).
 
 ### Example
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/smart-mode/42/toggle \
   -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "paused": true
+}
 ```
