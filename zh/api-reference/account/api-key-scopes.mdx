@@ -27,7 +27,7 @@ Node API 密钥不能调用此端点——REST API 会以 `403 NODE_API_KEY_ONLY
 </ResponseField>
 
 <ResponseField name="danger" type="string[]">
-  `withdraw`。在密钥上启用它需要 2FA 和非空的 IP 白名单
+  `withdraw`。在密钥上启用它需要 2FA 和非空的 IP 白名单；启用它、修改该密钥的 IP 白名单以及重新生成该密钥时，需要用新的 2FA 验证码或通行密钥确认
 </ResponseField>
 
 <ResponseField name="default" type="string[]">
