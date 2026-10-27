@@ -28,7 +28,7 @@ Ek guvenlik icin API anahtarinizi belirli IP adresleriyle sinirlandirabilirsini.
 Her API anahtarı **kapsamlar** (scopes) taşır — anahtarın yapabileceği işlemler. Bunları kontrol
 panelinde anahtarı oluştururken veya düzenlerken seçersiniz. Yeni bir anahtar tüm okuma ve yazma
 kapsamlarını alır (enerji ve bant genişliği satın alma, Smart Mode, bakiye ve geçmişi görüntüleme ve
-diğerleri), `withdraw` hariç: bu kapsam ayrıca etkinleştirilir ve 2FA ile IP beyaz listesi gerektirir.
+diğerleri), `withdraw` hariç: bu kapsam ayrıca etkinleştirilir ve 2FA ile IP beyaz listesi gerektirir; etkinleştirme, böyle bir anahtarın IP beyaz listesini değiştirme ve anahtarı yeniden oluşturma 2FA kodunuz veya passkey ile onaylanır.
 Anahtarın kapsamları dışındaki bir istek HTTP `403` ile reddedilir. Tam liste:
 [API Anahtarı Kapsamlarını Listele](/tr/api-reference/account/api-key-scopes).
 

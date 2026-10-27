@@ -28,7 +28,7 @@ Puedes restringir tu clave API a direcciones IP especificas para mayor seguridad
 Cada clave API lleva **alcances** (scopes): las operaciones que puede realizar. Los eliges en el panel
 al crear o editar una clave. Una clave nueva recibe todos los alcances de lectura y escritura (comprar
 energía y ancho de banda, Smart Mode, consultar el saldo y el historial, entre otros) salvo `withdraw`:
-ese alcance se activa por separado y requiere 2FA y una lista blanca de IP. Una solicitud fuera de los
+ese alcance se activa por separado y requiere 2FA y una lista blanca de IP; activarlo, cambiar la lista blanca de IP de esa clave y regenerarla se confirman con tu código 2FA o tu passkey. Una solicitud fuera de los
 alcances de la clave se rechaza con HTTP `403`. La lista completa:
 [Listar alcances de clave API](/es/api-reference/account/api-key-scopes).
 

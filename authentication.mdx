@@ -28,7 +28,7 @@ You can restrict your API key to specific IP addresses for additional security. 
 Each API key carries **scopes** — the operations it is allowed to perform. You choose them in the
 dashboard when you create or edit a key. A new key gets every read and write scope (buying energy and
 bandwidth, Smart Mode, reading the balance and history, and more) except `withdraw`: that scope is
-enabled separately and requires 2FA and an IP whitelist. A request outside the key's scopes is refused
+enabled separately and requires 2FA and an IP whitelist; enabling it, changing such a key's IP whitelist and regenerating the key are confirmed with your 2FA code or passkey. A request outside the key's scopes is refused
 with HTTP `403`. The full list: [List API Key Scopes](/api-reference/account/api-key-scopes).
 
 <Warning>

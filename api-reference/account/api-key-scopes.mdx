@@ -31,7 +31,7 @@ your Node API plan. A Node API key cannot call this endpoint — the REST API an
 </ResponseField>
 
 <ResponseField name="danger" type="string[]">
-  `withdraw`. Enabling it on a key requires 2FA and a non-empty IP whitelist
+  `withdraw`. Enabling it on a key requires 2FA and a non-empty IP whitelist and is confirmed with a fresh 2FA code or passkey, as are changing that key's IP whitelist and regenerating it
 </ResponseField>
 
 <ResponseField name="default" type="string[]">
