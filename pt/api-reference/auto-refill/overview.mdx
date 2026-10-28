@@ -30,7 +30,7 @@ Os dois recursos têm endpoints próprios e regras próprias. Um endereço pode 
 |---|---|---|
 | Endpoints | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
 | Campo do limiar | `threshold_energy`, 1 – 50.000.000 | `threshold_bandwidth`, 1 – 1.000.000 |
-| `add_volume` por recarga | 32.000 – 5.000.000 | 1 – 100.000 |
+| `add_volume` por recarga | 1 – 5.000.000 | 1 – 100.000 |
 | `duration` | apenas `1h` | `1h` ou `1d` |
 | Nível que comparamos com o limiar | Energia disponível | Toda a largura de banda disponível, **incluindo as 600 gratuitas por dia** |
 | Escopo para criar, editar, excluir | `buy_energy` | `buy_bandwidth` |

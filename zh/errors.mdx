@@ -74,6 +74,7 @@ description: "API 错误代码及处理方式"
 | `INVALID_ADDRESS` | `400` | 不是有效的 TRON 地址 |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | 目标是智能合约——TRON 禁止向其代理资源 |
 | `INVALID_VOLUME` | `400` | 请求数量超出允许范围 |
+| `POOL_EXHAUSTED` | `503` | 该地址暂时无法下少于 32,000 能量的订单。未扣除任何费用——请稍后重试，或订购 32,000 及以上 |
 | `INVALID_DURATION` | `400` | 时长不在允许的取值之内 |
 | `ORDER_NOT_FOUND` | `404` | 订单 ID 不存在 |
 | `RATE_LIMIT_EXCEEDED` | `429` | 请求过多——参见[速率限制](/zh/resources/rate-limits) |

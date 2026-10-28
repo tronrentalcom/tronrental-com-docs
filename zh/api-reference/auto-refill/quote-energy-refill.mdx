@@ -13,7 +13,7 @@ description: "在创建规则之前查看一次能量补充的价格"
 ### 查询参数
 
 <ParamField query="add_volume" type="number" required>
-  每次补充的能量。范围 32,000 至 5,000,000，与创建规则时相同。
+  每次补充的能量。范围 1 至 5,000,000，与创建规则时相同。
 </ParamField>
 
 能量补充的租期始终为一小时，因此没有 `duration` 参数；响应中始终为 `"duration": "1h"`。
@@ -73,7 +73,7 @@ console.log(await resp.json());
 | 状态 | 代码 | 触发条件 |
 |--------|------|------|
 | `403` | `FORBIDDEN` | API 密钥缺少 `view` 权限 |
-| `422` | — | 缺少 `add_volume`，或其超出 32,000 – 5,000,000 范围 |
+| `422` | — | 缺少 `add_volume`，或其超出 1 – 5,000,000 范围 |
 | `503` | `TEMPORARILY_UNAVAILABLE` | 暂时无法获取价格——请等待 `Retry-After` 给出的秒数后重试 |
 
 ```json
@@ -95,9 +95,9 @@ console.log(await resp.json());
     {
       "type": "greater_than_equal",
       "loc": ["query", "add_volume"],
-      "msg": "Input should be greater than or equal to 32000",
+      "msg": "Input should be greater than or equal to 1",
       "input": "1000",
-      "ctx": {"ge": 32000}
+      "ctx": {"ge": 1}
     }
   ]
 }
