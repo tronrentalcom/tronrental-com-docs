@@ -15,7 +15,7 @@ description: "为 TRON 地址购买能量"
 </ParamField>
 
 <ParamField body="volume" type="number" required>
-  要委托的能量数量（最小 32,000，最大 5,000,000）
+  要委托的能量数量（最小 1，最大 5,000,000）
 </ParamField>
 
 <ParamField body="duration" type="string" required>
@@ -29,7 +29,7 @@ description: "为 TRON 地址购买能量"
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  订单状态：`pending`、`filled`、`failed`
+  订单状态：`pending`、`filled`、`failed`、`submitted_unknown`（少于 32,000 的订单——见下方说明）
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
@@ -106,3 +106,9 @@ console.log(await resp.json());
   **65,000 能量**可覆盖一笔向已持有 USDT 地址的转账。
   对于首次接收 USDT 的地址（新建存储槽），请使用 **131,000**。
 </Tip>
+
+<Note>
+  **少于 32,000 能量的订单**由我们自己的能量池交付。如果当前无法为该地址提供服务，请求将以 `503 POOL_EXHAUSTED` 失败，**不会扣除任何费用**——请稍后重试，或订购 32,000 及以上。同一地址上一笔少于 32,000 的订单仍有效时，新订单也会以同样方式被拒绝。
+
+  此类订单可能以 `submitted_unknown` 返回：委托已广播，但尚未在区块中确认。几分钟内会变为 `filled`，或变为 `failed` 并全额退款——请通过 [Get Order](/zh/api-reference/orders/get-order) 查询。
+</Note>

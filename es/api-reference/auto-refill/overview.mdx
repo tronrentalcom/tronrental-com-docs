@@ -30,7 +30,7 @@ Los dos recursos tienen sus propios endpoints y sus propias reglas. Una direcci�
 |---|---|---|
 | Endpoints | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
 | Campo del umbral | `threshold_energy`, 1 – 50,000,000 | `threshold_bandwidth`, 1 – 1,000,000 |
-| `add_volume` por recarga | 32,000 – 5,000,000 | 350 – 100,000 |
+| `add_volume` por recarga | 1 – 5,000,000 | 350 – 100,000 |
 | `duration` | solo `1h` | `1h` o `1d` |
 | Nivel que comparamos con el umbral | Energía disponible | Todo el ancho de banda disponible, **incluidos los 600 gratuitos al día** |
 | Alcance para crear, editar y eliminar | `buy_energy` | `buy_bandwidth` |

@@ -13,7 +13,7 @@ El precio depende de cómo hagas la llamada. Con una clave API, es el precio de 
 ### Parámetros de consulta
 
 <ParamField query="add_volume" type="number" required>
-  Energía por recarga. De 32,000 a 5,000,000, el mismo rango que al crear una regla.
+  Energía por recarga. De 1 a 5,000,000, el mismo rango que al crear una regla.
 </ParamField>
 
 Las recargas de energía siempre duran una hora, así que no hay parámetro `duration`; la respuesta siempre trae `"duration": "1h"`.
@@ -73,7 +73,7 @@ console.log(await resp.json());
 | Estado | Código | Cuándo |
 |--------|--------|--------|
 | `403` | `FORBIDDEN` | La clave API carece del alcance `view` |
-| `422` | — | Falta `add_volume` o está fuera de 32,000 – 5,000,000 |
+| `422` | — | Falta `add_volume` o está fuera de 1 – 5,000,000 |
 | `503` | `TEMPORARILY_UNAVAILABLE` | No se pudo obtener el precio en este momento — reintenta pasados los segundos de `Retry-After` |
 
 ```json
@@ -95,9 +95,9 @@ Un error de validación llega en el formato del framework, con `detail` como arr
     {
       "type": "greater_than_equal",
       "loc": ["query", "add_volume"],
-      "msg": "Input should be greater than or equal to 32000",
+      "msg": "Input should be greater than or equal to 1",
       "input": "1000",
-      "ctx": {"ge": 32000}
+      "ctx": {"ge": 1}
     }
   ]
 }
