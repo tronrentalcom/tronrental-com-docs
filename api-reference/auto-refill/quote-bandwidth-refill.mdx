@@ -13,7 +13,7 @@ The price depends on how you call it. Called with an API key, it is the price of
 ### Query parameters
 
 <ParamField query="add_volume" type="number" required>
-  Bandwidth per refill. From 350 to 100,000, the same range as when creating a rule.
+  Bandwidth per refill. From 1 to 100,000, the same range as when creating a rule.
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -75,7 +75,7 @@ console.log(await resp.json());
 | Status | Code | When |
 |--------|------|------|
 | `403` | `FORBIDDEN` | The API key lacks the `view` scope |
-| `422` | — | `add_volume` is missing or outside 350 – 100,000, or `duration` is not `1h` or `1d` |
+| `422` | — | `add_volume` is missing or outside 1 – 100,000, or `duration` is not `1h` or `1d` |
 | `503` | `TEMPORARILY_UNAVAILABLE` | The price could not be read right now — retry after the `Retry-After` seconds |
 
 ```json

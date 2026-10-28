@@ -25,7 +25,7 @@ description: "Пополнение bandwidth на адресе, как толь�
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  Сколько bandwidth покупать за одно пополнение. От 350 до 100 000. Держите значение не ниже `threshold_bandwidth` — см. [предупреждение в обзоре](/ru/api-reference/auto-refill/overview#как-выбрать-значения).
+  Сколько bandwidth покупать за одно пополнение. От 1 до 100 000. Держите значение не ниже `threshold_bandwidth` — см. [предупреждение в обзоре](/ru/api-reference/auto-refill/overview#как-выбрать-значения).
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -165,9 +165,9 @@ console.log(await resp.json());
     {
       "type": "greater_than_equal",
       "loc": ["body", "add_volume"],
-      "msg": "Input should be greater than or equal to 350",
-      "input": 100,
-      "ctx": {"ge": 350}
+      "msg": "Input should be greater than or equal to 1",
+      "input": 0,
+      "ctx": {"ge": 1}
     }
   ]
 }
