@@ -15,7 +15,7 @@ Belirtilen TRON adresine enerji devredilir. Maliyet hesap bakiyenizden dusulur.
 </ParamField>
 
 <ParamField body="volume" type="number" required>
-  Devredilecek enerji miktari (min 32.000, maks 5.000.000)
+  Devredilecek enerji miktari (min 1, maks 5.000.000)
 </ParamField>
 
 <ParamField body="duration" type="string" required>
@@ -29,7 +29,7 @@ Belirtilen TRON adresine enerji devredilir. Maliyet hesap bakiyenizden dusulur.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Order status: `pending`, `filled`, `failed`
+  Order status: `pending`, `filled`, `failed`, `submitted_unknown` (32.000'in altındaki siparişler — aşağıdaki nota bakın)
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
@@ -106,3 +106,9 @@ console.log(await resp.json());
   **65.000 enerji**, halihazirda USDT bulunan bir adrese tek bir USDT transferini karsilar.
   Ilk kez USDT alacak alicilar icin **131.000** kullanin (yeni depolama alani olusturma).
 </Tip>
+
+<Note>
+  **32.000'in altındaki enerji siparişleri** kendi havuzumuzdan teslim edilir. Havuz şu anda bu adrese hizmet veremiyorsa istek `503 POOL_EXHAUSTED` ile başarısız olur ve **hiçbir ücret alınmaz** — daha sonra tekrar deneyin veya 32.000 ya da daha fazlasını sipariş edin. Aynı adres için 32.000'in altındaki önceki sipariş hâlâ aktifken yeni sipariş aynı şekilde reddedilir.
+
+  Böyle bir sipariş `submitted_unknown` olarak dönebilir: delegasyon yayınlandı ancak henüz bir blokta onaylanmadı. Birkaç dakika içinde `filled` ya da tam iadeyle `failed` olur — [Get Order](/tr/api-reference/orders/get-order) ile kontrol edin.
+</Note>

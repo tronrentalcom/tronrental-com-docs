@@ -15,7 +15,7 @@ Delega energia ao endereço TRON especificado. O custo é deduzido do saldo da s
 </ParamField>
 
 <ParamField body="volume" type="number" required>
-  Quantidade de energia a delegar (mín. 32.000, máx. 5.000.000)
+  Quantidade de energia a delegar (mín. 1, máx. 5.000.000)
 </ParamField>
 
 <ParamField body="duration" type="string" required>
@@ -29,7 +29,7 @@ Delega energia ao endereço TRON especificado. O custo é deduzido do saldo da s
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Order status: `pending`, `filled`, `failed`
+  Order status: `pending`, `filled`, `failed`, `submitted_unknown` (pedidos abaixo de 32.000 — veja a nota abaixo)
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
@@ -106,3 +106,9 @@ console.log(await resp.json());
   **65.000 energia** cobre uma transferência USDT para um endereço que já possui USDT.
   Use **131.000** para destinatários de USDT pela primeira vez (criação de novo slot de armazenamento).
 </Tip>
+
+<Note>
+  **Pedidos abaixo de 32.000 de energia** são entregues a partir do nosso próprio pool. Se ele não puder atender este endereço no momento, a requisição falha com `503 POOL_EXHAUSTED` e **nada é cobrado** — tente novamente mais tarde ou peça 32.000 ou mais. Enquanto um pedido anterior abaixo de 32.000 para o mesmo endereço ainda estiver ativo, um novo é recusado da mesma forma.
+
+  Um pedido assim pode voltar como `submitted_unknown`: a delegação foi transmitida, mas ainda não foi confirmada em um bloco. Em poucos minutos ele passa a `filled`, ou a `failed` com reembolso integral — consulte [Get Order](/pt/api-reference/orders/get-order).
+</Note>

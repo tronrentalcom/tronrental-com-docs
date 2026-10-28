@@ -79,6 +79,7 @@ Retornados no formato padrão, em `detail.error.code`:
 | `INVALID_ADDRESS` | `400` | Endereço TRON inválido |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | O destino é um contrato inteligente — a TRON proíbe delegar recursos a ele |
 | `INVALID_VOLUME` | `400` | Quantidade solicitada fora do intervalo permitido |
+| `POOL_EXHAUSTED` | `503` | Pedidos de energia abaixo de 32.000 estão temporariamente indisponíveis para este endereço. Nada foi cobrado — tente novamente mais tarde ou peça 32.000 ou mais |
 | `INVALID_DURATION` | `400` | Duração não está entre os valores aceitos |
 | `ORDER_NOT_FOUND` | `404` | O ID do pedido não existe |
 | `RATE_LIMIT_EXCEEDED` | `429` | Requisições em excesso — veja [Limites de Taxa](/pt/resources/rate-limits) |

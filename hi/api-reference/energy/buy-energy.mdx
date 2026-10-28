@@ -15,7 +15,7 @@ description: "TRON एड्रेस के लिए एनर्जी खर
 </ParamField>
 
 <ParamField body="volume" type="number" required>
-  डेलिगेट करने के लिए एनर्जी की मात्रा (न्यूनतम 32,000, अधिकतम 5,000,000)
+  डेलिगेट करने के लिए एनर्जी की मात्रा (न्यूनतम 1, अधिकतम 5,000,000)
 </ParamField>
 
 <ParamField body="duration" type="string" required>
@@ -29,7 +29,7 @@ description: "TRON एड्रेस के लिए एनर्जी खर
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Order status: `pending`, `filled`, `failed`
+  Order status: `pending`, `filled`, `failed`, `submitted_unknown` (32,000 से कम के ऑर्डर — नीचे नोट देखें)
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
@@ -106,3 +106,9 @@ console.log(await resp.json());
   **65,000 एनर्जी** उस एड्रेस पर एक USDT ट्रांसफर को कवर करती है जिसके पास पहले से USDT है।
   पहली बार USDT प्राप्त करने वालों के लिए **131,000** का उपयोग करें (नए स्टोरेज स्लॉट का निर्माण)।
 </Tip>
+
+<Note>
+  **32,000 से कम एनर्जी के ऑर्डर** हमारे अपने पूल से दिए जाते हैं। अगर वह इस समय इस एड्रेस को सर्व नहीं कर सकता, तो अनुरोध `503 POOL_EXHAUSTED` के साथ विफल होता है और **कुछ भी चार्ज नहीं होता** — बाद में पुनः प्रयास करें या 32,000 या अधिक ऑर्डर करें। जब तक उसी एड्रेस के लिए 32,000 से कम का पिछला ऑर्डर सक्रिय है, नया ऑर्डर इसी तरह अस्वीकार होता है।
+
+  ऐसा ऑर्डर `submitted_unknown` के साथ लौट सकता है: डेलिगेशन ब्रॉडकास्ट हो चुका है, पर अभी ब्लॉक में पुष्टि नहीं हुई। कुछ मिनटों में यह `filled` हो जाता है, या पूरे रिफंड के साथ `failed` — [Get Order](/hi/api-reference/orders/get-order) से जाँचें।
+</Note>

@@ -30,7 +30,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 |---|---|---|
 | 端点 | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
 | 阈值字段 | `threshold_energy`，1 – 50,000,000 | `threshold_bandwidth`，1 – 1,000,000 |
-| 每次补充的 `add_volume` | 32,000 – 5,000,000 | 350 – 100,000 |
+| 每次补充的 `add_volume` | 1 – 5,000,000 | 350 – 100,000 |
 | `duration` | 仅 `1h` | `1h` 或 `1d` |
 | 与阈值比较的数值 | 可用能量 | 全部可用带宽，**包括每天免费的 600** |
 | 创建、编辑、删除所需权限 | `buy_energy` | `buy_bandwidth` |

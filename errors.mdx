@@ -78,6 +78,7 @@ Returned in the standard shape, under `detail.error.code`:
 | `INVALID_ADDRESS` | `400` | Not a valid TRON address |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Target is a smart contract — TRON forbids delegating resources to it |
 | `INVALID_VOLUME` | `400` | Requested amount is outside the allowed range |
+| `POOL_EXHAUSTED` | `503` | Energy orders under 32,000 are temporarily unavailable for this address. Nothing was charged — retry later or order 32,000 or more |
 | `INVALID_DURATION` | `400` | Duration is not one of the accepted values |
 | `ORDER_NOT_FOUND` | `404` | Order ID does not exist |
 | `RATE_LIMIT_EXCEEDED` | `429` | Too many requests — see [Rate Limits](/resources/rate-limits) |
