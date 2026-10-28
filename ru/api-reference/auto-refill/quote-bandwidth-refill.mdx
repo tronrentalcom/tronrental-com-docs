@@ -13,7 +13,7 @@ description: "Цена одного пополнения bandwidth — ещё д
 ### Параметры запроса
 
 <ParamField query="add_volume" type="number" required>
-  Bandwidth за одно пополнение. От 350 до 100 000 — тот же диапазон, что при создании правила.
+  Bandwidth за одно пополнение. От 1 до 100 000 — тот же диапазон, что при создании правила.
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -75,7 +75,7 @@ console.log(await resp.json());
 | Статус | Код | Когда |
 |--------|------|------|
 | `403` | `FORBIDDEN` | У API-ключа нет скоупа `view` |
-| `422` | — | `add_volume` отсутствует или вне диапазона 350 – 100 000, либо `duration` — не `1h` и не `1d` |
+| `422` | — | `add_volume` отсутствует или вне диапазона 1 – 100 000, либо `duration` — не `1h` и не `1d` |
 | `503` | `TEMPORARILY_UNAVAILABLE` | Цену сейчас не удалось получить — повторите запрос, подождав столько секунд, сколько указано в `Retry-After` |
 
 ```json

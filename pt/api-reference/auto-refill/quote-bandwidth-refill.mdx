@@ -13,7 +13,7 @@ O preço depende de como você faz a chamada. Chamado com uma chave de API, é o
 ### Parâmetros de consulta
 
 <ParamField query="add_volume" type="number" required>
-  Largura de banda por recarga. De 350 a 100.000, o mesmo intervalo aceito ao criar uma regra.
+  Largura de banda por recarga. De 1 a 100.000, o mesmo intervalo aceito ao criar uma regra.
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -75,7 +75,7 @@ console.log(await resp.json());
 | Status | Código | Quando |
 |--------|------|------|
 | `403` | `FORBIDDEN` | A chave de API não tem o escopo `view` |
-| `422` | — | `add_volume` está ausente ou fora de 350 – 100.000, ou `duration` não é `1h` nem `1d` |
+| `422` | — | `add_volume` está ausente ou fora de 1 – 100.000, ou `duration` não é `1h` nem `1d` |
 | `503` | `TEMPORARILY_UNAVAILABLE` | Não foi possível obter o preço agora — tente novamente após os segundos indicados em `Retry-After` |
 
 ```json

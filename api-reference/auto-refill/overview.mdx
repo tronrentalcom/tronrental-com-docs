@@ -30,7 +30,7 @@ The two resources have their own endpoints and their own rules. One address can 
 |---|---|---|
 | Endpoints | `/api/v1/energy/auto-refill` | `/api/v1/bandwidth/auto-refill` |
 | Threshold field | `threshold_energy`, 1 – 50,000,000 | `threshold_bandwidth`, 1 – 1,000,000 |
-| `add_volume` per refill | 1 – 5,000,000 | 350 – 100,000 |
+| `add_volume` per refill | 1 – 5,000,000 | 1 – 100,000 |
 | `duration` | `1h` only | `1h` or `1d` |
 | Level we compare with the threshold | Available energy | All available bandwidth, **including the free 600 a day** |
 | Scope to create, edit, delete | `buy_energy` | `buy_bandwidth` |

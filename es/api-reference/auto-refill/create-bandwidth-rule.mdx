@@ -25,7 +25,7 @@ El ancho de banda disponible cuenta **todo** aquello con lo que la dirección pu
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  Ancho de banda que se compra en cada recarga. De 350 a 100,000. Mantenlo igual o por encima de `threshold_bandwidth` — consulta la [advertencia de la descripción general](/es/api-reference/auto-refill/overview#cómo-elegir-los-valores).
+  Ancho de banda que se compra en cada recarga. De 1 a 100,000. Mantenlo igual o por encima de `threshold_bandwidth` — consulta la [advertencia de la descripción general](/es/api-reference/auto-refill/overview#cómo-elegir-los-valores).
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -165,9 +165,9 @@ Un error de validación llega en el formato del framework, con `detail` como arr
     {
       "type": "greater_than_equal",
       "loc": ["body", "add_volume"],
-      "msg": "Input should be greater than or equal to 350",
-      "input": 100,
-      "ctx": {"ge": 350}
+      "msg": "Input should be greater than or equal to 1",
+      "input": 0,
+      "ctx": {"ge": 1}
     }
   ]
 }

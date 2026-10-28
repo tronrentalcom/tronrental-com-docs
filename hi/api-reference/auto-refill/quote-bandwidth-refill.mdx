@@ -13,7 +13,7 @@ description: "नियम बनाने से पहले, एक बैं
 ### क्वेरी पैरामीटर
 
 <ParamField query="add_volume" type="number" required>
-  प्रति रिफिल बैंडविड्थ। 350 से 100,000 तक, वही सीमा जो नियम बनाते समय होती है।
+  प्रति रिफिल बैंडविड्थ। 1 से 100,000 तक, वही सीमा जो नियम बनाते समय होती है।
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -75,7 +75,7 @@ console.log(await resp.json());
 | स्थिति | कोड | कब |
 |--------|------|------|
 | `403` | `FORBIDDEN` | API कुंजी के पास `view` स्कोप नहीं है |
-| `422` | — | `add_volume` गायब है या 350 – 100,000 से बाहर है, या `duration` न `1h` है न `1d` |
+| `422` | — | `add_volume` गायब है या 1 – 100,000 से बाहर है, या `duration` न `1h` है न `1d` |
 | `503` | `TEMPORARILY_UNAVAILABLE` | कीमत अभी पढ़ी नहीं जा सकी — `Retry-After` में दिए गए सेकंड के बाद फिर प्रयास करें |
 
 ```json

@@ -25,7 +25,7 @@ description: "每当地址的带宽低于阈值时为其补充带宽"
 </ParamField>
 
 <ParamField body="add_volume" type="number" required>
-  每次补充购买的带宽。范围 350 至 100,000。请让它不低于 `threshold_bandwidth`——参见[概述中的警告](/zh/api-reference/auto-refill/overview#选择数值)。
+  每次补充购买的带宽。范围 1 至 100,000。请让它不低于 `threshold_bandwidth`——参见[概述中的警告](/zh/api-reference/auto-refill/overview#选择数值)。
 </ParamField>
 
 <ParamField body="duration" type="string" default="1h">
@@ -165,9 +165,9 @@ console.log(await resp.json());
     {
       "type": "greater_than_equal",
       "loc": ["body", "add_volume"],
-      "msg": "Input should be greater than or equal to 350",
-      "input": 100,
-      "ctx": {"ge": 350}
+      "msg": "Input should be greater than or equal to 1",
+      "input": 0,
+      "ctx": {"ge": 1}
     }
   ]
 }

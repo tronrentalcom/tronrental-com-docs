@@ -13,7 +13,7 @@ description: "在创建规则之前查看一次带宽补充的价格"
 ### 查询参数
 
 <ParamField query="add_volume" type="number" required>
-  每次补充的带宽。范围 350 至 100,000，与创建规则时相同。
+  每次补充的带宽。范围 1 至 100,000，与创建规则时相同。
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -75,7 +75,7 @@ console.log(await resp.json());
 | 状态 | 代码 | 触发条件 |
 |--------|------|------|
 | `403` | `FORBIDDEN` | API 密钥缺少 `view` 权限 |
-| `422` | — | 缺少 `add_volume` 或其超出 350 – 100,000 范围，或 `duration` 不是 `1h` 或 `1d` |
+| `422` | — | 缺少 `add_volume` 或其超出 1 – 100,000 范围，或 `duration` 不是 `1h` 或 `1d` |
 | `503` | `TEMPORARILY_UNAVAILABLE` | 暂时无法获取价格——请等待 `Retry-After` 给出的秒数后重试 |
 
 ```json

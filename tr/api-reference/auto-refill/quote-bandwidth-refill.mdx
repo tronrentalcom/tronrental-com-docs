@@ -13,7 +13,7 @@ Fiyat, uç noktayı nasıl çağırdığınıza bağlıdır. API anahtarıyla ç
 ### Sorgu parametreleri
 
 <ParamField query="add_volume" type="number" required>
-  Dolum başına bant genişliği. 350 ile 100.000 arasında; kural oluştururken geçerli olan aralıkla aynı.
+  Dolum başına bant genişliği. 1 ile 100.000 arasında; kural oluştururken geçerli olan aralıkla aynı.
 </ParamField>
 
 <ParamField query="duration" type="string" default="1h">
@@ -75,7 +75,7 @@ console.log(await resp.json());
 | Durum | Kod | Ne zaman |
 |--------|------|------|
 | `403` | `FORBIDDEN` | API anahtarında `view` kapsamı yok |
-| `422` | — | `add_volume` eksik veya 350 – 100.000 aralığının dışında ya da `duration` değeri `1h` veya `1d` değil |
+| `422` | — | `add_volume` eksik veya 1 – 100.000 aralığının dışında ya da `duration` değeri `1h` veya `1d` değil |
 | `503` | `TEMPORARILY_UNAVAILABLE` | Fiyat şu anda okunamadı — `Retry-After` değerindeki saniye kadar bekleyip yeniden deneyin |
 
 ```json
