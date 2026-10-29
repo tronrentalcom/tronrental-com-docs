@@ -19,7 +19,23 @@ description: "为 TRON 地址购买带宽"
 </ParamField>
 
 <ParamField body="duration" type="string" required>
-  租赁时长：`"1h"`（1 小时）或 `"1d"`（24 小时）。请使用 `"1d"`，不要使用 `"24h"` 或数字小时值。
+  租赁时长，取以下值之一：
+
+  - `"1h"` — 1 小时
+  - `"1d"` — 24 小时
+  - `"5m"` … `"59m"` — 5 至 59 之间的任意整数分钟，按小时费率计价并享受折扣（参见[定价](#定价)）
+
+  分钟数写成不带前导零的数字，后跟小写 `m`：`"5m"`、`"30m"`。`"05m"`、`"5M"`、`"60m"` 或 `"90m"` 会以 `400 INVALID_DURATION` 被拒绝：一小时请写 `"1h"`，且 `"1h"` 与 `"1d"` 之间没有其他时长。请使用 `"1d"`，不要使用 `"24h"` 或数字小时值。
+</ParamField>
+
+<ParamField body="max_price_trx" type="string">
+  可选。您同意为该订单支付的最高金额（TRX）——租赁费与固定手续费合计。如果订单费用更高，将以 `409 PRICE_CHANGED` 被拒绝，**不会扣除任何费用**。请传入[带宽报价](/zh/api-reference/bandwidth/quote)返回的 `total_trx`。取值为大于 0 的十进制字符串，例如 `"0.58"`（也接受 JSON 数字）。不传时，订单按当前价格购买，与以往相同。
+</ParamField>
+
+### 请求头
+
+<ParamField header="Idempotency-Key" type="string">
+  可选，最多 64 个字符。使用同一个键和相同的请求体重试时，会返回原订单，而不会再次购买。订单成功后，同一个键配合不同的请求体——包括不同的 `max_price_trx`——会返回 `422 IDEMPOTENCY_KEY_REUSED`。若请求被拒绝且未扣除任何费用，例如 `409 PRICE_CHANGED` 或 `402 INSUFFICIENT_BALANCE`，该键可再次使用：用它和新价格重试即可。
 </ParamField>
 
 ### 响应
@@ -37,16 +53,50 @@ description: "为 TRON 地址购买带宽"
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
-  从余额扣除的总费用（TRX）
+  订单从余额扣除的总费用（TRX）——租赁费与固定手续费
 </ResponseField>
 
 <ResponseField name="reclaim_at" type="string | null">
   带宽租赁被收回时的 ISO 8601 时间戳
 </ResponseField>
 
+<ResponseField name="activation_cost_trx" type="string">
+  若 `target_address` 在链上尚未激活，为激活该地址收取的费用，在 `price_trx` 之外另行扣除。地址已激活时为 `"0"`。
+</ResponseField>
+
 ### 定价
 
-价格 = `(volume × price_sun) / 1,000,000 + 0.2 TRX` 固定费用。通过 `GET /v1/bandwidth/prices` 获取当前 `price_sun_1h`、`price_sun_1d` 和 `fixed_fee_trx`。
+`1h` 和 `1d`：价格 = `volume × price_sun / 1,000,000` + 固定手续费（0.2 TRX，除非您的账户有自己的手续费），其中 `price_sun` 为[获取带宽价格](/zh/api-reference/bandwidth/get-prices)中的 `price_sun_1h` 或 `price_sun_1d`；若您的账户有协商费率，则为您的协商费率。
+
+`5m` … `59m`：按小时费率（`price_sun_1h`，或您协商的小时费率）计价并享受折扣。折扣在 5 分钟时最大，随后线性递减，至 59 分钟时为零：
+
+```text
+discount % = short_max_discount_pct × (59 − minutes) / 54
+price_sun  = hourly price_sun × (1 − discount % / 100)
+```
+
+折扣仅适用于租赁费——固定手续费对所有时长都相同。分钟时长的租赁费四舍五入到最接近的 SUN（0.000001 TRX），恰好一半时向上取整。当前的 `short_max_discount_pct` 可在[获取带宽价格](/zh/api-reference/bandwidth/get-prices)中查看。
+
+| 时长 | `short_max_discount_pct` 为 5 时的折扣 | `price_sun_1h` 为 400 时的费率 |
+|---|---|---|
+| `5m` | 5% | 380 SUN |
+| `17m` | ≈ 3.89% | ≈ 384.44 SUN |
+| `32m` | 2.5% | 390 SUN |
+| `45m` | ≈ 1.3% | ≈ 394.81 SUN |
+| `59m` | 0% | 400 SUN |
+
+这些都无需您自行计算：[带宽报价](/zh/api-reference/bandwidth/quote)会按您的数量、时长和账户返回准确金额。
+
+### 先展示价格，再按该价格购买
+
+1. 使用您的 `X-API-Key` 调用 `GET /v1/bandwidth/quote`，并向您的用户展示 `total_trx`。
+2. 调用 `POST /v1/bandwidth/buy`，并将 `max_price_trx` 设为该 `total_trx`。
+
+报价与订单扣费由同一段代码计算，因此在价格不变期间，订单费用恰好等于 `total_trx`。如果其间价格发生变化，购买会在扣除任何费用之前以 `409 PRICE_CHANGED` 被拒绝：请重新获取报价、展示给用户，然后重试——如果您使用了 `Idempotency-Key`，请使用同一个键。
+
+<Warning>
+  `max_price_trx` 仅涵盖带宽订单。如果 `target_address` 在链上尚未激活，激活费用会另行扣除（`activation_cost_trx`），且不会与 `max_price_trx` 进行比较。
+</Warning>
 
 ### 示例
 
@@ -100,9 +150,119 @@ console.log(await resp.json());
   "price_trx": "10.28",
   "status": "filled",
   "txid": "abc123...",
-  "reclaim_at": "2026-06-10T21:00:00+00:00"
+  "reclaim_at": "2026-06-10T21:00:00+00:00",
+  "activation_cost_trx": "0"
 }
 ```
+
+### 示例：先报价，再购买 5 分钟
+
+<CodeGroup>
+```bash cURL
+# 1. The exact price — show total_trx to your user
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+
+# 2. Buy, refusing any price above the quoted total_trx
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 1000,
+    "duration": "5m",
+    "max_price_trx": "0.580000"
+  }'
+```
+
+```python Python
+import requests
+
+API = "https://api.tronrental.com/v1"
+HEADERS = {"X-API-Key": "your_api_key"}
+order = {"target_address": "TYourRecipientAddress1234567890abc", "volume": 1000, "duration": "5m"}
+
+quote = requests.get(
+    f"{API}/bandwidth/quote",
+    params={"volume": order["volume"], "duration": order["duration"]},
+    headers=HEADERS,
+).json()
+print("Price:", quote["total_trx"], "TRX")
+
+resp = requests.post(
+    f"{API}/bandwidth/buy",
+    headers=HEADERS,
+    json={**order, "max_price_trx": quote["total_trx"]},
+)
+if resp.status_code == 409 and resp.json()["detail"]["error"]["code"] == "PRICE_CHANGED":
+    print("The price changed and nothing was charged: quote again and retry")
+else:
+    print(resp.json())
+```
+
+```javascript JavaScript
+const API = "https://api.tronrental.com/v1";
+const headers = { "X-API-Key": "your_api_key" };
+const order = { target_address: "TYourRecipientAddress1234567890abc", volume: 1000, duration: "5m" };
+
+const quote = await (
+  await fetch(`${API}/bandwidth/quote?volume=${order.volume}&duration=${order.duration}`, { headers })
+).json();
+console.log("Price:", quote.total_trx, "TRX");
+
+const resp = await fetch(`${API}/bandwidth/buy`, {
+  method: "POST",
+  headers: { ...headers, "Content-Type": "application/json" },
+  body: JSON.stringify({ ...order, max_price_trx: quote.total_trx }),
+});
+const body = await resp.json();
+if (resp.status === 409 && body.detail?.error?.code === "PRICE_CHANGED") {
+  console.log("The price changed and nothing was charged: quote again and retry");
+} else {
+  console.log(body);
+}
+```
+</CodeGroup>
+
+<Info>
+  以下数值仅为示例，按 `price_sun_1h` 为 400、`short_max_discount_pct` 为 5 计算。
+</Info>
+
+```json Response
+{
+  "id": 5679,
+  "price_trx": "0.580000",
+  "status": "filled",
+  "txid": "def456...",
+  "reclaim_at": "2026-06-10T21:05:00+00:00",
+  "activation_cost_trx": "0"
+}
+```
+
+如果订单费用高于 `max_price_trx`——例如您传入了 `"0.57"`，而订单费用为 0.58 TRX——不会扣除任何费用，响应如下：
+
+```json 409 PRICE_CHANGED
+{
+  "detail": {
+    "error": {
+      "code": "PRICE_CHANGED",
+      "message": "Order price is 0.580000 TRX, above max_price_trx 0.57 TRX; nothing was charged"
+    }
+  }
+}
+```
+
+### 错误
+
+| 代码 | 含义 |
+|------|---------|
+| `400 INVALID_DURATION` | `duration` 不是 `1h`、`1d` 或 `5m` … `59m` |
+| `400 INVALID_VOLUME` | 数量超出 1–100,000 范围 |
+| `402 INSUFFICIENT_BALANCE` | 余额不足以支付该订单。未扣除任何费用 |
+| `409 PRICE_CHANGED` | 订单费用高于 `max_price_trx`。未扣除任何费用；消息中包含当前价格 |
+| `422 IDEMPOTENCY_KEY_REUSED` | 该 `Idempotency-Key` 已用于购买一笔请求体不同的订单 |
+
+`max_price_trx` 为 0、负数或非数字时，返回框架自身格式的 `422` 校验错误。其他代码列于[错误处理](/zh/errors)。
 
 <Tip>
   当免费每日带宽用尽时，**350 带宽**可覆盖一次 USDT TRC-20 转账。

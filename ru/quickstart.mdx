@@ -28,7 +28,7 @@ curl https://api.tronrental.com/v1/prices
 }
 ```
 
-Аренда энергии — **только 1 час** (`"1h"`). Bandwidth — `"1h"` или `"1d"`. `energy_trx` — только rental; при оплате добавляется `energy_fixed_fee_trx` (0.2 TRX).
+Аренда энергии — **только 1 час** (`"1h"`). Bandwidth — `"1h"`, `"1d"` или любое целое число минут от `"5m"` до `"59m"` — см. [Купить bandwidth](/ru/api-reference/bandwidth/buy-bandwidth). `energy_trx` — только rental; при оплате добавляется `energy_fixed_fee_trx` (0.2 TRX).
 
 ## 3. Пополните баланс TRX
 

@@ -74,6 +74,7 @@ Retornados no formato padrão, em `detail.error.code`:
 | `FORBIDDEN` | `403` | A chave não tem o escopo exigido por este endpoint, ou o IP da requisição não está na lista permitida da chave |
 | `NODE_API_KEY_ONLY` | `403` | Uma chave do Node API foi enviada a esta API — ela funciona apenas em `node.tronrental.com` |
 | `INSUFFICIENT_BALANCE` | `402` | Saldo da conta insuficiente para esta operação |
+| `PRICE_CHANGED` | `409` | O pedido custa mais que o `max_price_trx` que você enviou. Nada foi cobrado — obtenha uma nova cotação e tente novamente |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | Esta Idempotency-Key já foi usada com outro corpo de requisição |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | A Idempotency-Key tem mais de 64 caracteres |
 | `INVALID_ADDRESS` | `400` | Endereço TRON inválido |

@@ -1,0 +1,162 @@
+---
+title: Bandwidth fiyatı hesapla
+api: GET /api/v1/bandwidth/quote
+description: "Belirli bir miktar ve süre için bandwidth siparişinin sabit ücret dahil tam fiyatı"
+---
+
+## Bandwidth fiyatı hesapla
+
+Bu miktar ve süredeki bir bandwidth siparişi için tam olarak tahsil edilecek tutarı döner — kiralama
+ve sabit ücret birlikte, **sizin** tarifenizle. Fiyat teklifi, siparişi tahsil eden kodun aynısıyla
+hesaplanır; bu yüzden fiyat değişmediği sürece satın alma tam olarak `total_trx` tutarına mal olur.
+
+**Bu uç nokta herkese açıktır — kimlik doğrulama isteğe bağlıdır.** Kendi tarifenizi ve sabit
+ücretinizi almak için API anahtarınızı gönderin; anahtarsız genel fiyat döner.
+
+<Tip>
+  `total_trx` değerini kullanıcınıza gösterin ve
+  [Bandwidth satın al](/tr/api-reference/bandwidth/buy-bandwidth) isteğine `max_price_trx` olarak
+  gönderin. Fiyat, teklif ile satın alma arasında değişirse satın alma `409 PRICE_CHANGED` ile
+  reddedilir ve hiçbir ücret alınmaz — yeniden fiyat teklifi alın ve tekrar deneyin.
+</Tip>
+
+### Sorgu parametreleri
+
+<ParamField query="volume" type="integer" required>
+  Fiyatlandırılacak bandwidth birimi. 1 ile 100.000 arasında.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Kiralama süresi: `1h`, `1d` veya `5m` ile `59m` arasında tam dakika sayısı —
+  [Bandwidth satın al](/tr/api-reference/bandwidth/buy-bandwidth) ile aynı değerler.
+</ParamField>
+
+### Başlıklar
+
+<ParamField header="X-API-Key" type="string">
+  İsteğe bağlı. Geçerli bir anahtarla yanıt, anlaşmalı tarifenizi ve sabit ücretinizi yansıtır.
+  Anahtarın olmaması, geçersiz veya iptal edilmiş olması hata değildir — `personal_price: false` ile
+  genel fiyatı alırsınız.
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="volume" type="number">
+  Fiyatın hesaplandığı bandwidth miktarı
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Fiyatın hesaplandığı kiralama süresi
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  1 bandwidth birimi başına SUN cinsinden tarife, gösterim için 0,01'e yuvarlanmış. Dakikalık
+  sürelerde indirim olduğundan tarifeleri kesirli olur ve aşağıdaki tutarlar tam tarifeden hesaplanır —
+  bu yuvarlanmış değeri kendiniz çarpmak yerine `total_trx` değerini kullanın.
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Bu miktar ve süre için kiralama bedeli, sabit ücret hariç
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Sabit ücret; miktar ve süreden bağımsız olarak **sipariş başına bir kez** alınır. Hesabınızda özel
+  ücret, indirim veya muafiyet varsa burada kendi ücretiniz görünür.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **Tahsil edilecek tutar**: `rental_trx + fixed_fee_trx`.
+  [Bandwidth satın al](/tr/api-reference/bandwidth/buy-bandwidth) isteğine `max_price_trx` olarak
+  gönderin.
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  Anlaşmalı tarifeniz uygulandıysa `true`, fiyat genel fiyatsa `false`. Bu alanı kontrol edin: aksi
+  halde unutulmuş bir `X-API-Key` başlığı normal bir yanıt gibi görünür ve müşterilerinize genel
+  fiyatı verirken sizden kendi fiyatınız tahsil edilir.
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/quote",
+    params={"volume": 1000, "duration": "5m"},
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m",
+  { headers: { "X-API-Key": "your_api_key" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Aşağıdaki değerler örnektir: `price_sun_1h` 400 ve `short_max_discount_pct` 5. Güncel
+  tarifeler ve indirim [Bandwidth fiyatlarını al](/tr/api-reference/bandwidth/get-prices)
+  sayfasındadır.
+</Info>
+
+```json Response
+{
+  "volume": 1000,
+  "duration": "5m",
+  "price_sun": "380.00",
+  "rental_trx": "0.380000",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "0.580000",
+  "personal_price": false
+}
+```
+
+### Fiyat teklifinin içermedikleri
+
+<Warning>
+  Fiyat teklifi — ve `max_price_trx` — yalnızca bandwidth siparişini kapsar. Hedef adres zincirde
+  henüz etkinleştirilmemişse [Bandwidth satın al](/tr/api-reference/bandwidth/buy-bandwidth) adresi
+  etkinleştirir ve etkinleştirme ücretini ayrıca alır (yanıtındaki `activation_cost_trx`). Bu ücret
+  `total_trx` tutarına dahil değildir ve `max_price_trx` ile karşılaştırılmaz.
+</Warning>
+
+### Başka bir hesap adına işlem: `GET /v1/bandwidth/quote/me`
+
+`/bandwidth/quote` fiyatı **API anahtarının sahibi** için hesaplar. Anahtarınız `X-Account-Id`
+başlığıyla başka bir hesap adına işlem yapıyorsa satın alma o hesabın tarifesi ve ücretiyle tahsil
+edilir — fiyat teklifi tahsil edilen tutardan farklı olabilir ve ondan alınan bir `max_price_trx`
+değeri `409 PRICE_CHANGED` ile reddedilebilir.
+
+Bu durumda `GET /v1/bandwidth/quote/me` kullanın. Aynı sorgu parametrelerini alır ve aynı yanıtı
+döndürür, ancak kimlik doğrulama zorunludur ve hesap, `X-Account-Id` dahil, satın almadakiyle tamamen
+aynı şekilde belirlenir. `view` kapsamı gerektirir; bu kapsam her anahtarda her zaman vardır.
+
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote/me?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key" \
+  -H "X-Account-Id: 12345"
+```
+
+### Hatalar
+
+| Kod | Anlamı |
+|------|---------|
+| `400 INVALID_VOLUME` | Miktar 1–100.000 aralığının dışında |
+| `400 INVALID_DURATION` | `1h`, `1d` veya `5m` … `59m` dışında bir süre |
+| `401 INVALID_TOKEN` | Yalnızca `/quote/me`: API anahtarı eksik, bilinmiyor veya devre dışı |
+| `403 FORBIDDEN` | Yalnızca `/quote/me`: anahtarınızın `X-Account-Id` içindeki hesaba etkin erişimi yok |
+
+`/bandwidth/quote` üzerinde geçersiz veya iptal edilmiş `X-API-Key` hata **değildir**: fiyat genel
+fiyatla ve `personal_price: false` ile döner.

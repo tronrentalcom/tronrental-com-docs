@@ -1,0 +1,93 @@
+---
+title: Bandwidth कीमतें प्राप्त करें
+api: GET /api/v1/bandwidth/prices
+description: "सार्वजनिक bandwidth दरें, ऑर्डर सीमाएँ और मिनट वाली अवधियों पर छूट"
+---
+
+## Bandwidth कीमतें प्राप्त करें
+
+`1h` और `1d` के लिए सार्वजनिक bandwidth दरें, ऑर्डर की मात्रा की सीमाएँ, फिक्स्ड शुल्क और मिनट वाली अवधियों
+(`5m` … `59m`) पर छूट के पैरामीटर लौटाता है।
+
+**यह एंडपॉइंट सार्वजनिक है — प्रमाणीकरण आवश्यक नहीं है।** यह हमेशा सार्वजनिक दरें लौटाता है। अपनी दर पर किसी
+ऑर्डर की सटीक राशि के लिए [Bandwidth मूल्य अनुमान](/hi/api-reference/bandwidth/quote) का उपयोग करें।
+
+### प्रतिक्रिया
+
+<ResponseField name="price_per_day_trx" type="string">
+  घंटे की दर पर 24 घंटे के लिए 1,000 bandwidth यूनिट का मूल्य, TRX में: `price_sun_1h × 24 / 1000`। `1d` ऑर्डर की
+  कीमत इसके बजाय `price_sun_1d` से निकलती है।
+</ResponseField>
+
+<ResponseField name="price_sun_1h" type="number">
+  `1h` की सार्वजनिक दर, प्रति 1 bandwidth यूनिट SUN। मिनट वाली अवधियों की कीमत इसी से निकलती है।
+</ResponseField>
+
+<ResponseField name="price_sun_1d" type="number">
+  `1d` की सार्वजनिक दर, प्रति 1 bandwidth यूनिट SUN
+</ResponseField>
+
+<ResponseField name="min_volume" type="number">
+  सबसे छोटा ऑर्डर, bandwidth यूनिट में (1)
+</ResponseField>
+
+<ResponseField name="max_volume" type="number">
+  सबसे बड़ा ऑर्डर, bandwidth यूनिट में (100,000)
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  मानक फिक्स्ड शुल्क, किसी भी अवधि के लिए प्रति ऑर्डर एक बार लिया जाता है। आपका अपना शुल्क अलग हो सकता है —
+  [Bandwidth मूल्य अनुमान](/hi/api-reference/bandwidth/quote) उसे लौटाता है।
+</ResponseField>
+
+<ResponseField name="short_min_minutes" type="number">
+  सबसे छोटी मिनट वाली अवधि (5, यानी `"5m"`)
+</ResponseField>
+
+<ResponseField name="short_max_minutes" type="number">
+  सबसे लंबी मिनट वाली अवधि (59, यानी `"59m"`)। एक घंटा `"1h"` है।
+</ResponseField>
+
+<ResponseField name="short_max_discount_pct" type="string">
+  सबसे छोटी अवधि पर घंटे की दर से छूट, प्रतिशत में। सबसे लंबी अवधि पर यह रैखिक रूप से घटकर शून्य हो जाती है:
+  `discount % = short_max_discount_pct × (59 − minutes) / 54`। यह केवल किराये पर लागू होती है, फिक्स्ड शुल्क पर
+  नहीं। `"0"` का अर्थ है कि मिनट वाली अवधियों की कीमत घंटे की दर के बराबर है।
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/bandwidth/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  नीचे दिए मान उदाहरण हैं। दरें और छूट बदल सकती हैं।
+</Info>
+
+```json Response
+{
+  "price_per_day_trx": "9.6",
+  "price_sun_1h": 400,
+  "price_sun_1d": 630,
+  "min_volume": 1,
+  "max_volume": 100000,
+  "fixed_fee_trx": "0.2",
+  "short_min_minutes": 5,
+  "short_max_minutes": 59,
+  "short_max_discount_pct": "5"
+}
+```

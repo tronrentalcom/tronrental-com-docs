@@ -69,6 +69,8 @@
                   "api-reference/energy/quote",
                   "api-reference/energy/buy-energy",
                   "api-reference/energy/activate-address",
+                  "api-reference/bandwidth/get-prices",
+                  "api-reference/bandwidth/quote",
                   "api-reference/bandwidth/buy-bandwidth"
                 ]
               },
@@ -224,6 +226,8 @@
                   "ru/api-reference/energy/quote",
                   "ru/api-reference/energy/buy-energy",
                   "ru/api-reference/energy/activate-address",
+                  "ru/api-reference/bandwidth/get-prices",
+                  "ru/api-reference/bandwidth/quote",
                   "ru/api-reference/bandwidth/buy-bandwidth"
                 ]
               },
@@ -378,6 +382,8 @@
                   "zh/api-reference/energy/quote",
                   "zh/api-reference/energy/buy-energy",
                   "zh/api-reference/energy/activate-address",
+                  "zh/api-reference/bandwidth/get-prices",
+                  "zh/api-reference/bandwidth/quote",
                   "zh/api-reference/bandwidth/buy-bandwidth"
                 ]
               },
@@ -532,6 +538,8 @@
                   "es/api-reference/energy/quote",
                   "es/api-reference/energy/buy-energy",
                   "es/api-reference/energy/activate-address",
+                  "es/api-reference/bandwidth/get-prices",
+                  "es/api-reference/bandwidth/quote",
                   "es/api-reference/bandwidth/buy-bandwidth"
                 ]
               },
@@ -686,6 +694,8 @@
                   "tr/api-reference/energy/quote",
                   "tr/api-reference/energy/buy-energy",
                   "tr/api-reference/energy/activate-address",
+                  "tr/api-reference/bandwidth/get-prices",
+                  "tr/api-reference/bandwidth/quote",
                   "tr/api-reference/bandwidth/buy-bandwidth"
                 ]
               },
@@ -840,6 +850,8 @@
                   "pt/api-reference/energy/quote",
                   "pt/api-reference/energy/buy-energy",
                   "pt/api-reference/energy/activate-address",
+                  "pt/api-reference/bandwidth/get-prices",
+                  "pt/api-reference/bandwidth/quote",
                   "pt/api-reference/bandwidth/buy-bandwidth"
                 ]
               },
@@ -994,6 +1006,8 @@
                   "hi/api-reference/energy/quote",
                   "hi/api-reference/energy/buy-energy",
                   "hi/api-reference/energy/activate-address",
+                  "hi/api-reference/bandwidth/get-prices",
+                  "hi/api-reference/bandwidth/quote",
                   "hi/api-reference/bandwidth/buy-bandwidth"
                 ]
               },

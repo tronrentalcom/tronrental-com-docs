@@ -1,0 +1,159 @@
+---
+title: Calcular preço de bandwidth
+api: GET /api/v1/bandwidth/quote
+description: "Preço exato de um pedido de bandwidth para um volume e uma duração, taxa fixa incluída"
+---
+
+## Calcular preço de bandwidth
+
+Retorna o valor exato que será cobrado por um pedido de bandwidth com este volume e esta duração — aluguel e
+taxa fixa juntos, pela **sua** tarifa. A cotação é calculada pelo mesmo código que cobra o
+pedido; por isso, enquanto o preço não muda, a compra custa exatamente `total_trx`.
+
+**Este endpoint é público — a autenticação é opcional.** Envie sua chave de API para receber a sua
+tarifa e a sua taxa fixa; sem ela você obtém o preço público.
+
+<Tip>
+  Mostre `total_trx` ao seu usuário e envie-o como `max_price_trx` em
+  [Comprar bandwidth](/pt/api-reference/bandwidth/buy-bandwidth). Se o preço mudar entre a cotação e
+  a compra, a compra é recusada com `409 PRICE_CHANGED` e nada é cobrado — cote
+  novamente e repita.
+</Tip>
+
+### Parâmetros de consulta
+
+<ParamField query="volume" type="integer" required>
+  Unidades de bandwidth a cotar. Entre 1 e 100.000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Período de aluguel: `1h`, `1d` ou um número inteiro de minutos de `5m` a `59m` — os mesmos valores de
+  [Comprar bandwidth](/pt/api-reference/bandwidth/buy-bandwidth).
+</ParamField>
+
+### Cabeçalhos
+
+<ParamField header="X-API-Key" type="string">
+  Opcional. Com uma chave válida a resposta reflete sua tarifa negociada e sua taxa fixa. Chave
+  ausente, inválida ou revogada não é erro — você recebe o preço público com
+  `personal_price: false`.
+</ParamField>
+
+### Resposta
+
+<ResponseField name="volume" type="number">
+  Unidades de bandwidth para as quais a cotação foi calculada
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Período de aluguel para o qual a cotação foi calculada
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Tarifa em SUN por 1 unidade de bandwidth, arredondada a 0,01 para exibição. Os prazos em minutos têm
+  desconto, por isso a tarifa deles é fracionária, e os valores abaixo são calculados a partir da tarifa
+  exata — use `total_trx` em vez de multiplicar você mesmo este valor arredondado.
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Custo de aluguel para este volume e esta duração, sem a taxa fixa
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Taxa fixa, cobrada **uma vez por pedido**, independentemente do volume e da duração. Reflete a sua
+  taxa caso haja taxa personalizada, desconto ou isenção na sua conta.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **O que será cobrado**: `rental_trx + fixed_fee_trx`. Envie-o como `max_price_trx` em
+  [Comprar bandwidth](/pt/api-reference/bandwidth/buy-bandwidth).
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true` quando sua tarifa negociada foi aplicada, `false` quando a cotação usa o preço público.
+  Verifique este campo: um cabeçalho `X-API-Key` esquecido parece uma resposta normal, e você estaria
+  cotando o preço público aos seus clientes enquanto é cobrado pelo seu.
+</ResponseField>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/quote",
+    params={"volume": 1000, "duration": "5m"},
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m",
+  { headers: { "X-API-Key": "your_api_key" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Os valores abaixo são um exemplo, com `price_sun_1h` igual a 400 e `short_max_discount_pct` igual a 5. As
+  tarifas e o desconto atuais estão em [Consultar preços de bandwidth](/pt/api-reference/bandwidth/get-prices).
+</Info>
+
+```json Response
+{
+  "volume": 1000,
+  "duration": "5m",
+  "price_sun": "380.00",
+  "rental_trx": "0.380000",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "0.580000",
+  "personal_price": false
+}
+```
+
+### O que a cotação não inclui
+
+<Warning>
+  A cotação — e `max_price_trx` — cobre apenas o pedido de bandwidth. Se o endereço de destino ainda
+  não estiver ativado on-chain, [Comprar bandwidth](/pt/api-reference/bandwidth/buy-bandwidth) o ativa e
+  cobra a ativação à parte (`activation_cost_trx` na resposta). Essa cobrança não faz parte de
+  `total_trx` e não entra na verificação de `max_price_trx`.
+</Warning>
+
+### Agindo em nome de outra conta: `GET /v1/bandwidth/quote/me`
+
+`/bandwidth/quote` calcula o preço para o **dono da chave de API**. Se a sua chave age em nome de outra
+conta com o cabeçalho `X-Account-Id`, a compra é cobrada pela tarifa e pela taxa dessa conta — a cotação
+pode diferir da cobrança, e um `max_price_trx` tirado dela pode ser recusado com `409 PRICE_CHANGED`.
+
+Nesse caso, use `GET /v1/bandwidth/quote/me`. Ele aceita os mesmos parâmetros de consulta e retorna a
+mesma resposta, mas exige autenticação, e a conta é determinada exatamente como na compra,
+`X-Account-Id` incluído. Ele exige o escopo `view`, que toda chave sempre tem.
+
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote/me?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key" \
+  -H "X-Account-Id: 12345"
+```
+
+### Erros
+
+| Código | Significado |
+|------|---------|
+| `400 INVALID_VOLUME` | Volume fora de 1–100.000 |
+| `400 INVALID_DURATION` | Duração diferente de `1h`, `1d` ou `5m` … `59m` |
+| `401 INVALID_TOKEN` | Apenas `/quote/me`: chave de API ausente, desconhecida ou desativada |
+| `403 FORBIDDEN` | Apenas `/quote/me`: sua chave não tem acesso ativo à conta em `X-Account-Id` |
+
+Em `/bandwidth/quote` uma `X-API-Key` inválida ou revogada **não** é erro: a cotação é retornada
+ao preço público com `personal_price: false`.

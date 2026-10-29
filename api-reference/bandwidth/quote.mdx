@@ -1,0 +1,159 @@
+---
+title: Quote Bandwidth
+api: GET /api/v1/bandwidth/quote
+description: "Exact price of a bandwidth order for a volume and duration, fixed fee included"
+---
+
+## Quote Bandwidth
+
+Returns the exact amount a bandwidth order of this volume and duration will be charged — rental and
+fixed fee together, at **your** rate. The quote is calculated by the same code that charges the
+order, so while the price is unchanged the purchase costs exactly `total_trx`.
+
+**This endpoint is public — authentication is optional.** Send your API key to be quoted your own
+rate and fixed fee; without it you get the public price.
+
+<Tip>
+  Show `total_trx` to your user and pass it as `max_price_trx` to
+  [Buy Bandwidth](/api-reference/bandwidth/buy-bandwidth). If the price changes between the quote and
+  the purchase, the purchase is refused with `409 PRICE_CHANGED` and nothing is charged — quote
+  again and retry.
+</Tip>
+
+### Query parameters
+
+<ParamField query="volume" type="integer" required>
+  Bandwidth units to price. Between 1 and 100,000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Rental period: `1h`, `1d`, or a whole number of minutes from `5m` to `59m` — the same values as in
+  [Buy Bandwidth](/api-reference/bandwidth/buy-bandwidth).
+</ParamField>
+
+### Headers
+
+<ParamField header="X-API-Key" type="string">
+  Optional. With a valid key the response reflects your negotiated rate and your fixed fee. An
+  absent, invalid or revoked key is not an error — you get the public price with
+  `personal_price: false`.
+</ParamField>
+
+### Response
+
+<ResponseField name="volume" type="number">
+  Bandwidth units the quote was calculated for
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Rental period the quote was calculated for
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Rate in SUN per 1 bandwidth unit, rounded to 0.01 for display. Minute terms carry a discount, so
+  their rate is fractional, and the amounts below are calculated from the exact rate — take
+  `total_trx` rather than multiplying this rounded value yourself.
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Rental cost for this volume and duration, without the fixed fee
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Fixed fee, charged **once per order** regardless of volume and duration. Reflects your own fee if
+  a custom fee, discount or waiver applies to your account.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **What you will be charged**: `rental_trx + fixed_fee_trx`. Pass it as `max_price_trx` to
+  [Buy Bandwidth](/api-reference/bandwidth/buy-bandwidth).
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true` when your negotiated rate was applied, `false` when the quote is at the public price. Check
+  it: a forgotten `X-API-Key` header otherwise looks like a normal response, and you would quote
+  your customers the public price while being charged your own.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/quote",
+    params={"volume": 1000, "duration": "5m"},
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m",
+  { headers: { "X-API-Key": "your_api_key" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Values below are an example, with `price_sun_1h` of 400 and `short_max_discount_pct` of 5. Current rates
+  and the discount are in [Get Bandwidth Prices](/api-reference/bandwidth/get-prices).
+</Info>
+
+```json Response
+{
+  "volume": 1000,
+  "duration": "5m",
+  "price_sun": "380.00",
+  "rental_trx": "0.380000",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "0.580000",
+  "personal_price": false
+}
+```
+
+### What the quote does not include
+
+<Warning>
+  The quote — and `max_price_trx` — covers the bandwidth order only. If the target address is not
+  activated on-chain yet, [Buy Bandwidth](/api-reference/bandwidth/buy-bandwidth) activates it and
+  charges the activation on top (`activation_cost_trx` in its response). That charge is not part of
+  `total_trx` and is not checked against `max_price_trx`.
+</Warning>
+
+### Acting on another account: `GET /v1/bandwidth/quote/me`
+
+`/bandwidth/quote` prices for the **owner of the API key**. If your key acts on another account with
+the `X-Account-Id` header, the purchase is charged at that account's rate and fee — the quote may
+differ from the charge, and a `max_price_trx` taken from it may be refused with `409 PRICE_CHANGED`.
+
+Use `GET /v1/bandwidth/quote/me` in that case. It takes the same query parameters and returns the
+same response, but authentication is required, and the account is resolved exactly as for the
+purchase, `X-Account-Id` included. It needs the `view` scope, which every key always has.
+
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote/me?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key" \
+  -H "X-Account-Id: 12345"
+```
+
+### Errors
+
+| Code | Meaning |
+|------|---------|
+| `400 INVALID_VOLUME` | Volume outside 1–100,000 |
+| `400 INVALID_DURATION` | Duration other than `1h`, `1d` or `5m` … `59m` |
+| `401 INVALID_TOKEN` | `/quote/me` only: API key missing, unknown or disabled |
+| `403 FORBIDDEN` | `/quote/me` only: your key has no active access to the account in `X-Account-Id` |
+
+On `/bandwidth/quote` an invalid or revoked `X-API-Key` is **not** an error: the quote is returned
+at the public price with `personal_price: false`.

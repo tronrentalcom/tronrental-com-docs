@@ -19,7 +19,33 @@ Delegates bandwidth to the specified TRON address. The cost is deducted from you
 </ParamField>
 
 <ParamField body="duration" type="string" required>
-  Rental duration: `"1h"` (1 hour) or `"1d"` (24 hours). Use `"1d"`, not `"24h"` or numeric hour values.
+  Rental duration, one of:
+
+  - `"1h"` — 1 hour
+  - `"1d"` — 24 hours
+  - `"5m"` … `"59m"` — any whole number of minutes from 5 to 59, at the hourly rate with a discount (see [Pricing](#pricing))
+
+  Write minutes as a number without a leading zero, followed by a lowercase `m`: `"5m"`, `"30m"`. `"05m"`, `"5M"`,
+  `"60m"` or `"90m"` are rejected with `400 INVALID_DURATION`: an hour is `"1h"`, and there is
+  nothing between `"1h"` and `"1d"`. Use `"1d"`, not `"24h"` or numeric hour values.
+</ParamField>
+
+<ParamField body="max_price_trx" type="string">
+  Optional. The most you agree to pay for this order, in TRX — rental and fixed fee together. If the
+  order would cost more, it is refused with `409 PRICE_CHANGED` and **nothing is charged**. Pass the
+  `total_trx` from [Quote Bandwidth](/api-reference/bandwidth/quote). A decimal string such as
+  `"0.58"` (a JSON number is accepted too), greater than 0. Without it the order is bought at the
+  current price, as before.
+</ParamField>
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional, up to 64 characters. A retry with the same key and the same body returns the original
+  order instead of buying again. After a successful order, the same key with a different body —
+  a different `max_price_trx` included — returns `422 IDEMPOTENCY_KEY_REUSED`. After a refusal that
+  charged nothing, such as `409 PRICE_CHANGED` or `402 INSUFFICIENT_BALANCE`, the key is free again:
+  retry with it and the new price.
 </ParamField>
 
 ### Response
@@ -37,16 +63,63 @@ Delegates bandwidth to the specified TRON address. The cost is deducted from you
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
-  Total cost charged from your balance, in TRX
+  Total cost of the order charged from your balance, in TRX — rental and fixed fee
 </ResponseField>
 
 <ResponseField name="reclaim_at" type="string | null">
   ISO 8601 timestamp when the bandwidth rental is reclaimed
 </ResponseField>
 
+<ResponseField name="activation_cost_trx" type="string">
+  Charged for activating `target_address` on-chain if it was not activated yet, on top of
+  `price_trx`. `"0"` for an address that is already active.
+</ResponseField>
+
 ### Pricing
 
-Price = `(volume × price_sun) / 1,000,000 + 0.2 TRX` fixed fee. Get current `price_sun_1h`, `price_sun_1d`, and `fixed_fee_trx` from `GET /v1/bandwidth/prices`.
+`1h` and `1d`: price = `volume × price_sun / 1,000,000` + fixed fee (0.2 TRX unless your account has
+its own fee), where `price_sun` is
+`price_sun_1h` or `price_sun_1d` from [Get Bandwidth Prices](/api-reference/bandwidth/get-prices), or
+your negotiated rate if your account has one.
+
+`5m` … `59m`: the hourly rate (`price_sun_1h`, or your negotiated hourly rate) with a discount. The
+discount is largest on 5 minutes and falls linearly to zero on 59 minutes:
+
+```text
+discount % = short_max_discount_pct × (59 − minutes) / 54
+price_sun  = hourly price_sun × (1 − discount % / 100)
+```
+
+The discount applies to the rental only — the fixed fee is the same for every duration. The rental
+of a minute term is rounded to the nearest SUN (0.000001 TRX), halves up. The current `short_max_discount_pct` is in
+[Get Bandwidth Prices](/api-reference/bandwidth/get-prices).
+
+| Duration | Discount when `short_max_discount_pct` is 5 | Rate when `price_sun_1h` is 400 |
+|---|---|---|
+| `5m` | 5% | 380 SUN |
+| `17m` | ≈ 3.89% | ≈ 384.44 SUN |
+| `32m` | 2.5% | 390 SUN |
+| `45m` | ≈ 1.3% | ≈ 394.81 SUN |
+| `59m` | 0% | 400 SUN |
+
+You do not need to calculate any of this: [Quote Bandwidth](/api-reference/bandwidth/quote) returns
+the exact amount for your volume, duration and account.
+
+### Show the price, then buy at that price
+
+1. Call `GET /v1/bandwidth/quote` with your `X-API-Key` and show `total_trx` to your user.
+2. Call `POST /v1/bandwidth/buy` with `max_price_trx` set to that `total_trx`.
+
+The quote is calculated by the same code that charges the order, so while the price is unchanged
+the order costs exactly `total_trx`. If the price changed in between, the purchase is refused with
+`409 PRICE_CHANGED` before anything is charged: get a new quote, show it, and retry — with the same
+`Idempotency-Key`, if you use one.
+
+<Warning>
+  `max_price_trx` covers the bandwidth order only. If `target_address` is not activated on-chain yet,
+  the activation is charged on top (`activation_cost_trx`) and is not checked against
+  `max_price_trx`.
+</Warning>
 
 ### Example
 
@@ -100,9 +173,121 @@ console.log(await resp.json());
   "price_trx": "10.28",
   "status": "filled",
   "txid": "abc123...",
-  "reclaim_at": "2026-06-10T21:00:00+00:00"
+  "reclaim_at": "2026-06-10T21:00:00+00:00",
+  "activation_cost_trx": "0"
 }
 ```
+
+### Example: quote, then buy for 5 minutes
+
+<CodeGroup>
+```bash cURL
+# 1. The exact price — show total_trx to your user
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+
+# 2. Buy, refusing any price above the quoted total_trx
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 1000,
+    "duration": "5m",
+    "max_price_trx": "0.580000"
+  }'
+```
+
+```python Python
+import requests
+
+API = "https://api.tronrental.com/v1"
+HEADERS = {"X-API-Key": "your_api_key"}
+order = {"target_address": "TYourRecipientAddress1234567890abc", "volume": 1000, "duration": "5m"}
+
+quote = requests.get(
+    f"{API}/bandwidth/quote",
+    params={"volume": order["volume"], "duration": order["duration"]},
+    headers=HEADERS,
+).json()
+print("Price:", quote["total_trx"], "TRX")
+
+resp = requests.post(
+    f"{API}/bandwidth/buy",
+    headers=HEADERS,
+    json={**order, "max_price_trx": quote["total_trx"]},
+)
+if resp.status_code == 409 and resp.json()["detail"]["error"]["code"] == "PRICE_CHANGED":
+    print("The price changed and nothing was charged: quote again and retry")
+else:
+    print(resp.json())
+```
+
+```javascript JavaScript
+const API = "https://api.tronrental.com/v1";
+const headers = { "X-API-Key": "your_api_key" };
+const order = { target_address: "TYourRecipientAddress1234567890abc", volume: 1000, duration: "5m" };
+
+const quote = await (
+  await fetch(`${API}/bandwidth/quote?volume=${order.volume}&duration=${order.duration}`, { headers })
+).json();
+console.log("Price:", quote.total_trx, "TRX");
+
+const resp = await fetch(`${API}/bandwidth/buy`, {
+  method: "POST",
+  headers: { ...headers, "Content-Type": "application/json" },
+  body: JSON.stringify({ ...order, max_price_trx: quote.total_trx }),
+});
+const body = await resp.json();
+if (resp.status === 409 && body.detail?.error?.code === "PRICE_CHANGED") {
+  console.log("The price changed and nothing was charged: quote again and retry");
+} else {
+  console.log(body);
+}
+```
+</CodeGroup>
+
+<Info>
+  Values below are an example, with `price_sun_1h` of 400 and `short_max_discount_pct` of 5.
+</Info>
+
+```json Response
+{
+  "id": 5679,
+  "price_trx": "0.580000",
+  "status": "filled",
+  "txid": "def456...",
+  "reclaim_at": "2026-06-10T21:05:00+00:00",
+  "activation_cost_trx": "0"
+}
+```
+
+If the order costs more than `max_price_trx` — say you sent `"0.57"` and the order costs 0.58 TRX —
+nothing is charged and the response is:
+
+```json 409 PRICE_CHANGED
+{
+  "detail": {
+    "error": {
+      "code": "PRICE_CHANGED",
+      "message": "Order price is 0.580000 TRX, above max_price_trx 0.57 TRX; nothing was charged"
+    }
+  }
+}
+```
+
+### Errors
+
+| Code | Meaning |
+|------|---------|
+| `400 INVALID_DURATION` | `duration` is not `1h`, `1d` or `5m` … `59m` |
+| `400 INVALID_VOLUME` | Volume outside 1–100,000 |
+| `402 INSUFFICIENT_BALANCE` | Not enough balance for the order. Nothing was charged |
+| `409 PRICE_CHANGED` | The order costs more than `max_price_trx`. Nothing was charged; the message carries the current price |
+| `422 IDEMPOTENCY_KEY_REUSED` | The `Idempotency-Key` already bought an order with a different body |
+
+A `max_price_trx` of 0, a negative number or a non-number is a `422` validation error in the
+framework's own format. Other codes are listed in [Errors](/errors).
 
 <Tip>
   **350 bandwidth** covers one USDT TRC-20 transfer when free daily bandwidth is exhausted.

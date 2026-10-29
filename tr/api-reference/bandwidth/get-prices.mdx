@@ -1,0 +1,96 @@
+---
+title: Bandwidth fiyatlarını al
+api: GET /api/v1/bandwidth/prices
+description: "Genel bandwidth tarifeleri, sipariş limitleri ve dakikalık süre indirimi"
+---
+
+## Bandwidth fiyatlarını al
+
+`1h` ve `1d` için genel bandwidth tarifelerini, sipariş miktarı limitlerini, sabit ücreti ve
+dakikalık sürelerdeki (`5m` … `59m`) indirimin parametrelerini döndürür.
+
+**Bu uç nokta herkese açıktır — kimlik doğrulama gerektirmez.** Her zaman genel tarifeleri döndürür.
+Kendi tarifenizle bir siparişin tam tutarı için
+[Bandwidth fiyatı hesapla](/tr/api-reference/bandwidth/quote) kullanın.
+
+### Yanıt
+
+<ResponseField name="price_per_day_trx" type="string">
+  Saatlik tarifeyle 24 saat boyunca 1.000 bandwidth birimi için TRX: `price_sun_1h × 24 / 1000`. `1d`
+  siparişi ise `price_sun_1d` ile fiyatlandırılır.
+</ResponseField>
+
+<ResponseField name="price_sun_1h" type="number">
+  `1h` için genel tarife, 1 bandwidth birimi başına SUN. Dakikalık süreler bunun üzerinden
+  fiyatlandırılır.
+</ResponseField>
+
+<ResponseField name="price_sun_1d" type="number">
+  `1d` için genel tarife, 1 bandwidth birimi başına SUN
+</ResponseField>
+
+<ResponseField name="min_volume" type="number">
+  En küçük sipariş, bandwidth birimi cinsinden (1)
+</ResponseField>
+
+<ResponseField name="max_volume" type="number">
+  En büyük sipariş, bandwidth birimi cinsinden (100.000)
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Standart sabit ücret; süreden bağımsız olarak sipariş başına bir kez alınır. Kendi ücretiniz farklı
+  olabilir — [Bandwidth fiyatı hesapla](/tr/api-reference/bandwidth/quote) onu döndürür.
+</ResponseField>
+
+<ResponseField name="short_min_minutes" type="number">
+  En kısa dakikalık süre (5, yani `"5m"`)
+</ResponseField>
+
+<ResponseField name="short_max_minutes" type="number">
+  En uzun dakikalık süre (59, yani `"59m"`). Bir saat `"1h"` olarak yazılır.
+</ResponseField>
+
+<ResponseField name="short_max_discount_pct" type="string">
+  En kısa sürede saatlik tarifeden yapılan indirim, yüzde olarak. En uzun sürede doğrusal olarak
+  sıfıra iner: `discount % = short_max_discount_pct × (59 − minutes) / 54`. Sabit ücrete değil,
+  yalnızca kiralamaya uygulanır. `"0"`, dakikalık sürelerin saatlik tarifeyle fiyatlandırıldığı
+  anlamına gelir.
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/bandwidth/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  Aşağıdaki değerler örnektir. Tarifeler ve indirim değişebilir.
+</Info>
+
+```json Response
+{
+  "price_per_day_trx": "9.6",
+  "price_sun_1h": 400,
+  "price_sun_1d": 630,
+  "min_volume": 1,
+  "max_volume": 100000,
+  "fixed_fee_trx": "0.2",
+  "short_min_minutes": 5,
+  "short_max_minutes": 59,
+  "short_max_discount_pct": "5"
+}
+```

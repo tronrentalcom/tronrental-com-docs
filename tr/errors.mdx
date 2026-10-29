@@ -73,6 +73,7 @@ Standart biçimde, `detail.error.code` altında döndürülür:
 | `FORBIDDEN` | `403` | Anahtarda bu uç noktanın gerektirdiği kapsam yok ya da isteğin IP'si anahtarın izin listesinde değil |
 | `NODE_API_KEY_ONLY` | `403` | Bu API'ye bir Node API anahtarı gönderildi — bu anahtar yalnızca `node.tronrental.com` adresinde çalışır |
 | `INSUFFICIENT_BALANCE` | `402` | Bu işlem için hesap bakiyesi yetersiz |
+| `PRICE_CHANGED` | `409` | Sipariş, gönderdiğiniz `max_price_trx` değerinden pahalı. Hiçbir ücret alınmadı — yeni bir fiyat teklifi alın ve tekrar deneyin |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | Bu Idempotency-Key farklı bir istek gövdesiyle zaten kullanıldı |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | Idempotency-Key 64 karakterden uzun |
 | `INVALID_ADDRESS` | `400` | Geçerli bir TRON adresi değil |

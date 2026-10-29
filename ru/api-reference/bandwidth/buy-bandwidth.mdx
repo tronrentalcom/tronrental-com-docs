@@ -19,7 +19,23 @@ description: "Покупка bandwidth для адреса TRON"
 </ParamField>
 
 <ParamField body="duration" type="string" required>
-  Длительность аренды: `"1h"` (1 час) или `"1d"` (24 часа). Используйте `"1d"`, а не `"24h"` или число часов.
+  Длительность аренды, одно из значений:
+
+  - `"1h"` — 1 час
+  - `"1d"` — 24 часа
+  - `"5m"` … `"59m"` — любое целое число минут от 5 до 59, по часовой ставке со скидкой (см. [Ценообразование](#ценообразование))
+
+  Минуты записываются числом без ведущего нуля со строчной `m`: `"5m"`, `"30m"`. `"05m"`, `"5M"`, `"60m"` или `"90m"` отклоняются с `400 INVALID_DURATION`: час — это `"1h"`, а между `"1h"` и `"1d"` ничего нет. Используйте `"1d"`, а не `"24h"` или число часов.
+</ParamField>
+
+<ParamField body="max_price_trx" type="string">
+  Необязательный. Максимум, который вы согласны заплатить за этот заказ, в TRX — аренда и фиксированная комиссия вместе. Если заказ стоил бы дороже, он отклоняется с `409 PRICE_CHANGED` и **ничего не списывается**. Передайте `total_trx` из [Рассчитать цену bandwidth](/ru/api-reference/bandwidth/quote). Десятичная строка вида `"0.58"` (JSON-число тоже принимается), больше 0. Без этого параметра заказ покупается по текущей цене, как и раньше.
+</ParamField>
+
+### Заголовки
+
+<ParamField header="Idempotency-Key" type="string">
+  Необязательный, до 64 символов. Повтор с тем же ключом и тем же телом запроса возвращает исходный заказ, а не покупает заново. После успешного заказа тот же ключ с другим телом — в том числе с другим `max_price_trx` — возвращает `422 IDEMPOTENCY_KEY_REUSED`. После отказа, при котором ничего не списано, например `409 PRICE_CHANGED` или `402 INSUFFICIENT_BALANCE`, ключ снова свободен: повторите запрос с ним и новой ценой.
 </ParamField>
 
 ### Ответ
@@ -37,16 +53,50 @@ description: "Покупка bandwidth для адреса TRON"
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
-  Итоговая стоимость, списанная с баланса, в TRX
+  Итоговая стоимость заказа, списанная с баланса, в TRX — аренда и фиксированная комиссия
 </ResponseField>
 
 <ResponseField name="reclaim_at" type="string | null">
   ISO 8601 timestamp, когда bandwidth будет отозван
 </ResponseField>
 
+<ResponseField name="activation_cost_trx" type="string">
+  Сумма, списанная за on-chain активацию `target_address`, если адрес ещё не был активирован, — сверх `price_trx`. `"0"` для адреса, который уже активен.
+</ResponseField>
+
 ### Ценообразование
 
-Цена = `(volume × price_sun) / 1 000 000 + 0.2 TRX` фикс. комиссия. Актуальные `price_sun_1h`, `price_sun_1d` и `fixed_fee_trx` — в `GET /v1/bandwidth/prices`.
+`1h` и `1d`: цена = `volume × price_sun / 1,000,000` + фиксированная комиссия (0.2 TRX, если у вашего аккаунта нет своей комиссии), где `price_sun` — это `price_sun_1h` или `price_sun_1d` из [Получить цены bandwidth](/ru/api-reference/bandwidth/get-prices) либо ваша согласованная ставка, если она есть у вашего аккаунта.
+
+`5m` … `59m`: часовая ставка (`price_sun_1h` или ваша согласованная часовая ставка) со скидкой. Скидка максимальна на 5 минутах и линейно убывает до нуля на 59 минутах:
+
+```text
+discount % = short_max_discount_pct × (59 − minutes) / 54
+price_sun  = hourly price_sun × (1 − discount % / 100)
+```
+
+Скидка действует только на аренду — фиксированная комиссия одинакова для любого срока. Аренда на минутный срок округляется до ближайшего SUN (0.000001 TRX), половина — вверх. Текущее значение `short_max_discount_pct` — в [Получить цены bandwidth](/ru/api-reference/bandwidth/get-prices).
+
+| Срок | Скидка при `short_max_discount_pct`, равном 5 | Ставка при `price_sun_1h`, равном 400 |
+|---|---|---|
+| `5m` | 5% | 380 SUN |
+| `17m` | ≈ 3.89% | ≈ 384.44 SUN |
+| `32m` | 2.5% | 390 SUN |
+| `45m` | ≈ 1.3% | ≈ 394.81 SUN |
+| `59m` | 0% | 400 SUN |
+
+Считать всё это самостоятельно не нужно: [Рассчитать цену bandwidth](/ru/api-reference/bandwidth/quote) возвращает точную сумму для вашего объёма, срока и аккаунта.
+
+### Показать цену, затем купить по этой цене
+
+1. Вызовите `GET /v1/bandwidth/quote` со своим `X-API-Key` и покажите `total_trx` пользователю.
+2. Вызовите `POST /v1/bandwidth/buy` с `max_price_trx`, равным этому `total_trx`.
+
+Котировка рассчитывается тем же кодом, который списывает оплату за заказ, поэтому, пока цена не изменилась, заказ стоит ровно `total_trx`. Если цена за это время изменилась, покупка отклоняется с `409 PRICE_CHANGED` до какого-либо списания: получите новую котировку, покажите её и повторите запрос — с тем же `Idempotency-Key`, если вы его используете.
+
+<Warning>
+  `max_price_trx` распространяется только на заказ bandwidth. Если `target_address` ещё не активирован on-chain, активация списывается сверх (`activation_cost_trx`) и с `max_price_trx` не сверяется.
+</Warning>
 
 ### Пример
 
@@ -100,9 +150,119 @@ console.log(await resp.json());
   "price_trx": "10.28",
   "status": "filled",
   "txid": "abc123...",
-  "reclaim_at": "2026-06-10T21:00:00+00:00"
+  "reclaim_at": "2026-06-10T21:00:00+00:00",
+  "activation_cost_trx": "0"
 }
 ```
+
+### Пример: котировка, затем покупка на 5 минут
+
+<CodeGroup>
+```bash cURL
+# 1. The exact price — show total_trx to your user
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+
+# 2. Buy, refusing any price above the quoted total_trx
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 1000,
+    "duration": "5m",
+    "max_price_trx": "0.580000"
+  }'
+```
+
+```python Python
+import requests
+
+API = "https://api.tronrental.com/v1"
+HEADERS = {"X-API-Key": "your_api_key"}
+order = {"target_address": "TYourRecipientAddress1234567890abc", "volume": 1000, "duration": "5m"}
+
+quote = requests.get(
+    f"{API}/bandwidth/quote",
+    params={"volume": order["volume"], "duration": order["duration"]},
+    headers=HEADERS,
+).json()
+print("Price:", quote["total_trx"], "TRX")
+
+resp = requests.post(
+    f"{API}/bandwidth/buy",
+    headers=HEADERS,
+    json={**order, "max_price_trx": quote["total_trx"]},
+)
+if resp.status_code == 409 and resp.json()["detail"]["error"]["code"] == "PRICE_CHANGED":
+    print("The price changed and nothing was charged: quote again and retry")
+else:
+    print(resp.json())
+```
+
+```javascript JavaScript
+const API = "https://api.tronrental.com/v1";
+const headers = { "X-API-Key": "your_api_key" };
+const order = { target_address: "TYourRecipientAddress1234567890abc", volume: 1000, duration: "5m" };
+
+const quote = await (
+  await fetch(`${API}/bandwidth/quote?volume=${order.volume}&duration=${order.duration}`, { headers })
+).json();
+console.log("Price:", quote.total_trx, "TRX");
+
+const resp = await fetch(`${API}/bandwidth/buy`, {
+  method: "POST",
+  headers: { ...headers, "Content-Type": "application/json" },
+  body: JSON.stringify({ ...order, max_price_trx: quote.total_trx }),
+});
+const body = await resp.json();
+if (resp.status === 409 && body.detail?.error?.code === "PRICE_CHANGED") {
+  console.log("The price changed and nothing was charged: quote again and retry");
+} else {
+  console.log(body);
+}
+```
+</CodeGroup>
+
+<Info>
+  Значения ниже — пример, при `price_sun_1h`, равном 400, и `short_max_discount_pct`, равном 5.
+</Info>
+
+```json Response
+{
+  "id": 5679,
+  "price_trx": "0.580000",
+  "status": "filled",
+  "txid": "def456...",
+  "reclaim_at": "2026-06-10T21:05:00+00:00",
+  "activation_cost_trx": "0"
+}
+```
+
+Если заказ стоит дороже `max_price_trx` — например, вы передали `"0.57"`, а заказ стоит 0.58 TRX, — ничего не списывается, а ответ такой:
+
+```json 409 PRICE_CHANGED
+{
+  "detail": {
+    "error": {
+      "code": "PRICE_CHANGED",
+      "message": "Order price is 0.580000 TRX, above max_price_trx 0.57 TRX; nothing was charged"
+    }
+  }
+}
+```
+
+### Ошибки
+
+| Код | Значение |
+|------|---------|
+| `400 INVALID_DURATION` | `duration` — не `1h`, `1d` и не `5m` … `59m` |
+| `400 INVALID_VOLUME` | Объём вне диапазона 1–100 000 |
+| `402 INSUFFICIENT_BALANCE` | Недостаточно средств на балансе для заказа. Ничего не списано |
+| `409 PRICE_CHANGED` | Заказ стоит дороже `max_price_trx`. Ничего не списано; в сообщении указана текущая цена |
+| `422 IDEMPOTENCY_KEY_REUSED` | По этому `Idempotency-Key` уже куплен заказ с другим телом запроса |
+
+`max_price_trx`, равный 0, отрицательное число или не число — ошибка валидации `422` в собственном формате фреймворка. Остальные коды перечислены в разделе [Ошибки](/ru/errors).
 
 <Tip>
   **350 bandwidth** хватает на один перевод USDT TRC-20, когда бесплатный дневной лимит исчерпан.

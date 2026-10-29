@@ -1,0 +1,157 @@
+---
+title: Bandwidth मूल्य अनुमान
+api: GET /api/v1/bandwidth/quote
+description: "किसी मात्रा और अवधि के bandwidth ऑर्डर की सटीक कीमत, फिक्स्ड शुल्क सहित"
+---
+
+## Bandwidth मूल्य अनुमान
+
+इस मात्रा और अवधि के bandwidth ऑर्डर के लिए ठीक वही राशि लौटाता है जो काटी जाएगी — किराया और फिक्स्ड शुल्क
+मिलाकर, **आपकी** दर पर। अनुमान उसी कोड से निकाला जाता है जो ऑर्डर का शुल्क काटता है, इसलिए जब तक कीमत नहीं
+बदलती, खरीद की लागत ठीक `total_trx` होती है।
+
+**यह एंडपॉइंट सार्वजनिक है — प्रमाणीकरण वैकल्पिक है।** अपनी दर और अपने फिक्स्ड शुल्क पर अनुमान पाने के लिए
+अपनी API कुंजी भेजें; इसके बिना सार्वजनिक कीमत मिलेगी।
+
+<Tip>
+  अपने उपयोगकर्ता को `total_trx` दिखाएँ और उसे [Bandwidth खरीदें](/hi/api-reference/bandwidth/buy-bandwidth)
+  में `max_price_trx` के रूप में भेजें। यदि अनुमान और खरीद के बीच कीमत बदल जाए, तो खरीद `409 PRICE_CHANGED`
+  के साथ अस्वीकार होती है और कुछ भी चार्ज नहीं होता — फिर से अनुमान लें और पुनः प्रयास करें।
+</Tip>
+
+### क्वेरी पैरामीटर
+
+<ParamField query="volume" type="integer" required>
+  कीमत निकालने के लिए bandwidth यूनिट। 1 से 100,000 के बीच।
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  किराये की अवधि: `1h`, `1d`, या `5m` से `59m` तक मिनटों की पूर्ण संख्या — वही मान जो
+  [Bandwidth खरीदें](/hi/api-reference/bandwidth/buy-bandwidth) में हैं।
+</ParamField>
+
+### हेडर
+
+<ParamField header="X-API-Key" type="string">
+  वैकल्पिक। वैध कुंजी के साथ प्रतिक्रिया आपकी तय दर और आपका फिक्स्ड शुल्क दिखाती है। कुंजी न होना, गलत या रद्द
+  होना त्रुटि नहीं है — आपको `personal_price: false` के साथ सार्वजनिक कीमत मिलेगी।
+</ParamField>
+
+### प्रतिक्रिया
+
+<ResponseField name="volume" type="number">
+  जितनी bandwidth यूनिट के लिए अनुमान लगाया गया
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  किराये की वह अवधि जिसके लिए अनुमान लगाया गया
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  प्रति 1 bandwidth यूनिट दर, SUN में, प्रदर्शन के लिए 0.01 तक पूर्णांकित। मिनट वाली अवधियों पर छूट होती है,
+  इसलिए उनकी दर भिन्नात्मक होती है, और नीचे की राशियाँ सटीक दर से निकाली जाती हैं — इस पूर्णांकित मान को खुद
+  गुणा करने के बजाय `total_trx` लें।
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  इस मात्रा और अवधि का किराया, फिक्स्ड शुल्क के बिना
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  फिक्स्ड शुल्क, मात्रा और अवधि चाहे जो हो, **प्रति ऑर्डर एक बार** लिया जाता है। यदि आपके खाते पर अलग शुल्क,
+  छूट या माफी लागू है तो यहाँ आपका अपना शुल्क दिखेगा।
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **जो राशि काटी जाएगी**: `rental_trx + fixed_fee_trx`। इसे
+  [Bandwidth खरीदें](/hi/api-reference/bandwidth/buy-bandwidth) में `max_price_trx` के रूप में भेजें।
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  आपकी तय दर लागू होने पर `true`, अनुमान सार्वजनिक कीमत पर होने पर `false`। इसे जाँचें: वरना भूला हुआ
+  `X-API-Key` हेडर सामान्य प्रतिक्रिया जैसा दिखता है, और आप ग्राहकों को सार्वजनिक कीमत बताते रहेंगे जबकि कटौती
+  आपकी अपनी दर से होगी।
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/quote",
+    params={"volume": 1000, "duration": "5m"},
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m",
+  { headers: { "X-API-Key": "your_api_key" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  नीचे दिए मान उदाहरण हैं, `price_sun_1h` 400 और `short_max_discount_pct` 5 होने पर। वर्तमान दरें और छूट
+  [Bandwidth कीमतें प्राप्त करें](/hi/api-reference/bandwidth/get-prices) में हैं।
+</Info>
+
+```json Response
+{
+  "volume": 1000,
+  "duration": "5m",
+  "price_sun": "380.00",
+  "rental_trx": "0.380000",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "0.580000",
+  "personal_price": false
+}
+```
+
+### अनुमान में क्या शामिल नहीं है
+
+<Warning>
+  अनुमान — और `max_price_trx` — केवल bandwidth ऑर्डर को कवर करता है। यदि लक्ष्य पता अभी on-chain सक्रिय नहीं
+  है, तो [Bandwidth खरीदें](/hi/api-reference/bandwidth/buy-bandwidth) उसे सक्रिय करता है और सक्रियण का शुल्क
+  ऊपर से लेता है (उसकी प्रतिक्रिया में `activation_cost_trx`)। यह शुल्क `total_trx` का हिस्सा नहीं है और इसे
+  `max_price_trx` से नहीं जाँचा जाता।
+</Warning>
+
+### दूसरे खाते की ओर से काम करना: `GET /v1/bandwidth/quote/me`
+
+`/bandwidth/quote` **API कुंजी के मालिक** के लिए कीमत निकालता है। यदि आपकी कुंजी `X-Account-Id` हेडर के साथ
+किसी दूसरे खाते की ओर से काम करती है, तो खरीद का शुल्क उस खाते की दर और शुल्क पर लगता है — अनुमान वास्तविक
+कटौती से अलग हो सकता है, और उससे लिया गया `max_price_trx` `409 PRICE_CHANGED` के साथ अस्वीकार हो सकता है।
+
+ऐसे में `GET /v1/bandwidth/quote/me` का उपयोग करें। यह वही क्वेरी पैरामीटर लेता है और वही प्रतिक्रिया लौटाता
+है, लेकिन इसमें प्रमाणीकरण आवश्यक है, और खाता ठीक खरीद की तरह ही तय होता है, `X-Account-Id` सहित। इसके लिए
+`view` स्कोप आवश्यक है, जो हर कुंजी के पास हमेशा होता है।
+
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote/me?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key" \
+  -H "X-Account-Id: 12345"
+```
+
+### त्रुटियाँ
+
+| कोड | अर्थ |
+|------|---------|
+| `400 INVALID_VOLUME` | मात्रा 1–100,000 से बाहर |
+| `400 INVALID_DURATION` | `1h`, `1d` या `5m` … `59m` के अलावा कोई अवधि |
+| `401 INVALID_TOKEN` | केवल `/quote/me`: API कुंजी गायब, अज्ञात या अक्षम |
+| `403 FORBIDDEN` | केवल `/quote/me`: आपकी कुंजी के पास `X-Account-Id` वाले खाते तक कोई सक्रिय पहुँच नहीं है |
+
+`/bandwidth/quote` पर गलत या रद्द `X-API-Key` त्रुटि **नहीं** है: अनुमान सार्वजनिक कीमत पर
+`personal_price: false` के साथ लौटता है।

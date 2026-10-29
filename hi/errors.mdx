@@ -72,6 +72,7 @@ description: "API त्रुटि कोड और हैंडलिंग"
 | `FORBIDDEN` | `403` | कुंजी के पास इस एंडपॉइंट के लिए आवश्यक स्कोप नहीं है, या अनुरोध का IP कुंजी की श्वेतसूची में नहीं है |
 | `NODE_API_KEY_ONLY` | `403` | इस API को Node API कुंजी भेजी गई — वह केवल `node.tronrental.com` पर काम करती है |
 | `INSUFFICIENT_BALANCE` | `402` | इस कार्रवाई के लिए खाते की शेष राशि पर्याप्त नहीं |
+| `PRICE_CHANGED` | `409` | ऑर्डर की लागत आपके भेजे गए `max_price_trx` से अधिक है। कुछ भी चार्ज नहीं हुआ — नया मूल्य अनुमान लें और पुनः प्रयास करें |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | यह Idempotency-Key पहले ही किसी दूसरी अनुरोध बॉडी के साथ इस्तेमाल हो चुकी है |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | Idempotency-Key 64 अक्षरों से लंबी है |
 | `INVALID_ADDRESS` | `400` | मान्य TRON पता नहीं है |
