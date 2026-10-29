@@ -20,7 +20,7 @@ npx -y @tronrental-com/mcp-server
 ### Claude Code
 
 ```bash
-# Without API key (agent will register automatically)
+# Without API key (the agent registers an account with your email)
 claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
 
 # With API key
@@ -45,17 +45,19 @@ Add to your MCP configuration:
 }
 ```
 
-The `TRONRENTAL_API_KEY` environment variable is optional. If not provided, the agent can register a new account and create an API key through the MCP tools.
+The `TRONRENTAL_API_KEY` environment variable is optional. If not provided, the agent can register a new account and create an API key through the MCP tools. The agent asks for your email: TronRental mails a 6-digit code there, and the account is created only after you give that code to the agent.
 
 ## Available Tools
 
-The MCP server provides 10 tools:
+The MCP server provides 12 tools:
 
 | Tool | Auth | Description |
 |------|------|-------------|
 | `get_prices` | None | Current energy and bandwidth prices |
 | `calculate_savings` | None | Calculate savings: burn cost vs rental cost |
-| `register` | None | Register a new account |
+| `register` | None | Start registration: mails a 6-digit code to the user's email |
+| `verify_email_code` | None | Confirm the code and create the account |
+| `resend_email_code` | None | Mail a new code (expired or not received) |
 | `login` | None | Log in to existing account |
 | `create_api_key` | Token | Create an API key |
 | `get_deposit_address` | API key | Get TRX deposit address |
@@ -70,12 +72,18 @@ The MCP server provides 10 tools:
 
 1. `get_prices` — show current pricing
 2. `calculate_savings` — calculate savings for user's transfer volume
-3. `register` — create account
-4. `create_api_key` — generate API key
-5. `get_deposit_address` — get deposit address, user sends TRX
-6. `get_balance` — verify deposit arrived
-7. `buy_energy` — purchase energy
-8. `get_order` — confirm delegation
+3. `register` — the user's real email and a password; a 6-digit code is mailed there
+4. The user reads the code from the email and gives it to the agent
+5. `verify_email_code` — creates the account and signs in
+6. `create_api_key` — generate API key
+7. `get_deposit_address` — get deposit address, user sends TRX
+8. `get_balance` — verify deposit arrived
+9. `buy_energy` — purchase energy
+10. `get_order` — confirm delegation
+
+<Note>
+  The agent never invents an email address: without a code from a real inbox no account is created. The code is valid for 10 minutes; `resend_email_code` sends a new one (up to 3 emails per hour). The same steps over plain HTTP are described in [Authentication](/authentication#signing-up-via-the-api-ai-agents).
+</Note>
 
 ### Existing user (API key set)
 

@@ -20,7 +20,7 @@ npx -y @tronrental-com/mcp-server
 ### Claude Code
 
 ```bash
-# 无需 API 密钥（代理将自动注册）
+# 无需 API 密钥（代理将使用您的邮箱注册账户）
 claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
 
 # 使用 API 密钥
@@ -45,17 +45,19 @@ claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-c
 }
 ```
 
-`TRONRENTAL_API_KEY` 环境变量是可选的。如果未提供，代理可以通过 MCP 工具注册新账户并创建 API 密钥。
+`TRONRENTAL_API_KEY` 环境变量是可选的。如果未提供，代理可以通过 MCP 工具注册新账户并创建 API 密钥。代理会询问您的邮箱：TronRental 会向该邮箱发送 6 位验证码，只有在您把验证码提供给代理后，账户才会创建。
 
 ## 可用工具
 
-MCP 服务器提供 10 个工具：
+MCP 服务器提供 12 个工具：
 
 | 工具 | 认证 | 描述 |
 |------|------|------|
 | `get_prices` | 无需 | 当前能量和带宽价格 |
 | `calculate_savings` | 无需 | 计算节省：燃烧成本与租赁成本对比 |
-| `register` | 无需 | 注册新账户 |
+| `register` | 无需 | 开始注册：向用户邮箱发送 6 位验证码 |
+| `verify_email_code` | 无需 | 确认验证码并创建账户 |
+| `resend_email_code` | 无需 | 重新发送验证码（已过期或未收到） |
 | `login` | 无需 | 登录现有账户 |
 | `create_api_key` | 令牌 | 创建 API 密钥 |
 | `get_deposit_address` | API 密钥 | 获取 TRX 充值地址 |
@@ -70,12 +72,18 @@ MCP 服务器提供 10 个工具：
 
 1. `get_prices` — 查看当前价格
 2. `calculate_savings` — 根据用户的转账量计算节省
-3. `register` — 创建账户
-4. `create_api_key` — 生成 API 密钥
-5. `get_deposit_address` — 获取充值地址，用户发送 TRX
-6. `get_balance` — 确认充值到账
-7. `buy_energy` — 购买能量
-8. `get_order` — 确认委托
+3. `register` — 用户的真实邮箱和密码；系统向该邮箱发送 6 位验证码
+4. 用户在邮件中查看验证码并提供给代理
+5. `verify_email_code` — 创建账户并登录
+6. `create_api_key` — 生成 API 密钥
+7. `get_deposit_address` — 获取充值地址，用户发送 TRX
+8. `get_balance` — 确认充值到账
+9. `buy_energy` — 购买能量
+10. `get_order` — 确认委托
+
+<Note>
+  代理绝不会编造邮箱地址：没有来自真实邮箱的验证码，就不会创建账户。验证码有效期为 10 分钟；`resend_email_code` 会发送新的验证码（每小时最多 3 封邮件）。通过普通 HTTP 完成相同步骤的说明见[身份验证](/zh/authentication)。
+</Note>
 
 ### 现有用户（已设置 API 密钥）
 

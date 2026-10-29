@@ -19,6 +19,84 @@ curl https://api.tronrental.com/v1/account/balance \
 3. 点击 **创建 API 密钥**
 4. 复制并安全保存您的密钥 — 密钥仅显示一次
 
+只有在确认邮箱地址后，才会创建新的邮箱账户：TronRental 会向该邮箱发送 6 位验证码，输入该验证码后账户才会创建。
+
+### 通过 API 注册（AI 代理）
+
+代理或脚本无需访问网站即可开设账户并创建第一个密钥。为此需要用户的**真实**邮箱：只有使用该邮箱收到的验证码才能创建账户。
+
+**1. 开始注册** — 此时尚未创建账户，系统会向该地址发送 6 位验证码：
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "password": "<your-password>", "language": "en"}'
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|-------|------|----------|-------------|
+| `email` | string | 是 | 用户的邮箱 — 用户必须能在该邮箱中查看验证码 |
+| `password` | string | 是 | 至少 8 个字符，须包含大写字母、小写字母和数字 |
+| `language` | string | 否 | 邮件语言，默认为 `en` |
+
+```json
+{
+  "requires_email_code": true,
+  "access_token": null,
+  "refresh_token": null
+}
+```
+
+验证码有效期为 10 分钟。如果已有一个仍然有效的待验证验证码，则不会再发送第二封邮件。如需获取新验证码，请调用 `POST /v1/auth/email-code/send` 并传入 `{"email": "...", "language": "en"}`：之前的验证码随即失效，每个地址每小时最多收到 3 封邮件。
+
+**2. 确认邮箱** — 将验证码与**相同的密码**一起发送（在此步骤之前密码不会被保存）。此操作会创建账户并登录：
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "code": "123456", "password": "<your-password>"}'
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|-------|------|----------|-------------|
+| `email` | string | 是 | 与第 1 步相同的邮箱 |
+| `code` | string | 是 | 邮件中的 6 位验证码 |
+| `password` | string | 注册时必填 | 与第 1 步相同的密码 |
+| `referral_code` | string | 否 | 邀请您的用户的推荐码 |
+
+```json
+{
+  "access_token": "eyJhbGciOi...",
+  "refresh_token": "eyJhbGciOi...",
+  "session_id": "3f9c...",
+  "token_type": "bearer",
+  "is_new": true
+}
+```
+
+**3. 创建 API 密钥**，使用访问令牌（access token）：
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/api-keys \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+响应中的 `key` 字段就是 API 密钥 — 它仅显示一次。
+
+| 状态 | 代码 | 含义 |
+|--------|------|---------|
+| `400` | `WEAK_PASSWORD` | 密码不符合规则（验证码不会被消耗） |
+| `401` | `INVALID_CREDENTIALS` | 验证码错误或已过期 |
+| `403` | `EMAIL_DOMAIN_BLOCKED` | 不接受该邮箱服务商 |
+| `409` | `EMAIL_EXISTS` | 该邮箱已有账户 — 请直接登录 |
+| `429` | `RATE_LIMIT_EXCEEDED` | 请求或邮件过多，或连续 5 次输入错误的验证码 — 请重新获取验证码 |
+
+<Note>
+  [MCP 服务器](/zh/resources/mcp-server)通过 `register` 和 `verify_email_code` 工具完成这些步骤。
+</Note>
+
 ### IP 白名单（可选）
 
 您可以将 API 密钥限制为特定 IP 地址，以提高安全性。在创建或编辑密钥时，可在控制面板中进行配置。

@@ -19,6 +19,84 @@ curl https://api.tronrental.com/v1/account/balance \
 3. Haz clic en **Crear clave API**
 4. Copia y almacena tu clave de forma segura — solo se muestra una vez
 
+Una cuenta nueva con email solo se crea después de confirmar la dirección: TronRental envía por correo un código de 6 dígitos, y la cuenta existe en cuanto se introduce ese código.
+
+### Registro mediante la API (agentes de IA)
+
+Un agente o un script puede abrir una cuenta y emitir su primera clave sin pasar por el sitio web. Necesita el email **real** del usuario: la cuenta solo se crea con el código recibido en esa bandeja de entrada.
+
+**1. Inicia el registro** — todavía no se crea ninguna cuenta; se envía un código de 6 dígitos a la dirección:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "password": "<your-password>", "language": "en"}'
+```
+
+| Campo | Tipo | Obligatorio | Descripción |
+|-------|------|----------|-------------|
+| `email` | string | Sí | El email del usuario — debe poder leer el código en esa bandeja |
+| `password` | string | Sí | Al menos 8 caracteres, con una letra mayúscula, una minúscula y un dígito |
+| `language` | string | No | Idioma del correo, por defecto `en` |
+
+```json
+{
+  "requires_email_code": true,
+  "access_token": null,
+  "refresh_token": null
+}
+```
+
+El código es válido durante 10 minutos. Si ya hay un código válido pendiente, no se envía un segundo correo. Para obtener un código nuevo, llama a `POST /v1/auth/email-code/send` con `{"email": "...", "language": "en"}`: el código anterior deja de funcionar, y cada dirección recibe como máximo 3 correos por hora.
+
+**2. Confirma el email** — envía el código junto con la **misma contraseña** (no se guarda antes de este paso). Esto crea la cuenta e inicia sesión:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "code": "123456", "password": "<your-password>"}'
+```
+
+| Campo | Tipo | Obligatorio | Descripción |
+|-------|------|----------|-------------|
+| `email` | string | Sí | El mismo email que en el paso 1 |
+| `code` | string | Sí | Código de 6 dígitos del correo |
+| `password` | string | Sí, para el registro | La misma contraseña que en el paso 1 |
+| `referral_code` | string | No | Código de referido del usuario que te invitó |
+
+```json
+{
+  "access_token": "eyJhbGciOi...",
+  "refresh_token": "eyJhbGciOi...",
+  "session_id": "3f9c...",
+  "token_type": "bearer",
+  "is_new": true
+}
+```
+
+**3. Crea una clave API** con el token de acceso:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/api-keys \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+El campo `key` de la respuesta es la clave API: solo se muestra una vez.
+
+| Estado | Código | Significado |
+|--------|------|---------|
+| `400` | `WEAK_PASSWORD` | La contraseña no cumple las reglas (el código no se gasta) |
+| `401` | `INVALID_CREDENTIALS` | Código incorrecto o caducado |
+| `403` | `EMAIL_DOMAIN_BLOCKED` | No se acepta este proveedor de correo |
+| `409` | `EMAIL_EXISTS` | Ese email ya tiene una cuenta — inicia sesión en su lugar |
+| `429` | `RATE_LIMIT_EXCEEDED` | Demasiadas solicitudes o correos, o 5 códigos incorrectos seguidos — solicita un código nuevo |
+
+<Note>
+  El [servidor MCP](/es/resources/mcp-server) ejecuta estos pasos con las herramientas `register` y `verify_email_code`.
+</Note>
+
 ### Lista blanca de IP (opcional)
 
 Puedes restringir tu clave API a direcciones IP especificas para mayor seguridad. Configura esto en el panel de control al crear o editar una clave.
