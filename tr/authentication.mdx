@@ -19,6 +19,84 @@ curl https://api.tronrental.com/v1/account/balance \
 3. **API Anahtari Olustur** butonuna tiklayin
 4. Anahtarinizi kopyalayin ve guvenli bir sekilde saklayin — yalnizca bir kez gosterilir
 
+E-posta ile açılan yeni bir hesap ancak adres onaylandıktan sonra oluşturulur: TronRental 6 haneli bir kod gönderir ve hesap bu kod girildiğinde oluşur.
+
+### API üzerinden kayıt (AI ajanları)
+
+Bir ajan veya betik, web sitesine girmeden hesap açabilir ve ilk anahtarını oluşturabilir. Bunun için kullanıcının **gerçek** e-posta adresi gerekir: hesap yalnızca o gelen kutusuna gelen kodla oluşturulur.
+
+**1. Kaydı başlatın** — henüz hesap oluşturulmaz, adrese 6 haneli bir kod gönderilir:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "password": "<your-password>", "language": "en"}'
+```
+
+| Alan | Tür | Zorunlu | Açıklama |
+|-------|------|----------|-------------|
+| `email` | string | Evet | Kullanıcının e-posta adresi — kullanıcı kodu bu adresten okuyabilmelidir |
+| `password` | string | Evet | En az 8 karakter; bir büyük harf, bir küçük harf ve bir rakam içermelidir |
+| `language` | string | Hayır | E-postanın dili, varsayılan `en` |
+
+```json
+{
+  "requires_email_code": true,
+  "access_token": null,
+  "refresh_token": null
+}
+```
+
+Kod 10 dakika geçerlidir. Geçerli bir kod zaten bekliyorsa ikinci bir e-posta gönderilmez. Yeni kod almak için `{"email": "...", "language": "en"}` ile `POST /v1/auth/email-code/send` çağırın: önceki kod geçersiz olur ve bir adrese saatte en fazla 3 e-posta gönderilir.
+
+**2. E-postayı onaylayın** — kodu **aynı parolayla** birlikte gönderin (parola bu adımdan önce saklanmaz). Bu çağrı hesabı oluşturur ve oturum açar:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "code": "123456", "password": "<your-password>"}'
+```
+
+| Alan | Tür | Zorunlu | Açıklama |
+|-------|------|----------|-------------|
+| `email` | string | Evet | 1. adımdakiyle aynı e-posta adresi |
+| `code` | string | Evet | E-postadaki 6 haneli kod |
+| `password` | string | Kayıt için evet | 1. adımdakiyle aynı parola |
+| `referral_code` | string | Hayır | Sizi davet eden kullanıcının referans kodu |
+
+```json
+{
+  "access_token": "eyJhbGciOi...",
+  "refresh_token": "eyJhbGciOi...",
+  "session_id": "3f9c...",
+  "token_type": "bearer",
+  "is_new": true
+}
+```
+
+**3. API anahtarı oluşturun** — access token ile:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/api-keys \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+Yanıttaki `key` alanı API anahtarıdır — yalnızca bir kez gösterilir.
+
+| Durum | Kod | Anlamı |
+|--------|------|---------|
+| `400` | `WEAK_PASSWORD` | Parola kurallara uymuyor (kod harcanmaz) |
+| `401` | `INVALID_CREDENTIALS` | Kod yanlış veya süresi dolmuş |
+| `403` | `EMAIL_DOMAIN_BLOCKED` | Bu e-posta sağlayıcısı kabul edilmiyor |
+| `409` | `EMAIL_EXISTS` | Bu e-posta adresiyle zaten bir hesap var — bunun yerine giriş yapın |
+| `429` | `RATE_LIMIT_EXCEEDED` | Çok fazla istek veya e-posta ya da üst üste 5 yanlış kod — yeni bir kod isteyin |
+
+<Note>
+  [MCP sunucusu](/tr/resources/mcp-server) bu adımları `register` ve `verify_email_code` araçlarıyla yürütür.
+</Note>
+
 ### IP Beyaz Listesi (istege bagli)
 
 Ek guvenlik icin API anahtarinizi belirli IP adresleriyle sinirlandirabilirsini. Bunu, anahtar olusturma veya duzenleme sirasinda kontrol panelinden yapilandirabilirsini.

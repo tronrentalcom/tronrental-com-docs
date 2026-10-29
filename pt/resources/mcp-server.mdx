@@ -20,7 +20,7 @@ npx -y @tronrental-com/mcp-server
 ### Claude Code
 
 ```bash
-# Sem chave API (o agente se registrará automaticamente)
+# Sem chave API (o agente registra uma conta com seu e-mail)
 claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
 
 # Com chave API
@@ -45,17 +45,19 @@ Adicione à sua configuração MCP:
 }
 ```
 
-A variável de ambiente `TRONRENTAL_API_KEY` é opcional. Se não for fornecida, o agente pode registrar uma nova conta e criar uma chave API através das ferramentas MCP.
+A variável de ambiente `TRONRENTAL_API_KEY` é opcional. Se não for fornecida, o agente pode registrar uma nova conta e criar uma chave API através das ferramentas MCP. O agente pede seu e-mail: o TronRental envia para lá um código de 6 dígitos, e a conta só é criada depois que você passa esse código ao agente.
 
 ## Ferramentas Disponíveis
 
-O servidor MCP fornece 10 ferramentas:
+O servidor MCP fornece 12 ferramentas:
 
 | Ferramenta | Autenticação | Descrição |
 |------------|--------------|-----------|
 | `get_prices` | Nenhuma | Preços atuais de energia e bandwidth |
 | `calculate_savings` | Nenhuma | Calcular economia: custo de queima vs custo de aluguel |
-| `register` | Nenhuma | Registrar uma nova conta |
+| `register` | Nenhuma | Iniciar o cadastro: envia um código de 6 dígitos para o e-mail do usuário |
+| `verify_email_code` | Nenhuma | Confirmar o código e criar a conta |
+| `resend_email_code` | Nenhuma | Enviar um novo código (expirado ou não recebido) |
 | `login` | Nenhuma | Fazer login em uma conta existente |
 | `create_api_key` | Token | Criar uma chave API |
 | `get_deposit_address` | Chave API | Obter endereço de depósito de TRX |
@@ -70,12 +72,18 @@ O servidor MCP fornece 10 ferramentas:
 
 1. `get_prices` — mostrar preços atuais
 2. `calculate_savings` — calcular economia para o volume de transferências do usuário
-3. `register` — criar conta
-4. `create_api_key` — gerar chave API
-5. `get_deposit_address` — obter endereço de depósito, usuário envia TRX
-6. `get_balance` — verificar se o depósito chegou
-7. `buy_energy` — comprar energia
-8. `get_order` — confirmar delegação
+3. `register` — o e-mail real do usuário e uma senha; um código de 6 dígitos é enviado para lá
+4. O usuário lê o código no e-mail e o passa ao agente
+5. `verify_email_code` — cria a conta e faz o login
+6. `create_api_key` — gerar chave API
+7. `get_deposit_address` — obter endereço de depósito, usuário envia TRX
+8. `get_balance` — verificar se o depósito chegou
+9. `buy_energy` — comprar energia
+10. `get_order` — confirmar delegação
+
+<Note>
+  O agente nunca inventa um endereço de e-mail: sem um código de uma caixa de entrada real, nenhuma conta é criada. O código é válido por 10 minutos; `resend_email_code` envia um novo (até 3 e-mails por hora). As mesmas etapas via HTTP simples estão descritas em [Autenticação](/pt/authentication).
+</Note>
 
 ### Usuário existente (chave API configurada)
 

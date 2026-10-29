@@ -19,6 +19,84 @@ curl https://api.tronrental.com/v1/account/balance \
 3. Click **Create API Key**
 4. Copy and securely store your key — it's shown only once
 
+A new email account is created only after you confirm the address: TronRental mails a 6-digit code, and the account exists once that code is entered.
+
+### Signing up via the API (AI agents)
+
+An agent or script can open an account and issue its first key without the website. It needs the user's **real** email: the account is created only with the code from that inbox.
+
+**1. Start the sign-up** — no account is created yet, a 6-digit code is mailed to the address:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "password": "<your-password>", "language": "en"}'
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | string | Yes | The user's email — they must be able to read the code from it |
+| `password` | string | Yes | At least 8 characters with an uppercase letter, a lowercase letter and a digit |
+| `language` | string | No | Language of the email, default `en` |
+
+```json
+{
+  "requires_email_code": true,
+  "access_token": null,
+  "refresh_token": null
+}
+```
+
+The code is valid for 10 minutes. If a valid code is already pending, no second email is sent. To get a new code, call `POST /v1/auth/email-code/send` with `{"email": "...", "language": "en"}`: the previous code stops working, and an address gets at most 3 emails per hour.
+
+**2. Confirm the email** — send the code together with the **same password** (it is not stored before this step). This creates the account and signs in:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "code": "123456", "password": "<your-password>"}'
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | string | Yes | Same email as in step 1 |
+| `code` | string | Yes | 6-digit code from the email |
+| `password` | string | Yes for sign-up | Same password as in step 1 |
+| `referral_code` | string | No | Referral code of the user who invited you |
+
+```json
+{
+  "access_token": "eyJhbGciOi...",
+  "refresh_token": "eyJhbGciOi...",
+  "session_id": "3f9c...",
+  "token_type": "bearer",
+  "is_new": true
+}
+```
+
+**3. Create an API key** with the access token:
+
+```bash
+curl -X POST https://api.tronrental.com/v1/auth/api-keys \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+The `key` field of the response is the API key — it is shown only once.
+
+| Status | Code | Meaning |
+|--------|------|---------|
+| `400` | `WEAK_PASSWORD` | The password does not meet the rules (the code is not spent) |
+| `401` | `INVALID_CREDENTIALS` | Wrong or expired code |
+| `403` | `EMAIL_DOMAIN_BLOCKED` | This email provider is not accepted |
+| `409` | `EMAIL_EXISTS` | The email already has an account — sign in instead |
+| `429` | `RATE_LIMIT_EXCEEDED` | Too many requests or emails, or 5 wrong codes in a row — request a new code |
+
+<Note>
+  The [MCP server](/resources/mcp-server) runs these steps with the `register` and `verify_email_code` tools.
+</Note>
+
 ### IP Whitelist (optional)
 
 You can restrict your API key to specific IP addresses for additional security. Configure this in the dashboard when creating or editing a key.
