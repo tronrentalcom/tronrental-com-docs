@@ -1,0 +1,93 @@
+---
+title: Get Bandwidth Prices
+api: GET /api/v1/bandwidth/prices
+description: "Public bandwidth rates, order limits and the minute-term discount"
+---
+
+## Get Bandwidth Prices
+
+Returns the public bandwidth rates for `1h` and `1d`, the order volume limits, the fixed fee and the
+parameters of the discount on minute terms (`5m` … `59m`).
+
+**This endpoint is public — no authentication required.** It always returns the public rates. For
+the exact amount of an order at your own rate, use [Quote Bandwidth](/api-reference/bandwidth/quote).
+
+### Response
+
+<ResponseField name="price_per_day_trx" type="string">
+  TRX for 1,000 bandwidth units for 24 hours at the hourly rate: `price_sun_1h × 24 / 1000`. A `1d`
+  order is priced by `price_sun_1d` instead.
+</ResponseField>
+
+<ResponseField name="price_sun_1h" type="number">
+  Public rate for `1h`, SUN per 1 bandwidth unit. Minute terms are priced from it.
+</ResponseField>
+
+<ResponseField name="price_sun_1d" type="number">
+  Public rate for `1d`, SUN per 1 bandwidth unit
+</ResponseField>
+
+<ResponseField name="min_volume" type="number">
+  Smallest order, in bandwidth units (1)
+</ResponseField>
+
+<ResponseField name="max_volume" type="number">
+  Largest order, in bandwidth units (100,000)
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Standard fixed fee, charged once per order for any duration. Your own fee may differ —
+  [Quote Bandwidth](/api-reference/bandwidth/quote) returns it.
+</ResponseField>
+
+<ResponseField name="short_min_minutes" type="number">
+  Shortest minute term (5, i.e. `"5m"`)
+</ResponseField>
+
+<ResponseField name="short_max_minutes" type="number">
+  Longest minute term (59, i.e. `"59m"`). An hour is `"1h"`.
+</ResponseField>
+
+<ResponseField name="short_max_discount_pct" type="string">
+  Discount off the hourly rate on the shortest term, in percent. It falls linearly to zero on the
+  longest term: `discount % = short_max_discount_pct × (59 − minutes) / 54`. It applies to the rental
+  only, not to the fixed fee. `"0"` means minute terms cost the hourly rate.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/bandwidth/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  Values below are an example. Rates and the discount can change.
+</Info>
+
+```json Response
+{
+  "price_per_day_trx": "9.6",
+  "price_sun_1h": 400,
+  "price_sun_1d": 630,
+  "min_volume": 1,
+  "max_volume": 100000,
+  "fixed_fee_trx": "0.2",
+  "short_min_minutes": 5,
+  "short_max_minutes": 59,
+  "short_max_discount_pct": "5"
+}
+```

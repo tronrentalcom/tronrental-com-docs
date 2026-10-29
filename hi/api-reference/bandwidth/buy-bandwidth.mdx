@@ -19,7 +19,32 @@ description: "TRON पते के लिए bandwidth खरीदें"
 </ParamField>
 
 <ParamField body="duration" type="string" required>
-  किराये की अवधि: `"1h"` (1 घंटा) या `"1d"` (24 घंटे)। `"24h"` या संख्यात्मक घंटे का उपयोग न करें — `"1d"` उपयोग करें।
+  किराये की अवधि, इनमें से एक:
+
+  - `"1h"` — 1 घंटा
+  - `"1d"` — 24 घंटे
+  - `"5m"` … `"59m"` — 5 से 59 तक मिनटों की कोई भी पूर्ण संख्या, घंटे की दर पर छूट के साथ (देखें [मूल्य निर्धारण](#मूल्य-निर्धारण))
+
+  मिनट को शुरुआती शून्य के बिना संख्या और उसके बाद छोटे अक्षर `m` के रूप में लिखें: `"5m"`, `"30m"`। `"05m"`, `"5M"`,
+  `"60m"` या `"90m"` `400 INVALID_DURATION` के साथ अस्वीकार होते हैं: एक घंटा `"1h"` है, और `"1h"` व
+  `"1d"` के बीच कुछ नहीं है। `"24h"` या संख्यात्मक घंटे का उपयोग न करें — `"1d"` उपयोग करें।
+</ParamField>
+
+<ParamField body="max_price_trx" type="string">
+  वैकल्पिक। इस ऑर्डर के लिए आप अधिकतम जितना चुकाने को तैयार हैं, TRX में — किराया और फिक्स्ड शुल्क मिलाकर।
+  यदि ऑर्डर इससे महँगा पड़े, तो वह `409 PRICE_CHANGED` के साथ अस्वीकार होता है और **कुछ भी चार्ज नहीं होता**।
+  [Bandwidth मूल्य अनुमान](/hi/api-reference/bandwidth/quote) से मिला `total_trx` भेजें। `"0.58"` जैसी
+  दशमलव स्ट्रिंग (JSON संख्या भी स्वीकार है), 0 से बड़ी। इसके बिना ऑर्डर पहले की तरह मौजूदा कीमत पर खरीदा
+  जाता है।
+</ParamField>
+
+### हेडर
+
+<ParamField header="Idempotency-Key" type="string">
+  वैकल्पिक, अधिकतम 64 अक्षर। उसी कुंजी और उसी body के साथ दोहराया गया अनुरोध दोबारा खरीदने के बजाय मूल ऑर्डर
+  लौटाता है। सफल ऑर्डर के बाद वही कुंजी अलग body के साथ — अलग `max_price_trx` सहित — `422 IDEMPOTENCY_KEY_REUSED`
+  लौटाती है। ऐसे इनकार के बाद जिसमें कुछ भी चार्ज नहीं हुआ, जैसे `409 PRICE_CHANGED` या
+  `402 INSUFFICIENT_BALANCE`, कुंजी फिर से मुक्त हो जाती है: उसी कुंजी और नई कीमत के साथ पुनः प्रयास करें।
 </ParamField>
 
 ### प्रतिक्रिया
@@ -37,16 +62,61 @@ description: "TRON पते के लिए bandwidth खरीदें"
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
-  शेष राशि से काटी गई कुल लागत, TRX में
+  शेष राशि से काटी गई ऑर्डर की कुल लागत, TRX में — किराया और फिक्स्ड शुल्क
 </ResponseField>
 
 <ResponseField name="reclaim_at" type="string | null">
   ISO 8601 timestamp जब किराए का bandwidth reclaim होता है
 </ResponseField>
 
+<ResponseField name="activation_cost_trx" type="string">
+  यदि `target_address` अभी on-chain सक्रिय नहीं था, तो उसे सक्रिय करने का शुल्क, `price_trx` के ऊपर से।
+  पहले से सक्रिय पते के लिए `"0"`।
+</ResponseField>
+
 ### मूल्य निर्धारण
 
-मूल्य = `(volume × price_sun) / 1,000,000 + 0.2 TRX` निश्चित शुल्क। वर्तमान `price_sun_1h`, `price_sun_1d` और `fixed_fee_trx` के लिए `GET /v1/bandwidth/prices` देखें।
+`1h` और `1d`: मूल्य = `volume × price_sun / 1,000,000` + फिक्स्ड शुल्क (0.2 TRX, जब तक आपके खाते का अपना शुल्क न हो), जहाँ `price_sun`
+[Bandwidth कीमतें प्राप्त करें](/hi/api-reference/bandwidth/get-prices) से `price_sun_1h` या `price_sun_1d` है,
+या, यदि आपके खाते की तय दर है, तो वह दर।
+
+`5m` … `59m`: घंटे की दर (`price_sun_1h`, या आपकी तय घंटे की दर) छूट के साथ। छूट 5 मिनट पर सबसे अधिक होती
+है और 59 मिनट पर रैखिक रूप से घटकर शून्य हो जाती है:
+
+```text
+discount % = short_max_discount_pct × (59 − minutes) / 54
+price_sun  = hourly price_sun × (1 − discount % / 100)
+```
+
+छूट केवल किराये पर लागू होती है — फिक्स्ड शुल्क हर अवधि के लिए एक समान है। मिनट वाली अवधि का किराया निकटतम SUN
+(0.000001 TRX) तक पूर्णांकित होता है, आधा ऊपर की ओर। वर्तमान `short_max_discount_pct`
+[Bandwidth कीमतें प्राप्त करें](/hi/api-reference/bandwidth/get-prices) में है।
+
+| अवधि | `short_max_discount_pct` 5 होने पर छूट | `price_sun_1h` 400 होने पर दर |
+|---|---|---|
+| `5m` | 5% | 380 SUN |
+| `17m` | ≈ 3.89% | ≈ 384.44 SUN |
+| `32m` | 2.5% | 390 SUN |
+| `45m` | ≈ 1.3% | ≈ 394.81 SUN |
+| `59m` | 0% | 400 SUN |
+
+यह सब आपको खुद गिनने की ज़रूरत नहीं है: [Bandwidth मूल्य अनुमान](/hi/api-reference/bandwidth/quote) आपकी
+मात्रा, अवधि और खाते के लिए सटीक राशि लौटाता है।
+
+### कीमत दिखाएँ, फिर उसी कीमत पर खरीदें
+
+1. अपनी `X-API-Key` के साथ `GET /v1/bandwidth/quote` कॉल करें और अपने उपयोगकर्ता को `total_trx` दिखाएँ।
+2. `max_price_trx` को उसी `total_trx` पर सेट करके `POST /v1/bandwidth/buy` कॉल करें।
+
+अनुमान उसी कोड से निकाला जाता है जो ऑर्डर का शुल्क काटता है, इसलिए जब तक कीमत नहीं बदलती, ऑर्डर की लागत
+ठीक `total_trx` होती है। यदि बीच में कीमत बदल गई, तो कुछ भी चार्ज होने से पहले खरीद `409 PRICE_CHANGED` के
+साथ अस्वीकार हो जाती है: नया अनुमान लें, उसे दिखाएँ, और पुनः प्रयास करें — यदि आप `Idempotency-Key` उपयोग
+करते हैं, तो उसी के साथ।
+
+<Warning>
+  `max_price_trx` केवल bandwidth ऑर्डर को कवर करता है। यदि `target_address` अभी on-chain सक्रिय नहीं है, तो
+  सक्रियण का शुल्क ऊपर से लिया जाता है (`activation_cost_trx`) और उसे `max_price_trx` से नहीं जाँचा जाता।
+</Warning>
 
 ### उदाहरण
 
@@ -100,9 +170,121 @@ console.log(await resp.json());
   "price_trx": "10.28",
   "status": "filled",
   "txid": "abc123...",
-  "reclaim_at": "2026-06-10T21:00:00+00:00"
+  "reclaim_at": "2026-06-10T21:00:00+00:00",
+  "activation_cost_trx": "0"
 }
 ```
+
+### उदाहरण: अनुमान, फिर 5 मिनट के लिए खरीद
+
+<CodeGroup>
+```bash cURL
+# 1. The exact price — show total_trx to your user
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+
+# 2. Buy, refusing any price above the quoted total_trx
+curl -X POST https://api.tronrental.com/v1/bandwidth/buy \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_address": "TYourRecipientAddress1234567890abc",
+    "volume": 1000,
+    "duration": "5m",
+    "max_price_trx": "0.580000"
+  }'
+```
+
+```python Python
+import requests
+
+API = "https://api.tronrental.com/v1"
+HEADERS = {"X-API-Key": "your_api_key"}
+order = {"target_address": "TYourRecipientAddress1234567890abc", "volume": 1000, "duration": "5m"}
+
+quote = requests.get(
+    f"{API}/bandwidth/quote",
+    params={"volume": order["volume"], "duration": order["duration"]},
+    headers=HEADERS,
+).json()
+print("Price:", quote["total_trx"], "TRX")
+
+resp = requests.post(
+    f"{API}/bandwidth/buy",
+    headers=HEADERS,
+    json={**order, "max_price_trx": quote["total_trx"]},
+)
+if resp.status_code == 409 and resp.json()["detail"]["error"]["code"] == "PRICE_CHANGED":
+    print("The price changed and nothing was charged: quote again and retry")
+else:
+    print(resp.json())
+```
+
+```javascript JavaScript
+const API = "https://api.tronrental.com/v1";
+const headers = { "X-API-Key": "your_api_key" };
+const order = { target_address: "TYourRecipientAddress1234567890abc", volume: 1000, duration: "5m" };
+
+const quote = await (
+  await fetch(`${API}/bandwidth/quote?volume=${order.volume}&duration=${order.duration}`, { headers })
+).json();
+console.log("Price:", quote.total_trx, "TRX");
+
+const resp = await fetch(`${API}/bandwidth/buy`, {
+  method: "POST",
+  headers: { ...headers, "Content-Type": "application/json" },
+  body: JSON.stringify({ ...order, max_price_trx: quote.total_trx }),
+});
+const body = await resp.json();
+if (resp.status === 409 && body.detail?.error?.code === "PRICE_CHANGED") {
+  console.log("The price changed and nothing was charged: quote again and retry");
+} else {
+  console.log(body);
+}
+```
+</CodeGroup>
+
+<Info>
+  नीचे दिए मान उदाहरण हैं, `price_sun_1h` 400 और `short_max_discount_pct` 5 होने पर।
+</Info>
+
+```json Response
+{
+  "id": 5679,
+  "price_trx": "0.580000",
+  "status": "filled",
+  "txid": "def456...",
+  "reclaim_at": "2026-06-10T21:05:00+00:00",
+  "activation_cost_trx": "0"
+}
+```
+
+यदि ऑर्डर की लागत `max_price_trx` से अधिक है — मान लीजिए आपने `"0.57"` भेजा और ऑर्डर की लागत 0.58 TRX है —
+तो कुछ भी चार्ज नहीं होता और प्रतिक्रिया यह होती है:
+
+```json 409 PRICE_CHANGED
+{
+  "detail": {
+    "error": {
+      "code": "PRICE_CHANGED",
+      "message": "Order price is 0.580000 TRX, above max_price_trx 0.57 TRX; nothing was charged"
+    }
+  }
+}
+```
+
+### त्रुटियाँ
+
+| कोड | अर्थ |
+|------|---------|
+| `400 INVALID_DURATION` | `duration` न `1h` है, न `1d`, न `5m` … `59m` |
+| `400 INVALID_VOLUME` | मात्रा 1–100,000 से बाहर |
+| `402 INSUFFICIENT_BALANCE` | ऑर्डर के लिए शेष राशि पर्याप्त नहीं। कुछ भी चार्ज नहीं हुआ |
+| `409 PRICE_CHANGED` | ऑर्डर की लागत `max_price_trx` से अधिक है। कुछ भी चार्ज नहीं हुआ; संदेश में मौजूदा कीमत होती है |
+| `422 IDEMPOTENCY_KEY_REUSED` | इस `Idempotency-Key` से पहले ही किसी अलग body के साथ ऑर्डर खरीदा जा चुका है |
+
+0, ऋणात्मक संख्या या गैर-संख्या वाला `max_price_trx` फ्रेमवर्क के अपने प्रारूप में `422` सत्यापन त्रुटि है।
+अन्य कोड [त्रुटियां](/hi/errors) में सूचीबद्ध हैं।
 
 <Tip>
   मुफ्त दैनिक bandwidth समाप्त होने पर **350 bandwidth** एक USDT TRC-20 transfer को कवर करता है।

@@ -1,0 +1,135 @@
+---
+title: Рассчитать цену bandwidth
+api: GET /api/v1/bandwidth/quote
+description: "Точная цена заказа bandwidth для объёма и срока, с учётом фиксированной комиссии"
+---
+
+## Рассчитать цену bandwidth
+
+Возвращает точную сумму, которая будет списана за заказ bandwidth такого объёма и срока, — аренда и фиксированная комиссия вместе, по **вашей** ставке. Котировка рассчитывается тем же кодом, который списывает оплату за заказ, поэтому, пока цена не изменилась, покупка стоит ровно `total_trx`.
+
+**Эндпоинт публичный — аутентификация не обязательна.** Передайте свой API-ключ, чтобы получить котировку по своей ставке и своей фиксированной комиссии; без него вернётся публичная цена.
+
+<Tip>
+  Покажите `total_trx` пользователю и передайте его как `max_price_trx` в [Купить bandwidth](/ru/api-reference/bandwidth/buy-bandwidth). Если цена изменится между котировкой и покупкой, покупка будет отклонена с `409 PRICE_CHANGED` и ничего не спишется — запросите котировку заново и повторите.
+</Tip>
+
+### Параметры запроса
+
+<ParamField query="volume" type="integer" required>
+  Объём bandwidth для расчёта. От 1 до 100 000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Срок аренды: `1h`, `1d` или целое число минут от `5m` до `59m` — те же значения, что и в [Купить bandwidth](/ru/api-reference/bandwidth/buy-bandwidth).
+</ParamField>
+
+### Заголовки
+
+<ParamField header="X-API-Key" type="string">
+  Необязательный. С действующим ключом ответ отражает вашу согласованную ставку и вашу фиксированную комиссию. Отсутствующий, неверный или отозванный ключ — не ошибка: вы получите публичную цену с `personal_price: false`.
+</ParamField>
+
+### Ответ
+
+<ResponseField name="volume" type="number">
+  Объём bandwidth, для которого рассчитана котировка
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Срок аренды, для которого рассчитана котировка
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Ставка в SUN за 1 единицу bandwidth, округлённая до 0.01 для отображения. На минутные сроки действует скидка, поэтому их ставка дробная, а суммы ниже рассчитаны по точной ставке — берите `total_trx`, а не умножайте это округлённое значение сами.
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Стоимость аренды для этого объёма и срока, без фиксированной комиссии
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Фиксированная комиссия, берётся **один раз за заказ** независимо от объёма и срока. Отражает вашу комиссию, если для аккаунта настроена индивидуальная комиссия, скидка или её снятие.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **Сумма, которая будет списана**: `rental_trx + fixed_fee_trx`. Передайте её как `max_price_trx` в [Купить bandwidth](/ru/api-reference/bandwidth/buy-bandwidth).
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true`, если применилась ваша согласованная ставка, `false` — если котировка по публичной цене. Проверяйте это поле: забытый заголовок `X-API-Key` иначе выглядит как обычный ответ, и вы будете показывать клиентам публичную цену, а списываться будет ваша.
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/quote",
+    params={"volume": 1000, "duration": "5m"},
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m",
+  { headers: { "X-API-Key": "your_api_key" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Значения ниже — пример, при `price_sun_1h`, равном 400, и `short_max_discount_pct`, равном 5. Актуальные ставки и скидка — в [Получить цены bandwidth](/ru/api-reference/bandwidth/get-prices).
+</Info>
+
+```json Response
+{
+  "volume": 1000,
+  "duration": "5m",
+  "price_sun": "380.00",
+  "rental_trx": "0.380000",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "0.580000",
+  "personal_price": false
+}
+```
+
+### Что не входит в котировку
+
+<Warning>
+  Котировка — как и `max_price_trx` — распространяется только на заказ bandwidth. Если целевой адрес ещё не активирован on-chain, [Купить bandwidth](/ru/api-reference/bandwidth/buy-bandwidth) активирует его и списывает активацию сверх (`activation_cost_trx` в ответе). Это списание не входит в `total_trx` и не сверяется с `max_price_trx`.
+</Warning>
+
+### Действия от имени другого аккаунта: `GET /v1/bandwidth/quote/me`
+
+`/bandwidth/quote` считает цену для **владельца API-ключа**. Если ваш ключ действует от имени другого аккаунта через заголовок `X-Account-Id`, покупка списывается по ставке и комиссии этого аккаунта — котировка может отличаться от списания, а `max_price_trx`, взятый из неё, может быть отклонён с `409 PRICE_CHANGED`.
+
+В этом случае используйте `GET /v1/bandwidth/quote/me`. Он принимает те же параметры запроса и возвращает тот же ответ, но аутентификация обязательна, а аккаунт определяется ровно так же, как при покупке, включая `X-Account-Id`. Для него нужен скоуп `view`, который всегда есть у любого ключа.
+
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote/me?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key" \
+  -H "X-Account-Id: 12345"
+```
+
+### Ошибки
+
+| Код | Значение |
+|------|---------|
+| `400 INVALID_VOLUME` | Объём вне диапазона 1–100 000 |
+| `400 INVALID_DURATION` | Срок, отличный от `1h`, `1d` или `5m` … `59m` |
+| `401 INVALID_TOKEN` | Только `/quote/me`: API-ключ отсутствует, неизвестен или отключён |
+| `403 FORBIDDEN` | Только `/quote/me`: у вашего ключа нет активного доступа к аккаунту из `X-Account-Id` |
+
+На `/bandwidth/quote` неверный или отозванный `X-API-Key` — **не** ошибка: котировка вернётся по публичной цене с `personal_price: false`.

@@ -1,0 +1,87 @@
+---
+title: 获取带宽价格
+api: GET /api/v1/bandwidth/prices
+description: "公开带宽费率、订单数量限制及分钟时长折扣"
+---
+
+## 获取带宽价格
+
+返回 `1h` 和 `1d` 的公开带宽费率、订单数量限制、固定手续费，以及分钟时长（`5m` … `59m`）折扣的参数。
+
+**此端点为公开接口——无需身份验证。** 它始终返回公开费率。如需按您自己的费率获得订单的准确金额，请使用[带宽报价](/zh/api-reference/bandwidth/quote)。
+
+### 响应
+
+<ResponseField name="price_per_day_trx" type="string">
+  按小时费率计算的 1,000 单位带宽 24 小时的 TRX 价格：`price_sun_1h × 24 / 1000`。`1d` 订单则按 `price_sun_1d` 计价。
+</ResponseField>
+
+<ResponseField name="price_sun_1h" type="number">
+  `1h` 的公开费率，每 1 单位带宽的 SUN 价格。分钟时长以它为基础计价。
+</ResponseField>
+
+<ResponseField name="price_sun_1d" type="number">
+  `1d` 的公开费率，每 1 单位带宽的 SUN 价格
+</ResponseField>
+
+<ResponseField name="min_volume" type="number">
+  最小订单量，以带宽单位计（1）
+</ResponseField>
+
+<ResponseField name="max_volume" type="number">
+  最大订单量，以带宽单位计（100,000）
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  标准固定手续费，任何时长均为每笔订单收取一次。您自己的手续费可能不同——[带宽报价](/zh/api-reference/bandwidth/quote)会返回它。
+</ResponseField>
+
+<ResponseField name="short_min_minutes" type="number">
+  最短分钟时长（5，即 `"5m"`）
+</ResponseField>
+
+<ResponseField name="short_max_minutes" type="number">
+  最长分钟时长（59，即 `"59m"`）。一小时为 `"1h"`。
+</ResponseField>
+
+<ResponseField name="short_max_discount_pct" type="string">
+  最短时长相对小时费率的折扣，以百分比计。折扣线性递减，至最长时长时为零：`discount % = short_max_discount_pct × (59 − minutes) / 54`。折扣仅适用于租赁费，不适用于固定手续费。`"0"` 表示分钟时长按小时费率计价。
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/bandwidth/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  以下数值仅为示例。费率和折扣可能会变化。
+</Info>
+
+```json Response
+{
+  "price_per_day_trx": "9.6",
+  "price_sun_1h": 400,
+  "price_sun_1d": 630,
+  "min_volume": 1,
+  "max_volume": 100000,
+  "fixed_fee_trx": "0.2",
+  "short_min_minutes": 5,
+  "short_max_minutes": 59,
+  "short_max_discount_pct": "5"
+}
+```

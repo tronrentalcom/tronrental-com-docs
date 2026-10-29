@@ -1,0 +1,160 @@
+---
+title: Calcular precio de bandwidth
+api: GET /api/v1/bandwidth/quote
+description: "Precio exacto de un pedido de bandwidth para un volumen y una duración, comisión fija incluida"
+---
+
+## Calcular precio de bandwidth
+
+Devuelve el importe exacto que se cobrará por un pedido de bandwidth de este volumen y esta duración —
+alquiler y comisión fija juntos, a **su** tarifa. La cotización se calcula con el mismo código que cobra
+el pedido, así que mientras el precio no cambie la compra cuesta exactamente `total_trx`.
+
+**Este endpoint es público — la autenticación es opcional.** Envíe su clave API para recibir su propia
+tarifa y comisión fija; sin ella obtendrá el precio público.
+
+<Tip>
+  Muestre `total_trx` a su usuario y páselo como `max_price_trx` a
+  [Comprar bandwidth](/es/api-reference/bandwidth/buy-bandwidth). Si el precio cambia entre la cotización y
+  la compra, la compra se rechaza con `409 PRICE_CHANGED` y no se cobra nada — vuelva a cotizar
+  y reintente.
+</Tip>
+
+### Parámetros de consulta
+
+<ParamField query="volume" type="integer" required>
+  Unidades de bandwidth a cotizar. Entre 1 y 100,000.
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  Periodo de alquiler: `1h`, `1d` o un número entero de minutos de `5m` a `59m` — los mismos valores que en
+  [Comprar bandwidth](/es/api-reference/bandwidth/buy-bandwidth).
+</ParamField>
+
+### Cabeceras
+
+<ParamField header="X-API-Key" type="string">
+  Opcional. Con una clave válida la respuesta refleja su tarifa negociada y su comisión fija. Una clave
+  ausente, inválida o revocada no es un error: obtendrá el precio público con
+  `personal_price: false`.
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="volume" type="number">
+  Unidades de bandwidth para las que se calculó la cotización
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Periodo de alquiler para el que se calculó la cotización
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  Tarifa en SUN por 1 unidad de bandwidth, redondeada a 0.01 para mostrarla. Los plazos en minutos llevan
+  descuento, por lo que su tarifa es fraccionaria, y los importes siguientes se calculan con la tarifa
+  exacta: tome `total_trx` en lugar de multiplicar usted mismo este valor redondeado.
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  Costo de alquiler para este volumen y esta duración, sin la comisión fija
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Comisión fija, cobrada **una vez por pedido** sin importar el volumen ni la duración. Refleja su propia
+  comisión si a su cuenta se le aplica una comisión personalizada, un descuento o una exención.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **Lo que se le cobrará**: `rental_trx + fixed_fee_trx`. Páselo como `max_price_trx` a
+  [Comprar bandwidth](/es/api-reference/bandwidth/buy-bandwidth).
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  `true` cuando se aplicó su tarifa negociada, `false` cuando la cotización va al precio público.
+  Compruébelo: una cabecera `X-API-Key` olvidada parece una respuesta normal, y estaría cotizando a sus
+  clientes el precio público mientras se le cobra el suyo.
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/quote",
+    params={"volume": 1000, "duration": "5m"},
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m",
+  { headers: { "X-API-Key": "your_api_key" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  Los valores siguientes son un ejemplo, con `price_sun_1h` de 400 y `short_max_discount_pct` de 5. Las tarifas
+  actuales y el descuento están en [Obtener precios de bandwidth](/es/api-reference/bandwidth/get-prices).
+</Info>
+
+```json Response
+{
+  "volume": 1000,
+  "duration": "5m",
+  "price_sun": "380.00",
+  "rental_trx": "0.380000",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "0.580000",
+  "personal_price": false
+}
+```
+
+### Lo que la cotización no incluye
+
+<Warning>
+  La cotización — y `max_price_trx` — cubre solo el pedido de bandwidth. Si la dirección de destino aún no
+  está activada on-chain, [Comprar bandwidth](/es/api-reference/bandwidth/buy-bandwidth) la activa y
+  cobra la activación aparte (`activation_cost_trx` en su respuesta). Ese cargo no forma parte de
+  `total_trx` y no se compara con `max_price_trx`.
+</Warning>
+
+### Actuar sobre otra cuenta: `GET /v1/bandwidth/quote/me`
+
+`/bandwidth/quote` calcula el precio para el **propietario de la clave API**. Si su clave actúa sobre otra
+cuenta con la cabecera `X-Account-Id`, la compra se cobra a la tarifa y la comisión de esa cuenta — la
+cotización puede diferir del cargo, y un `max_price_trx` tomado de ella puede rechazarse con
+`409 PRICE_CHANGED`.
+
+En ese caso, use `GET /v1/bandwidth/quote/me`. Acepta los mismos parámetros de consulta y devuelve la
+misma respuesta, pero requiere autenticación, y la cuenta se determina exactamente igual que en la
+compra, `X-Account-Id` incluido. Requiere el alcance `view`, que toda clave tiene siempre.
+
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote/me?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key" \
+  -H "X-Account-Id: 12345"
+```
+
+### Errores
+
+| Código | Significado |
+|------|---------|
+| `400 INVALID_VOLUME` | Volumen fuera de 1–100,000 |
+| `400 INVALID_DURATION` | Duración distinta de `1h`, `1d` o `5m` … `59m` |
+| `401 INVALID_TOKEN` | Solo `/quote/me`: clave API ausente, desconocida o deshabilitada |
+| `403 FORBIDDEN` | Solo `/quote/me`: su clave no tiene acceso activo a la cuenta indicada en `X-Account-Id` |
+
+En `/bandwidth/quote` una `X-API-Key` inválida o revocada **no** es un error: la cotización se devuelve
+al precio público con `personal_price: false`.

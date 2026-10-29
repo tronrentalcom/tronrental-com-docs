@@ -73,6 +73,7 @@ Returned in the standard shape, under `detail.error.code`:
 | `FORBIDDEN` | `403` | The key lacks the scope this endpoint requires, or the request IP is not on the key's whitelist |
 | `NODE_API_KEY_ONLY` | `403` | A Node API key was sent to this API — it works only at `node.tronrental.com` |
 | `INSUFFICIENT_BALANCE` | `402` | Account balance too low for this operation |
+| `PRICE_CHANGED` | `409` | The order costs more than the `max_price_trx` you sent. Nothing was charged — get a new quote and retry |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | This Idempotency-Key was already used with a different request body |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | Idempotency-Key is longer than 64 characters |
 | `INVALID_ADDRESS` | `400` | Not a valid TRON address |

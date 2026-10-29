@@ -1,0 +1,87 @@
+---
+title: Получить цены bandwidth
+api: GET /api/v1/bandwidth/prices
+description: "Публичные ставки bandwidth, лимиты заказа и скидка на минутные сроки"
+---
+
+## Получить цены bandwidth
+
+Возвращает публичные ставки bandwidth для `1h` и `1d`, лимиты объёма заказа, фиксированную комиссию и параметры скидки на минутные сроки (`5m` … `59m`).
+
+**Этот эндпоинт публичный — аутентификация не требуется.** Он всегда возвращает публичные ставки. Чтобы узнать точную сумму заказа по своей ставке, используйте [Рассчитать цену bandwidth](/ru/api-reference/bandwidth/quote).
+
+### Ответ
+
+<ResponseField name="price_per_day_trx" type="string">
+  TRX за 1 000 единиц bandwidth на 24 часа по часовой ставке: `price_sun_1h × 24 / 1000`. Заказ на `1d` считается по `price_sun_1d`.
+</ResponseField>
+
+<ResponseField name="price_sun_1h" type="number">
+  Публичная ставка для `1h`, SUN за 1 единицу bandwidth. От неё рассчитываются минутные сроки.
+</ResponseField>
+
+<ResponseField name="price_sun_1d" type="number">
+  Публичная ставка для `1d`, SUN за 1 единицу bandwidth
+</ResponseField>
+
+<ResponseField name="min_volume" type="number">
+  Минимальный заказ, в единицах bandwidth (1)
+</ResponseField>
+
+<ResponseField name="max_volume" type="number">
+  Максимальный заказ, в единицах bandwidth (100 000)
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Стандартная фиксированная комиссия, берётся один раз за заказ при любом сроке. Ваша комиссия может отличаться — её возвращает [Рассчитать цену bandwidth](/ru/api-reference/bandwidth/quote).
+</ResponseField>
+
+<ResponseField name="short_min_minutes" type="number">
+  Самый короткий минутный срок (5, т. е. `"5m"`)
+</ResponseField>
+
+<ResponseField name="short_max_minutes" type="number">
+  Самый длинный минутный срок (59, т. е. `"59m"`). Час — это `"1h"`.
+</ResponseField>
+
+<ResponseField name="short_max_discount_pct" type="string">
+  Скидка от часовой ставки на самом коротком сроке, в процентах. Она линейно убывает до нуля на самом длинном сроке: `discount % = short_max_discount_pct × (59 − minutes) / 54`. Действует только на аренду, а не на фиксированную комиссию. `"0"` означает, что минутные сроки стоят по часовой ставке.
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/bandwidth/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  Значения ниже — пример. Ставки и скидка могут меняться.
+</Info>
+
+```json Response
+{
+  "price_per_day_trx": "9.6",
+  "price_sun_1h": 400,
+  "price_sun_1d": 630,
+  "min_volume": 1,
+  "max_volume": 100000,
+  "fixed_fee_trx": "0.2",
+  "short_min_minutes": 5,
+  "short_max_minutes": 59,
+  "short_max_discount_pct": "5"
+}
+```

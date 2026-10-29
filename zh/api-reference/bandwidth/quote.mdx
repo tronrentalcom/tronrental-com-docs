@@ -1,0 +1,135 @@
+---
+title: 带宽报价
+api: GET /api/v1/bandwidth/quote
+description: "指定数量和时长的带宽订单的准确价格，已包含固定手续费"
+---
+
+## 带宽报价
+
+返回该数量和时长的带宽订单将实际扣除的准确金额——租赁费与固定手续费合计，按**您的**费率计算。报价与订单扣费由同一段代码计算，因此在价格不变期间，购买费用恰好等于 `total_trx`。
+
+**此端点为公开接口——身份验证为可选。** 传入您的 API 密钥可按您自己的费率和固定手续费报价；不传则返回公开价格。
+
+<Tip>
+  向您的用户展示 `total_trx`，并将其作为 `max_price_trx` 传给[购买带宽](/zh/api-reference/bandwidth/buy-bandwidth)。如果在报价与购买之间价格发生变化，购买将以 `409 PRICE_CHANGED` 被拒绝，且不会扣除任何费用——请重新报价并重试。
+</Tip>
+
+### 查询参数
+
+<ParamField query="volume" type="integer" required>
+  需要报价的带宽单位数。范围 1 至 100,000。
+</ParamField>
+
+<ParamField query="duration" type="string" default="1h">
+  租赁时长：`1h`、`1d`，或 `5m` 至 `59m` 之间的整数分钟——取值与[购买带宽](/zh/api-reference/bandwidth/buy-bandwidth)相同。
+</ParamField>
+
+### 请求头
+
+<ParamField header="X-API-Key" type="string">
+  可选。使用有效密钥时，响应会反映您协商的费率和您的固定手续费。缺失、无效或已吊销的密钥不算错误——您会得到公开价格，且 `personal_price: false`。
+</ParamField>
+
+### 响应
+
+<ResponseField name="volume" type="number">
+  本次报价所针对的带宽单位数
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  本次报价所针对的租赁时长
+</ResponseField>
+
+<ResponseField name="price_sun" type="string">
+  每 1 单位带宽的费率（SUN），为便于展示四舍五入到 0.01。分钟时长带有折扣，因此其费率是小数，而下列金额按精确费率计算——请直接使用 `total_trx`，不要自己用这个取整后的值相乘。
+</ResponseField>
+
+<ResponseField name="rental_trx" type="string">
+  该数量和时长的租赁费用，不含固定手续费
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  固定手续费，**每笔订单收取一次**，与数量和时长无关。若您的账户设有专属手续费、折扣或豁免，此处会体现您的实际手续费。
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  **将要扣除的金额**：`rental_trx + fixed_fee_trx`。请将其作为 `max_price_trx` 传给[购买带宽](/zh/api-reference/bandwidth/buy-bandwidth)。
+</ResponseField>
+
+<ResponseField name="personal_price" type="boolean">
+  应用了您协商的费率时为 `true`，按公开价格报价时为 `false`。请检查该字段：否则遗漏 `X-API-Key` 请求头的响应看起来与正常响应无异，您会按公开价向客户报价，而实际按您自己的价格扣费。
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/quote",
+    params={"volume": 1000, "duration": "5m"},
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json()["total_trx"])
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/quote?volume=1000&duration=5m",
+  { headers: { "X-API-Key": "your_api_key" } }
+);
+const quote = await resp.json();
+console.log(quote.total_trx);
+```
+</CodeGroup>
+
+<Info>
+  以下数值仅为示例，按 `price_sun_1h` 为 400、`short_max_discount_pct` 为 5 计算。当前费率和折扣请参见[获取带宽价格](/zh/api-reference/bandwidth/get-prices)。
+</Info>
+
+```json Response
+{
+  "volume": 1000,
+  "duration": "5m",
+  "price_sun": "380.00",
+  "rental_trx": "0.380000",
+  "fixed_fee_trx": "0.2",
+  "total_trx": "0.580000",
+  "personal_price": false
+}
+```
+
+### 报价不包含的内容
+
+<Warning>
+  报价——以及 `max_price_trx`——仅涵盖带宽订单。如果目标地址在链上尚未激活，[购买带宽](/zh/api-reference/bandwidth/buy-bandwidth)会激活该地址，并另行收取激活费用（其响应中的 `activation_cost_trx`）。该费用不计入 `total_trx`，也不会与 `max_price_trx` 进行比较。
+</Warning>
+
+### 代表其他账户操作：`GET /v1/bandwidth/quote/me`
+
+`/bandwidth/quote` 按 **API 密钥所有者**的价格报价。如果您的密钥通过 `X-Account-Id` 请求头代表其他账户操作，购买将按该账户的费率和手续费扣费——报价可能与实际扣费不同，据此得到的 `max_price_trx` 可能会以 `409 PRICE_CHANGED` 被拒绝。
+
+这种情况下请使用 `GET /v1/bandwidth/quote/me`。它接受相同的查询参数并返回相同的响应，但需要身份验证，且账户的确定方式与购买时完全相同，包括 `X-Account-Id`。它需要 `view` 权限，而每个密钥始终具备该权限。
+
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/quote/me?volume=1000&duration=5m" \
+  -H "X-API-Key: your_api_key" \
+  -H "X-Account-Id: 12345"
+```
+
+### 错误
+
+| 代码 | 含义 |
+|------|---------|
+| `400 INVALID_VOLUME` | 数量超出 1–100,000 范围 |
+| `400 INVALID_DURATION` | 时长不是 `1h`、`1d` 或 `5m` … `59m` |
+| `401 INVALID_TOKEN` | 仅限 `/quote/me`：API 密钥缺失、未知或已禁用 |
+| `403 FORBIDDEN` | 仅限 `/quote/me`：您的密钥对 `X-Account-Id` 中的账户没有有效的访问权限 |
+
+在 `/bandwidth/quote` 上，无效或已吊销的 `X-API-Key` **不是**错误：仍会按公开价格返回报价，且 `personal_price: false`。

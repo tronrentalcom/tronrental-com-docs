@@ -1,0 +1,93 @@
+---
+title: Consultar preços de bandwidth
+api: GET /api/v1/bandwidth/prices
+description: "Tarifas públicas de bandwidth, limites de pedido e o desconto dos prazos em minutos"
+---
+
+## Consultar preços de bandwidth
+
+Retorna as tarifas públicas de bandwidth para `1h` e `1d`, os limites de volume do pedido, a taxa fixa e os
+parâmetros do desconto dos prazos em minutos (`5m` … `59m`).
+
+**Este endpoint é público — nenhuma autenticação é necessária.** Ele sempre retorna as tarifas públicas. Para
+o valor exato de um pedido pela sua própria tarifa, use [Calcular preço de bandwidth](/pt/api-reference/bandwidth/quote).
+
+### Resposta
+
+<ResponseField name="price_per_day_trx" type="string">
+  TRX por 1.000 unidades de bandwidth durante 24 horas pela tarifa horária: `price_sun_1h × 24 / 1000`. Um pedido `1d`
+  é cobrado por `price_sun_1d`.
+</ResponseField>
+
+<ResponseField name="price_sun_1h" type="number">
+  Tarifa pública para `1h`, em SUN por 1 unidade de bandwidth. Os prazos em minutos são calculados a partir dela.
+</ResponseField>
+
+<ResponseField name="price_sun_1d" type="number">
+  Tarifa pública para `1d`, em SUN por 1 unidade de bandwidth
+</ResponseField>
+
+<ResponseField name="min_volume" type="number">
+  Menor pedido, em unidades de bandwidth (1)
+</ResponseField>
+
+<ResponseField name="max_volume" type="number">
+  Maior pedido, em unidades de bandwidth (100.000)
+</ResponseField>
+
+<ResponseField name="fixed_fee_trx" type="string">
+  Taxa fixa padrão, cobrada uma vez por pedido para qualquer duração. A sua taxa pode ser diferente —
+  [Calcular preço de bandwidth](/pt/api-reference/bandwidth/quote) a retorna.
+</ResponseField>
+
+<ResponseField name="short_min_minutes" type="number">
+  Prazo em minutos mais curto (5, ou seja, `"5m"`)
+</ResponseField>
+
+<ResponseField name="short_max_minutes" type="number">
+  Prazo em minutos mais longo (59, ou seja, `"59m"`). Uma hora é `"1h"`.
+</ResponseField>
+
+<ResponseField name="short_max_discount_pct" type="string">
+  Desconto sobre a tarifa horária no prazo mais curto, em porcentagem. Ele cai linearmente até zero no
+  prazo mais longo: `discount % = short_max_discount_pct × (59 − minutes) / 54`. Aplica-se apenas ao aluguel,
+  não à taxa fixa. `"0"` significa que os prazos em minutos custam a tarifa horária.
+</ResponseField>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/prices
+```
+
+```python Python
+import requests
+resp = requests.get("https://api.tronrental.com/v1/bandwidth/prices")
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/prices");
+const data = await resp.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Info>
+  Os valores abaixo são um exemplo. As tarifas e o desconto podem mudar.
+</Info>
+
+```json Response
+{
+  "price_per_day_trx": "9.6",
+  "price_sun_1h": 400,
+  "price_sun_1d": 630,
+  "min_volume": 1,
+  "max_volume": 100000,
+  "fixed_fee_trx": "0.2",
+  "short_min_minutes": 5,
+  "short_max_minutes": 59,
+  "short_max_discount_pct": "5"
+}
+```
