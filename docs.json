@@ -54,7 +54,8 @@
               {
                 "group": "TRON Energy",
                 "pages": [
-                  "resources/tron-energy"
+                  "resources/tron-energy",
+                  "resources/energy-broadcaster"
                 ]
               }
             ]
@@ -211,7 +212,8 @@
               {
                 "group": "Энергия TRON",
                 "pages": [
-                  "ru/resources/tron-energy"
+                  "ru/resources/tron-energy",
+                  "ru/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -367,7 +369,8 @@
               {
                 "group": "TRON 能量",
                 "pages": [
-                  "zh/resources/tron-energy"
+                  "zh/resources/tron-energy",
+                  "zh/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -523,7 +526,8 @@
               {
                 "group": "Energía TRON",
                 "pages": [
-                  "es/resources/tron-energy"
+                  "es/resources/tron-energy",
+                  "es/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -679,7 +683,8 @@
               {
                 "group": "TRON Enerji",
                 "pages": [
-                  "tr/resources/tron-energy"
+                  "tr/resources/tron-energy",
+                  "tr/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -835,7 +840,8 @@
               {
                 "group": "Energia TRON",
                 "pages": [
-                  "pt/resources/tron-energy"
+                  "pt/resources/tron-energy",
+                  "pt/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -991,7 +997,8 @@
               {
                 "group": "TRON एनर्जी",
                 "pages": [
-                  "hi/resources/tron-energy"
+                  "hi/resources/tron-energy",
+                  "hi/resources/energy-broadcaster"
                 ]
               }
             ]

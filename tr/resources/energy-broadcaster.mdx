@@ -1,0 +1,56 @@
+---
+title: Energy Broadcaster
+description: "TRX'i olmayan bir adresten işlem gönderin: enerji ve bandwidth otomatik devredilir ve TronRental bakiyenizden düşülür"
+---
+
+## Nedir
+
+Energy Broadcaster, cüzdanınızda (TronLink, TokenPocket) veya kendi backend'inizde bir kez ayarladığınız bir TRON düğüm URL'sidir. İmzalı bir işlem buradan geçtiğinde broadcaster gönderenin ihtiyaç duyduğu enerji ve bandwidth'i hesaplar, bunları gönderene devreder ve işlemi ancak ondan sonra ağa yayınlar. Ücret TronRental bakiyenizden düşülür; bu yüzden gönderen adreste enerji ve bandwidth için TRX gerekmez.
+
+Anahtarlarınız sizde kalır: broadcaster zaten imzalanmış bir işlem alır ve onu değiştirmeden yayınlar.
+
+## Kurulum
+
+1. [tronrental.com](https://tronrental.com) üzerinden TRX bakiyenizi yükleyin.
+2. Paneldeki [Broadcast](https://tronrental.com/dashboard/broadcast) sayfasında bir broadcaster oluşturun. Gizli bir yayın URL'si alırsınız — istatistikler karışmasın diye her cüzdan için bir tane.
+3. URL'yi cüzdanınızın ağ ayarlarında düğüm olarak girin veya sunucunuzdan HTTP ya da gRPC ile kullanın (gRPC sunucusu, portu ve TLS ayarları panelde gösterilir).
+
+<Warning>
+  Yayın URL'si bir parola gibidir: ona sahip olan herkes bakiyenizi harcar. Sızarsa broadcaster'ı panelden kapatın ve yenisini oluşturun.
+</Warning>
+
+## Neler kapsanıyor
+
+| İşlem | Broadcaster'ın devrettiği |
+|---|---|
+| USDT, USDC, USDD ve A7A5 transferleri | enerji ve bandwidth |
+| SunSwap'teki swap'lar | enerji ve bandwidth, hesabınızın limitleri dahilinde |
+| Diğer TRC-20 token transferleri ve diğer tüm akıllı sözleşme çağrıları | enerji ve bandwidth, hesabınızın limitleri dahilinde |
+| TRX transferleri | bandwidth |
+
+Bir swap veya sözleşme çağrısı için broadcaster imzalı işlemi kendi düğümünde simüle eder ve gönderenin ödediği enerjiyi bir miktar fazlasıyla devreder. Enerjinin bir kısmını sözleşmeyi dağıtan taraf karşılıyorsa yalnızca gönderenin payı devredilir.
+
+### Limitler
+
+Swap'lar ve sözleşme çağrıları hesabınızın limitleri dahilinde karşılanır: çağrı başına en fazla 1.000.000 enerji ve diğer token transferleri ile diğer sözleşme çağrıları için tüm broadcaster'larınızın ortak kullandığı günlük enerji limiti (UTC günü). Limiti aşan bir çağrı olduğu gibi yayınlanır — devir olmadan ve ücret alınmadan. Farklı limitlere ihtiyacınız varsa destekle iletişime geçin.
+
+## Neler kapsanmıyor
+
+- **TRX olarak alınan ücretler.** TRON ağı bazı ücretleri enerji veya bandwidth yerine TRX olarak alır: yeni bir adrese TRX veya TRC-10 token gönderirken adres aktivasyonu (yaklaşık 1,1 TRX), çoklu imzalı işlemler (+1 TRX), memo (+1 TRX) ve hesap izinlerinin değiştirilmesi (100 TRX). Devir bunları ödeyemez; bu tür işlemler için gönderen adresin kendi TRX'i olmalıdır.
+- **Akıllı sözleşme dağıtımı.**
+- **Akıllı sözleşme içermeyen diğer işlemler** (TRC-10 transferleri, staking, oylama) — düğümden değişmeden geçer.
+- **Gönderen adreste zaten bulunan enerji hesaba katılmaz:** broadcaster her zaman işlemin ihtiyaç duyduğu miktarın tamamını devreder.
+
+## Broadcaster ayarları
+
+Tüm ayarlar [Broadcast](https://tronrental.com/dashboard/broadcast) sayfasında, her broadcaster için ayrı ayrıdır.
+
+| Ayar | Ne yapar |
+|---|---|
+| **İşlemi engelle** / **Geçir** | Bakiyeniz enerjiyi karşılamadığında: *İşlemi engelle* işlemi reddeder, böylece gönderen TRX yakmaz; *Geçir* işlemi devir olmadan yayınlar ve ağ ücretini gönderen öder. |
+| **Bant genişliği devret** | Açık (varsayılan) — broadcaster, bant genişliği yetersiz olan gönderene bant genişliği de devreder. Kapalı — bant genişliğini gönderen kendisi öder; ücretsiz bant genişliği yoksa TRX ile. |
+| **Sözleşme çağrıları** | Kapalıyken swap'lar, diğer token transferleri ve sözleşme çağrıları enerjisiz yayınlanır ve ücret alınmaz. USDT, USDC, USDD, A7A5 ve TRX transferleri etkilenmez. |
+| **Revert koruması** | Sözleşme çağrıları açıkken görünür. Simülasyon çağrının başarısız olacağını gösterirse broadcaster bir sonraki blokta tekrar kontrol eder; yine başarısız olursa işlem yayınlanmaz, cüzdan bir hata alır, ücret alınmaz ve TRX yakılmaz. Sonraki blok birkaç saniye içinde gelmezse veya düğümlerimiz erişilemezse çağrı, koruma kapalıymış gibi gönderilir. Nadiren geçecek bir çağrı reddedilir — örneğin bir saniye önce gönderilen ve henüz bloğa girmemiş bir `approve`'a dayanan çağrı; birkaç saniye sonra tekrar gönderin. Kapalıyken başarısız olacak bir çağrı devir olmadan yayınlanır ve ücreti gönderen öder. |
+| **Duraklat** | Yayın URL'si, siz devam ettirene kadar cüzdana tamamen yanıt vermeyi bırakır — bakiye okuma dahil. |
+
+Broadcaster'dan geçen transferler, swap'lar ve sözleşme çağrıları panelde sonuçlarıyla görünür: devredilen ve ücretlendirilen enerji ya da işlemin enerjisiz gitme nedeni.
