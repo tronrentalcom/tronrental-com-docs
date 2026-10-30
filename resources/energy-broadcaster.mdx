@@ -32,7 +32,7 @@ For a swap or a contract call the broadcaster simulates the signed transaction o
 
 ### Limits
 
-Swaps and contract calls are served within the limits of your account: at most 1,000,000 energy per call, and a daily energy limit for transfers of other tokens and calls to other contracts (not swaps), shared by all your broadcasters (UTC day). A call above a limit is broadcast as is — without delegation and without a charge. Contact support if you need different limits.
+Swaps and contract calls are served within the limits of your account: at most 1,000,000 energy per call, and a daily energy limit for transfers of other tokens and calls to other contracts, shared by all your broadcasters (UTC day). A call above a limit is broadcast as is — without delegation and without a charge. Contact support if you need different limits.
 
 ## What is not covered
 
@@ -48,8 +48,9 @@ All settings are on the [Broadcast](https://tronrental.com/dashboard/broadcast) 
 | Setting | What it does |
 |---|---|
 | **Block transaction** / **Passthrough** | When your balance cannot pay for the energy: *Block transaction* rejects the transaction, so the sender burns no TRX; *Passthrough* broadcasts it without delegation, and the sender pays the network fee. |
+| **Delegate bandwidth** | On (default) — the broadcaster also delegates bandwidth to a sender that lacks it. Off — the sender pays for bandwidth itself, in TRX if it has no free bandwidth. |
 | **Contract calls** | Off — swaps, transfers of other tokens and contract calls are broadcast without energy and nothing is charged. Transfers of USDT, USDC, USDD, A7A5 and TRX are not affected. |
-| **Revert protection** | Shown when contract calls are on. If the simulation shows the call would fail, the broadcaster checks it again on the next block; if it still fails, the transaction is not broadcast, the wallet gets an error, nothing is charged and no TRX is burned. Rarely a call that would have gone through is refused — for example, one that relies on an `approve` sent a second earlier and not yet in a block; send it again a few seconds later. Off — a failing call is broadcast without delegation, and the sender pays the fee. |
+| **Revert protection** | Shown when contract calls are on. If the simulation shows the call would fail, the broadcaster checks it again on the next block; if it still fails, the transaction is not broadcast, the wallet gets an error, nothing is charged and no TRX is burned. If the next block does not arrive within a few seconds or our nodes are unavailable, the call is sent as with protection off. Rarely a call that would have gone through is refused — for example, one that relies on an `approve` sent a second earlier and not yet in a block; send it again a few seconds later. Off — a failing call is broadcast without delegation, and the sender pays the fee. |
 | **Pause** | The broadcast URL stops answering the wallet entirely — reading the balance included — until you resume it. |
 
-Every transaction that goes through the broadcaster appears in the dashboard with its result: energy delegated and charged, or the reason it went out without energy.
+Transfers, swaps and contract calls that go through the broadcaster appear in the dashboard with their result: energy delegated and charged, or the reason it went out without energy.

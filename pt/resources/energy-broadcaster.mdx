@@ -32,7 +32,7 @@ Para um swap ou uma chamada de contrato, o broadcaster simula a transação assi
 
 ### Limites
 
-Swaps e chamadas de contratos são atendidos dentro dos limites da sua conta: no máximo 1.000.000 de energia por chamada e um limite diário de energia para transferências de outros tokens e chamadas a outros contratos (exceto swaps), compartilhado por todos os seus broadcasters (dia UTC). Uma chamada acima do limite é transmitida como está — sem delegação e sem cobrança. Se precisar de outros limites, fale com o suporte.
+Swaps e chamadas de contratos são atendidos dentro dos limites da sua conta: no máximo 1.000.000 de energia por chamada e um limite diário de energia para transferências de outros tokens e chamadas a outros contratos, compartilhado por todos os seus broadcasters (dia UTC). Uma chamada acima do limite é transmitida como está — sem delegação e sem cobrança. Se precisar de outros limites, fale com o suporte.
 
 ## O que não é coberto
 
@@ -48,8 +48,9 @@ Todas as configurações ficam na página [Broadcast](https://tronrental.com/das
 | Configuração | O que faz |
 |---|---|
 | **Bloquear a transação** / **Deixar passar** | Quando o seu saldo não cobre a energia: *Bloquear a transação* a rejeita, e o remetente não queima TRX; *Deixar passar* a transmite sem delegação, e o remetente paga a taxa da rede. |
+| **Delegar bandwidth** | Ativado (padrão) — o broadcaster também delega bandwidth ao remetente que não tenha o suficiente. Desativado — o remetente paga o bandwidth por conta própria, em TRX se não tiver bandwidth gratuito. |
 | **Chamadas de contratos** | Desativado — swaps, transferências de outros tokens e chamadas de contratos são transmitidos sem energia e nada é cobrado. Transferências de USDT, USDC, USDD, A7A5 e TRX não são afetadas. |
-| **Proteção contra revert** | Aparece com as chamadas de contratos ativadas. Se a simulação mostrar que a chamada vai falhar, o broadcaster verifica de novo no bloco seguinte; se ainda falhar, a transação não é transmitida, a carteira recebe um erro, nada é cobrado e nenhum TRX é queimado. Raramente é recusada uma chamada que teria funcionado — por exemplo, uma que depende de um `approve` enviado um segundo antes e que ainda não entrou num bloco; envie-a novamente alguns segundos depois. Desativado — uma chamada que falha é transmitida sem delegação, e o remetente paga a taxa. |
+| **Proteção contra revert** | Aparece com as chamadas de contratos ativadas. Se a simulação mostrar que a chamada vai falhar, o broadcaster verifica de novo no bloco seguinte; se ainda falhar, a transação não é transmitida, a carteira recebe um erro, nada é cobrado e nenhum TRX é queimado. Se o bloco seguinte não chegar em alguns segundos ou os nossos nós estiverem indisponíveis, a chamada é enviada como sem proteção. Raramente é recusada uma chamada que teria funcionado — por exemplo, uma que depende de um `approve` enviado um segundo antes e que ainda não entrou num bloco; envie-a novamente alguns segundos depois. Desativado — uma chamada que falha é transmitida sem delegação, e o remetente paga a taxa. |
 | **Pausar** | A URL de broadcast deixa de responder à carteira por completo — inclusive à leitura do saldo — até você retomar. |
 
-Cada transação que passa pelo broadcaster aparece no painel com o resultado: a energia delegada e cobrada, ou o motivo pelo qual saiu sem energia.
+Transferências, swaps e chamadas de contratos que passam pelo broadcaster aparecem no painel com o resultado: a energia delegada e cobrada, ou o motivo pelo qual saiu sem energia.
