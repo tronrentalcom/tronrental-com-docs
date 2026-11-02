@@ -185,10 +185,15 @@
                 "group": "Resources",
                 "pages": [
                   "resources/mcp-server",
-                  "resources/rate-limits",
-                  "resources/changelog"
+                  "resources/rate-limits"
                 ]
               }
+            ]
+          },
+          {
+            "tab": "Changelog",
+            "pages": [
+              "changelog"
             ]
           }
         ]
@@ -341,10 +346,15 @@
                 "group": "Ресурсы",
                 "pages": [
                   "ru/resources/mcp-server",
-                  "ru/resources/rate-limits",
-                  "ru/resources/changelog"
+                  "ru/resources/rate-limits"
                 ]
               }
+            ]
+          },
+          {
+            "tab": "Список изменений",
+            "pages": [
+              "ru/changelog"
             ]
           }
         ]
@@ -497,10 +507,15 @@
                 "group": "资源",
                 "pages": [
                   "zh/resources/mcp-server",
-                  "zh/resources/rate-limits",
-                  "zh/resources/changelog"
+                  "zh/resources/rate-limits"
                 ]
               }
+            ]
+          },
+          {
+            "tab": "更新日志",
+            "pages": [
+              "zh/changelog"
             ]
           }
         ]
@@ -653,10 +668,15 @@
                 "group": "Recursos",
                 "pages": [
                   "es/resources/mcp-server",
-                  "es/resources/rate-limits",
-                  "es/resources/changelog"
+                  "es/resources/rate-limits"
                 ]
               }
+            ]
+          },
+          {
+            "tab": "Registro de cambios",
+            "pages": [
+              "es/changelog"
             ]
           }
         ]
@@ -809,10 +829,15 @@
                 "group": "Kaynaklar",
                 "pages": [
                   "tr/resources/mcp-server",
-                  "tr/resources/rate-limits",
-                  "tr/resources/changelog"
+                  "tr/resources/rate-limits"
                 ]
               }
+            ]
+          },
+          {
+            "tab": "Değişiklik Günlüğü",
+            "pages": [
+              "tr/changelog"
             ]
           }
         ]
@@ -965,10 +990,15 @@
                 "group": "Recursos",
                 "pages": [
                   "pt/resources/mcp-server",
-                  "pt/resources/rate-limits",
-                  "pt/resources/changelog"
+                  "pt/resources/rate-limits"
                 ]
               }
+            ]
+          },
+          {
+            "tab": "Registro de alterações",
+            "pages": [
+              "pt/changelog"
             ]
           }
         ]
@@ -1121,10 +1151,15 @@
                 "group": "संसाधन",
                 "pages": [
                   "hi/resources/mcp-server",
-                  "hi/resources/rate-limits",
-                  "hi/resources/changelog"
+                  "hi/resources/rate-limits"
                 ]
               }
+            ]
+          },
+          {
+            "tab": "चेंजलॉग",
+            "pages": [
+              "hi/changelog"
             ]
           }
         ]
@@ -1145,6 +1180,34 @@
     {
       "source": "/",
       "destination": "/introduction"
+    },
+    {
+      "source": "/resources/changelog",
+      "destination": "/changelog"
+    },
+    {
+      "source": "/ru/resources/changelog",
+      "destination": "/ru/changelog"
+    },
+    {
+      "source": "/zh/resources/changelog",
+      "destination": "/zh/changelog"
+    },
+    {
+      "source": "/es/resources/changelog",
+      "destination": "/es/changelog"
+    },
+    {
+      "source": "/tr/resources/changelog",
+      "destination": "/tr/changelog"
+    },
+    {
+      "source": "/pt/resources/changelog",
+      "destination": "/pt/changelog"
+    },
+    {
+      "source": "/hi/resources/changelog",
+      "destination": "/hi/changelog"
     }
   ],
   "footerSocials": {
