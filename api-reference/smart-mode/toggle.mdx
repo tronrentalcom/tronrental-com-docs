@@ -8,6 +8,8 @@ description: "Pause or resume a Smart Mode subscription"
 
 Pauses an active subscription or resumes a paused one. While paused, no fees are charged and transfers are not monitored.
 
+A subscription with `stop_after_transfer` is paused by its next USDT transfer (`paused_reason: "transfer"`). Resume it here — the option stays on.
+
 ### Path parameters
 
 <ParamField path="sub_id" type="number" required>

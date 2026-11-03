@@ -8,6 +8,8 @@ description: "暂停或恢复智能模式订阅"
 
 暂停活跃的订阅或恢复已暂停的订阅。暂停期间不收取费用，也不监控转账。
 
+开启 `stop_after_transfer` 的订阅会在下一笔 USDT 转账后暂停（`paused_reason: "transfer"`）。在此恢复即可，该选项保持开启。
+
 ### 路径参数
 
 <ParamField path="sub_id" type="number" required>

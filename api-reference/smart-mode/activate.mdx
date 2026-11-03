@@ -22,6 +22,10 @@ Starts automatic energy delivery for the specified address. The first daily fee 
   Enable BW Guarantee (+0.3 TRX per transfer)
 </ParamField>
 
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Switch the subscription off after the next USDT transfer from the address: that transfer is charged as usual, then the subscription is paused, as with [Toggle Subscription](/api-reference/smart-mode/toggle). The paid day is not refunded. Resuming keeps the option on: the subscription switches off again after the next transfer.
+</ParamField>
+
 ### Response
 
 Returns `subscription_id` — the ID of the created subscription. Read the subscription itself with [List Subscriptions](/api-reference/smart-mode/list-subscriptions).
@@ -35,7 +39,8 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
   -d '{
     "address": "TYourAddress...",
     "label": "Main wallet",
-    "bw_guarantee": true
+    "bw_guarantee": true,
+    "stop_after_transfer": false
   }'
 ```
 

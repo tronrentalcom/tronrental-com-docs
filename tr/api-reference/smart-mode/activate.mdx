@@ -22,6 +22,10 @@ Belirtilen adres icin otomatik enerji teslimini baslatir. Ilk gunluk ucret hemen
   BW Garantisini etkinlestir (transfer basina +0,3 TRX)
 </ParamField>
 
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Adresten yapilan sonraki USDT transferinden sonra aboneligi kapatir: bu transfer her zamanki gibi ucretlendirilir, ardindan abonelik [Aboneligi Degistir](/tr/api-reference/smart-mode/toggle) ile oldugu gibi duraklatilir. Odenmis gun iade edilmez. Devam ettirildiginde secenek acik kalir: abonelik sonraki transferden sonra yine kapanir.
+</ParamField>
+
 ### Yanit
 
 Olusturulan aboneligin kimligi olan `subscription_id` degerini dondurur. Aboneligin kendisini [Abonelikleri Listele](/tr/api-reference/smart-mode/list-subscriptions) ile alin.
@@ -35,7 +39,8 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
   -d '{
     "address": "TYourAddress...",
     "label": "Main wallet",
-    "bw_guarantee": true
+    "bw_guarantee": true,
+    "stop_after_transfer": false
   }'
 ```
 

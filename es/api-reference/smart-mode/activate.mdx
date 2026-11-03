@@ -22,6 +22,10 @@ Inicia la entrega automatica de energia para la direccion especificada. La prime
   Habilitar Garantia de BW (+0.3 TRX por transferencia)
 </ParamField>
 
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Desactivar la suscripcion tras la proxima transferencia de USDT desde la direccion: esa transferencia se cobra como siempre y luego la suscripcion queda en pausa, como con [Alternar suscripcion](/es/api-reference/smart-mode/toggle). El dia pagado no se reembolsa. Al reanudarla la opcion sigue activa: la suscripcion se desactivara de nuevo tras la siguiente transferencia.
+</ParamField>
+
 ### Respuesta
 
 Devuelve `subscription_id`, el ID de la suscripcion creada. La suscripcion completa se obtiene con [Listar suscripciones](/es/api-reference/smart-mode/list-subscriptions).
@@ -35,7 +39,8 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
   -d '{
     "address": "TYourAddress...",
     "label": "Main wallet",
-    "bw_guarantee": true
+    "bw_guarantee": true,
+    "stop_after_transfer": false
   }'
 ```
 

@@ -32,6 +32,14 @@ Array of subscription objects:
   `true` while the subscription is paused with [Toggle Subscription](/api-reference/smart-mode/toggle): no fees are charged and transfers are not monitored
 </ResponseField>
 
+<ResponseField name="stop_after_transfer" type="boolean">
+  Whether the subscription switches off after the next USDT transfer (see `stop_after_transfer` in [Activate](/api-reference/smart-mode/activate))
+</ResponseField>
+
+<ResponseField name="paused_reason" type="string">
+  Why the subscription is paused: `transfer` — switched off by a USDT transfer; `null` — paused with [Toggle Subscription](/api-reference/smart-mode/toggle) or not paused
+</ResponseField>
+
 <ResponseField name="bw_guarantee" type="boolean">
   Whether BW Guarantee is enabled
 </ResponseField>
@@ -55,6 +63,8 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "label": "Main wallet",
     "status": "active",
     "paused": false,
+    "stop_after_transfer": false,
+    "paused_reason": null,
     "bw_guarantee": true,
     "created_at": "2026-03-05T12:00:00Z"
   },
@@ -64,6 +74,8 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "label": null,
     "status": "active",
     "paused": true,
+    "stop_after_transfer": true,
+    "paused_reason": "transfer",
     "bw_guarantee": false,
     "created_at": "2026-03-04T10:00:00Z"
   }
