@@ -64,6 +64,7 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "id": 247033,
         "type": "energy",
         "status": "filled",
+        "source": "api",
         "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "volume": 65000,
         "expected_volume": 65000,
@@ -83,9 +84,8 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```
 
 <Note>
-  Duas lacunas que vale conhecer antes de depurar com este registro:
+  O registro lista todas as entregas à sua conta — todos os [eventos](/pt/api-reference/webhooks/overview), incluindo `subscription.transfer` e `package.*`.
 
-  - Ele lista entregas atribuídas às suas **chaves de API**, então hoje as entregas de `subscription.transfer` e `package.*` não aparecem aqui, mesmo tendo sido enviadas.
-  - Uma URL que não conseguimos resolver, ou que resolve para um endereço privado, **não gera linha alguma** — um registro vazio não distingue «não houve eventos» de «o endereço foi recusado». Se você esperava tráfego e não vê nada, confira a URL em [Dashboard → API](https://tronrental.com/dashboard/api).
+  Uma lacuna que vale conhecer antes de depurar com ele: uma URL que não conseguimos resolver, ou que resolve para um endereço privado, **não gera linha alguma** — um registro vazio não distingue «não houve eventos» de «o endereço foi recusado». Se você esperava tráfego e não vê nada, confira a URL em [Dashboard → API](https://tronrental.com/dashboard/api).
 </Note>
 

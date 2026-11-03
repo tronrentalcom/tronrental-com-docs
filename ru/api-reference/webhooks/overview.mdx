@@ -9,20 +9,22 @@ description: "Получайте уведомления о событиях ак
 
 ### События
 
-Сегодня существует шесть событий.
+Сегодня существует восемь событий.
 
 | Событие | Когда отправляется |
 |-------|-----------|
-| `order.updated` | Заказ энергии или bandwidth сменил состояние — **только для заказов, созданных через API** |
+| `order.updated` | Заказ энергии или bandwidth вашего аккаунта сменил состояние — откуда бы он ни пришёл: API, сайт, Telegram-бот или автопополнение |
+| `activation.updated` | Завершилась активация адреса, оплаченная с баланса |
+| `invoice.updated` | Инвойс вашего аккаунта сменил статус |
 | `subscription.transfer` | Smart Mode оплатил перевод с отслеживаемого адреса |
 | `package.transfer` | Transfer Package оплатил перевод со своего адреса |
 | `package.completed` | Transfer Package перестал обслуживать переводы |
 | `package.activated` | Transfer Package стал активным |
 | `package.expired` | Истёк неоплаченный инвойс Transfer Package |
 
-<Warning>
-  `order.updated` отправляется только для заказов, созданных с API-ключом. Покупки на сайте и через Telegram-бота вебхук не порождают — при том что события Smart Mode тот же аккаунт получает как обычно.
-</Warning>
+<Note>
+  С 3 ноября 2026 года `order.updated` приходит **по каждому заказу аккаунта**; раньше — только по заказам, созданным с API-ключом. Канал заказа различайте по полю `source`. [Аренды bandwidth](/ru/api-reference/bandwidth-rentals/create-rental) событий не отправляют.
+</Note>
 
 ### Конверт
 
@@ -56,6 +58,10 @@ description: "Получайте уведомления о событиях ак
 
 <ResponseField name="status" type="string">
   `processing`, `filled`, `partial`, `failed`, `reclaimed` или `reclaim_failed`. **Это поле — источник истины**, см. предупреждение ниже.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  Откуда пришёл заказ: `api`, `web` (сайт), `bot` (Telegram-бот), `autorefill` (правило [автопополнения](/ru/api-reference/auto-refill/overview)), `faucet` (бесплатный bandwidth) или `broadcast` (Energy Broadcast).
 </ResponseField>
 
 <ResponseField name="target_address" type="string">
@@ -97,6 +103,7 @@ description: "Получайте уведомления о событиях ак
     "id": 247033,
     "type": "energy",
     "status": "filled",
+    "source": "web",
     "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "volume": 65000,
     "expected_volume": 65000,
@@ -115,6 +122,93 @@ description: "Получайте уведомления о событиях ак
 </Warning>
 
 Крупный заказ мы внутри делим на части, но это наша кухня: вы получаете **один вебхук на заказ**, а не по одному на часть.
+
+Один и тот же `status` по заказу может прийти больше одного раза. Считайте ключом пару `(id, status)` и пропускайте повтор.
+
+### `activation.updated`
+
+Отправляется, когда завершилась активация, оплаченная с баланса: через [Активацию адреса](/ru/api-reference/energy/activate-address), на сайте или автоматически, когда заказу или Transfer Package нужно активировать неактивный адрес.
+
+<ResponseField name="id" type="number">
+  ID записи активации — тот `id`, который возвращает Активация адреса.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  Адрес, который активировали.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` — мы отправили активацию в сеть; `already_activated` — адрес уже был активен, ничего не списано; `failed` — активация не состоялась, списание возвращено; `pending` — транзакция отправлена, но её исход пока неизвестен, поэтому списание удержано до проверки.
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  Транзакция активации или `null`, если её нет.
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  Во что активация обошлась вам в итоге, десятичной строкой: `0` после возврата и для уже активного адреса.
+</ResponseField>
+
+```json Response
+{
+  "event": "activation.updated",
+  "data": {
+    "id": 12345,
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "txid": "a1b2c3d4e5f6...",
+    "cost_trx": "1.2"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Note>
+  `pending` бывает редко, и итог по нему второго события сегодня не присылает. Если активация остаётся в `pending`, напишите в поддержку.
+</Note>
+
+### `invoice.updated`
+
+Отправляется аккаунту — владельцу инвойса, когда меняется его статус. `data` — тот же объект, что возвращает [Получить инвойс](/ru/api-reference/invoices/get-invoice), с двумя отличиями: `error_message` всегда `null`, а `status` — тот статус, о котором сообщает это событие.
+
+| `status` | Значение |
+|----------|---------|
+| `paid` | Оплата получена, идёт доставка |
+| `underpaid` | Пришло меньше цены; до какого момента можно доплатить, показывает `topup_until` |
+| `delegated` | Ресурс делегирован |
+| `failed` | Доставка не удалась |
+| `expired` | Оплата не пришла до истечения инвойса |
+| `reclaimed` | Аренда закончилась, ресурс отозван |
+| `reclaim_failed` | Отозвать ресурс не удалось |
+
+```json Response
+{
+  "event": "invoice.updated",
+  "data": {
+    "invoice_id": "7c1f0c2a-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+    "payment_address": "TPaymentAddress...",
+    "target_address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration": "1h",
+    "price_trx": "2.75",
+    "price_usdt": "0.64",
+    "status": "delegated",
+    "error_message": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "paid_at": "2026-11-03T14:50:40+00:00",
+    "completed_at": "2026-11-03T14:51:16+00:00",
+    "expires_at": "2026-11-03T15:20:00+00:00",
+    "created_at": "2026-11-03T14:50:00+00:00"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+  **Статус может повториться, а события — прийти не по порядку**: `delegated` может опередить предшествовавший ему `paid`. Когда важно точное состояние, сверяйтесь через [Получить инвойс](/ru/api-reference/invoices/get-invoice).
+</Warning>
+
+Инвойс принадлежит вашему аккаунту, если вы создали его, войдя на сайт. У инвойса, созданного без входа, владельца нет, и событий он не отправляет — сегодня это касается и инвойса, созданного с API-ключом.
 
 ### `subscription.transfer`
 
@@ -320,7 +414,9 @@ description: "Получайте уведомления о событиях ак
 - Таймаут **10 секунд** на попытку.
 - Мы ждём любой **`2xx`**. Всё остальное считается неудачной попыткой.
 - **Редиректы не следуются.** `301`/`302` — это неудачная попытка, а не переход.
-- Пропущенные события **не досылаются**. Если все три попытки не удались, событие потеряно; сверяйтесь через [Получение заказа](/ru/api-reference/orders/get-order) или [Список пакетов](/ru/api-reference/transfer-packages/list), а не ждите повтора.
+- Пропущенные события **не досылаются**. Если все три попытки не удались, событие потеряно; сверяйтесь через [Получение заказа](/ru/api-reference/orders/get-order), [Получить инвойс](/ru/api-reference/invoices/get-invoice) или [Список пакетов](/ru/api-reference/transfer-packages/list), а не ждите повтора.
+- **Порядок событий не гарантирован.** Каждое доставляется отдельно, поэтому более позднее может прийти раньше. Повтор приходит с тем же телом, тем же `timestamp` и той же подписью.
+- События шлёт каждый заказ аккаунта, включая автопополнение, поэтому у загруженного аккаунта их много. Отвечайте `2xx` сразу, а тяжёлую обработку делайте после ответа.
 
 Ваш URL обязан резолвиться в **публичный** адрес. Loopback, приватные и link-local диапазоны отвергаются, как и хост, который вообще не резолвится — в обоих случаях ничего не отправляется и строка в журнале не пишется.
 

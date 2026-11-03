@@ -64,6 +64,7 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "id": 247033,
         "type": "energy",
         "status": "filled",
+        "source": "api",
         "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "volume": 65000,
         "expected_volume": 65000,
@@ -83,9 +84,8 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```
 
 <Note>
-  Две особенности, о которых стоит знать, прежде чем отлаживаться по этому журналу:
+  В журнале — каждая доставка вашему аккаунту: все [события](/ru/api-reference/webhooks/overview), включая `subscription.transfer` и `package.*`.
 
-  - В нём перечислены доставки, отнесённые к вашим **API-ключам**, поэтому доставки `subscription.transfer` и `package.*` сегодня сюда не попадают, даже если были отправлены.
-  - URL, который не удалось зарезолвить, или адрес из приватного диапазона **не дают строки вовсе** — пустой журнал не отличает «событий не было» от «адрес отвергнут». Если трафик ожидался, а его нет, проверьте URL в [Dashboard → API](https://tronrental.com/dashboard/api).
+  Одна особенность, о которой стоит знать, прежде чем отлаживаться по нему: URL, который не удалось зарезолвить, или адрес из приватного диапазона **не дают строки вовсе** — пустой журнал не отличает «событий не было» от «адрес отвергнут». Если трафик ожидался, а его нет, проверьте URL в [Dashboard → API](https://tronrental.com/dashboard/api).
 </Note>
 

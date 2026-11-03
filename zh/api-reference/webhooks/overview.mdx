@@ -9,20 +9,22 @@ description: "实时接收账户事件通知"
 
 ### 事件
 
-目前共有六个事件。
+目前共有八个事件。
 
 | 事件 | 触发时机 |
 |-------|-----------|
-| `order.updated` | 能量或带宽订单状态变化时——**仅限通过 API 创建的订单** |
+| `order.updated` | 您账户的能量或带宽订单状态变化——无论订单来自哪里：API、网站、Telegram 机器人或自动补充 |
+| `activation.updated` | 用余额支付的地址激活有了结果 |
+| `invoice.updated` | 属于您账户的账单状态变化 |
 | `subscription.transfer` | Smart Mode 为受监控地址的一笔转账付费时 |
 | `package.transfer` | Transfer Package 为其地址的一笔转账付费时 |
 | `package.completed` | Transfer Package 停止为转账服务时 |
 | `package.activated` | Transfer Package 激活时 |
 | `package.expired` | 未支付的 Transfer Package 账单过期时 |
 
-<Warning>
-  `order.updated` 仅针对使用 API 密钥创建的订单发送。在网站或 Telegram 机器人上完成的购买不会产生 Webhook，即便同一账户仍能正常收到 Smart Mode 事件。
-</Warning>
+<Note>
+  自 2026 年 11 月 3 日起，`order.updated` 覆盖**账户的每一个订单**；此前只发送给用 API 密钥创建的订单。请用 `source` 字段区分渠道。[带宽租赁](/zh/api-reference/bandwidth-rentals/create-rental)不发送事件。
+</Note>
 
 ### 消息信封
 
@@ -56,6 +58,10 @@ description: "实时接收账户事件通知"
 
 <ResponseField name="status" type="string">
   `processing`、`filled`、`partial`、`failed`、`reclaimed` 或 `reclaim_failed`。**该字段是判断依据**，请看下面的警告。
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  订单来源：`api`、`web`（网站）、`bot`（Telegram 机器人）、`autorefill`（[自动补充](/zh/api-reference/auto-refill/overview)规则）、`faucet`（免费带宽）或 `broadcast`（Energy Broadcast）。
 </ResponseField>
 
 <ResponseField name="target_address" type="string">
@@ -97,6 +103,7 @@ description: "实时接收账户事件通知"
     "id": 247033,
     "type": "energy",
     "status": "filled",
+    "source": "web",
     "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "volume": 65000,
     "expected_volume": 65000,
@@ -115,6 +122,93 @@ description: "实时接收账户事件通知"
 </Warning>
 
 大额订单在内部会被拆分成多笔，但那是我们的事：您**每个订单只收到一个 Webhook**，而不是每个分片一个。
+
+同一订单的同一个 `status` 可能不止到达一次。请以 `(id, status)` 作为键，忽略重复。
+
+### `activation.updated`
+
+用余额支付的激活有结果时发送：通过[激活地址](/zh/api-reference/energy/activate-address)、在网站上，或在订单或 Transfer Package 需要激活未激活地址时自动进行的激活。
+
+<ResponseField name="id" type="number">
+  激活记录 ID——即激活地址返回的 `id`。
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  被激活的地址。
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed`——我们已将激活广播上链；`already_activated`——地址原本已激活，未扣费；`failed`——激活未完成，扣费已退回；`pending`——交易已发送，但结果尚不确定，因此扣费暂扣，待我们核实。
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  激活交易；没有时为 `null`。
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  激活最终花费，十进制字符串：退款后以及地址原本已激活时为 `0`。
+</ResponseField>
+
+```json Response
+{
+  "event": "activation.updated",
+  "data": {
+    "id": 12345,
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "txid": "a1b2c3d4e5f6...",
+    "cost_trx": "1.2"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Note>
+  `pending` 很少见，目前其最终结果不会再发送第二个事件。如果激活一直处于 `pending`，请联系客服。
+</Note>
+
+### `invoice.updated`
+
+账单状态变化时发送给账单所属账户。`data` 与[获取账单](/zh/api-reference/invoices/get-invoice)返回的对象相同，有两点区别：`error_message` 始终为 `null`，`status` 是本事件通告的状态。
+
+| `status` | 含义 |
+|----------|---------|
+| `paid` | 已收到付款，正在交付 |
+| `underpaid` | 到账金额低于价格；`topup_until` 表示补足余款的截止时间 |
+| `delegated` | 资源已委托 |
+| `failed` | 交付失败 |
+| `expired` | 账单到期前未收到付款 |
+| `reclaimed` | 租期结束，资源已收回 |
+| `reclaim_failed` | 资源收回失败 |
+
+```json Response
+{
+  "event": "invoice.updated",
+  "data": {
+    "invoice_id": "7c1f0c2a-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+    "payment_address": "TPaymentAddress...",
+    "target_address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration": "1h",
+    "price_trx": "2.75",
+    "price_usdt": "0.64",
+    "status": "delegated",
+    "error_message": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "paid_at": "2026-11-03T14:50:40+00:00",
+    "completed_at": "2026-11-03T14:51:16+00:00",
+    "expires_at": "2026-11-03T15:20:00+00:00",
+    "created_at": "2026-11-03T14:50:00+00:00"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+  **状态可能重复，事件也可能乱序到达**——`delegated` 可能比它之前的 `paid` 先到。需要确切状态时，请用[获取账单](/zh/api-reference/invoices/get-invoice)确认。
+</Warning>
+
+在网站登录状态下创建的账单属于您的账户。未登录创建的账单没有所属账户，不会发送事件——目前用 API 密钥创建的账单也属于这种情况。
 
 ### `subscription.transfer`
 
@@ -320,7 +414,9 @@ description: "实时接收账户事件通知"
 - 每次尝试超时 **10 秒**。
 - 我们接受任何 **`2xx`**。其他一律视为失败尝试。
 - **不跟随重定向。** `301`/`302` 是一次失败尝试，而不是跳转。
-- 错过的事件**不会**补发。三次尝试都失败，该事件就丢失了；请用[查询订单](/zh/api-reference/orders/get-order)或[套餐列表](/zh/api-reference/transfer-packages/list)对账，而不是等待重发。
+- 错过的事件**不会**补发。三次尝试都失败，该事件就丢失了；请用[查询订单](/zh/api-reference/orders/get-order)、[获取账单](/zh/api-reference/invoices/get-invoice)或[套餐列表](/zh/api-reference/transfer-packages/list)对账，而不是等待重发。
+- **事件不保证顺序。** 每个事件单独投递，因此较晚的事件可能先到。重试的请求体、`timestamp` 和签名都相同。
+- 账户的每个订单都会发送事件，包括自动补充，因此繁忙的账户会收到大量事件。请立即返回 `2xx`，繁重的处理放在响应之后。
 
 您的 URL 必须解析到**公网**地址。回环、私有和链路本地地址段会被拒绝，无法解析的主机同样如此——这两种情况下都不会发送任何请求，也不会写入日志。
 

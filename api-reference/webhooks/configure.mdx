@@ -6,7 +6,7 @@ description: "Set your webhook URL"
 
 ## Configure Webhook
 
-Sets the account's webhook URL. There is one URL per account, and both events go to it.
+Sets the account's webhook URL. There is one URL per account, and every [event](/api-reference/webhooks/overview#events) goes to it.
 
 <Warning>
 **An API key cannot call this.** Changing the webhook URL — or reading the signing secret — requires a session you opened yourself on the website. With an API key the request is rejected:

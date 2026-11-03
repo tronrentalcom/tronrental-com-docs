@@ -9,20 +9,22 @@ description: "अपने खाते की घटनाओं की सू�
 
 ### घटनाएँ
 
-आज छह घटनाएँ मौजूद हैं।
+आज आठ घटनाएँ मौजूद हैं।
 
 | घटना | कब भेजी जाती है |
 |-------|-----------|
-| `order.updated` | एनर्जी या बैंडविड्थ ऑर्डर की स्थिति बदलने पर — **केवल API से बनाए गए ऑर्डर के लिए** |
+| `order.updated` | आपके खाते के एनर्जी या बैंडविड्थ ऑर्डर की स्थिति बदली — ऑर्डर चाहे जहाँ से दिया गया हो: API, वेबसाइट, Telegram बॉट या ऑटो रिफिल |
+| `activation.updated` | आपके बैलेंस से भुगतान किया गया एड्रेस सक्रियण पूरा हुआ |
+| `invoice.updated` | आपके खाते के इनवॉइस की स्थिति बदली |
 | `subscription.transfer` | Smart Mode ने किसी निगरानी वाले पते से हुए ट्रांसफ़र का भुगतान किया |
 | `package.transfer` | Transfer Package ने अपने पते से हुए ट्रांसफ़र का भुगतान किया |
 | `package.completed` | Transfer Package ने ट्रांसफ़र की सेवा बंद कर दी |
 | `package.activated` | Transfer Package सक्रिय हुआ |
 | `package.expired` | बिना भुगतान वाले Transfer Package इनवॉइस की अवधि समाप्त हुई |
 
-<Warning>
-  `order.updated` केवल उन ऑर्डर के लिए भेजी जाती है जो API कुंजी से बनाए गए हों। वेबसाइट या टेलीग्राम बॉट से की गई खरीद पर कोई वेबहुक नहीं जाता — भले ही वही खाता Smart Mode की घटनाएँ सामान्य रूप से पाता रहे।
-</Warning>
+<Note>
+  3 नवंबर 2026 से `order.updated` **खाते के हर ऑर्डर** के लिए भेजा जाता है; पहले यह केवल API कुंजी से बनाए गए ऑर्डर के लिए भेजा जाता था। चैनल `source` फ़ील्ड से पहचानें। [बैंडविड्थ रेंटल](/hi/api-reference/bandwidth-rentals/create-rental) घटनाएँ नहीं भेजते।
+</Note>
 
 ### लिफ़ाफ़ा
 
@@ -56,6 +58,10 @@ description: "अपने खाते की घटनाओं की सू�
 
 <ResponseField name="status" type="string">
   `processing`, `filled`, `partial`, `failed`, `reclaimed` या `reclaim_failed`। **यही फ़ील्ड सत्य का स्रोत है** — नीचे दी चेतावनी देखें।
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  ऑर्डर कहाँ से दिया गया: `api`, `web` (वेबसाइट), `bot` (Telegram बॉट), `autorefill` ([ऑटो रिफिल](/hi/api-reference/auto-refill/overview) नियम), `faucet` (मुफ़्त बैंडविड्थ) या `broadcast` (Energy Broadcast)।
 </ResponseField>
 
 <ResponseField name="target_address" type="string">
@@ -97,6 +103,7 @@ description: "अपने खाते की घटनाओं की सू�
     "id": 247033,
     "type": "energy",
     "status": "filled",
+    "source": "web",
     "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "volume": 65000,
     "expected_volume": 65000,
@@ -115,6 +122,93 @@ description: "अपने खाते की घटनाओं की सू�
 </Warning>
 
 बड़े ऑर्डर को हम भीतर हिस्सों में बाँटते हैं, पर वह हमारा काम है: आपको **प्रति ऑर्डर एक ही वेबहुक** मिलता है, प्रति हिस्सा नहीं।
+
+एक ही ऑर्डर के लिए वही `status` एक से अधिक बार आ सकता है। `(id, status)` को कुंजी मानें और दोहराव को अनदेखा करें।
+
+### `activation.updated`
+
+तब भेजा जाता है जब आपके बैलेंस से भुगतान किया गया सक्रियण पूरा होता है: [एड्रेस सक्रिय करें](/hi/api-reference/energy/activate-address) से, वेबसाइट पर, या अपने-आप तब, जब किसी ऑर्डर या Transfer Package को निष्क्रिय एड्रेस सक्रिय करना हो।
+
+<ResponseField name="id" type="number">
+  सक्रियण रिकॉर्ड की ID — वही `id` जो एड्रेस सक्रिय करें लौटाता है।
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  वह एड्रेस जिसे सक्रिय किया गया।
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` — हमने सक्रियण नेटवर्क पर भेज दिया; `already_activated` — एड्रेस पहले से सक्रिय था और कुछ नहीं काटा गया; `failed` — सक्रियण नहीं हुआ और कटौती लौटा दी गई; `pending` — लेनदेन भेजा गया, पर उसका परिणाम अभी पता नहीं है, इसलिए हमारी जाँच तक कटौती रोकी गई है।
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  सक्रियण लेनदेन, या कोई न हो तो `null`।
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  अंत में सक्रियण की आपकी लागत, दशमलव स्ट्रिंग के रूप में: रिफ़ंड के बाद और पहले से सक्रिय एड्रेस के लिए `0`।
+</ResponseField>
+
+```json Response
+{
+  "event": "activation.updated",
+  "data": {
+    "id": 12345,
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "txid": "a1b2c3d4e5f6...",
+    "cost_trx": "1.2"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Note>
+  `pending` दुर्लभ है, और आज उसका अंतिम परिणाम दूसरी घटना नहीं भेजता। अगर कोई सक्रियण `pending` में ही रहे, तो सपोर्ट से संपर्क करें।
+</Note>
+
+### `invoice.updated`
+
+इनवॉइस की स्थिति बदलने पर उस खाते को भेजा जाता है जिसका वह इनवॉइस है। `data` वही ऑब्जेक्ट है जो [इनवॉइस प्राप्त करें](/hi/api-reference/invoices/get-invoice) लौटाता है, दो अंतरों के साथ: `error_message` हमेशा `null` होता है, और `status` वह स्थिति है जिसकी सूचना यह घटना देती है।
+
+| `status` | अर्थ |
+|----------|---------|
+| `paid` | भुगतान मिला, डिलीवरी जारी है |
+| `underpaid` | कीमत से कम राशि आई; बाकी राशि कब तक भेजी जा सकती है, यह `topup_until` बताता है |
+| `delegated` | संसाधन डेलिगेट हो गया |
+| `failed` | डिलीवरी विफल रही |
+| `expired` | इनवॉइस की अवधि खत्म होने से पहले भुगतान नहीं आया |
+| `reclaimed` | रेंटल खत्म हुआ और संसाधन वापस ले लिया गया |
+| `reclaim_failed` | संसाधन वापस नहीं लिया जा सका |
+
+```json Response
+{
+  "event": "invoice.updated",
+  "data": {
+    "invoice_id": "7c1f0c2a-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+    "payment_address": "TPaymentAddress...",
+    "target_address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration": "1h",
+    "price_trx": "2.75",
+    "price_usdt": "0.64",
+    "status": "delegated",
+    "error_message": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "paid_at": "2026-11-03T14:50:40+00:00",
+    "completed_at": "2026-11-03T14:51:16+00:00",
+    "expires_at": "2026-11-03T15:20:00+00:00",
+    "created_at": "2026-11-03T14:50:00+00:00"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+  **स्थिति दोहराई जा सकती है, और घटनाएँ क्रम से बाहर आ सकती हैं** — `delegated` अपने से पहले वाले `paid` से पहले आ सकता है। जब सटीक स्थिति मायने रखती हो, तो [इनवॉइस प्राप्त करें](/hi/api-reference/invoices/get-invoice) से पुष्टि करें।
+</Warning>
+
+इनवॉइस आपके खाते का होता है, अगर आपने उसे वेबसाइट पर साइन इन करके बनाया हो। बिना साइन इन के बनाए गए इनवॉइस का कोई मालिक नहीं होता और वह घटनाएँ नहीं भेजता — और आज इसमें API कुंजी से बनाया गया इनवॉइस भी शामिल है।
 
 ### `subscription.transfer`
 
@@ -320,7 +414,9 @@ description: "अपने खाते की घटनाओं की सू�
 - प्रति प्रयास **10 सेकंड** का टाइमआउट।
 - हम कोई भी **`2xx`** स्वीकार करते हैं। बाकी सब विफल प्रयास गिना जाता है।
 - **रीडायरेक्ट का पालन नहीं किया जाता।** `301`/`302` एक विफल प्रयास है, छलाँग नहीं।
-- छूटी हुई घटनाएँ बाद में **दोबारा नहीं भेजी जातीं**। तीनों प्रयास विफल हुए तो वह घटना चली गई; दोबारा भेजे जाने की प्रतीक्षा के बजाय [ऑर्डर देखें](/hi/api-reference/orders/get-order) या [पैकेज सूची](/hi/api-reference/transfer-packages/list) से मिलान करें।
+- छूटी हुई घटनाएँ बाद में **दोबारा नहीं भेजी जातीं**। तीनों प्रयास विफल हुए तो वह घटना चली गई; दोबारा भेजे जाने की प्रतीक्षा के बजाय [ऑर्डर देखें](/hi/api-reference/orders/get-order), [इनवॉइस प्राप्त करें](/hi/api-reference/invoices/get-invoice) या [पैकेज सूची](/hi/api-reference/transfer-packages/list) से मिलान करें।
+- **घटनाओं का क्रम तय नहीं है।** हर घटना अलग से डिलीवर होती है, इसलिए बाद वाली घटना पहले आ सकती है। दोबारा प्रयास में वही बॉडी, वही `timestamp` और वही हस्ताक्षर होते हैं।
+- खाते का हर ऑर्डर घटनाएँ भेजता है, ऑटो रिफिल भी, इसलिए व्यस्त खाते को बहुत सारी घटनाएँ मिलती हैं। तुरंत `2xx` लौटाएँ और भारी काम जवाब देने के बाद करें।
 
 आपका URL किसी **सार्वजनिक** पते पर रिज़ॉल्व होना चाहिए। लूपबैक, निजी और लिंक-लोकल रेंज अस्वीकार की जाती हैं, और वह होस्ट भी जो रिज़ॉल्व ही न हो — दोनों स्थितियों में कुछ नहीं भेजा जाता और लॉग में कोई पंक्ति नहीं लिखी जाती।
 

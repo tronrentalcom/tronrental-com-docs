@@ -9,20 +9,22 @@ Su cuenta tiene **una sola URL de webhook** y todos los eventos se envían a ell
 
 ### Eventos
 
-Hoy existen seis eventos.
+Hoy existen ocho eventos.
 
 | Evento | Cuándo se envía |
 |-------|-----------|
-| `order.updated` | Un pedido de energía o de bandwidth cambia de estado — **solo para pedidos creados a través de la API** |
+| `order.updated` | Un pedido de energía o ancho de banda de su cuenta cambia de estado, sin importar cómo se hizo: API, sitio web, bot de Telegram o recarga automática |
+| `activation.updated` | Se resolvió una activación de dirección pagada con su saldo |
+| `invoice.updated` | Una factura de su cuenta cambia de estado |
 | `subscription.transfer` | Smart Mode pagó una transferencia de una dirección vigilada |
 | `package.transfer` | Un Transfer Package pagó una transferencia desde su dirección |
 | `package.completed` | Un Transfer Package dejó de cubrir transferencias |
 | `package.activated` | Un Transfer Package se activó |
 | `package.expired` | Venció la factura sin pagar de un Transfer Package |
 
-<Warning>
-  `order.updated` se envía únicamente para pedidos creados con una clave API. Las compras hechas en el sitio web o mediante el bot de Telegram no generan webhook, aunque la misma cuenta sí reciba con normalidad los eventos de Smart Mode.
-</Warning>
+<Note>
+  Desde el 3 de noviembre de 2026, `order.updated` cubre **todos los pedidos de la cuenta**; antes solo se enviaba para pedidos creados con una clave API. Distinga los canales por el campo `source`. Los [alquileres de ancho de banda](/es/api-reference/bandwidth-rentals/create-rental) no envían eventos.
+</Note>
 
 ### Sobre del mensaje
 
@@ -56,6 +58,10 @@ Cabeceras:
 
 <ResponseField name="status" type="string">
   `processing`, `filled`, `partial`, `failed`, `reclaimed` o `reclaim_failed`. **Este campo es la fuente de verdad**; vea la advertencia siguiente.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  Dónde se hizo el pedido: `api`, `web` (el sitio web), `bot` (el bot de Telegram), `autorefill` (una regla de [Recarga automática](/es/api-reference/auto-refill/overview)), `faucet` (ancho de banda gratuito) o `broadcast` (Energy Broadcast).
 </ResponseField>
 
 <ResponseField name="target_address" type="string">
@@ -97,6 +103,7 @@ Cabeceras:
     "id": 247033,
     "type": "energy",
     "status": "filled",
+    "source": "web",
     "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "volume": 65000,
     "expected_volume": 65000,
@@ -115,6 +122,93 @@ Cabeceras:
 </Warning>
 
 Internamente dividimos los pedidos grandes en partes, pero eso es asunto nuestro: usted recibe **un webhook por pedido**, nunca uno por parte.
+
+El mismo `status` puede llegar más de una vez para un pedido. Use `(id, status)` como clave e ignore la repetición.
+
+### `activation.updated`
+
+Se envía cuando se resuelve una activación pagada con su saldo: una hecha con [Activar direccion](/es/api-reference/energy/activate-address), en el sitio web o automáticamente cuando un pedido o un Transfer Package necesita activar una dirección inactiva.
+
+<ResponseField name="id" type="number">
+  ID del registro de activación: el `id` que devuelve Activar direccion.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  La dirección que se activó.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed`: enviamos la activación a la red; `already_activated`: la dirección ya estaba activa y no se cobró nada; `failed`: la activación no se realizó y el cargo se reembolsó; `pending`: la transacción se envió, pero su resultado aún no se conoce, así que el cargo queda retenido hasta que lo comprobemos.
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  La transacción de activación, o `null` si no la hay.
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  Lo que finalmente le costó la activación, como cadena decimal: `0` tras un reembolso y para una dirección que ya estaba activa.
+</ResponseField>
+
+```json Response
+{
+  "event": "activation.updated",
+  "data": {
+    "id": 12345,
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "txid": "a1b2c3d4e5f6...",
+    "cost_trx": "1.2"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Note>
+  `pending` es poco frecuente, y hoy su resultado final no envía un segundo evento. Si una activación se queda en `pending`, contacte con soporte.
+</Note>
+
+### `invoice.updated`
+
+Se envía a la cuenta propietaria de la factura cuando cambia su estado. `data` es el objeto que devuelve [Obtener factura](/es/api-reference/invoices/get-invoice), con dos diferencias: `error_message` siempre es `null`, y `status` es el estado que anuncia este evento.
+
+| `status` | Significado |
+|----------|---------|
+| `paid` | Pago recibido, entrega en curso |
+| `underpaid` | Llegó menos que el precio; `topup_until` indica hasta cuándo se puede enviar el resto |
+| `delegated` | El recurso se delegó |
+| `failed` | La entrega falló |
+| `expired` | No llegó ningún pago antes de que venciera la factura |
+| `reclaimed` | El alquiler terminó y el recurso se retiró |
+| `reclaim_failed` | No se pudo retirar el recurso |
+
+```json Response
+{
+  "event": "invoice.updated",
+  "data": {
+    "invoice_id": "7c1f0c2a-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+    "payment_address": "TPaymentAddress...",
+    "target_address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration": "1h",
+    "price_trx": "2.75",
+    "price_usdt": "0.64",
+    "status": "delegated",
+    "error_message": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "paid_at": "2026-11-03T14:50:40+00:00",
+    "completed_at": "2026-11-03T14:51:16+00:00",
+    "expires_at": "2026-11-03T15:20:00+00:00",
+    "created_at": "2026-11-03T14:50:00+00:00"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+  **Un estado puede repetirse y los eventos pueden llegar desordenados**: un `delegated` puede llegar antes que el `paid` que lo precedió. Cuando importe el estado exacto, confírmelo con [Obtener factura](/es/api-reference/invoices/get-invoice).
+</Warning>
+
+Una factura pertenece a su cuenta cuando la creó con la sesión iniciada en el sitio web. Una factura creada sin iniciar sesión no tiene propietario y no envía eventos; hoy eso incluye una factura creada con una clave API.
 
 ### `subscription.transfer`
 
@@ -320,7 +414,9 @@ La factura de un paquete no se pagó dentro de su plazo de 30 minutos. No se cob
 - Tiempo de espera de **10 segundos** por intento.
 - Esperamos cualquier **`2xx`**. Cualquier otra cosa cuenta como intento fallido.
 - **No se siguen las redirecciones.** Un `301`/`302` es un intento fallido, no un salto.
-- Los eventos perdidos **no** se reenvían después. Si fallan los tres intentos, ese evento se pierde; concilie con [Consultar pedido](/es/api-reference/orders/get-order) o [Listar paquetes](/es/api-reference/transfer-packages/list) en lugar de esperar una repetición.
+- Los eventos perdidos **no** se reenvían después. Si fallan los tres intentos, ese evento se pierde; concilie con [Consultar pedido](/es/api-reference/orders/get-order), [Obtener factura](/es/api-reference/invoices/get-invoice) o [Listar paquetes](/es/api-reference/transfer-packages/list) en lugar de esperar una repetición.
+- **Los eventos no llegan en orden.** Cada uno se entrega por separado, así que uno posterior puede llegar antes. Un reintento lleva el mismo cuerpo, el mismo `timestamp` y la misma firma.
+- Cada pedido de la cuenta envía eventos, también la recarga automática, así que una cuenta con mucha actividad recibe muchos. Responda `2xx` de inmediato y haga el trabajo pesado después de responder.
 
 Su URL debe resolverse a una dirección **pública**. Se rechazan los rangos loopback, privados y link-local, y también un host que no resuelve: en ambos casos no se envía nada y no se escribe ninguna fila en el registro.
 

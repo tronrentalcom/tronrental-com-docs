@@ -62,7 +62,7 @@ No hay un tope de gasto diario: una regla compra siempre que el nivel esté por 
 
 Cada recarga aparece en tu historial de órdenes ([Listar órdenes](/es/api-reference/orders/list-orders)) con `source: "autorefill"`. Para listar solo las órdenes de recarga, llama a `GET /orders?source=autorefill`; para exportarlas como archivo, usa el [informe](/api-reference/account/reports) `autorefill`.
 
-Las reglas creadas con una clave API envían [webhooks `order.updated`](/es/api-reference/webhooks/overview) por sus órdenes de recarga, igual que las órdenes que creas a través de la API. Las reglas creadas sin clave API no los envían.
+Cada orden de recarga envía un [webhook `order.updated`](/es/api-reference/webhooks/overview) con `source: "autorefill"`, tanto si la regla se creó en el sitio web como con una clave API.
 
 ### Estado de la regla
 
