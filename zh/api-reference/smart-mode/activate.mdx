@@ -22,6 +22,10 @@ description: "为 TRON 地址激活智能模式"
   启用带宽保障（每笔转账 +0.3 TRX）
 </ParamField>
 
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  在该地址的下一笔 USDT 转账后关闭订阅：这笔转账照常计费，随后订阅暂停，与[切换订阅状态](/zh/api-reference/smart-mode/toggle)相同。已支付的当天费用不退还。恢复后该选项保持开启：下一笔转账后订阅会再次关闭。
+</ParamField>
+
 ### 响应
 
 返回 `subscription_id`——所创建订阅的 ID。订阅本身请通过 [订阅列表](/zh/api-reference/smart-mode/list-subscriptions) 获取。
@@ -35,7 +39,8 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
   -d '{
     "address": "TYourAddress...",
     "label": "Main wallet",
-    "bw_guarantee": true
+    "bw_guarantee": true,
+    "stop_after_transfer": false
   }'
 ```
 

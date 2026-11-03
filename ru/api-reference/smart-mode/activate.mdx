@@ -22,6 +22,10 @@ description: "Активация Smart Mode для адреса TRON"
   Включить BW Guarantee (+0.3 TRX за перевод)
 </ParamField>
 
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Выключить подписку после следующего перевода USDT с адреса: этот перевод списывается как обычно, затем подписка встаёт на паузу — как через [Переключение подписки](/ru/api-reference/smart-mode/toggle). Оплаченные сутки не возвращаются. После возобновления опция остаётся: подписка снова выключится после следующего перевода.
+</ParamField>
+
 ### Ответ
 
 Возвращает `subscription_id` — ID созданной подписки. Саму подписку отдаёт [Список подписок](/ru/api-reference/smart-mode/list-subscriptions).
@@ -35,7 +39,8 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
   -d '{
     "address": "TYourAddress...",
     "label": "Main wallet",
-    "bw_guarantee": true
+    "bw_guarantee": true,
+    "stop_after_transfer": false
   }'
 ```
 

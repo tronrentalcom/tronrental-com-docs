@@ -22,6 +22,10 @@ description: "TRON एड्रेस के लिए Smart Mode सक्र�
   BW Guarantee सक्षम करें (+0.3 TRX प्रति ट्रांसफर)
 </ParamField>
 
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  पते से अगले USDT ट्रांसफ़र के बाद सब्सक्रिप्शन बंद करें: वह ट्रांसफ़र सामान्य रूप से चार्ज होता है, फिर सब्सक्रिप्शन रुक जाता है — जैसे [सब्सक्रिप्शन टॉगल करें](/hi/api-reference/smart-mode/toggle) से। भुगतान किया गया दिन वापस नहीं होता। फिर से शुरू करने पर विकल्प चालू रहता है: अगले ट्रांसफ़र के बाद सब्सक्रिप्शन फिर बंद हो जाएगा।
+</ParamField>
+
 ### रिस्पॉन्स
 
 `subscription_id` लौटाता है — बनाए गए सब्सक्रिप्शन की ID। सब्सक्रिप्शन का पूरा विवरण [सब्सक्रिप्शन सूची](/hi/api-reference/smart-mode/list-subscriptions) से प्राप्त करें।
@@ -35,7 +39,8 @@ curl -X POST https://api.tronrental.com/v1/smart-mode/activate \
   -d '{
     "address": "TYourAddress...",
     "label": "Main wallet",
-    "bw_guarantee": true
+    "bw_guarantee": true,
+    "stop_after_transfer": false
   }'
 ```
 

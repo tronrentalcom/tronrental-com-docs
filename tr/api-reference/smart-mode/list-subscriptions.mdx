@@ -32,6 +32,14 @@ Abonelik nesneleri dizisi:
   Abonelik [Aboneligi Degistir](/tr/api-reference/smart-mode/toggle) ile duraklatildigi surece `true`: ucret alinmaz, transferler izlenmez
 </ResponseField>
 
+<ResponseField name="stop_after_transfer" type="boolean">
+  Aboneligin sonraki USDT transferinden sonra kapanip kapanmayacagi ([Etkinlestir](/tr/api-reference/smart-mode/activate) icindeki `stop_after_transfer`)
+</ResponseField>
+
+<ResponseField name="paused_reason" type="string">
+  Aboneligin neden duraklatildigi: `transfer` — bir USDT transferi kapatti; `null` — [Aboneligi Degistir](/tr/api-reference/smart-mode/toggle) ile duraklatildi veya duraklatilmadi
+</ResponseField>
+
 <ResponseField name="bw_guarantee" type="boolean">
   BW Garantisinin etkin olup olmadigi
 </ResponseField>
@@ -55,6 +63,8 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "label": "Main wallet",
     "status": "active",
     "paused": false,
+    "stop_after_transfer": false,
+    "paused_reason": null,
     "bw_guarantee": true,
     "created_at": "2026-03-05T12:00:00Z"
   },
@@ -64,6 +74,8 @@ curl https://api.tronrental.com/v1/smart-mode/subscriptions \
     "label": null,
     "status": "active",
     "paused": true,
+    "stop_after_transfer": true,
+    "paused_reason": "transfer",
     "bw_guarantee": false,
     "created_at": "2026-03-04T10:00:00Z"
   }
