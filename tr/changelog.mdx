@@ -1,0 +1,133 @@
+---
+title: "Değişiklik Günlüğü"
+description: "TronRental'daki yenilikler: enerji ve bant genişliği kiralama, otomasyon, ödemeler, çekimler, staking ve API"
+rss: true
+---
+
+TronRental web sitesindeki, kontrol panelinizdeki ve API'deki yeni özellikler ve değişiklikler. Etikete göre filtreleyebilir veya RSS akışına abone olabilirsiniz.
+
+<Update label="2026-10-30" description="TRC-20 token'ları, swap'lar ve kontrat çağrıları için Energy Broadcaster" tags={["Broadcaster"]}>
+Energy Broadcaster artık yalnızca USDT'ye hizmet vermiyor: diğer TRC-20 token'larının transferleri, SunSwap üzerindeki swap'lar ve diğer akıllı kontratlara yapılan çağrılar enerji ve bant genişliği alır, TRX transferleri ise bant genişliği alır. Her çağrının maliyeti simülasyonundan hesaplanır; daha az yaygın token'lar, swap'lar ve kontrat çağrıları hesabınızın limitleri dahilinde karşılanır ve broadcaster ayarlarından kapatılabilir. [Energy Broadcaster](https://tronrental.com/tr/energy-broadcaster)
+</Update>
+
+<Update label="2026-10-29" description="E-posta koduyla onaylanan kayıt" tags={["API"]}>
+E-posta adresiyle kaydolan yeni hesaplar, bu adrese gönderilen 6 haneli bir kodla onaylanır. API üzerinden kayıt yaptıran betikler için geriye dönük uyumsuz değişiklik: `POST /auth/register` artık token döndürmek yerine `requires_email_code: true` yanıtını verir ve hesap `POST /auth/email-code/verify` ile oluşturulur. Mevcut hesaplar etkilenmez. [Kimlik Doğrulama](/tr/authentication)
+</Update>
+
+<Update label="2026-10-29" description="5 dakikadan başlayan bant genişliği kiralama" tags={["Bandwidth", "API"]}>
+Bant genişliğini yalnızca bir saat veya bir gün için değil, 5 ila 59 dakika arasındaki her süre için saatlik fiyata göre indirimli kiralayın. Yeni fiyat sorgulama uç noktası tam tutarı döndürür; isteğe bağlı `max_price_trx` ise fiyatı sorgudan sonra değişen bir alımı reddeder. [Bandwidth fiyatı hesapla](/tr/api-reference/bandwidth/quote)
+</Update>
+
+<Update label="2026-10-28" description="1 birimden başlayan enerji ve bant genişliği" tags={["Energy", "Bandwidth", "API"]}>
+Minimum sipariş artık 1 birim enerji veya bant genişliğidir ve olağan piyasa minimumunun altındadır: web sitesinde, API'de, Telegram botunda ve Otomatik Dolum kurallarında. Enerji için faturalar ve Hızlı Satın Al yine 32.000'den başlar. [Enerji Satın Al](/tr/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-10-28" description="Auto-Bandwidth" tags={["Auto-Bandwidth"]}>
+Bir adres için Auto-Bandwidth'i açtığınızda, o adresten giden transferler bant genişliği alır; böylece ağ bunun için TRX yakmaz. USDT, TRX, USDD ve tüm TRC-20 token'ları için çalışır, adresin ücretsiz günlük bant genişliği yeterli olduğu sürece bekler ve günlük olarak ve bizim bant genişliğimizi kullanan her transfer başına faturalandırılır. [Auto-Bandwidth](https://tronrental.com/tr/auto-bandwidth)
+</Update>
+
+<Update label="2026-10-27" description="withdraw kapsamlı API anahtarları 2FA ile onaylanır" tags={["API", "Withdrawals"]}>
+Bir API anahtarında `withdraw` kapsamını etkinleştirmek, böyle bir anahtarın IP beyaz listesini değiştirmek ve anahtarı yeniden oluşturmak artık 2FA kodunuz veya passkey ile onaylanır. Daha önce verilen anahtarlar çalışmaya devam eder. [API Anahtarı Kapsamlarını Listele](/tr/api-reference/account/api-key-scopes)
+</Update>
+
+<Update label="2026-10-20" description="Çekimlerde güvenli tekrar" tags={["Withdrawals", "API"]}>
+`POST /account/withdrawal`, isteğe bağlı bir `Idempotency-Key` başlığı kabul eder: aynı anahtarla tekrarlanan istek, ikinci bir çekim oluşturmak yerine ilk çekimi döndürür. Başlıkla birlikte çekimler arasındaki bekleme 60 saniye yerine 5 saniyedir. [Çekimler](/tr/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-10-19" description="Node API" tags={["Node API"]}>
+`node.tronrental.com` adresinde TRON HTTP ve gRPC API'sine abonelikle erişim: aylık kotalı planlar, 7 günlük deneme planı, otomatik yenileme ve kontrol panelinizde yönetilen API anahtarları. [Node API](https://tronrental.com/tr/node-api)
+</Update>
+
+<Update label="2026-10-16" description="Transfer Paketleri: pakette en az 2 transfer" tags={["Transfer Packages", "API"]}>
+Geriye dönük uyumsuz değişiklik: `POST /transfer-packages/buy` ve `POST /transfer-packages/buy-invoice`, `package_size: 1` değerini HTTP 422 ile reddeder. Bir paket 2 ila 10.000 transfer içerir; tek bir transfer `single_transfer: true` ile satın alınır. [Paket Satın Al](/tr/api-reference/transfer-packages/buy)
+</Update>
+
+<Update label="2026-10-16" description="Transfer Paketleri webhook'ları" tags={["Transfer Packages", "API"]}>
+Paket sahibinin webhook'u artık 4 olay alır: kalan bakiyeyle birlikte her transfer için `package.transfer`, ayrıca `package.completed`, `package.activated` ve `package.expired`. Paketin son hakkını kullanan transfere ilişkin Telegram bildirimi de artık ulaşıyor. [Webhook'lara genel bakış](/tr/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-10-13" description="Enerji ve bant genişliği için Otomatik Dolum" tags={["Auto-Refill", "Energy", "Bandwidth", "API"]}>
+Bir adres için eşik belirleyin: kullanılabilir enerjisi veya bant genişliği bu eşiğin altına düştüğünde adresi bakiyenizden otomatik olarak dolduruyoruz. Kurallar kontrol panelinde, Telegram botunda ve API üzerinden yönetilir; her dolum siparişlerinizde görünür. [Otomatik Dolum](https://tronrental.com/tr/auto-refill)
+</Update>
+
+<Update label="2026-09-24" description="Ücret tasarrufu analizörü" tags={["Energy"]}>
+Ücret tasarrufu analizörü ücretsizdir: herhangi bir TRON adresinin transferlere 7 gün, 30 gün, bir yıl veya tüm zaman içinde ne kadar harcadığını ve enerji kiralamanın bunun yerine ne kadara mal olacağını gösterir, paylaşılabilir bir rapor bağlantısı da sunar. Kayıt veya cüzdan bağlantısı gerekmez. [Ücret tasarrufu analizörü](https://tronrental.com/tr/fee-savings-analyzer)
+</Update>
+
+<Update label="2026-09-21" description="Çekimi 20 saniye içinde iptal edin" tags={["Withdrawals", "API"]}>
+Kontrol panelinde bir çekimi onayladıktan sonra iptal etmek için 20 saniyeniz vardır; ücret dahil tutarın tamamı bakiyenize geri döner. API'deki çekimler `scheduled`, `processing` ve `cancelled` durumlarını gösterir. [Çekimler](/tr/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-09-14" description="Enerji fiyatı hesaplama" tags={["Energy", "API"]}>
+`GET /energy/quote`, belirli bir miktar için tam toplamı döndürür: kiralama bedeli artı sabit ücret, TRX ve USD cinsinden. API anahtarıyla kişisel fiyatınızı kullanır; anahtar olmadan piyasa fiyatını kullanır. [Fiyat hesapla](/tr/api-reference/energy/quote)
+</Update>
+
+<Update label="2026-09-11" description="Webhook'lar: kontrol panelinden ayarlanır, imzalı gönderimler" tags={["API"]}>
+Webhook URL'niz artık hesap başına bir tanedir ve imzalama anahtarını da bulduğunuz kontrol panelinden ayarlanır. Her gönderim bir `X-Webhook-Signature` başlığı ve bir `timestamp` alanı taşır ve en fazla 3 denemeyle yapılır. Geriye dönük uyumsuz değişiklik: API anahtarıyla çağrılan `POST /webhooks/configure`, HTTP 403 `FORBIDDEN_SESSION_TYPE` döndürür. [Webhook yapılandırma](/tr/api-reference/webhooks/configure)
+</Update>
+
+<Update label="2026-09-10" description="Energy Broadcaster" tags={["Broadcaster"]}>
+Broadcaster URL'nizi TronLink'e, TokenPocket'e veya kendi kodunuza bir kez yapıştırın; USDT transferleriniz TRX yakmak yerine TronRental bakiyenizden ödenerek otomatik olarak enerji ve bant genişliği alsın. Bakiye bittiğinde bir transferin engellenmesini mi yoksa her zamanki gibi gönderilmesini mi istediğinize siz karar verirsiniz. [Energy Broadcaster](https://tronrental.com/tr/energy-broadcaster)
+</Update>
+
+<Update label="2026-09-03" description="API anahtarı istek günlüğü" tags={["API"]}>
+Bir API anahtarının son 7 güne ait isteklerini görmek için kontrol panelinde o anahtarı açın: yöntem, yol, durum, gecikme ve IP. Anahtar listesi ayrıca her anahtarın 7 günde kaç istek yaptığını ve en son ne zaman kullanıldığını gösterir. [Kimlik Doğrulama](/tr/authentication)
+</Update>
+
+<Update label="2026-08-13" description="Bakiye geçmişi" tags={["API", "Payments"]}>
+Bakiyenizdeki her değişiklik (siparişler, iadeler, yatırımlar, çekimler, staking ödülleri) siparişlerinizin Tüm geçmiş sekmesinde ve `GET /account/history` içinde listelenir. Alıcı adresin etkinleştirilmesi gerektiğinde, sipariş bu etkinleştirmenin maliyetini de gösterir. [Bakiye Geçmişi](/tr/api-reference/account/history)
+</Update>
+
+<Update label="2026-08-06" description="Zaten etkin olan bir adresin etkinleştirilmesi" tags={["API"]}>
+Zincirde zaten etkin olan bir adresi etkinleştirmek artık hata vermez: API, `status: "already_activated"` ile HTTP 200 yanıtı verir ve hiçbir ücret alınmaz. [Adres Etkinleştir](/tr/api-reference/energy/activate-address)
+</Update>
+
+<Update label="2026-08-03" description="Hesap olmadan herhangi bir adres için bant genişliği satın alın" tags={["Bandwidth", "Payments"]}>
+TRON Bant Genişliği Satın Al sayfası, kayıt olmadan herhangi bir adrese bant genişliği kiralar: faturayı TRX veya USDT ile ya da bakiyenizden, 1 saat veya 1 gün için ödeyin. Tek bir fatura enerjiyi ve bant genişliğini birlikte de kapsayabilir. [TRON Bant Genişliği Satın Al](https://tronrental.com/tr/buy-tron-bandwidth)
+</Update>
+
+<Update label="2026-08-02" description="USDT çekimleri" tags={["Withdrawals", "API"]}>
+Bakiyenizi USDT olarak çekin: girdiğiniz USDT tutarının tamamını alırsınız ve onaylarken döviz kuru sabitlenir. API'de `POST /account/withdrawal` çağrısına `currency: "USDT"` gönderin. [Çekimler](/tr/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-08-02" description="Bakiyenizden staking" tags={["Staking"]}>
+TRX'i doğrudan TronRental bakiyenizden, 1 TRX'ten başlayarak ve cüzdan olmadan stake edin: otomatik bileşik getiri veya bakiyenize aktardığınız basit ödüller arasında seçim yapın. [Staking](https://tronrental.com/tr/staking)
+</Update>
+
+<Update label="2026-03-14" description="Webhook'lar" tags={["API"]}>
+Kontrol panelinde bir webhook URL'si ayarlayın ve API üzerinden verilen siparişlerin durum güncellemelerini alın. [Webhook'lara genel bakış](/tr/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-02-27" description="Transfer Paketleri" tags={["Transfer Packages", "Bandwidth"]}>
+Ön ödemeli USDT transfer paketleri: bir adres için paket satın alın; o adresten yapılan her USDT transferi paketten 1 transfer kullanır. İsteğe bağlı BW Guarantee, transferler için bant genişliğini de devreder. [Transfer Paketleri Genel Bakış](/tr/api-reference/transfer-packages/overview)
+</Update>
+
+<Update label="2026-02-27" description="Bant genişliği API'si" tags={["Bandwidth", "API"]}>
+API üzerinden herhangi bir TRON adresi için 1 saat veya 1 gün süreyle bant genişliği satın alın.
+
+2026-10-29 tarihinden itibaren: 5 ila 59 dakika arasındaki her süre için de. [Bandwidth satın al](/tr/api-reference/bandwidth/buy-bandwidth)
+</Update>
+
+<Update label="2026-02-27" description="API anahtarları için IP beyaz listesi" tags={["API"]}>
+Kontrol panelinde bir API anahtarını IP adresleri listesiyle sınırlayın; diğer adreslerden gelen istekler reddedilir. [Kimlik Doğrulama](/tr/authentication)
+</Update>
+
+<Update label="2026-02-23" description="Çekim API'si" tags={["Withdrawals", "API"]}>
+API üzerinden bakiyenizden herhangi bir TRON adresine TRX çekin.
+
+2026-08-02 tarihinden itibaren: USDT de. [Çekimler](/tr/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-02-22" description="Smart Mode" tags={["Smart Mode"]}>
+USDT transferleri için otomatik enerji: bir adres bağlayın; o adresten yapılan her USDT transferi ayrı sipariş vermeden enerji alır.
+
+2026-02-27 tarihinden itibaren: isteğe bağlı BW Guarantee, transferler için bant genişliğini de devreder. [Akıllı Mod Genel Bakış](/tr/api-reference/smart-mode/overview)
+</Update>
+
+<Update label="2026-02-20" description="Faturalar" tags={["Energy", "API"]}>
+Hesap olmadan herhangi bir adres için enerji satın alın: bir fatura oluşturun, herhangi bir cüzdandan ödeyin; ödeme ulaştıktan sonra enerji devredilir. [Fatura Oluştur](/tr/api-reference/invoices/create-invoice)
+</Update>
+
+<Update label="2026-02-10" description="TronRental lansmanı" tags={["Energy", "Bandwidth", "Payments", "API"]}>
+USDT transfer ücretlerini düşürmek için herhangi bir adres için TRON enerjisi ve bant genişliği kiralayın: yatırımlı hesap bakiyesi, anlık fiyatlar ve web sitesinde ve API üzerinden aynı özellikler. [TronRental](https://tronrental.com/tr)
+</Update>

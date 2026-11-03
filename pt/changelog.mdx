@@ -1,0 +1,133 @@
+---
+title: "Registro de alterações"
+description: "Novidades da TronRental: aluguel de energia e largura de banda, automação, pagamentos, saques, staking e a API"
+rss: true
+---
+
+Novos recursos e mudanças no site da TronRental, no seu painel e na API. Filtre por tag ou assine o feed RSS.
+
+<Update label="2026-10-30" description="Energy Broadcaster para tokens TRC-20, swaps e chamadas de contrato" tags={["Broadcaster"]}>
+O Energy Broadcaster agora atende mais do que USDT: transferências de outros tokens TRC-20, swaps na SunSwap e chamadas a outros contratos inteligentes recebem energia e largura de banda, e transferências de TRX recebem largura de banda. O custo de cada chamada é calculado a partir da sua simulação; tokens, swaps e chamadas de contrato menos comuns são atendidos dentro dos limites da sua conta e podem ser desativados nas configurações do broadcaster. [Energy Broadcaster](https://tronrental.com/pt/energy-broadcaster)
+</Update>
+
+<Update label="2026-10-29" description="Cadastro confirmado com um código por e-mail" tags={["API"]}>
+As novas contas registradas com um endereço de e-mail são confirmadas com um código de 6 dígitos enviado a esse endereço. Mudança incompatível para scripts que fazem o cadastro pela API: `POST /auth/register` agora responde `requires_email_code: true` em vez de retornar tokens, e a conta é criada por `POST /auth/email-code/verify`. As contas existentes não são afetadas. [Autenticação](/pt/authentication)
+</Update>
+
+<Update label="2026-10-29" description="Aluguel de largura de banda a partir de 5 minutos" tags={["Bandwidth", "API"]}>
+Alugue largura de banda por qualquer prazo de 5 a 59 minutos, com desconto sobre a tarifa por hora, e não apenas por uma hora ou um dia. O novo endpoint de cotação retorna o valor exato, e o parâmetro opcional `max_price_trx` recusa uma compra cujo preço mudou depois da cotação. [Calcular preço de bandwidth](/pt/api-reference/bandwidth/quote)
+</Update>
+
+<Update label="2026-10-28" description="Energia e largura de banda a partir de 1 unidade" tags={["Energy", "Bandwidth", "API"]}>
+O pedido mínimo agora é de 1 unidade de energia ou de largura de banda, abaixo do mínimo habitual do mercado: no site, na API, no bot do Telegram e nas regras da Recarga automática. As faturas e a Compra Instantânea de energia continuam começando em 32.000. [Comprar Energia](/pt/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-10-28" description="Auto-Bandwidth" tags={["Auto-Bandwidth"]}>
+Ative o Auto-Bandwidth para um endereço e as transferências de saída dele recebem largura de banda, de modo que a rede não queime TRX com isso. Funciona com USDT, TRX, USDD e qualquer token TRC-20, aguarda enquanto a largura de banda diária gratuita do endereço for suficiente e é cobrado por dia mais por transferência que usou a nossa largura de banda. [Auto-Bandwidth](https://tronrental.com/pt/auto-bandwidth)
+</Update>
+
+<Update label="2026-10-27" description="Chaves de API com o escopo withdraw confirmadas com 2FA" tags={["API", "Withdrawals"]}>
+Ativar o escopo `withdraw` em uma chave de API, alterar a lista de IPs permitidos dessa chave e regenerá-la agora são confirmados com seu código 2FA ou passkey. As chaves emitidas antes continuam funcionando. [Listar escopos de chaves de API](/pt/api-reference/account/api-key-scopes)
+</Update>
+
+<Update label="2026-10-20" description="Novas tentativas seguras para saques" tags={["Withdrawals", "API"]}>
+`POST /account/withdrawal` aceita um cabeçalho opcional `Idempotency-Key`: uma requisição repetida com a mesma chave retorna o primeiro saque em vez de criar um segundo. Com o cabeçalho, a pausa entre saques é de 5 segundos em vez de 60. [Saques](/pt/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-10-19" description="Node API" tags={["Node API"]}>
+Acesso por assinatura à API HTTP e gRPC da TRON em `node.tronrental.com`: planos com cotas mensais, um plano de teste de 7 dias, renovação automática e chaves de API gerenciadas no seu painel. [Node API](https://tronrental.com/pt/node-api)
+</Update>
+
+<Update label="2026-10-16" description="Pacotes de Transferência: no mínimo 2 transferências por pacote" tags={["Transfer Packages", "API"]}>
+Mudança incompatível: `POST /transfer-packages/buy` e `POST /transfer-packages/buy-invoice` rejeitam `package_size: 1` com HTTP 422. Um pacote contém de 2 a 10.000 transferências; uma única transferência é comprada com `single_transfer: true`. [Comprar Pacote](/pt/api-reference/transfer-packages/buy)
+</Update>
+
+<Update label="2026-10-16" description="Webhooks dos Pacotes de Transferência" tags={["Transfer Packages", "API"]}>
+O webhook do proprietário do pacote agora recebe 4 eventos: `package.transfer` para cada transferência, com o saldo restante, `package.completed`, `package.activated` e `package.expired`. A notificação do Telegram sobre a última transferência de um pacote agora também chega. [Webhooks — visão geral](/pt/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-10-13" description="Recarga automática de energia e largura de banda" tags={["Auto-Refill", "Energy", "Bandwidth", "API"]}>
+Defina um limiar para um endereço: quando a energia ou a largura de banda disponível dele cair abaixo desse nível, fazemos a recarga automaticamente a partir do seu saldo. As regras são gerenciadas no painel, no bot do Telegram e pela API, e cada recarga aparece nos seus pedidos. [Recarga automática](https://tronrental.com/pt/auto-refill)
+</Update>
+
+<Update label="2026-09-24" description="Análise de taxas" tags={["Energy"]}>
+A análise de taxas gratuita mostra quanto qualquer endereço TRON gastou em transferências em 7 dias, 30 dias, um ano ou em todo o período e quanto custaria alugar energia em vez disso, com um link compartilhável do relatório. Sem cadastro e sem conectar carteira. [Análise de taxas](https://tronrental.com/pt/fee-savings-analyzer)
+</Update>
+
+<Update label="2026-09-21" description="Cancele um saque em até 20 segundos" tags={["Withdrawals", "API"]}>
+Depois de confirmar um saque no painel, você tem 20 segundos para cancelá-lo, e o valor total, incluindo a taxa, volta para o seu saldo. Na API, os saques mostram os status `scheduled`, `processing` e `cancelled`. [Saques](/pt/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-09-14" description="Cotação do preço da energia" tags={["Energy", "API"]}>
+`GET /energy/quote` retorna o total exato para um volume: o aluguel mais a taxa fixa, em TRX e USD. Com uma chave de API usa o seu preço personalizado; sem chave, o preço de mercado. [Calcular preço](/pt/api-reference/energy/quote)
+</Update>
+
+<Update label="2026-09-11" description="Webhooks: configuração no painel e entregas assinadas" tags={["API"]}>
+A URL do seu webhook agora é uma por conta e é definida no painel, onde você também encontra o segredo de assinatura. Cada entrega leva um cabeçalho `X-Webhook-Signature` e um campo `timestamp` e é feita em até 3 tentativas. Mudança incompatível: `POST /webhooks/configure` chamado com uma chave de API retorna HTTP 403 `FORBIDDEN_SESSION_TYPE`. [Configurar webhook](/pt/api-reference/webhooks/configure)
+</Update>
+
+<Update label="2026-09-10" description="Energy Broadcaster" tags={["Broadcaster"]}>
+Cole a URL do seu broadcaster no TronLink, no TokenPocket ou no seu próprio código uma única vez, e as suas transferências de USDT recebem energia e largura de banda automaticamente, pagas com o seu saldo TronRental em vez de queimar TRX. Você decide se uma transferência é bloqueada ou enviada normalmente quando o saldo acaba. [Energy Broadcaster](https://tronrental.com/pt/energy-broadcaster)
+</Update>
+
+<Update label="2026-09-03" description="Registro de requisições da chave de API" tags={["API"]}>
+Abra uma chave de API no painel para ver as requisições dela dos últimos 7 dias: método, caminho, status, latência e IP. A lista de chaves também mostra quantas requisições cada chave fez em 7 dias e quando foi usada pela última vez. [Autenticação](/pt/authentication)
+</Update>
+
+<Update label="2026-08-13" description="Histórico do saldo" tags={["API", "Payments"]}>
+Cada alteração do seu saldo (pedidos, reembolsos, depósitos, saques, recompensas de staking) aparece na aba Histórico completo dos seus pedidos e em `GET /account/history`. Um pedido também mostra o custo de ativação do endereço destinatário quando ele precisou ser ativado. [Histórico de Saldo](/pt/api-reference/account/history)
+</Update>
+
+<Update label="2026-08-06" description="Ativação de um endereço já ativo" tags={["API"]}>
+Ativar um endereço que já está ativo na blockchain não falha mais: a API responde HTTP 200 com `status: "already_activated"` e nada é cobrado. [Ativar Endereço](/pt/api-reference/energy/activate-address)
+</Update>
+
+<Update label="2026-08-03" description="Compre largura de banda para qualquer endereço sem conta" tags={["Bandwidth", "Payments"]}>
+A página Comprar largura de banda TRON aluga largura de banda para qualquer endereço sem cadastro: pague a fatura em TRX ou USDT, ou com o seu saldo, por 1 hora ou 1 dia. Uma fatura também pode combinar energia e largura de banda. [Comprar largura de banda TRON](https://tronrental.com/pt/buy-tron-bandwidth)
+</Update>
+
+<Update label="2026-08-02" description="Saques em USDT" tags={["Withdrawals", "API"]}>
+Saque o seu saldo em USDT: você recebe exatamente o valor em USDT que informar, e a taxa de câmbio fica travada enquanto você confirma. Na API, passe `currency: "USDT"` para `POST /account/withdrawal`. [Saques](/pt/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-08-02" description="Staking a partir do seu saldo" tags={["Staking"]}>
+Faça staking de TRX direto do seu saldo TronRental, a partir de 1 TRX e sem carteira: escolha a capitalização automática ou recompensas simples que você resgata para o seu saldo. [Staking de TRX](https://tronrental.com/pt/staking)
+</Update>
+
+<Update label="2026-03-14" description="Webhooks" tags={["API"]}>
+Defina uma URL de webhook no painel e receba atualizações de status dos pedidos feitos pela API. [Webhooks — visão geral](/pt/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-02-27" description="Pacotes de Transferência" tags={["Transfer Packages", "Bandwidth"]}>
+Pacotes pré-pagos de transferências USDT: compre um pacote para um endereço, e cada transferência USDT feita a partir dele usa 1 transferência do pacote. O BW Guarantee opcional delega largura de banda também para as transferências. [Visão Geral dos Pacotes de Transferência](/pt/api-reference/transfer-packages/overview)
+</Update>
+
+<Update label="2026-02-27" description="API de largura de banda" tags={["Bandwidth", "API"]}>
+Compre largura de banda para qualquer endereço TRON pela API, por 1 hora ou 1 dia.
+
+Desde 2026-10-29: também por qualquer prazo de 5 a 59 minutos. [Comprar bandwidth](/pt/api-reference/bandwidth/buy-bandwidth)
+</Update>
+
+<Update label="2026-02-27" description="Lista de IPs permitidos para chaves de API" tags={["API"]}>
+Limite uma chave de API a uma lista de endereços IP no painel; as requisições de outros endereços são rejeitadas. [Autenticação](/pt/authentication)
+</Update>
+
+<Update label="2026-02-23" description="API de saques" tags={["Withdrawals", "API"]}>
+Saque TRX do seu saldo para qualquer endereço TRON pela API.
+
+Desde 2026-08-02: USDT também. [Saques](/pt/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-02-22" description="Smart Mode" tags={["Smart Mode"]}>
+Energia automática para transferências USDT: conecte um endereço, e cada transferência USDT feita a partir dele recebe energia sem pedidos separados.
+
+Desde 2026-02-27: o BW Guarantee opcional delega largura de banda também para as transferências. [Visão Geral do Smart Mode](/pt/api-reference/smart-mode/overview)
+</Update>
+
+<Update label="2026-02-20" description="Faturas" tags={["Energy", "API"]}>
+Compre energia para qualquer endereço sem conta: crie uma fatura, pague-a de qualquer carteira, e a energia é delegada depois que o pagamento chega. [Criar Fatura](/pt/api-reference/invoices/create-invoice)
+</Update>
+
+<Update label="2026-02-10" description="Lançamento da TronRental" tags={["Energy", "Bandwidth", "Payments", "API"]}>
+Alugue energia e largura de banda TRON para qualquer endereço para reduzir as taxas de transferência de USDT: saldo da conta com depósitos, preços em tempo real e os mesmos recursos no site e pela API. [TronRental](https://tronrental.com/pt)
+</Update>

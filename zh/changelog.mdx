@@ -1,0 +1,133 @@
+---
+title: "更新日志"
+description: "TronRental 的最新动态：能量与带宽租赁、自动化、支付、提现、质押和 API"
+rss: true
+---
+
+TronRental 网站、控制台和 API 的新功能与变更。可按标签筛选，或订阅 RSS 源。
+
+<Update label="2026-10-30" description="Energy Broadcaster 支持 TRC-20 代币、兑换和合约调用" tags={["Broadcaster"]}>
+Energy Broadcaster 现在不再只服务于 USDT：其他 TRC-20 代币的转账、SunSwap 上的兑换以及对其他智能合约的调用都能获得能量和带宽，TRX 转账则能获得带宽。每次调用的费用根据其模拟结果计算；较少见的代币、兑换和合约调用在您账户的限额内提供服务，并可在 broadcaster 设置中关闭。[Energy Broadcaster](https://tronrental.com/zh/energy-broadcaster)
+</Update>
+
+<Update label="2026-10-29" description="使用邮箱验证码确认注册" tags={["API"]}>
+通过邮箱注册的新账户，需使用发送到该邮箱的 6 位验证码确认。对通过 API 注册的脚本而言，这是不兼容变更：`POST /auth/register` 现在返回 `requires_email_code: true`，而不再返回令牌，账户由 `POST /auth/email-code/verify` 创建。现有账户不受影响。[身份验证](/zh/authentication)
+</Update>
+
+<Update label="2026-10-29" description="带宽租赁最短 5 分钟" tags={["Bandwidth", "API"]}>
+可租用 5 至 59 分钟之间任意时长的带宽，价格在小时费率的基础上给予折扣，而不再只能按小时或按天租用。新的报价接口会返回准确金额，可选的 `max_price_trx` 会拒绝在报价后价格已发生变化的购买。[带宽报价](/zh/api-reference/bandwidth/quote)
+</Update>
+
+<Update label="2026-10-28" description="能量和带宽最低 1 单位起" tags={["Energy", "Bandwidth", "API"]}>
+最低订单现为 1 单位能量或带宽，低于通常的市场最低值：网站、API、Telegram 机器人和自动补充规则均适用。能量的账单和即时购买仍从 32,000 起。[购买能量](/zh/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-10-28" description="Auto-Bandwidth" tags={["Auto-Bandwidth"]}>
+为某个地址开启 Auto-Bandwidth 后，其转出交易会获得带宽，网络便不会为此燃烧 TRX。它适用于 USDT、TRX、USDD 和任意 TRC-20 代币；当该地址的每日免费带宽足够时会等待，并按天加上每笔使用了我们带宽的转账计费。[Auto-Bandwidth](https://tronrental.com/zh/auto-bandwidth)
+</Update>
+
+<Update label="2026-10-27" description="具有 withdraw 权限的 API 密钥需通过 2FA 确认" tags={["API", "Withdrawals"]}>
+在 API 密钥上开启 `withdraw` 权限、修改此类密钥的 IP 白名单以及重新生成该密钥，现在需要用您的 2FA 验证码或通行密钥确认。此前签发的密钥继续有效。[列出 API 密钥权限](/zh/api-reference/account/api-key-scopes)
+</Update>
+
+<Update label="2026-10-20" description="提现的安全重试" tags={["Withdrawals", "API"]}>
+`POST /account/withdrawal` 接受可选的 `Idempotency-Key` 请求头：使用相同密钥重复发起请求时，返回的是最初的那笔提现，而不会再创建一笔提现。带此请求头时，两次提现之间的间隔为 5 秒，而不是 60 秒。[提现](/zh/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-10-19" description="Node API" tags={["Node API"]}>
+通过订阅访问 `node.tronrental.com` 上的 TRON HTTP 和 gRPC API：套餐含月度配额，另有 7 天试用套餐、自动续费，API 密钥在控制台中管理。[Node API](https://tronrental.com/zh/node-api)
+</Update>
+
+<Update label="2026-10-16" description="转账套餐：每个套餐至少 2 笔转账" tags={["Transfer Packages", "API"]}>
+不兼容变更：`POST /transfer-packages/buy` 和 `POST /transfer-packages/buy-invoice` 会以 HTTP 422 拒绝 `package_size: 1`。一个套餐包含 2 至 10,000 笔转账；单笔转账请使用 `single_transfer: true` 购买。[购买套餐](/zh/api-reference/transfer-packages/buy)
+</Update>
+
+<Update label="2026-10-16" description="转账套餐 Webhook" tags={["Transfer Packages", "API"]}>
+套餐所有者的 Webhook 现在会收到 4 种事件：每笔转账对应的 `package.transfer`（附剩余额度）、`package.completed`、`package.activated` 和 `package.expired`。套餐最后一笔转账的 Telegram 通知现在也会送达。[Webhook 概览](/zh/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-10-13" description="能量和带宽自动补充" tags={["Auto-Refill", "Energy", "Bandwidth", "API"]}>
+为某个地址设置阈值：当其可用能量或带宽低于该阈值时，我们会自动从您的余额中为其补充。规则可在控制台、Telegram 机器人和 API 中管理，每次补充都会出现在您的订单中。[自动补充](https://tronrental.com/zh/auto-refill)
+</Update>
+
+<Update label="2026-09-24" description="手续费节省分析" tags={["Energy"]}>
+免费的手续费节省分析会显示任意 TRON 地址在 7 天、30 天、一年或全部时间内的转账花费，以及同样的转账改为租用能量需要多少费用，并附带可分享的报告链接。无需注册，也无需连接钱包。[TRON 地址手续费分析](https://tronrental.com/zh/fee-savings-analyzer)
+</Update>
+
+<Update label="2026-09-21" description="20 秒内可取消提现" tags={["Withdrawals", "API"]}>
+在控制台确认提现后，您有 20 秒的时间取消它，包括手续费在内的全部金额会退回您的余额。API 中的提现会显示 `scheduled`、`processing` 和 `cancelled` 状态。[提现](/zh/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-09-14" description="能量价格报价" tags={["Energy", "API"]}>
+`GET /energy/quote` 返回指定数量的准确总价：租赁费加固定手续费，以 TRX 和 USD 计。使用 API 密钥时按您的个人价格计算；不使用密钥时按市场价格计算。[价格估算](/zh/api-reference/energy/quote)
+</Update>
+
+<Update label="2026-09-11" description="Webhook：在控制台设置，带签名的推送" tags={["API"]}>
+每个账户使用单一的 Webhook URL，在控制台中设置，签名密钥也在那里查看。每次推送都带有 `X-Webhook-Signature` 请求头和 `timestamp` 字段，最多尝试 3 次。不兼容变更：使用 API 密钥调用 `POST /webhooks/configure` 会返回 HTTP 403 `FORBIDDEN_SESSION_TYPE`。[配置 Webhook](/zh/api-reference/webhooks/configure)
+</Update>
+
+<Update label="2026-09-10" description="Energy Broadcaster" tags={["Broadcaster"]}>
+只需把您的 broadcaster URL 粘贴到 TronLink、TokenPocket 或您自己的代码中一次，您的 USDT 转账就会自动获得能量和带宽，费用从 TronRental 余额中支付，而不是燃烧 TRX。余额耗尽时，转账是被拦截还是照常发送，由您决定。[Energy Broadcaster](https://tronrental.com/zh/energy-broadcaster)
+</Update>
+
+<Update label="2026-09-03" description="API 密钥请求日志" tags={["API"]}>
+在控制台中打开某个 API 密钥，即可查看它最近 7 天的请求：方法、路径、状态、延迟和 IP。密钥列表还会显示每个密钥在 7 天内发出的请求数以及最后使用时间。[身份验证](/zh/authentication)
+</Update>
+
+<Update label="2026-08-13" description="余额历史" tags={["API", "Payments"]}>
+余额的每一次变动（订单、退款、充值、提现、质押奖励）都会列在订单的“全部历史”标签页以及 `GET /account/history` 中。当订单需要激活接收地址时，订单中还会显示激活该地址的费用。[余额历史](/zh/api-reference/account/history)
+</Update>
+
+<Update label="2026-08-06" description="激活已激活的地址" tags={["API"]}>
+激活一个在链上已经处于激活状态的地址不再失败：API 返回 HTTP 200 和 `status: "already_activated"`，且不收取任何费用。[激活地址](/zh/api-reference/energy/activate-address)
+</Update>
+
+<Update label="2026-08-03" description="无需账户即可为任意地址购买带宽" tags={["Bandwidth", "Payments"]}>
+“购买 TRON 带宽”页面无需注册即可为任意地址租用带宽：用 TRX 或 USDT 支付账单，或从余额支付，租期为 1 小时或 1 天。同一张账单还可以合并能量和带宽。[购买 TRON 带宽](https://tronrental.com/zh/buy-tron-bandwidth)
+</Update>
+
+<Update label="2026-08-02" description="USDT 提现" tags={["Withdrawals", "API"]}>
+以 USDT 提现您的余额：您收到的正是您输入的 USDT 金额，汇率在您确认期间保持锁定。在 API 中，向 `POST /account/withdrawal` 传入 `currency: "USDT"`。[提现](/zh/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-08-02" description="用余额质押" tags={["Staking"]}>
+直接用 TronRental 余额质押 TRX，1 TRX 起，无需钱包：可选择自动复投，或选择由您领取到余额的普通奖励。[质押](https://tronrental.com/zh/staking)
+</Update>
+
+<Update label="2026-03-14" description="Webhook" tags={["API"]}>
+在控制台中设置 Webhook URL，即可接收通过 API 下单的订单状态更新。[Webhook 概览](/zh/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-02-27" description="转账套餐" tags={["Transfer Packages", "Bandwidth"]}>
+预付费的 USDT 转账套餐：为某个地址购买套餐，从该地址发出的每笔 USDT 转账都会消耗套餐中的 1 笔转账。可选的 BW Guarantee 也会为这些转账委托带宽。[转账套餐概述](/zh/api-reference/transfer-packages/overview)
+</Update>
+
+<Update label="2026-02-27" description="带宽 API" tags={["Bandwidth", "API"]}>
+通过 API 为任意 TRON 地址购买带宽，租期为 1 小时或 1 天。
+
+自 2026-10-29 起：也可租用 5 至 59 分钟之间的任意时长。[购买带宽](/zh/api-reference/bandwidth/buy-bandwidth)
+</Update>
+
+<Update label="2026-02-27" description="API 密钥的 IP 白名单" tags={["API"]}>
+在控制台中把 API 密钥限制为一组 IP 地址；来自其他地址的请求会被拒绝。[身份验证](/zh/authentication)
+</Update>
+
+<Update label="2026-02-23" description="提现 API" tags={["Withdrawals", "API"]}>
+通过 API 将余额中的 TRX 提现到任意 TRON 地址。
+
+自 2026-08-02 起：也支持 USDT。[提现](/zh/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-02-22" description="Smart Mode" tags={["Smart Mode"]}>
+为 USDT 转账自动提供能量：连接地址后，从该地址发出的每笔 USDT 转账都会获得能量，无需单独下单。
+
+自 2026-02-27 起：可选的 BW Guarantee 也会为这些转账委托带宽。[智能模式概述](/zh/api-reference/smart-mode/overview)
+</Update>
+
+<Update label="2026-02-20" description="账单" tags={["Energy", "API"]}>
+无需账户即可为任意地址购买能量：创建账单，用任意钱包支付，付款到账后能量即被委托。[创建账单](/zh/api-reference/invoices/create-invoice)
+</Update>
+
+<Update label="2026-02-10" description="TronRental 上线" tags={["Energy", "Bandwidth", "Payments", "API"]}>
+租用 TRON 能量和带宽，为任意地址降低 USDT 转账费用：账户余额与充值、实时价格，网站和 API 提供相同的功能。[TronRental](https://tronrental.com/zh)
+</Update>

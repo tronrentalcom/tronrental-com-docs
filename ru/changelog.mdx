@@ -1,0 +1,133 @@
+---
+title: "Список изменений"
+description: "Что нового в TronRental: аренда энергии и bandwidth, автоматизация, платежи, выводы, стейкинг и API"
+rss: true
+---
+
+Новые возможности и изменения на сайте TronRental, в вашем личном кабинете и в API. Фильтруйте записи по тегу или подпишитесь на RSS-ленту.
+
+<Update label="2026-10-30" description="Energy Broadcaster для токенов TRC-20, обменов и вызовов контрактов" tags={["Broadcaster"]}>
+Energy Broadcaster теперь обслуживает не только USDT: переводы других токенов TRC-20, обмены на SunSwap и вызовы других смарт-контрактов получают энергию и bandwidth, а переводы TRX получают bandwidth. Стоимость каждого вызова рассчитывается по его симуляции; менее распространённые токены, обмены и вызовы контрактов обслуживаются в пределах лимитов вашего аккаунта и могут быть отключены в настройках бродкастера. [Energy Broadcaster](https://tronrental.com/ru/energy-broadcaster)
+</Update>
+
+<Update label="2026-10-29" description="Регистрация подтверждается кодом из письма" tags={["API"]}>
+Новые аккаунты, зарегистрированные по адресу электронной почты, подтверждаются 6-значным кодом, который отправляется на этот адрес. Несовместимое изменение для скриптов, которые регистрируются через API: `POST /auth/register` теперь отвечает `requires_email_code: true` вместо выдачи токенов, а аккаунт создаётся запросом `POST /auth/email-code/verify`. Существующие аккаунты не затрагиваются. [Аутентификация](/ru/authentication)
+</Update>
+
+<Update label="2026-10-29" description="Аренда bandwidth от 5 минут" tags={["Bandwidth", "API"]}>
+Арендуйте bandwidth на любой срок от 5 до 59 минут со скидкой от часовой ставки, а не только на час или на день. Новый эндпоинт расчёта цены возвращает точную сумму, а необязательный параметр `max_price_trx` отклоняет покупку, цена которой изменилась после расчёта. [Рассчитать цену bandwidth](/ru/api-reference/bandwidth/quote)
+</Update>
+
+<Update label="2026-10-28" description="Энергия и bandwidth от 1 единицы" tags={["Energy", "Bandwidth", "API"]}>
+Минимальный заказ теперь составляет 1 единицу энергии или bandwidth, что ниже обычного рыночного минимума: на сайте, в API, в Telegram-боте и в правилах автопополнения. Инвойсы и Instant Buy на энергию по-прежнему начинаются с 32 000. [Купить энергию](/ru/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-10-28" description="Auto-Bandwidth" tags={["Auto-Bandwidth"]}>
+Включите Auto-Bandwidth для адреса, и его исходящие переводы будут получать bandwidth, так что сеть не сжигает на них TRX. Функция работает для USDT, TRX, USDD и любого токена TRC-20, ждёт, пока адресу хватает бесплатного суточного bandwidth, и оплачивается за день плюс за каждый перевод, который использовал наш bandwidth. [Auto-Bandwidth](https://tronrental.com/ru/auto-bandwidth)
+</Update>
+
+<Update label="2026-10-27" description="API-ключи с разрешением withdraw подтверждаются кодом 2FA" tags={["API", "Withdrawals"]}>
+Включение разрешения `withdraw` у API-ключа, изменение белого списка IP такого ключа и его перевыпуск теперь подтверждаются вашим кодом 2FA или passkey. Ранее выпущенные ключи продолжают работать. [Список разрешений API-ключа](/ru/api-reference/account/api-key-scopes)
+</Update>
+
+<Update label="2026-10-20" description="Безопасные повторы выводов" tags={["Withdrawals", "API"]}>
+`POST /account/withdrawal` принимает необязательный заголовок `Idempotency-Key`: повторный запрос с тем же ключом возвращает первый вывод, а не создаёт второй. С этим заголовком пауза между выводами составляет 5 секунд вместо 60. [Выводы](/ru/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-10-19" description="Node API" tags={["Node API"]}>
+Доступ по подписке к HTTP и gRPC API сети TRON на `node.tronrental.com`: тарифы с ежемесячными квотами, 7-дневный пробный тариф, автопродление и API-ключи, которыми вы управляете в личном кабинете. [Node API](https://tronrental.com/ru/node-api)
+</Update>
+
+<Update label="2026-10-16" description="Пакеты переводов: не менее 2 переводов в пакете" tags={["Transfer Packages", "API"]}>
+Несовместимое изменение: `POST /transfer-packages/buy` и `POST /transfer-packages/buy-invoice` отклоняют `package_size: 1` с HTTP 422. В пакете может быть от 2 до 10 000 переводов; отдельный перевод покупается с `single_transfer: true`. [Купить пакет](/ru/api-reference/transfer-packages/buy)
+</Update>
+
+<Update label="2026-10-16" description="Вебхуки пакетов переводов" tags={["Transfer Packages", "API"]}>
+Вебхук владельца пакета теперь получает 4 события: `package.transfer` для каждого перевода с остатком баланса, `package.completed`, `package.activated` и `package.expired`. Уведомление в Telegram о последнем переводе пакета теперь тоже приходит. [Вебхуки — обзор](/ru/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-10-13" description="Автопополнение энергии и bandwidth" tags={["Auto-Refill", "Energy", "Bandwidth", "API"]}>
+Задайте порог для адреса: когда его доступная энергия или bandwidth опускается ниже порога, мы автоматически пополняем адрес с вашего баланса. Правилами можно управлять в личном кабинете, в Telegram-боте и через API, а каждое пополнение отображается в ваших заказах. [Автопополнение](https://tronrental.com/ru/auto-refill)
+</Update>
+
+<Update label="2026-09-24" description="Анализ комиссий TRON-адреса" tags={["Energy"]}>
+Бесплатный анализ комиссий показывает, сколько любой адрес TRON потратил на переводы за 7 дней, 30 дней, год или всё время и сколько стоила бы аренда энергии вместо этого, со ссылкой на отчёт, которой можно поделиться. Регистрация и подключение кошелька не нужны. [Анализ комиссий TRON-адреса](https://tronrental.com/ru/fee-savings-analyzer)
+</Update>
+
+<Update label="2026-09-21" description="Отмена вывода в течение 20 секунд" tags={["Withdrawals", "API"]}>
+После подтверждения вывода в личном кабинете у вас есть 20 секунд, чтобы его отменить, и вся сумма вместе с комиссией возвращается на ваш баланс. Выводы в API получают статусы `scheduled`, `processing` и `cancelled`. [Выводы](/ru/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-09-14" description="Расчёт цены энергии" tags={["Energy", "API"]}>
+`GET /energy/quote` возвращает точную итоговую сумму за заданный объём: аренда плюс фиксированная комиссия, в TRX и USD. С API-ключом используется ваша персональная цена, без ключа — рыночная. [Рассчитать цену](/ru/api-reference/energy/quote)
+</Update>
+
+<Update label="2026-09-11" description="Вебхуки: настройка в личном кабинете, подписанные доставки" tags={["API"]}>
+URL вашего вебхука теперь один на аккаунт и задаётся в личном кабинете, где вы также найдёте секрет для подписи. Каждая доставка содержит заголовок `X-Webhook-Signature` и поле `timestamp` и выполняется не более чем за 3 попытки. Несовместимое изменение: `POST /webhooks/configure`, вызванный с API-ключом, возвращает HTTP 403 `FORBIDDEN_SESSION_TYPE`. [Настройка вебхука](/ru/api-reference/webhooks/configure)
+</Update>
+
+<Update label="2026-09-10" description="Energy Broadcaster" tags={["Broadcaster"]}>
+Один раз вставьте URL бродкастера в TronLink, TokenPocket или свой код — и переводы USDT будут автоматически получать энергию и bandwidth с оплатой с баланса TronRental вместо сжигания TRX. Вы решаете, блокируется ли перевод или отправляется как обычно, когда баланс заканчивается. [Energy Broadcaster](https://tronrental.com/ru/energy-broadcaster)
+</Update>
+
+<Update label="2026-09-03" description="Журнал запросов API-ключа" tags={["API"]}>
+Откройте API-ключ в личном кабинете, чтобы увидеть его запросы за последние 7 дней: метод, путь, статус, задержку и IP. В списке ключей также указано, сколько запросов сделал каждый ключ за 7 дней и когда он использовался в последний раз. [Аутентификация](/ru/authentication)
+</Update>
+
+<Update label="2026-08-13" description="История баланса" tags={["API", "Payments"]}>
+Каждое изменение вашего баланса (заказы, возвраты, депозиты, выводы, награды за стейкинг) отображается на вкладке «Вся история» ваших заказов и в `GET /account/history`. В заказе также указана стоимость активации адреса получателя, если его пришлось активировать. [История баланса](/ru/api-reference/account/history)
+</Update>
+
+<Update label="2026-08-06" description="Активация уже активного адреса" tags={["API"]}>
+Активация адреса, который уже активен в блокчейне, больше не завершается ошибкой: API отвечает HTTP 200 с `status: "already_activated"`, и ничего не списывается. [Активация адреса](/ru/api-reference/energy/activate-address)
+</Update>
+
+<Update label="2026-08-03" description="Покупка bandwidth для любого адреса без аккаунта" tags={["Bandwidth", "Payments"]}>
+На странице «Купить bandwidth TRON» можно арендовать bandwidth для любого адреса без регистрации: оплатите инвойс в TRX или USDT либо с баланса, на 1 час или 1 день. Один инвойс также может объединять энергию и bandwidth. [Купить bandwidth TRON](https://tronrental.com/ru/buy-tron-bandwidth)
+</Update>
+
+<Update label="2026-08-02" description="Выводы в USDT" tags={["Withdrawals", "API"]}>
+Выводите баланс в USDT: вы получаете ровно ту сумму USDT, которую ввели, а курс обмена фиксируется на время подтверждения. В API передайте `currency: "USDT"` в `POST /account/withdrawal`. [Выводы](/ru/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-08-02" description="Стейкинг с баланса" tags={["Staking"]}>
+Стейкайте TRX прямо со своего баланса TronRental, от 1 TRX и без кошелька: выберите автокомпаунд или простые награды, которые вы забираете на баланс. [Стейкинг TRX](https://tronrental.com/ru/staking)
+</Update>
+
+<Update label="2026-03-14" description="Вебхуки" tags={["API"]}>
+Задайте URL вебхука в личном кабинете и получайте обновления статусов заказов, размещённых через API. [Вебхуки — обзор](/ru/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-02-27" description="Пакеты переводов" tags={["Transfer Packages", "Bandwidth"]}>
+Предоплаченные пакеты переводов USDT: купите пакет для адреса, и каждый перевод USDT с него использует 1 перевод пакета. Необязательный BW Guarantee также делегирует bandwidth для переводов. [Обзор пакетов переводов](/ru/api-reference/transfer-packages/overview)
+</Update>
+
+<Update label="2026-02-27" description="API bandwidth" tags={["Bandwidth", "API"]}>
+Покупайте bandwidth для любого адреса TRON через API на 1 час или 1 день.
+
+Начиная с 2026-10-29: также на любой срок от 5 до 59 минут. [Купить bandwidth](/ru/api-reference/bandwidth/buy-bandwidth)
+</Update>
+
+<Update label="2026-02-27" description="Белый список IP для API-ключей" tags={["API"]}>
+Ограничьте API-ключ списком IP-адресов в личном кабинете; запросы с других адресов отклоняются. [Аутентификация](/ru/authentication)
+</Update>
+
+<Update label="2026-02-23" description="API вывода средств" tags={["Withdrawals", "API"]}>
+Выводите TRX со своего баланса на любой адрес TRON через API.
+
+Начиная с 2026-08-02: также USDT. [Выводы](/ru/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-02-22" description="Smart Mode" tags={["Smart Mode"]}>
+Автоматическая энергия для переводов USDT: подключите адрес, и каждый перевод USDT с него получает энергию без отдельных заказов.
+
+Начиная с 2026-02-27: необязательный BW Guarantee также делегирует bandwidth для переводов. [Обзор Smart Mode](/ru/api-reference/smart-mode/overview)
+</Update>
+
+<Update label="2026-02-20" description="Инвойсы" tags={["Energy", "API"]}>
+Покупайте энергию для любого адреса без аккаунта: создайте инвойс, оплатите его из любого кошелька, и энергия будет делегирована после поступления платежа. [Создать инвойс](/ru/api-reference/invoices/create-invoice)
+</Update>
+
+<Update label="2026-02-10" description="Запуск TronRental" tags={["Energy", "Bandwidth", "Payments", "API"]}>
+Арендуйте энергию и bandwidth в сети TRON для любого адреса, чтобы снизить комиссии за переводы USDT: баланс аккаунта с депозитами, цены в реальном времени и одни и те же возможности на сайте и через API. [TronRental](https://tronrental.com/ru)
+</Update>

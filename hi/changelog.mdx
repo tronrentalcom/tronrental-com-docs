@@ -1,0 +1,133 @@
+---
+title: "चेंजलॉग"
+description: "TronRental में नया क्या है: एनर्जी और बैंडविड्थ रेंटल, ऑटोमेशन, भुगतान, निकासी, स्टेकिंग और API"
+rss: true
+---
+
+TronRental वेबसाइट, आपके डैशबोर्ड और API में नई सुविधाएँ और बदलाव। टैग से फ़िल्टर करें या RSS फ़ीड की सदस्यता लें।
+
+<Update label="2026-10-30" description="TRC-20 टोकन, स्वैप और कॉन्ट्रैक्ट कॉल के लिए Energy Broadcaster" tags={["Broadcaster"]}>
+Energy Broadcaster अब केवल USDT तक सीमित नहीं है: अन्य TRC-20 टोकन के ट्रांसफर, SunSwap पर स्वैप और अन्य स्मार्ट कॉन्ट्रैक्ट की कॉल को एनर्जी और बैंडविड्थ मिलती है, और TRX ट्रांसफर को बैंडविड्थ मिलती है। हर कॉल की लागत उसके सिमुलेशन से निकाली जाती है; कम प्रचलित टोकन, स्वैप और कॉन्ट्रैक्ट कॉल आपके अकाउंट की सीमाओं के भीतर पूरी की जाती हैं और ब्रॉडकास्टर की सेटिंग में बंद की जा सकती हैं। [Energy Broadcaster](https://tronrental.com/hi/energy-broadcaster)
+</Update>
+
+<Update label="2026-10-29" description="साइन-अप की पुष्टि ईमेल कोड से" tags={["API"]}>
+ईमेल पते से रजिस्टर होने वाले नए अकाउंट की पुष्टि उस पते पर भेजे गए 6 अंकों के कोड से होती है। API से साइन-अप करने वाली स्क्रिप्ट के लिए ब्रेकिंग बदलाव: `POST /auth/register` अब टोकन लौटाने के बजाय `requires_email_code: true` लौटाता है, और अकाउंट `POST /auth/email-code/verify` से बनता है। मौजूदा अकाउंट प्रभावित नहीं होते। [प्रमाणीकरण](/hi/authentication)
+</Update>
+
+<Update label="2026-10-29" description="5 मिनट से बैंडविड्थ रेंटल" tags={["Bandwidth", "API"]}>
+5 से 59 मिनट तक की किसी भी अवधि के लिए बैंडविड्थ किराए पर लें, घंटे की दर से छूट पर; केवल घंटे या दिन के हिसाब से नहीं। नया मूल्य अनुमान एंडपॉइंट सटीक राशि लौटाता है, और वैकल्पिक `max_price_trx` उस खरीद को अस्वीकार कर देता है जिसकी कीमत मूल्य अनुमान के बाद बदल गई हो। [Bandwidth मूल्य अनुमान](/hi/api-reference/bandwidth/quote)
+</Update>
+
+<Update label="2026-10-28" description="1 यूनिट से एनर्जी और बैंडविड्थ" tags={["Energy", "Bandwidth", "API"]}>
+न्यूनतम ऑर्डर अब 1 यूनिट एनर्जी या बैंडविड्थ है, जो सामान्य बाज़ार न्यूनतम से कम है: वेबसाइट पर, API में, टेलीग्राम बॉट में और ऑटो रिफिल नियमों में। एनर्जी के लिए इनवॉइस और तुरंत खरीदें अब भी 32,000 से शुरू होते हैं। [एनर्जी खरीदें](/hi/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-10-28" description="Auto-Bandwidth" tags={["Auto-Bandwidth"]}>
+किसी एड्रेस के लिए Auto-Bandwidth चालू करें, और उससे होने वाले आउटगोइंग ट्रांसफर को बैंडविड्थ मिलती है, ताकि नेटवर्क इसके लिए TRX बर्न न करे। यह USDT, TRX, USDD और किसी भी TRC-20 टोकन के लिए काम करता है, एड्रेस की मुफ़्त दैनिक बैंडविड्थ पर्याप्त होने तक रुकता है, और बिलिंग प्रतिदिन के शुल्क के साथ-साथ हर उस ट्रांसफर के शुल्क से होती है जिसमें हमारी बैंडविड्थ लगी। [Auto-Bandwidth](https://tronrental.com/hi/auto-bandwidth)
+</Update>
+
+<Update label="2026-10-27" description="withdraw स्कोप वाली API कुंजियों की पुष्टि 2FA से" tags={["API", "Withdrawals"]}>
+API कुंजी पर `withdraw` स्कोप सक्षम करना, ऐसी कुंजी की IP श्वेतसूची बदलना और उसे फिर से बनाना अब आपके 2FA कोड या पासकी से पुष्ट होता है। पहले जारी की गई कुंजियाँ काम करती रहती हैं। [API कुंजी स्कोप की सूची](/hi/api-reference/account/api-key-scopes)
+</Update>
+
+<Update label="2026-10-20" description="निकासी के लिए सुरक्षित दोहराव" tags={["Withdrawals", "API"]}>
+`POST /account/withdrawal` वैकल्पिक `Idempotency-Key` हेडर स्वीकार करता है: उसी कुंजी के साथ दोहराया गया अनुरोध दूसरी निकासी बनाने के बजाय पहली निकासी लौटाता है। हेडर के साथ निकासियों के बीच का विराम 60 के बजाय 5 सेकंड होता है। [निकासी](/hi/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-10-19" description="Node API" tags={["Node API"]}>
+`node.tronrental.com` पर TRON HTTP और gRPC API की सब्सक्रिप्शन पहुँच: मासिक कोटा वाले प्लान, 7 दिन का ट्रायल प्लान, ऑटो-रिन्यू और आपके डैशबोर्ड में प्रबंधित API कुंजियाँ। [Node API](https://tronrental.com/hi/node-api)
+</Update>
+
+<Update label="2026-10-16" description="Transfer Packages: हर पैकेज में कम से कम 2 ट्रांसफर" tags={["Transfer Packages", "API"]}>
+ब्रेकिंग बदलाव: `POST /transfer-packages/buy` और `POST /transfer-packages/buy-invoice` `package_size: 1` को HTTP 422 के साथ अस्वीकार करते हैं। पैकेज में 2 से 10,000 ट्रांसफर होते हैं; सिंगल ट्रांसफर `single_transfer: true` के साथ खरीदा जाता है। [पैकेज खरीदें](/hi/api-reference/transfer-packages/buy)
+</Update>
+
+<Update label="2026-10-16" description="Transfer Packages के वेबहुक" tags={["Transfer Packages", "API"]}>
+पैकेज के मालिक के वेबहुक को अब 4 घटनाएँ मिलती हैं: हर ट्रांसफर के लिए शेष बैलेंस के साथ `package.transfer`, `package.completed`, `package.activated` और `package.expired`। पैकेज को पूरी तरह खर्च कर देने वाले ट्रांसफर की टेलीग्राम सूचना भी अब आती है। [वेबहुक — परिचय](/hi/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-10-13" description="एनर्जी और बैंडविड्थ के लिए ऑटो रिफिल" tags={["Auto-Refill", "Energy", "Bandwidth", "API"]}>
+किसी एड्रेस के लिए थ्रेशोल्ड तय करें: जब उसकी उपलब्ध एनर्जी या बैंडविड्थ उससे नीचे गिरती है, हम उसे आपके बैलेंस से अपने-आप टॉप-अप कर देते हैं। नियम डैशबोर्ड में, टेलीग्राम बॉट में और API से प्रबंधित होते हैं, और हर रिफिल आपके ऑर्डर में दिखता है। [ऑटो रिफिल](https://tronrental.com/hi/auto-refill)
+</Update>
+
+<Update label="2026-09-24" description="शुल्क बचत विश्लेषक" tags={["Energy"]}>
+मुफ़्त शुल्क बचत विश्लेषक दिखाता है कि किसी भी TRON एड्रेस ने 7 दिन, 30 दिन, साल भर या पूरे समय में ट्रांसफर पर कितना खर्च किया और उसकी जगह एनर्जी किराए पर लेने में कितना खर्च आता, साथ में साझा करने योग्य रिपोर्ट लिंक। इसके लिए साइन-अप या वॉलेट कनेक्ट करने की ज़रूरत नहीं। [शुल्क विश्लेषण](https://tronrental.com/hi/fee-savings-analyzer)
+</Update>
+
+<Update label="2026-09-21" description="निकासी को 20 सेकंड के भीतर रद्द करें" tags={["Withdrawals", "API"]}>
+डैशबोर्ड में निकासी की पुष्टि करने के बाद उसे रद्द करने के लिए आपके पास 20 सेकंड होते हैं, और शुल्क सहित पूरी राशि आपके बैलेंस में लौट आती है। API में निकासी की स्थितियाँ `scheduled`, `processing` और `cancelled` दिखती हैं। [निकासी](/hi/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-09-14" description="एनर्जी मूल्य अनुमान" tags={["Energy", "API"]}>
+`GET /energy/quote` किसी मात्रा की सटीक कुल राशि लौटाता है: किराया और फिक्स्ड शुल्क, TRX और USD में। API कुंजी के साथ यह आपकी व्यक्तिगत कीमत का उपयोग करता है; कुंजी के बिना, बाज़ार कीमत का। [मूल्य अनुमान](/hi/api-reference/energy/quote)
+</Update>
+
+<Update label="2026-09-11" description="वेबहुक: डैशबोर्ड में सेटअप, हस्ताक्षरित डिलीवरी" tags={["API"]}>
+आपके वेबहुक का URL अब प्रति अकाउंट एक ही होता है और डैशबोर्ड में सेट किया जाता है, जहाँ आपको साइनिंग सीक्रेट भी मिलता है। हर डिलीवरी में `X-Webhook-Signature` हेडर और `timestamp` फ़ील्ड होता है और वह अधिकतम 3 प्रयासों में की जाती है। ब्रेकिंग बदलाव: API कुंजी से कॉल किया गया `POST /webhooks/configure` HTTP 403 `FORBIDDEN_SESSION_TYPE` लौटाता है। [वेबहुक कॉन्फ़िगर करें](/hi/api-reference/webhooks/configure)
+</Update>
+
+<Update label="2026-09-10" description="Energy Broadcaster" tags={["Broadcaster"]}>
+अपना ब्रॉडकास्टर URL TronLink, TokenPocket या अपने कोड में एक बार पेस्ट करें, और आपके USDT ट्रांसफर को अपने-आप एनर्जी और बैंडविड्थ मिल जाती है, जिसका भुगतान TRX बर्न करने के बजाय आपके TronRental बैलेंस से होता है। बैलेंस खत्म होने पर ट्रांसफर ब्लॉक हो या सामान्य रूप से भेजा जाए, यह आप तय करते हैं। [Energy Broadcaster](https://tronrental.com/hi/energy-broadcaster)
+</Update>
+
+<Update label="2026-09-03" description="API कुंजी का अनुरोध लॉग" tags={["API"]}>
+डैशबोर्ड में API कुंजी खोलें और पिछले 7 दिनों के उसके अनुरोध देखें: मेथड, पाथ, स्टेटस, लेटेंसी और IP। कुंजियों की सूची में यह भी दिखता है कि हर कुंजी ने 7 दिनों में कितने अनुरोध किए और उसका इस्तेमाल आख़िरी बार कब हुआ। [प्रमाणीकरण](/hi/authentication)
+</Update>
+
+<Update label="2026-08-13" description="बैलेंस इतिहास" tags={["API", "Payments"]}>
+आपके बैलेंस का हर बदलाव (ऑर्डर, रिफंड, जमा, निकासी, स्टेकिंग रिवॉर्ड) आपके ऑर्डर के पूरा इतिहास टैब में और `GET /account/history` में सूचीबद्ध होता है। जिस ऑर्डर में प्राप्तकर्ता एड्रेस को सक्रिय करना पड़ा, उसमें उस सक्रियण की लागत भी दिखती है। [बैलेंस इतिहास](/hi/api-reference/account/history)
+</Update>
+
+<Update label="2026-08-06" description="पहले से सक्रिय एड्रेस को सक्रिय करना" tags={["API"]}>
+जो एड्रेस ऑन-चेन पहले से सक्रिय है, उसे सक्रिय करने का अनुरोध अब विफल नहीं होता: API HTTP 200 और `status: "already_activated"` के साथ जवाब देता है, और कोई शुल्क नहीं लगता। [एड्रेस सक्रिय करें](/hi/api-reference/energy/activate-address)
+</Update>
+
+<Update label="2026-08-03" description="बिना अकाउंट के किसी भी एड्रेस के लिए बैंडविड्थ खरीदें" tags={["Bandwidth", "Payments"]}>
+Buy TRON Bandwidth पेज रजिस्ट्रेशन के बिना किसी भी एड्रेस को बैंडविड्थ किराए पर देता है: इनवॉइस का भुगतान TRX या USDT में या अपने बैलेंस से करें, 1 घंटे या 1 दिन के लिए। एक इनवॉइस में एनर्जी और बैंडविड्थ को साथ भी जोड़ा जा सकता है। [Buy TRON Bandwidth](https://tronrental.com/hi/buy-tron-bandwidth)
+</Update>
+
+<Update label="2026-08-02" description="USDT में निकासी" tags={["Withdrawals", "API"]}>
+अपना बैलेंस USDT में निकालें: आप जितनी USDT राशि दर्ज करते हैं, ठीक उतनी ही आपको मिलती है, और पुष्टि करते समय विनिमय दर लॉक रहती है। API में `POST /account/withdrawal` को `currency: "USDT"` भेजें। [निकासी](/hi/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-08-02" description="बैलेंस से स्टेकिंग" tags={["Staking"]}>
+अपने TronRental बैलेंस से सीधे TRX स्टेक करें, 1 TRX से और बिना वॉलेट के: स्वचालित कंपाउंडिंग या साधारण रिवॉर्ड चुनें, जिन्हें आप अपने बैलेंस में क्लेम करते हैं। [स्टेकिंग](https://tronrental.com/hi/staking)
+</Update>
+
+<Update label="2026-03-14" description="वेबहुक" tags={["API"]}>
+डैशबोर्ड में वेबहुक URL सेट करें और API से दिए गए ऑर्डर की स्थिति के अपडेट पाएँ। [वेबहुक — परिचय](/hi/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-02-27" description="Transfer Packages" tags={["Transfer Packages", "Bandwidth"]}>
+USDT ट्रांसफर के प्रीपेड पैकेज: किसी एड्रेस के लिए पैकेज खरीदें, और उससे होने वाला हर USDT ट्रांसफर पैकेज के 1 ट्रांसफर का उपयोग करता है। वैकल्पिक BW Guarantee ट्रांसफर के लिए बैंडविड्थ भी डेलिगेट करता है। [Transfer Packages अवलोकन](/hi/api-reference/transfer-packages/overview)
+</Update>
+
+<Update label="2026-02-27" description="Bandwidth API" tags={["Bandwidth", "API"]}>
+API से किसी भी TRON एड्रेस के लिए बैंडविड्थ खरीदें, 1 घंटे या 1 दिन के लिए।
+
+2026-10-29 से: 5 से 59 मिनट की किसी भी अवधि के लिए भी। [Bandwidth खरीदें](/hi/api-reference/bandwidth/buy-bandwidth)
+</Update>
+
+<Update label="2026-02-27" description="API कुंजियों के लिए IP श्वेतसूची" tags={["API"]}>
+डैशबोर्ड में API कुंजी को IP एड्रेस की सूची तक सीमित करें; अन्य एड्रेस से आने वाले अनुरोध अस्वीकार कर दिए जाते हैं। [प्रमाणीकरण](/hi/authentication)
+</Update>
+
+<Update label="2026-02-23" description="निकासी API" tags={["Withdrawals", "API"]}>
+API से अपने बैलेंस से किसी भी TRON एड्रेस पर TRX निकालें।
+
+2026-08-02 से: USDT भी। [निकासी](/hi/api-reference/account/withdrawals)
+</Update>
+
+<Update label="2026-02-22" description="Smart Mode" tags={["Smart Mode"]}>
+USDT ट्रांसफर के लिए स्वचालित एनर्जी: एड्रेस कनेक्ट करें, और उससे होने वाले हर USDT ट्रांसफर को अलग ऑर्डर के बिना एनर्जी मिल जाती है।
+
+2026-02-27 से: वैकल्पिक BW Guarantee ट्रांसफर के लिए बैंडविड्थ भी डेलिगेट करता है। [Smart Mode अवलोकन](/hi/api-reference/smart-mode/overview)
+</Update>
+
+<Update label="2026-02-20" description="इनवॉइस" tags={["Energy", "API"]}>
+बिना अकाउंट के किसी भी एड्रेस के लिए एनर्जी खरीदें: इनवॉइस बनाएं, किसी भी वॉलेट से उसका भुगतान करें, और भुगतान आने के बाद एनर्जी डेलिगेट हो जाती है। [इनवॉइस बनाएं](/hi/api-reference/invoices/create-invoice)
+</Update>
+
+<Update label="2026-02-10" description="TronRental का लॉन्च" tags={["Energy", "Bandwidth", "Payments", "API"]}>
+USDT ट्रांसफर की फ़ीस घटाने के लिए किसी भी एड्रेस के लिए TRON एनर्जी और बैंडविड्थ किराए पर लें: जमा वाला अकाउंट बैलेंस, रीयल-टाइम कीमतें, और वेबसाइट व API पर वही सुविधाएँ। [TronRental](https://tronrental.com/hi)
+</Update>
