@@ -1,0 +1,56 @@
+---
+title: Energy Broadcaster
+description: "Send transactions from an address without TRX: energy and bandwidth are delegated automatically and charged to your TronRental balance"
+---
+
+## What it is
+
+The Energy Broadcaster is a TRON node URL that you set once in your wallet (TronLink, TokenPocket) or in your own backend. When a signed transaction goes through it, the broadcaster works out the energy and bandwidth the sender needs, delegates them to the sender and only then broadcasts the transaction. The cost is charged to your TronRental balance, so the sender's address needs no TRX for energy or bandwidth.
+
+Your keys stay with you: the broadcaster receives an already signed transaction and broadcasts it unchanged.
+
+## Setup
+
+1. Top up your TRX balance on [tronrental.com](https://tronrental.com).
+2. Create a broadcaster on the [Broadcast](https://tronrental.com/dashboard/broadcast) page of the dashboard. You get a secret broadcast URL — one per wallet, so the statistics do not mix.
+3. Set the URL as the node in your wallet's network settings, or use it from your server over HTTP or gRPC (the dashboard shows the gRPC server, port and TLS settings).
+
+<Warning>
+  The broadcast URL works like a password: anyone who has it spends your balance. If it leaks, switch the broadcaster off in the dashboard and create a new one.
+</Warning>
+
+## What is covered
+
+| Transaction | What the broadcaster delegates |
+|---|---|
+| Transfers of USDT, USDC, USDD and A7A5 | energy and bandwidth |
+| Swaps on SunSwap | energy and bandwidth, within your account's limits |
+| Transfers of other TRC-20 tokens and calls to any other smart contract | energy and bandwidth, within your account's limits |
+| TRX transfers | bandwidth |
+
+For a swap or a contract call the broadcaster simulates the signed transaction on its own node and delegates the energy the sender pays for, with a margin. When the contract's deployer covers part of the energy, only the sender's part is delegated.
+
+### Limits
+
+Swaps and contract calls are served within the limits of your account: at most 1,000,000 energy per call, and a daily energy limit for transfers of other tokens and calls to other contracts, shared by all your broadcasters (UTC day). A call above a limit is broadcast as is — without delegation and without a charge. Contact support if you need different limits.
+
+## What is not covered
+
+- **Fees charged in TRX.** The TRON network charges some fees in TRX rather than in energy or bandwidth: activating a new address when sending it TRX or TRC-10 tokens (about 1.1 TRX), multi-signature transactions (+1 TRX), a memo (+1 TRX) and changing account permissions (100 TRX). Delegation cannot pay them, so the sender's address needs its own TRX for such transactions.
+- **Deploying smart contracts.**
+- **Other transactions without a smart contract** (TRC-10 transfers, staking, voting) — they pass through the node unchanged.
+- **Energy already on the sender's address is not taken into account:** the broadcaster always delegates the full amount the transaction needs.
+
+## Broadcaster settings
+
+All settings are on the [Broadcast](https://tronrental.com/dashboard/broadcast) page, separately for each broadcaster.
+
+| Setting | What it does |
+|---|---|
+| **Block transaction** / **Passthrough** | When your balance cannot pay for the energy: *Block transaction* rejects the transaction, so the sender burns no TRX; *Passthrough* broadcasts it without delegation, and the sender pays the network fee. |
+| **Delegate bandwidth** | On (default) — the broadcaster also delegates bandwidth to a sender that lacks it. Off — the sender pays for bandwidth itself, in TRX if it has no free bandwidth. |
+| **Contract calls** | Off — swaps, transfers of other tokens and contract calls are broadcast without energy and nothing is charged. Transfers of USDT, USDC, USDD, A7A5 and TRX are not affected. |
+| **Revert protection** | Shown when contract calls are on. If the simulation shows the call would fail, the broadcaster checks it again on the next block; if it still fails, the transaction is not broadcast, the wallet gets an error, nothing is charged and no TRX is burned. If the next block does not arrive within a few seconds or our nodes are unavailable, the call is sent as with protection off. Rarely a call that would have gone through is refused — for example, one that relies on an `approve` sent a second earlier and not yet in a block; send it again a few seconds later. Off — a failing call is broadcast without delegation, and the sender pays the fee. |
+| **Pause** | The broadcast URL stops answering the wallet entirely — reading the balance included — until you resume it. |
+
+Transfers, swaps and contract calls that go through the broadcaster appear in the dashboard with their result: energy delegated and charged, or the reason it went out without energy.
