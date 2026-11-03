@@ -9,20 +9,22 @@ Hesabınızın **tek bir webhook URL'si** vardır ve tüm olaylar oraya gider. [
 
 ### Olaylar
 
-Bugün altı olay mevcut.
+Bugün sekiz olay mevcut.
 
 | Olay | Ne zaman gönderilir |
 |-------|-----------|
-| `order.updated` | Bir enerji veya bandwidth siparişi durum değiştirdiğinde — **yalnızca API üzerinden oluşturulan siparişler için** |
+| `order.updated` | Hesabınızın bir enerji veya bant genişliği siparişinin durumu değişti — nereden verildiği fark etmez: API, web sitesi, Telegram botu veya otomatik dolum |
+| `activation.updated` | Bakiyenizden ödenen bir adres etkinleştirmesi sonuçlandı |
+| `invoice.updated` | Hesabınıza ait bir faturanın durumu değişti |
 | `subscription.transfer` | Smart Mode, izlenen bir adresten yapılan transferin bedelini ödediğinde |
 | `package.transfer` | Bir Transfer Package, kendi adresinden yapılan bir transferin bedelini ödediğinde |
 | `package.completed` | Bir Transfer Package transferleri karşılamayı bıraktığında |
 | `package.activated` | Bir Transfer Package etkinleştiğinde |
 | `package.expired` | Ödenmemiş bir Transfer Package faturasının süresi dolduğunda |
 
-<Warning>
-  `order.updated` yalnızca bir API anahtarıyla oluşturulan siparişler için gönderilir. Web sitesinden veya Telegram botundan yapılan alımlar webhook üretmez — aynı hesap Smart Mode olaylarını normal biçimde almaya devam etse bile.
-</Warning>
+<Note>
+  3 Kasım 2026'dan beri `order.updated` **hesabın her siparişi** için gönderilir; önceden yalnızca API anahtarıyla oluşturulan siparişler için gönderiliyordu. Kanalları `source` alanından ayırt edin. [Bant genişliği kiralamaları](/tr/api-reference/bandwidth-rentals/create-rental) olay göndermez.
+</Note>
 
 ### Zarf
 
@@ -56,6 +58,10 @@ Başlıklar:
 
 <ResponseField name="status" type="string">
   `processing`, `filled`, `partial`, `failed`, `reclaimed` veya `reclaim_failed`. **Doğrunun kaynağı bu alandır** — aşağıdaki uyarıya bakın.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  Siparişin verildiği yer: `api`, `web` (web sitesi), `bot` (Telegram botu), `autorefill` (bir [Otomatik Dolum](/tr/api-reference/auto-refill/overview) kuralı), `faucet` (ücretsiz bant genişliği) veya `broadcast` (Energy Broadcast).
 </ResponseField>
 
 <ResponseField name="target_address" type="string">
@@ -97,6 +103,7 @@ Başlıklar:
     "id": 247033,
     "type": "energy",
     "status": "filled",
+    "source": "web",
     "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "volume": 65000,
     "expected_volume": 65000,
@@ -115,6 +122,93 @@ Başlıklar:
 </Warning>
 
 Büyük siparişleri içeride parçalara böleriz, ama bu bizim işimiz: siz **sipariş başına tek bir webhook** alırsınız, parça başına değil.
+
+Aynı `status` bir sipariş için birden fazla kez gelebilir. `(id, status)` çiftini anahtar olarak kullanın ve tekrarı yok sayın.
+
+### `activation.updated`
+
+Bakiyenizden ödenen bir etkinleştirme sonuçlandığında gönderilir: [Adres Etkinlestir](/tr/api-reference/energy/activate-address) ile, web sitesinde ya da bir sipariş veya Transfer Package etkin olmayan bir adresi etkinleştirmeye ihtiyaç duyduğunda otomatik olarak yapılan etkinleştirme.
+
+<ResponseField name="id" type="number">
+  Etkinleştirme kaydının kimliği — Adres Etkinlestir'in döndürdüğü `id`.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  Etkinleştirilen adres.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` — etkinleştirmeyi ağa gönderdik; `already_activated` — adres zaten etkindi ve ücret alınmadı; `failed` — etkinleştirme gerçekleşmedi ve ücret iade edildi; `pending` — işlem gönderildi ancak sonucu henüz bilinmiyor, bu yüzden ücret biz kontrol edene kadar tutuluyor.
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  Etkinleştirme işlemi ya da yoksa `null`.
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  Etkinleştirmenin size nihai maliyeti, ondalık dize olarak: iadeden sonra ve zaten etkin olan bir adres için `0`.
+</ResponseField>
+
+```json Response
+{
+  "event": "activation.updated",
+  "data": {
+    "id": 12345,
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "txid": "a1b2c3d4e5f6...",
+    "cost_trx": "1.2"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Note>
+  `pending` nadirdir ve nihai sonucu bugün ikinci bir olay göndermez. Bir etkinleştirme `pending` durumunda kalırsa destekle iletişime geçin.
+</Note>
+
+### `invoice.updated`
+
+Faturanın durumu değiştiğinde faturanın sahibi olan hesaba gönderilir. `data`, [Fatura Al](/tr/api-reference/invoices/get-invoice) uç noktasının döndürdüğü nesnedir; iki farkla: `error_message` her zaman `null` olur ve `status`, bu olayın bildirdiği durumdur.
+
+| `status` | Anlamı |
+|----------|---------|
+| `paid` | Ödeme alındı, teslimat sürüyor |
+| `underpaid` | Fiyattan az tutar geldi; kalanın ne zamana kadar gönderilebileceğini `topup_until` gösterir |
+| `delegated` | Kaynak devredildi |
+| `failed` | Teslimat başarısız oldu |
+| `expired` | Fatura süresi dolmadan ödeme gelmedi |
+| `reclaimed` | Kiralama bitti ve kaynak geri alındı |
+| `reclaim_failed` | Kaynak geri alınamadı |
+
+```json Response
+{
+  "event": "invoice.updated",
+  "data": {
+    "invoice_id": "7c1f0c2a-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+    "payment_address": "TPaymentAddress...",
+    "target_address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration": "1h",
+    "price_trx": "2.75",
+    "price_usdt": "0.64",
+    "status": "delegated",
+    "error_message": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "paid_at": "2026-11-03T14:50:40+00:00",
+    "completed_at": "2026-11-03T14:51:16+00:00",
+    "expires_at": "2026-11-03T15:20:00+00:00",
+    "created_at": "2026-11-03T14:50:00+00:00"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+  **Bir durum tekrarlanabilir ve olaylar sırasız gelebilir** — bir `delegated`, kendisinden önceki `paid`'den önce gelebilir. Kesin durum önemli olduğunda [Fatura Al](/tr/api-reference/invoices/get-invoice) ile doğrulayın.
+</Warning>
+
+Bir fatura, web sitesinde oturum açmışken oluşturduysanız hesabınıza aittir. Oturum açmadan oluşturulan bir faturanın sahibi yoktur ve olay göndermez — bugün buna API anahtarıyla oluşturulan fatura da dahildir.
 
 ### `subscription.transfer`
 
@@ -320,7 +414,9 @@ Bir paketin faturası 30 dakikalık süresi içinde ödenmedi. Hiçbir ücret al
 - Deneme başına **10 saniye** zaman aşımı.
 - Herhangi bir **`2xx`** bekleriz. Bunun dışındaki her şey başarısız deneme sayılır.
 - **Yönlendirmeler izlenmez.** `301`/`302` bir sıçrama değil, başarısız bir denemedir.
-- Kaçan olaylar sonradan **yeniden gönderilmez**. Üç deneme de başarısız olursa o olay kaybolur; tekrar beklemek yerine [Sipariş sorgulama](/tr/api-reference/orders/get-order) veya [Paketleri Listele](/tr/api-reference/transfer-packages/list) ile mutabakat yapın.
+- Kaçan olaylar sonradan **yeniden gönderilmez**. Üç deneme de başarısız olursa o olay kaybolur; tekrar beklemek yerine [Sipariş sorgulama](/tr/api-reference/orders/get-order), [Fatura Al](/tr/api-reference/invoices/get-invoice) veya [Paketleri Listele](/tr/api-reference/transfer-packages/list) ile mutabakat yapın.
+- **Olayların sırası garanti edilmez.** Her biri ayrı teslim edilir, bu yüzden sonraki bir olay önce gelebilir. Yeniden deneme aynı gövdeyi, aynı `timestamp` değerini ve aynı imzayı taşır.
+- Hesabın her siparişi, otomatik dolum dahil, olay gönderir; bu yüzden yoğun bir hesap çok sayıda olay alır. Hemen `2xx` yanıtı verin, ağır işi yanıttan sonra yapın.
 
 URL'niz **genel** bir adrese çözümlenmelidir. Loopback, özel ve link-local aralıklar reddedilir; hiç çözümlenmeyen bir host da öyle — her iki durumda da hiçbir şey gönderilmez ve günlüğe satır yazılmaz.
 
