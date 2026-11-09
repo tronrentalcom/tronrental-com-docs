@@ -5,6 +5,10 @@ description: "API 更新与变更"
 
 ## 更新日志
 
+### 2026 年 11 月
+
+- **能量** — [购买能量](/zh/api-reference/energy/buy-energy) 的 `max_price_trx` 会在扣除任何费用之前拒绝在[报价](/zh/api-reference/energy/quote)之后价格已变化的购买；报价现在按与订单扣费完全相同的方式舍入到 SUN
+
 ### 2026 年 10 月
 
 - **Energy Broadcaster** — SunSwap 兑换和对任何智能合约的调用现在可在账户限额之内获得能量和带宽；可选的回滚保护可在发送前拦截会失败的调用。详见 [Energy Broadcaster](/zh/resources/energy-broadcaster)

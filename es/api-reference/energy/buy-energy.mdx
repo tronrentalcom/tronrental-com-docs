@@ -22,6 +22,24 @@ Delega energia a la direccion TRON especificada. El costo se deduce del saldo de
   Duración del alquiler: `"1h"` (solo 1 hora)
 </ParamField>
 
+<ParamField body="max_price_trx" type="string">
+  Opcional. Lo máximo que acepta pagar por este pedido, en TRX — alquiler y comisión fija juntos. Si el
+  pedido costara más, se rechaza con `409 PRICE_CHANGED` y **no se cobra nada**. Pase el
+  `total_trx` de [Calcular precio](/es/api-reference/energy/quote). Una cadena decimal como
+  `"2.15"` (también se acepta un número JSON), mayor que 0. Sin él, el pedido se compra al
+  precio actual, como hasta ahora.
+</ParamField>
+
+### Cabeceras
+
+<ParamField header="Idempotency-Key" type="string">
+  Opcional, hasta 64 caracteres. Un reintento con la misma clave y el mismo cuerpo devuelve el pedido
+  original en lugar de comprar de nuevo. Tras un pedido exitoso, la misma clave con otro cuerpo —
+  incluido un `max_price_trx` distinto — devuelve `422 IDEMPOTENCY_KEY_REUSED`. Tras un rechazo que
+  no cobró nada, como `409 PRICE_CHANGED` o `402 INSUFFICIENT_BALANCE`, la clave vuelve a quedar libre:
+  reintente con ella y el nuevo precio.
+</ParamField>
+
 ### Respuesta
 
 <ResponseField name="id" type="number">
@@ -47,6 +65,23 @@ Delega energia a la direccion TRON especificada. El costo se deduce del saldo de
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
 </ResponseField>
+
+### Mostrar el precio y comprar a ese precio
+
+1. Llame a `GET /v1/energy/quote` con su `X-API-Key` y muestre `total_trx` a su usuario.
+2. Llame a `POST /v1/energy/buy` con `max_price_trx` igual a ese `total_trx`.
+
+La cotización se redondea al SUN exactamente como se cobra el pedido, así que mientras el precio no
+cambie el pedido cuesta exactamente `total_trx`. El precio de la energía sigue al mercado y puede
+cambiar entre la cotización y la compra: entonces la compra se rechaza con `409 PRICE_CHANGED` antes
+de cobrar nada — obtenga una nueva cotización, muéstrela y reintente, con la misma `Idempotency-Key`
+si usa una.
+
+<Warning>
+  `max_price_trx` cubre solo el pedido de energía. Si `target_address` aún no está activada on-chain,
+  la activación se cobra aparte (`activation_cost_trx`) y no se compara con
+  `max_price_trx`.
+</Warning>
 
 ### Ejemplo
 
