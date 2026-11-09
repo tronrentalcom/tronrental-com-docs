@@ -22,6 +22,24 @@ Belirtilen TRON adresine enerji devredilir. Maliyet hesap bakiyenizden dusulur.
   Kiralama süresi: `"1h"` (yalnızca 1 saat)
 </ParamField>
 
+<ParamField body="max_price_trx" type="string">
+  İsteğe bağlı. Bu sipariş için ödemeyi kabul ettiğiniz en yüksek tutar (TRX) — kiralama ve sabit
+  ücret birlikte. Sipariş bundan pahalıya gelecekse `409 PRICE_CHANGED` ile reddedilir ve **hiçbir
+  ücret alınmaz**. [Fiyat hesapla](/tr/api-reference/energy/quote) yanıtındaki
+  `total_trx` değerini gönderin. `"2.15"` gibi ondalık bir dize (JSON sayısı da kabul edilir), 0'dan
+  büyük. Bu alan olmadan sipariş, eskisi gibi güncel fiyattan satın alınır.
+</ParamField>
+
+### Başlıklar
+
+<ParamField header="Idempotency-Key" type="string">
+  İsteğe bağlı, en fazla 64 karakter. Aynı anahtar ve aynı gövdeyle yapılan tekrar, yeniden satın
+  almak yerine ilk siparişi döndürür. Başarılı bir siparişten sonra aynı anahtar farklı bir gövdeyle —
+  farklı bir `max_price_trx` dahil — `422 IDEMPOTENCY_KEY_REUSED` döndürür. `409 PRICE_CHANGED` veya
+  `402 INSUFFICIENT_BALANCE` gibi hiçbir ücret alınmayan bir retten sonra anahtar yeniden kullanılabilir
+  hâle gelir: aynı anahtarla ve yeni fiyatla tekrar deneyin.
+</ParamField>
+
 ### Yanit
 
 <ResponseField name="id" type="number">
@@ -47,6 +65,23 @@ Belirtilen TRON adresine enerji devredilir. Maliyet hesap bakiyenizden dusulur.
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
 </ResponseField>
+
+### Fiyatı gösterin, sonra o fiyattan satın alın
+
+1. `X-API-Key` anahtarınızla `GET /v1/energy/quote` çağırın ve `total_trx` değerini kullanıcınıza gösterin.
+2. `max_price_trx` değerini bu `total_trx` olarak ayarlayıp `POST /v1/energy/buy` çağırın.
+
+Fiyat teklifi, sipariş nasıl tahsil ediliyorsa SUN'a tam olarak öyle yuvarlanır; bu yüzden fiyat
+değişmediği sürece sipariş tam olarak `total_trx` tutarına mal olur. Enerji fiyatı piyasayı izler ve
+teklif ile satın alma arasında değişebilir: bu durumda satın alma, hiçbir ücret alınmadan
+`409 PRICE_CHANGED` ile reddedilir — yeni bir fiyat teklifi alın, gösterin ve tekrar deneyin,
+kullanıyorsanız aynı `Idempotency-Key` ile.
+
+<Warning>
+  `max_price_trx` yalnızca enerji siparişini kapsar. `target_address` zincirde henüz
+  etkinleştirilmemişse etkinleştirme ücreti ayrıca alınır (`activation_cost_trx`) ve
+  `max_price_trx` ile karşılaştırılmaz.
+</Warning>
 
 ### Ornek
 

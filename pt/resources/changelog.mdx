@@ -5,6 +5,10 @@ description: "Atualizações e alterações da API"
 
 ## Changelog
 
+### Novembro 2026
+
+- **Energia** — `max_price_trx` em [Comprar Energia](/pt/api-reference/energy/buy-energy) recusa uma compra cujo preço mudou depois da [cotação](/pt/api-reference/energy/quote), antes de qualquer cobrança; a cotação agora é arredondada ao SUN exatamente como o pedido é cobrado
+
 ### Outubro 2026
 
 - **Energy Broadcaster** — swaps na SunSwap e chamadas a qualquer smart contract agora recebem energia e bandwidth, dentro dos limites da sua conta; a proteção contra revert opcional pode impedir o envio de uma chamada que falharia. Veja [Energy Broadcaster](/pt/resources/energy-broadcaster)

@@ -22,6 +22,24 @@ Delegates energy to the specified TRON address. The cost is deducted from your a
   Rental duration: `"1h"` (1 hour only)
 </ParamField>
 
+<ParamField body="max_price_trx" type="string">
+  Optional. The most you agree to pay for this order, in TRX — rental and fixed fee together. If the
+  order would cost more, it is refused with `409 PRICE_CHANGED` and **nothing is charged**. Pass the
+  `total_trx` from [Quote Price](/api-reference/energy/quote). A decimal string such as
+  `"2.15"` (a JSON number is accepted too), greater than 0. Without it the order is bought at the
+  current price, as before.
+</ParamField>
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional, up to 64 characters. A retry with the same key and the same body returns the original
+  order instead of buying again. After a successful order, the same key with a different body —
+  a different `max_price_trx` included — returns `422 IDEMPOTENCY_KEY_REUSED`. After a refusal that
+  charged nothing, such as `409 PRICE_CHANGED` or `402 INSUFFICIENT_BALANCE`, the key is free again:
+  retry with it and the new price.
+</ParamField>
+
 ### Response
 
 <ResponseField name="id" type="number">
@@ -47,6 +65,22 @@ Delegates energy to the specified TRON address. The cost is deducted from your a
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
 </ResponseField>
+
+### Show the price, then buy at that price
+
+1. Call `GET /v1/energy/quote` with your `X-API-Key` and show `total_trx` to your user.
+2. Call `POST /v1/energy/buy` with `max_price_trx` set to that `total_trx`.
+
+The quote is rounded to the SUN exactly as the order is charged, so while the price is unchanged
+the order costs exactly `total_trx`. The energy price follows the market and can move between the
+quote and the purchase: then the purchase is refused with `409 PRICE_CHANGED` before anything is
+charged — get a new quote, show it, and retry, with the same `Idempotency-Key` if you use one.
+
+<Warning>
+  `max_price_trx` covers the energy order only. If `target_address` is not activated on-chain yet,
+  the activation is charged on top (`activation_cost_trx`) and is not checked against
+  `max_price_trx`.
+</Warning>
 
 ### Example
 

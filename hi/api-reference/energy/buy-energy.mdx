@@ -22,6 +22,23 @@ description: "TRON एड्रेस के लिए एनर्जी खर
   किराये की अवधि: `"1h"` (केवल 1 घंटा)
 </ParamField>
 
+<ParamField body="max_price_trx" type="string">
+  वैकल्पिक। इस ऑर्डर के लिए आप अधिकतम जितना चुकाने को तैयार हैं, TRX में — किराया और फिक्स्ड शुल्क मिलाकर।
+  यदि ऑर्डर इससे महँगा पड़े, तो वह `409 PRICE_CHANGED` के साथ अस्वीकार होता है और **कुछ भी चार्ज नहीं होता**।
+  [मूल्य अनुमान](/hi/api-reference/energy/quote) से मिला `total_trx` भेजें। `"2.15"` जैसी
+  दशमलव स्ट्रिंग (JSON संख्या भी स्वीकार है), 0 से बड़ी। इसके बिना ऑर्डर पहले की तरह मौजूदा कीमत पर खरीदा
+  जाता है।
+</ParamField>
+
+### हेडर
+
+<ParamField header="Idempotency-Key" type="string">
+  वैकल्पिक, अधिकतम 64 अक्षर। उसी कुंजी और उसी body के साथ दोहराया गया अनुरोध दोबारा खरीदने के बजाय मूल ऑर्डर
+  लौटाता है। सफल ऑर्डर के बाद वही कुंजी अलग body के साथ — अलग `max_price_trx` सहित — `422 IDEMPOTENCY_KEY_REUSED`
+  लौटाती है। ऐसे इनकार के बाद जिसमें कुछ भी चार्ज नहीं हुआ, जैसे `409 PRICE_CHANGED` या
+  `402 INSUFFICIENT_BALANCE`, कुंजी फिर से मुक्त हो जाती है: उसी कुंजी और नई कीमत के साथ पुनः प्रयास करें।
+</ParamField>
+
 ### रिस्पॉन्स
 
 <ResponseField name="id" type="number">
@@ -47,6 +64,21 @@ description: "TRON एड्रेस के लिए एनर्जी खर
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
 </ResponseField>
+
+### कीमत दिखाएँ, फिर उसी कीमत पर खरीदें
+
+1. अपनी `X-API-Key` के साथ `GET /v1/energy/quote` कॉल करें और अपने उपयोगकर्ता को `total_trx` दिखाएँ।
+2. `max_price_trx` को उसी `total_trx` पर सेट करके `POST /v1/energy/buy` कॉल करें।
+
+अनुमान को SUN तक ठीक उसी तरह राउंड किया जाता है जैसे ऑर्डर का शुल्क काटा जाता है, इसलिए जब तक कीमत नहीं
+बदलती, ऑर्डर की लागत ठीक `total_trx` होती है। एनर्जी की कीमत बाज़ार के साथ चलती है और अनुमान व खरीद के बीच
+बदल सकती है: तब कुछ भी चार्ज होने से पहले खरीद `409 PRICE_CHANGED` के साथ अस्वीकार हो जाती है — नया अनुमान
+लें, उसे दिखाएँ, और पुनः प्रयास करें; यदि आप `Idempotency-Key` उपयोग करते हैं, तो उसी के साथ।
+
+<Warning>
+  `max_price_trx` केवल एनर्जी ऑर्डर को कवर करता है। यदि `target_address` अभी on-chain सक्रिय नहीं है, तो
+  सक्रियण का शुल्क ऊपर से लिया जाता है (`activation_cost_trx`) और उसे `max_price_trx` से नहीं जाँचा जाता।
+</Warning>
 
 ### उदाहरण
 
