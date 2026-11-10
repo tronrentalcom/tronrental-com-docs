@@ -82,6 +82,7 @@ Standart biçimde, `detail.error.code` altında döndürülür:
 | `POOL_EXHAUSTED` | `503` | Bu adres için 32.000'in altındaki enerji siparişleri geçici olarak kullanılamıyor. Hiçbir ücret alınmadı — daha sonra tekrar deneyin veya 32.000 ya da daha fazlasını sipariş edin |
 | `INVALID_DURATION` | `400` | Süre, kabul edilen değerlerden biri değil |
 | `ORDER_NOT_FOUND` | `404` | Sipariş kimliği mevcut değil |
+| `ORDER_NOT_RECLAIMABLE` | `409` | Sipariş henüz teslim edilmiş (`filled`) bir bant genişliği siparişi değil veya başarısız oldu — yalnızca böyle bir sipariş geri alınabilir |
 | `RATE_LIMIT_EXCEEDED` | `429` | Çok fazla istek — bkz. [Hız Sınırları](/tr/resources/rate-limits) |
 
 <Note>

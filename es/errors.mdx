@@ -83,6 +83,7 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `POOL_EXHAUSTED` | `503` | Los pedidos de energía de menos de 32,000 no están disponibles temporalmente para esta dirección. No se cobró nada — reintenta más tarde o pide 32,000 o más |
 | `INVALID_DURATION` | `400` | La duración no es uno de los valores aceptados |
 | `ORDER_NOT_FOUND` | `404` | El ID de orden no existe |
+| `ORDER_NOT_RECLAIMABLE` | `409` | La orden aún no es una orden de ancho de banda entregada (`filled`) o falló; solo una orden así se puede recuperar |
 | `RATE_LIMIT_EXCEEDED` | `429` | Demasiadas solicitudes — ver [Límites de tasa](/es/resources/rate-limits) |
 
 <Note>

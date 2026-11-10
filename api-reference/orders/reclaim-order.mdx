@@ -1,0 +1,63 @@
+---
+title: Reclaim Order
+api: POST /api/v1/orders/{order_id}/reclaim
+description: "Take back an order's bandwidth before its term ends"
+---
+
+## Reclaim Order
+
+Undelegates the bandwidth of your order right away — for example, once the address has made the transfer it was rented for — instead of waiting for the end of the term. **The unused time is not refunded.** Only bandwidth orders can be reclaimed early.
+
+### Path parameters
+
+<ParamField path="order_id" type="number" required>
+  Order ID — the `id` returned by Buy Bandwidth.
+</ParamField>
+
+### Response
+
+Returns the order object, the same as Get Order. `status` tells what happened:
+
+| Status | Meaning |
+|--------|-------------|
+| `reclaimed` | The bandwidth was undelegated within this request; `undelegate_txid` is the on-chain transaction |
+| `filled` | The order is queued for the next reclaim cycle, usually within 30 seconds. The result arrives in the `order.updated` webhook, or poll Get Order |
+| `reclaiming` | A reclaim of this order is already running |
+| `reclaim_failed` | The undelegation did not go through after retries — contact support |
+
+A repeated call for an order that is already `reclaiming`, `reclaimed` or `reclaim_failed` returns the order unchanged, so retries are safe. The API key needs the `buy_bandwidth` scope.
+
+### Errors
+
+| Code | Status | When |
+|------|--------|------|
+| `ORDER_NOT_FOUND` | `404` | No such order on your account |
+| `ORDER_NOT_RECLAIMABLE` | `409` | The order is not delivered (`filled`) yet, or it failed |
+| `BAD_REQUEST` | `400` | Not a bandwidth order |
+| `FORBIDDEN` | `403` | The API key lacks the `buy_bandwidth` scope |
+
+### Example
+
+```bash
+curl -X POST https://api.tronrental.com/v1/orders/12345/reclaim \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "id": 12345,
+  "type": "bandwidth",
+  "target_address": "TRecipientAddress...",
+  "volume": 350,
+  "duration": "1h",
+  "price_trx": "0.42",
+  "status": "reclaimed",
+  "delegate_txid": "a1b2c3d4e5f6...",
+  "undelegate_txid": "f6e5d4c3b2a1...",
+  "reclaim_at": "2026-11-11T11:00:00Z",
+  "source": "api",
+  "activation_id": null,
+  "activation_cost_trx": null,
+  "created_at": "2026-11-11T10:00:00Z"
+}
+```
