@@ -18,6 +18,10 @@ description: "Проверить статус заказа энергии или
 
 Возвращает полный объект заказа, включая `status`, `type`, `volume`, `price_trx`, `delegate_txid` и временные метки.
 
+<ResponseField name="fixed_fee_trx" type="string">
+  Фиксированная комиссия этого заказа, берётся **один раз за заказ** независимо от объёма. **Уже входит** в `price_trx`. Отражает вашу комиссию, если для аккаунта настроена индивидуальная ставка, скидка или её снятие.
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   ID активации адреса, за которую заплатил этот заказ, или `null`, если ни за какую не платил.
 </ResponseField>
@@ -70,6 +74,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,

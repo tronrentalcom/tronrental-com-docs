@@ -18,6 +18,10 @@ Retorna o status atual e os detalhes completos de um pedido de energia ou largur
 
 Retorna o objeto completo do pedido, incluindo `status`, `type`, `volume`, `price_trx`, `delegate_txid` e carimbos de data/hora.
 
+<ResponseField name="fixed_fee_trx" type="string">
+  Taxa fixa deste pedido, cobrada **uma vez por pedido**, independentemente do volume. **Já está incluída** em `price_trx`. Reflete a sua taxa caso haja taxa personalizada, desconto ou isenção na sua conta.
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   ID da ativacao de endereco que este pedido pagou, ou `null` se nao pagou nenhuma.
 </ResponseField>
@@ -70,6 +74,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,

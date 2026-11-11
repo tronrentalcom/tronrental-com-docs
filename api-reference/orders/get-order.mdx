@@ -18,6 +18,10 @@ Returns the current status and full details of an energy or bandwidth order.
 
 Returns the full order object including `status`, `type`, `volume`, `price_trx`, `delegate_txid`, and timestamps.
 
+<ResponseField name="fixed_fee_trx" type="string">
+  Fixed fee of this order, charged **once per order** regardless of volume. It is **already included** in `price_trx`. Reflects your own fee if a custom fee, discount or waiver applies to your account.
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   ID of the address activation this order paid for, or `null` when it paid for none.
 </ResponseField>
@@ -70,6 +74,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,
