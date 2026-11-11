@@ -18,6 +18,10 @@ description: "ID द्वारा एनर्जी या बैंडवि
 
 `status`, `type`, `volume`, `price_trx`, `delegate_txid` और टाइमस्टैम्प सहित पूरा ऑर्डर ऑब्जेक्ट लौटाता है।
 
+<ResponseField name="fixed_fee_trx" type="string">
+  इस ऑर्डर का फिक्स्ड शुल्क, मात्रा चाहे जो हो, **प्रति ऑर्डर एक बार** लिया जाता है। यह `price_trx` में **पहले से शामिल** है। यदि आपके खाते पर अलग शुल्क, छूट या माफी लागू है तो यहाँ वही दिखेगा।
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   इस ऑर्डर ने जिस पते की सक्रियता का भुगतान किया उसकी ID, या `null` यदि किसी का नहीं किया।
 </ResponseField>
@@ -68,6 +72,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,

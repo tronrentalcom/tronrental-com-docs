@@ -18,6 +18,10 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
 
 `status`, `type`, `volume`, `price_trx`, `delegate_txid` ve zaman damgaları dahil tüm sipariş nesnesini döndürür.
 
+<ResponseField name="fixed_fee_trx" type="string">
+  Bu siparişin sabit ücreti; miktardan bağımsız olarak **sipariş başına bir kez** alınır. `price_trx` içinde **zaten yer alır**. Hesabınızda özel ücret, indirim veya muafiyet varsa burada kendi ücretiniz görünür.
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   Bu siparisin odedigi adres aktivasyonunun ID'si; hicbirini odemediyse `null`.
 </ResponseField>
@@ -70,6 +74,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,

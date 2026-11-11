@@ -18,6 +18,10 @@ Devuelve el estado actual y los detalles completos de una orden de energía o an
 
 Devuelve el objeto completo de la orden, incluyendo `status`, `type`, `volume`, `price_trx`, `delegate_txid` y marcas de tiempo.
 
+<ResponseField name="fixed_fee_trx" type="string">
+  Comisión fija de este pedido, cobrada **una vez por pedido** sin importar el volumen. **Ya está incluida** en `price_trx`. Refleja su propia comisión si a su cuenta se le aplica una comisión personalizada, un descuento o una exención.
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   ID de la activacion de direccion que pago este pedido, o `null` si no pago ninguna.
 </ResponseField>
@@ -70,6 +74,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,

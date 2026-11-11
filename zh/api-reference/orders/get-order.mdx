@@ -18,6 +18,10 @@ description: "通过 ID 查询能量或带宽订单的状态"
 
 返回完整的订单对象，包括 `status`、`type`、`volume`、`price_trx`、`delegate_txid` 和时间戳。
 
+<ResponseField name="fixed_fee_trx" type="string">
+  本订单的固定手续费，**每笔订单收取一次**，与数量无关。**已包含在** `price_trx` 中。若您的账户设有专属手续费、折扣或豁免，此处会体现您的实际手续费。
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   此订单支付的地址激活 ID；若未支付任何激活则为 `null`。
 </ResponseField>
@@ -63,6 +67,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,
