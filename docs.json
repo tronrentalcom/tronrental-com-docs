@@ -7,6 +7,11 @@
     "dark": "/logo/dark.svg"
   },
   "favicon": "/favicon.svg",
+  "api": {
+    "mdx": {
+      "server": "https://api.tronrental.com"
+    }
+  },
   "colors": {
     "primary": "#0ea5e9",
     "light": "#38bdf8",
