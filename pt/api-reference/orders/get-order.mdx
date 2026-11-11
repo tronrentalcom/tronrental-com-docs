@@ -40,7 +40,8 @@ Retorna o objeto completo do pedido, incluindo `status`, `type`, `volume`, `pric
 | `filled` | sim | Energia ou largura de banda delegada |
 | `partial` | sim | Um pedido grande de energia foi entregue em parte; o preço da parte não entregue voltou ao seu saldo |
 | `failed` | sim | A entrega falhou; o preço integral voltou ao seu saldo |
-| `reclaimed` | sim | Entregue; o período de aluguel terminou e o recurso foi recuperado |
+| `reclaiming` | não | Entregue; o recurso está sendo recuperado — ao fim do aluguel ou após [Recuperar pedido](/pt/api-reference/orders/reclaim-order) |
+| `reclaimed` | sim | Entregue; o período de aluguel terminou ou você chamou [Recuperar pedido](/pt/api-reference/orders/reclaim-order), e o recurso foi recuperado |
 | `reclaim_failed` | sim | Entregue; a recuperação do recurso após o aluguel não foi concluída do nosso lado. Nada a fazer da sua parte |
 
 Um pedido em andamento normalmente se torna final em segundos, no máximo em minutos. Consulte este

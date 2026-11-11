@@ -80,6 +80,7 @@ description: "API 错误代码及处理方式"
 | `POOL_EXHAUSTED` | `503` | 该地址暂时无法下少于 32,000 能量的订单。未扣除任何费用——请稍后重试，或订购 32,000 及以上 |
 | `INVALID_DURATION` | `400` | 时长不在允许的取值之内 |
 | `ORDER_NOT_FOUND` | `404` | 订单 ID 不存在 |
+| `ORDER_NOT_RECLAIMABLE` | `409` | 订单尚未成为已交付（`filled`）的带宽订单，或已失败——只有此类订单可以提前回收 |
 | `RATE_LIMIT_EXCEEDED` | `429` | 请求过多——参见[速率限制](/zh/resources/rate-limits) |
 
 <Note>

@@ -40,7 +40,8 @@ Devuelve el objeto completo de la orden, incluyendo `status`, `type`, `volume`, 
 | `filled` | sí | Energía o ancho de banda delegados |
 | `partial` | sí | Una orden grande de energía se entregó en parte; el precio de la parte no entregada vuelve a su saldo |
 | `failed` | sí | La entrega falló; el precio completo vuelve a su saldo |
-| `reclaimed` | sí | Entregada; el período de alquiler terminó y el recurso se recuperó |
+| `reclaiming` | no | Entregada; el recurso se está recuperando — al terminar el alquiler o tras [Recuperar orden](/es/api-reference/orders/reclaim-order) |
+| `reclaimed` | sí | Entregada; el período de alquiler terminó o llamó a [Recuperar orden](/es/api-reference/orders/reclaim-order), y el recurso se recuperó |
 | `reclaim_failed` | sí | Entregada; la recuperación del recurso tras el alquiler no se completó de nuestro lado. No tiene que hacer nada |
 
 Una orden en curso normalmente pasa a final en segundos, como máximo en minutos. Consulte este endpoint

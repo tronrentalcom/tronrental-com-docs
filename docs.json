@@ -108,7 +108,8 @@
                 "group": "Orders",
                 "pages": [
                   "api-reference/orders/get-order",
-                  "api-reference/orders/list-orders"
+                  "api-reference/orders/list-orders",
+                  "api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -266,7 +267,8 @@
                 "group": "Заказы",
                 "pages": [
                   "ru/api-reference/orders/get-order",
-                  "ru/api-reference/orders/list-orders"
+                  "ru/api-reference/orders/list-orders",
+                  "ru/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -423,7 +425,8 @@
                 "group": "订单",
                 "pages": [
                   "zh/api-reference/orders/get-order",
-                  "zh/api-reference/orders/list-orders"
+                  "zh/api-reference/orders/list-orders",
+                  "zh/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -580,7 +583,8 @@
                 "group": "Órdenes",
                 "pages": [
                   "es/api-reference/orders/get-order",
-                  "es/api-reference/orders/list-orders"
+                  "es/api-reference/orders/list-orders",
+                  "es/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -737,7 +741,8 @@
                 "group": "Siparişler",
                 "pages": [
                   "tr/api-reference/orders/get-order",
-                  "tr/api-reference/orders/list-orders"
+                  "tr/api-reference/orders/list-orders",
+                  "tr/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -894,7 +899,8 @@
                 "group": "Pedidos",
                 "pages": [
                   "pt/api-reference/orders/get-order",
-                  "pt/api-reference/orders/list-orders"
+                  "pt/api-reference/orders/list-orders",
+                  "pt/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -1051,7 +1057,8 @@
                 "group": "ऑर्डर",
                 "pages": [
                   "hi/api-reference/orders/get-order",
-                  "hi/api-reference/orders/list-orders"
+                  "hi/api-reference/orders/list-orders",
+                  "hi/api-reference/orders/reclaim-order"
                 ]
               },
               {

@@ -84,6 +84,7 @@ Returned in the standard shape, under `detail.error.code`:
 | `POOL_EXHAUSTED` | `503` | Energy orders under 32,000 are temporarily unavailable for this address. Nothing was charged — retry later or order 32,000 or more |
 | `INVALID_DURATION` | `400` | Duration is not one of the accepted values |
 | `ORDER_NOT_FOUND` | `404` | Order ID does not exist |
+| `ORDER_NOT_RECLAIMABLE` | `409` | The order is not a delivered (`filled`) bandwidth order yet, or it failed — only such an order can be reclaimed |
 | `RATE_LIMIT_EXCEEDED` | `429` | Too many requests — see [Rate Limits](/resources/rate-limits) |
 
 <Note>

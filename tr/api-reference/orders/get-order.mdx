@@ -40,7 +40,8 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
 | `filled` | evet | Enerji veya bant genişliği delege edildi |
 | `partial` | evet | Büyük bir enerji siparişi kısmen teslim edildi; teslim edilmeyen kısmın fiyatı bakiyenize geri döndü |
 | `failed` | evet | Teslimat başarısız oldu; fiyatın tamamı bakiyenize geri döndü |
-| `reclaimed` | evet | Teslim edildi; kiralama süresi doldu ve kaynak geri alındı |
+| `reclaiming` | hayır | Teslim edildi; kaynak geri alınıyor — kiralama bitince veya [Siparişi geri al](/tr/api-reference/orders/reclaim-order) çağrısından sonra |
+| `reclaimed` | evet | Teslim edildi; kiralama süresi doldu veya [Siparişi geri al](/tr/api-reference/orders/reclaim-order) çağrıldı ve kaynak geri alındı |
 | `reclaim_failed` | evet | Teslim edildi; kiralama sonunda kaynağı geri alma bizim tarafımızda gerçekleşmedi. Sizin yapmanız gereken bir şey yok |
 
 İşlemdeki bir sipariş normalde saniyeler içinde, en fazla birkaç dakikada nihai duruma geçer. Bu
