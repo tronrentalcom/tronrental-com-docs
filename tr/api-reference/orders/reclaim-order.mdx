@@ -1,6 +1,6 @@
 ---
 title: Siparişi geri al
-api: POST /api/v1/orders/{order_id}/reclaim
+api: POST /v1/orders/{order_id}/reclaim
 description: "Siparişin bant genişliğini süresi dolmadan geri al"
 ---
 
@@ -23,7 +23,7 @@ Get Order ile aynı şekilde sipariş nesnesini döndürür. `status` ne olduğu
 | `reclaimed` | Bant genişliği bu istek içinde geri alındı; `undelegate_txid` zincirdeki işlemdir |
 | `filled` | Sipariş bir sonraki geri alma döngüsüne alındı, genellikle 30 saniye içinde. Sonuç `order.updated` webhook'u ile gelir veya Get Order'ı sorgulayın |
 | `reclaiming` | Bu siparişin geri alınması zaten sürüyor |
-| `reclaim_failed` | Geri alma, tekrar denemelerden sonra gerçekleşmedi — destekle iletişime geçin |
+| `reclaim_failed` | Geri alma, tekrar denemelerden sonra bizim tarafımızda gerçekleşmedi. Sizin yapmanız gereken bir şey yok |
 
 Zaten `reclaiming`, `reclaimed` veya `reclaim_failed` durumundaki bir sipariş için tekrar çağrı siparişi değiştirmeden döndürür, bu yüzden tekrar denemek güvenlidir. API anahtarının `buy_bandwidth` yetkisi olmalıdır.
 

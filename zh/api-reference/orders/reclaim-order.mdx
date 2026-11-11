@@ -1,6 +1,6 @@
 ---
 title: 提前回收订单
-api: POST /api/v1/orders/{order_id}/reclaim
+api: POST /v1/orders/{order_id}/reclaim
 description: "在租期结束前收回订单的带宽"
 ---
 
@@ -23,7 +23,7 @@ description: "在租期结束前收回订单的带宽"
 | `reclaimed` | 带宽已在本次请求中取消委托；`undelegate_txid` 为链上交易 |
 | `filled` | 订单已排入下一个回收周期，通常在 30 秒内完成。结果通过 `order.updated` webhook 通知，或轮询 Get Order |
 | `reclaiming` | 该订单的回收正在进行中 |
-| `reclaim_failed` | 多次重试后取消委托仍未成功——请联系客服 |
+| `reclaim_failed` | 多次重试后，我们这边未能完成取消委托。您无需做任何事 |
 
 对已处于 `reclaiming`、`reclaimed` 或 `reclaim_failed` 状态的订单再次调用，会原样返回订单，因此重试是安全的。API 密钥需要 `buy_bandwidth` 权限。
 

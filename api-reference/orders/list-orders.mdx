@@ -1,6 +1,6 @@
 ---
 title: List Orders
-api: GET /api/v1/orders
+api: GET /v1/orders
 description: "List your orders with pagination and filters"
 ---
 
@@ -19,7 +19,7 @@ Returns a paginated list of your orders, newest first.
 </ParamField>
 
 <ParamField query="status" type="string">
-  Filter by status (e.g. `filled`, `pending`, `failed`)
+  Filter by status (e.g. `filled`, `partial`, `failed`). All values: [Order statuses](/api-reference/orders/get-order#order-statuses)
 </ParamField>
 
 <ParamField query="type" type="string">

@@ -1,6 +1,6 @@
 ---
 title: 订单列表
-api: GET /api/v1/orders
+api: GET /v1/orders
 description: "分页和筛选列出您的订单"
 ---
 
@@ -19,7 +19,7 @@ description: "分页和筛选列出您的订单"
 </ParamField>
 
 <ParamField query="status" type="string">
-  按状态筛选（例如 `filled`、`pending`、`failed`）
+  按状态筛选（例如 `filled`、`partial`、`failed`）。全部取值：[订单状态](/zh/api-reference/orders/get-order)
 </ParamField>
 
 <ParamField query="type" type="string">

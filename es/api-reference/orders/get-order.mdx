@@ -1,6 +1,6 @@
 ---
 title: Obtener orden
-api: GET /api/v1/orders/{order_id}
+api: GET /v1/orders/{order_id}
 description: "Consulta el estado de una orden de energía o ancho de banda por ID"
 ---
 
@@ -32,12 +32,28 @@ Devuelve el objeto completo de la orden, incluyendo `status`, `type`, `volume`, 
 
 ### Estados de la orden
 
-| Estado | Descripción |
-|--------|-------------|
-| `pending` | Orden recibida, delegación en curso |
-| `filled` | Energía o ancho de banda delegados correctamente |
-| `failed` | La delegación falló |
-| `reclaimed` | Ancho de banda devuelto tras el período de alquiler o con [Recuperar orden](/es/api-reference/orders/reclaim-order) (solo órdenes de ancho de banda) |
+| Estado | Final | Descripción |
+|--------|-------|-------------|
+| `created` | no | Orden registrada, la entrega aún no ha comenzado |
+| `processing` | no | Una orden grande de energía (más de 1,000,000) se está entregando por partes |
+| `submitted_unknown` | no | Delegación transmitida, a la espera de confirmación en un bloque — órdenes de ancho de banda y de energía de menos de 32,000 |
+| `filled` | sí | Energía o ancho de banda delegados |
+| `partial` | sí | Una orden grande de energía se entregó en parte; el precio de la parte no entregada vuelve a su saldo |
+| `failed` | sí | La entrega falló; el precio completo vuelve a su saldo |
+| `reclaiming` | no | Entregada; el recurso se está recuperando — al terminar el alquiler o tras [Recuperar orden](/es/api-reference/orders/reclaim-order) |
+| `reclaimed` | sí | Entregada; el período de alquiler terminó o llamó a [Recuperar orden](/es/api-reference/orders/reclaim-order), y el recurso se recuperó |
+| `reclaim_failed` | sí | Entregada; la recuperación del recurso tras el alquiler no se completó de nuestro lado. No tiene que hacer nada |
+
+Una orden en curso normalmente pasa a final en segundos, como máximo en minutos. Consulte este endpoint
+cada 5–10 segundos, o suscríbase al [webhook](/es/api-reference/webhooks/overview) `order.updated` para
+recibir el estado final. Si una orden sigue en curso durante más de 15 minutos, contacte con soporte
+indicando su ID.
+
+Un estado final no cambia, con una excepción: una orden `filled` puede pasar después a `reclaimed` o
+`reclaim_failed` cuando termina su alquiler. Una orden `failed` o `partial` nunca se entrega más ni se
+cobra de nuevo. Si la respuesta de su compra traía `provider_outcome: "unknown"`, la energía reembolsada
+aún puede llegar a la dirección en pocos minutos, y no se le cobra por ella — consulte
+[Comprar energía](/es/api-reference/energy/buy-energy).
 
 ### Ejemplo
 

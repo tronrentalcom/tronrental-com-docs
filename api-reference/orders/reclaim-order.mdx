@@ -1,6 +1,6 @@
 ---
 title: Reclaim Order
-api: POST /api/v1/orders/{order_id}/reclaim
+api: POST /v1/orders/{order_id}/reclaim
 description: "Take back an order's bandwidth before its term ends"
 ---
 
@@ -23,7 +23,7 @@ Returns the order object, the same as Get Order. `status` tells what happened:
 | `reclaimed` | The bandwidth was undelegated within this request; `undelegate_txid` is the on-chain transaction |
 | `filled` | The order is queued for the next reclaim cycle, usually within 30 seconds. The result arrives in the `order.updated` webhook, or poll Get Order |
 | `reclaiming` | A reclaim of this order is already running |
-| `reclaim_failed` | The undelegation did not go through after retries — contact support |
+| `reclaim_failed` | The undelegation did not go through on our side after retries. Nothing for you to do |
 
 A repeated call for an order that is already `reclaiming`, `reclaimed` or `reclaim_failed` returns the order unchanged, so retries are safe. The API key needs the `buy_bandwidth` scope.
 

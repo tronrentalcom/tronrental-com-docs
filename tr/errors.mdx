@@ -76,6 +76,8 @@ Standart biçimde, `detail.error.code` altında döndürülür:
 | `PRICE_CHANGED` | `409` | Sipariş, gönderdiğiniz `max_price_trx` değerinden pahalı. Hiçbir ücret alınmadı — yeni bir fiyat teklifi alın ve tekrar deneyin |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | Bu Idempotency-Key farklı bir istek gövdesiyle zaten kullanıldı |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | Idempotency-Key 64 karakterden uzun |
+| `IDEMPOTENT_REQUEST_IN_PROGRESS` | `409` | Bu Idempotency-Key ile yapılan bir istek hâlâ işleniyor. Birkaç saniye bekleyin ve aynı anahtarla tekrar deneyin — yeni bir anahtara geçmeyin |
+| `IDEMPOTENCY_UNAVAILABLE` | `503` | Idempotency-Key kontrol edilemedi, bu yüzden hiçbir şey satın alınmadı. Aynı anahtarla tekrar deneyin |
 | `INVALID_ADDRESS` | `400` | Geçerli bir TRON adresi değil |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Hedef bir akıllı sözleşme — TRON ona kaynak devretmeyi yasaklar |
 | `INVALID_VOLUME` | `400` | İstenen miktar izin verilen aralığın dışında |

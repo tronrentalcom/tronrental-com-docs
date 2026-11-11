@@ -1,6 +1,6 @@
 ---
 title: Досрочный отзыв заказа
-api: POST /api/v1/orders/{order_id}/reclaim
+api: POST /v1/orders/{order_id}/reclaim
 description: "Забрать bandwidth заказа до конца срока"
 ---
 
@@ -23,7 +23,7 @@ description: "Забрать bandwidth заказа до конца срока"
 | `reclaimed` | Bandwidth отозван в этом же запросе; `undelegate_txid` — транзакция в сети |
 | `filled` | Заказ поставлен в следующий цикл отзыва, обычно до 30 секунд. Итог придёт вебхуком `order.updated`, либо опрашивайте Get Order |
 | `reclaiming` | Отзыв этого заказа уже идёт |
-| `reclaim_failed` | Отзыв не прошёл после повторов — напишите в поддержку |
+| `reclaim_failed` | Отозвать на нашей стороне не удалось после повторов. Вам ничего делать не нужно |
 
 Повторный вызов для заказа в статусе `reclaiming`, `reclaimed` или `reclaim_failed` возвращает заказ без изменений, поэтому повторять запрос безопасно. Ключу API нужно право `buy_bandwidth`.
 

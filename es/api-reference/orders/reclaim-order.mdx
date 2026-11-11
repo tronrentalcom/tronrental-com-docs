@@ -1,6 +1,6 @@
 ---
 title: Recuperar orden
-api: POST /api/v1/orders/{order_id}/reclaim
+api: POST /v1/orders/{order_id}/reclaim
 description: "Recuperar el ancho de banda de una orden antes de que termine su plazo"
 ---
 
@@ -23,7 +23,7 @@ Devuelve el objeto de la orden, igual que Get Order. `status` indica lo que pas�
 | `reclaimed` | El ancho de banda se retiró en esta misma solicitud; `undelegate_txid` es la transacción en la cadena |
 | `filled` | La orden quedó en cola para el siguiente ciclo de recuperación, normalmente en menos de 30 segundos. El resultado llega en el webhook `order.updated`, o consulta Get Order |
 | `reclaiming` | Ya hay una recuperación de esta orden en curso |
-| `reclaim_failed` | La retirada no se completó tras los reintentos: contacta con soporte |
+| `reclaim_failed` | La retirada no se completó de nuestro lado tras los reintentos. No tiene que hacer nada |
 
 Una llamada repetida para una orden que ya está en `reclaiming`, `reclaimed` o `reclaim_failed` devuelve la orden sin cambios, así que reintentar es seguro. La clave de API necesita el permiso `buy_bandwidth`.
 

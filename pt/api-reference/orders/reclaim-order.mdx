@@ -1,6 +1,6 @@
 ---
 title: Recuperar pedido
-api: POST /api/v1/orders/{order_id}/reclaim
+api: POST /v1/orders/{order_id}/reclaim
 description: "Recuperar a largura de banda de um pedido antes do fim do prazo"
 ---
 
@@ -23,7 +23,7 @@ Retorna o objeto do pedido, igual ao Get Order. `status` mostra o que aconteceu:
 | `reclaimed` | A largura de banda foi removida nesta mesma requisição; `undelegate_txid` é a transação na blockchain |
 | `filled` | O pedido entrou na fila do próximo ciclo de recuperação, normalmente em até 30 segundos. O resultado chega no webhook `order.updated`, ou consulte Get Order |
 | `reclaiming` | Uma recuperação deste pedido já está em andamento |
-| `reclaim_failed` | A remoção não foi concluída após as tentativas — fale com o suporte |
+| `reclaim_failed` | A remoção não foi concluída do nosso lado após as tentativas. Nada a fazer da sua parte |
 
 Uma chamada repetida para um pedido que já está em `reclaiming`, `reclaimed` ou `reclaim_failed` retorna o pedido sem alterações, então repetir é seguro. A chave de API precisa da permissão `buy_bandwidth`.
 

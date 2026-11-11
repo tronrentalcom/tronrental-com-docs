@@ -1,6 +1,6 @@
 ---
 title: 购买能量
-api: POST /api/v1/energy/buy
+api: POST /v1/energy/buy
 description: "为 TRON 地址购买能量"
 ---
 
@@ -30,6 +30,9 @@ description: "为 TRON 地址购买能量"
 
 <ParamField header="Idempotency-Key" type="string">
   可选，最多 64 个字符。使用同一个键和相同的请求体重试时，会返回原订单，而不会再次购买。订单成功后，同一个键配合不同的请求体——包括不同的 `max_price_trx`——会返回 `422 IDEMPOTENCY_KEY_REUSED`。若请求被拒绝且未扣除任何费用，例如 `409 PRICE_CHANGED` 或 `402 INSUFFICIENT_BALANCE`，该键可再次使用：用它和新价格重试即可。
+
+  第一个带此键的请求仍在处理时，重试会收到 `409 IDEMPOTENT_REQUEST_IN_PROGRESS`：请等待几秒，并使用同一个键重试。如果无法检查该键，请求会在购买任何内容之前以 `503 IDEMPOTENCY_UNAVAILABLE` 被拒绝：请使用同一个键重试。键保留 24 小时；超过后，它将开启一次新的购买。
+  见下方「超时与重试」一节。
 </ParamField>
 
 ### 响应
@@ -39,11 +42,13 @@ description: "为 TRON 地址购买能量"
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  订单状态：`pending`、`filled`、`failed`、`submitted_unknown`（少于 32,000 的订单——见下方说明）
+  订单状态。最多 1,000,000 能量的订单通常直接返回最终状态：`filled` 或 `failed`。
+  更大的订单会分批交付，可能返回 `processing`，最终为 `filled`、`partial` 或 `failed`。少于 32,000 的订单可能返回 `submitted_unknown`（见下方说明）。
+  全部状态：[查询订单](/zh/api-reference/orders/get-order)。
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  委托广播后的链上交易 ID（`pending` 期间为 null）
+  委托广播后的链上交易 ID。当 `provider_outcome` 为 `unknown_delivered` 时为空。
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
@@ -58,6 +63,14 @@ description: "为 TRON 地址购买能量"
   地址激活费用（以 TRX 计），如已激活则为 `"0"`
 </ResponseField>
 
+<ResponseField name="provider_outcome" type="string | null">
+  普通结果时为 `null`。否则用于说明不是单纯成功的结果：
+
+  - `rejected` —— 确定没有交付。订单为 `failed`，全部费用已退回您的余额，`Idempotency-Key` 可再次使用。
+  - `unknown` —— 交付确认丢失。订单为 `failed`（大订单为 `partial`），未确认的部分已退款，但这部分能量仍可能在几分钟内到达该地址。若到达，您无需为其付费。使用同一个 `Idempotency-Key` 重试会返回同样的结果；使用新的键则会再次购买，该地址随后可能收到两次能量。
+  - `unknown_delivered` —— 确认丢失，但在链上找到了该委托。订单为 `filled` 并已扣费；`txid` 为空。
+</ResponseField>
+
 ### 先展示价格，再按该价格购买
 
 1. 使用您的 `X-API-Key` 调用 `GET /v1/energy/quote`，并向您的用户展示 `total_trx`。
@@ -68,6 +81,18 @@ description: "为 TRON 地址购买能量"
 <Warning>
   `max_price_trx` 仅涵盖能量订单。如果 `target_address` 在链上尚未激活，激活费用会另行扣除（`activation_cost_trx`），且不会与 `max_price_trx` 进行比较。
 </Warning>
+
+### 超时与重试
+
+请求一旦到达我们，即使您的连接断开，也会被处理到底：订单可能已创建并扣费，而您却没有收到响应。要安全地重试：
+
+1. 为每次购买在您这边生成一个 `Idempotency-Key`（可使用您自己的订单 ID），并在调用之前保存好。
+2. 遇到超时、连接错误或 `5xx` 响应时，使用同一个键、稍作停顿后再次发送相同的请求。您会得到原订单；如果第一个请求根本没有到达我们，这一次就会完成购买。
+3. 遇到 `409 IDEMPOTENT_REQUEST_IN_PROGRESS` 时，请等待几秒，并使用同一个键重试。
+
+结果不明时，切勿换用新的键：新的键就是一次新的购买。如果重试持续收到 `409 IDEMPOTENT_REQUEST_IN_PROGRESS` 超过一分钟，说明第一个请求在我们这边以意外状态结束——请在再次购买之前，到[订单列表](/zh/api-reference/orders/list-orders)中查找，或联系支持。不带键的重试始终是一次新的购买。
+
+以下响应是最终的——没有扣除任何费用，且该请求以后也不会被处理：除 `409 IDEMPOTENT_REQUEST_IN_PROGRESS` 和 `422 IDEMPOTENCY_KEY_REUSED` 之外的任何 `4xx` 错误，以及错误码为 `POOL_EXHAUSTED` 或 `IDEMPOTENCY_UNAVAILABLE` 的 `503`。`422 IDEMPOTENCY_KEY_REUSED` 表示本次请求没有购买任何内容，但使用同一个键的更早请求可能已经购买。请按[错误](/zh/errors)中的说明解读错误码。
 
 ### 示例
 
@@ -118,8 +143,12 @@ console.log(await resp.json());
 ```json Response
 {
   "id": 12345,
+  "status": "filled",
+  "txid": "a1b2c3d4e5f6...",
   "price_trx": "2.75",
-  "status": "pending"
+  "reclaim_at": "2026-06-10T05:30:00+00:00",
+  "activation_cost_trx": "0",
+  "provider_outcome": null
 }
 ```
 

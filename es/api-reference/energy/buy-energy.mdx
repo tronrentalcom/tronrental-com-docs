@@ -1,6 +1,6 @@
 ---
 title: Comprar energia
-api: POST /api/v1/energy/buy
+api: POST /v1/energy/buy
 description: "Comprar energia para una direccion TRON"
 ---
 
@@ -38,6 +38,12 @@ Delega energia a la direccion TRON especificada. El costo se deduce del saldo de
   incluido un `max_price_trx` distinto — devuelve `422 IDEMPOTENCY_KEY_REUSED`. Tras un rechazo que
   no cobró nada, como `409 PRICE_CHANGED` o `402 INSUFFICIENT_BALANCE`, la clave vuelve a quedar libre:
   reintente con ella y el nuevo precio.
+
+  Mientras la primera solicitud con la clave sigue en curso, un reintento recibe
+  `409 IDEMPOTENT_REQUEST_IN_PROGRESS`: espere unos segundos y reintente con la misma clave. Si no se
+  puede comprobar la clave, la solicitud se rechaza con `503 IDEMPOTENCY_UNAVAILABLE` antes de comprar
+  nada: reintente con la misma clave. Una clave se conserva 24 horas; después inicia una compra nueva.
+  Ver la sección «Tiempos de espera y reintentos» más abajo.
 </ParamField>
 
 ### Respuesta
@@ -47,11 +53,15 @@ Delega energia a la direccion TRON especificada. El costo se deduce del saldo de
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Order status: `pending`, `filled`, `failed`, `submitted_unknown` (pedidos de menos de 32,000 — ver la nota abajo)
+  Estado del pedido. Los pedidos de hasta 1,000,000 de energía normalmente vuelven finales: `filled` o
+  `failed`. Los pedidos mayores se entregan por partes y pueden volver como `processing`, y terminar
+  como `filled`, `partial` o `failed`. Los pedidos de menos de 32,000 pueden volver como
+  `submitted_unknown` (ver la nota abajo). Todos los estados: [Obtener orden](/es/api-reference/orders/get-order).
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  On-chain transaction id once the delegation is broadcast (null while `pending`)
+  On-chain transaction id once the delegation is broadcast. Vacío cuando `provider_outcome` es
+  `unknown_delivered`.
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
@@ -64,6 +74,20 @@ Delega energia a la direccion TRON especificada. El costo se deduce del saldo de
 
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
+</ResponseField>
+
+<ResponseField name="provider_outcome" type="string | null">
+  `null` para un resultado ordinario. En otro caso explica un resultado que no fue un éxito simple:
+
+  - `rejected` — la entrega definitivamente no ocurrió. El pedido queda `failed`, el precio completo
+    vuelve a su saldo y la `Idempotency-Key` queda libre de nuevo.
+  - `unknown` — se perdió la confirmación de la entrega. El pedido queda `failed` (`partial` en un
+    pedido grande) y la parte sin confirmar se reembolsa, pero esa energía aún puede llegar a la
+    dirección en pocos minutos. Si llega, no se le cobra por ella. Un reintento con la misma
+    `Idempotency-Key` devuelve este mismo resultado; una clave nueva compra de nuevo, y entonces la
+    dirección puede recibir la energía dos veces.
+  - `unknown_delivered` — se perdió la confirmación, pero la delegación se encontró on-chain. El
+    pedido queda `filled` y cobrado; `txid` está vacío.
 </ResponseField>
 
 ### Mostrar el precio y comprar a ese precio
@@ -82,6 +106,30 @@ si usa una.
   la activación se cobra aparte (`activation_cost_trx`) y no se compara con
   `max_price_trx`.
 </Warning>
+
+### Tiempos de espera y reintentos
+
+Una vez que su solicitud nos llega, se procesa hasta el final aunque su conexión se corte: un pedido
+puede crearse y cobrarse aunque usted nunca vea la respuesta. Para reintentar de forma segura:
+
+1. Cree una `Idempotency-Key` por compra de su lado (sirve su propio ID de pedido) y guárdela antes de
+   la llamada.
+2. Ante un tiempo de espera agotado, un error de conexión o una respuesta `5xx`, envíe de nuevo la
+   misma solicitud con la misma clave, tras una breve pausa. Obtiene el pedido original; si la primera
+   solicitud nunca nos llegó, esta realiza la compra.
+3. Ante `409 IDEMPOTENT_REQUEST_IN_PROGRESS`, espere unos segundos y reintente con la misma clave.
+
+Nunca cambie a una clave nueva mientras el resultado no esté claro: una clave nueva es una compra
+nueva. Si los reintentos siguen recibiendo `409 IDEMPOTENT_REQUEST_IN_PROGRESS` durante más de un
+minuto, la primera solicitud terminó en un estado inesperado de nuestro lado — búsquela en
+[Listar órdenes](/es/api-reference/orders/list-orders) o contacte con soporte antes de volver a
+comprar. Sin clave, un reintento siempre es una compra nueva.
+
+Estas respuestas son definitivas — no se cobró nada y la solicitud nunca se procesará más tarde:
+cualquier error `4xx` salvo `409 IDEMPOTENT_REQUEST_IN_PROGRESS` y `422 IDEMPOTENCY_KEY_REUSED`, y un
+`503` con código `POOL_EXHAUSTED` o `IDEMPOTENCY_UNAVAILABLE`. `422 IDEMPOTENCY_KEY_REUSED` significa
+que esta solicitud no compró nada, pero una solicitud anterior con la misma clave puede haber
+comprado. Lea el código como se describe en [Errores](/es/errors).
 
 ### Ejemplo
 
@@ -132,8 +180,12 @@ console.log(await resp.json());
 ```json Response
 {
   "id": 12345,
+  "status": "filled",
+  "txid": "a1b2c3d4e5f6...",
   "price_trx": "2.75",
-  "status": "pending"
+  "reclaim_at": "2026-06-10T05:30:00+00:00",
+  "activation_cost_trx": "0",
+  "provider_outcome": null
 }
 ```
 

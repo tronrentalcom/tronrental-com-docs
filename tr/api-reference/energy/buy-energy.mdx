@@ -1,6 +1,6 @@
 ---
 title: Enerji Satin Al
-api: POST /api/v1/energy/buy
+api: POST /v1/energy/buy
 description: "Bir TRON adresi icin enerji satin alin"
 ---
 
@@ -38,6 +38,12 @@ Belirtilen TRON adresine enerji devredilir. Maliyet hesap bakiyenizden dusulur.
   farklı bir `max_price_trx` dahil — `422 IDEMPOTENCY_KEY_REUSED` döndürür. `409 PRICE_CHANGED` veya
   `402 INSUFFICIENT_BALANCE` gibi hiçbir ücret alınmayan bir retten sonra anahtar yeniden kullanılabilir
   hâle gelir: aynı anahtarla ve yeni fiyatla tekrar deneyin.
+
+  Anahtarla yapılan ilk istek hâlâ işlenirken yapılan bir tekrar `409 IDEMPOTENT_REQUEST_IN_PROGRESS`
+  döndürür: birkaç saniye bekleyin ve aynı anahtarla tekrar deneyin. Anahtar kontrol edilemezse istek,
+  hiçbir şey satın alınmadan `503 IDEMPOTENCY_UNAVAILABLE` ile reddedilir: aynı anahtarla tekrar
+  deneyin. Anahtar 24 saat saklanır; bu sürenin ardından yeni bir satın alma başlatır.
+  Tekrar denemelerin nasıl çalıştığı için aşağıdaki «Zaman aşımları ve tekrar denemeler» bölümüne bakın.
 </ParamField>
 
 ### Yanit
@@ -47,11 +53,16 @@ Belirtilen TRON adresine enerji devredilir. Maliyet hesap bakiyenizden dusulur.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Order status: `pending`, `filled`, `failed`, `submitted_unknown` (32.000'in altındaki siparişler — aşağıdaki nota bakın)
+  Sipariş durumu. 1.000.000 enerjiye kadar olan siparişler normalde nihai durumla döner: `filled` veya
+  `failed`. Daha büyük siparişler parçalar hâlinde teslim edilir ve `processing` olarak dönebilir,
+  ardından `filled`, `partial` veya `failed` ile sonuçlanır. 32.000'in altındaki siparişler
+  `submitted_unknown` olarak dönebilir (aşağıdaki nota bakın). Tüm durumlar:
+  [Get Order](/tr/api-reference/orders/get-order).
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  On-chain transaction id once the delegation is broadcast (null while `pending`)
+  Delegasyon yayınlandıktan sonraki on-chain işlem kimliği. `provider_outcome` değeri
+  `unknown_delivered` olduğunda boştur.
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
@@ -64,6 +75,19 @@ Belirtilen TRON adresine enerji devredilir. Maliyet hesap bakiyenizden dusulur.
 
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
+</ResponseField>
+
+<ResponseField name="provider_outcome" type="string | null">
+  Olağan bir sonuç için `null`. Aksi hâlde düz bir başarı olmayan sonucu açıklar:
+
+  - `rejected` — teslimat kesinlikle gerçekleşmedi. Sipariş `failed` olur, fiyatın tamamı bakiyenize
+    geri döner ve `Idempotency-Key` yeniden kullanılabilir hâle gelir.
+  - `unknown` — teslimat onayı kayboldu. Sipariş `failed` olur (büyük sipariş için `partial`) ve
+    onaylanmamış kısım iade edilir; ancak bu enerji birkaç dakika içinde yine de adrese ulaşabilir.
+    Ulaşırsa bunun için ücret alınmaz. Aynı `Idempotency-Key` ile yapılan tekrar aynı sonucu döndürür;
+    yeni bir anahtar yeniden satın alır ve adres bu durumda enerjiyi iki kez alabilir.
+  - `unknown_delivered` — onay kayboldu, ancak delegasyon zincirde bulundu. Sipariş `filled` olur ve
+    ücretlendirilir; `txid` boştur.
 </ResponseField>
 
 ### Fiyatı gösterin, sonra o fiyattan satın alın
@@ -82,6 +106,30 @@ kullanıyorsanız aynı `Idempotency-Key` ile.
   etkinleştirilmemişse etkinleştirme ücreti ayrıca alınır (`activation_cost_trx`) ve
   `max_price_trx` ile karşılaştırılmaz.
 </Warning>
+
+### Zaman aşımları ve tekrar denemeler
+
+İsteğiniz bize ulaştıktan sonra, bağlantınız kopsa bile sonuna kadar işlenir: yanıtı hiç görmeseniz de
+bir sipariş oluşturulmuş ve ücreti alınmış olabilir. Güvenle tekrar denemek için:
+
+1. Her satın alma için kendi tarafınızda bir `Idempotency-Key` oluşturun (kendi sipariş ID'niz
+   olabilir) ve çağrıdan önce kaydedin.
+2. Zaman aşımı, bağlantı hatası veya `5xx` yanıtında aynı isteği aynı anahtarla, kısa bir ara vererek
+   tekrar gönderin. Orijinal siparişi alırsınız; ilk istek bize hiç ulaşmadıysa bu istek satın almayı
+   gerçekleştirir.
+3. `409 IDEMPOTENT_REQUEST_IN_PROGRESS` durumunda birkaç saniye bekleyin ve aynı anahtarla tekrar deneyin.
+
+Sonuç belirsizken asla yeni bir anahtara geçmeyin: yeni anahtar yeni bir satın almadır. Tekrar
+denemeler bir dakikadan uzun süre `409 IDEMPOTENT_REQUEST_IN_PROGRESS` almaya devam ederse, ilk istek
+bizim tarafımızda beklenmedik bir durumda sonuçlanmıştır — tekrar satın almadan önce siparişi
+[Siparişleri Listele](/tr/api-reference/orders/list-orders) içinde bulun veya destekle iletişime geçin.
+Anahtar olmadan her tekrar yeni bir satın almadır.
+
+Şu yanıtlar nihaidir — hiçbir ücret alınmadı ve istek daha sonra asla işlenmeyecek:
+`409 IDEMPOTENT_REQUEST_IN_PROGRESS` ve `422 IDEMPOTENCY_KEY_REUSED` dışındaki her `4xx` hata ile
+`POOL_EXHAUSTED` veya `IDEMPOTENCY_UNAVAILABLE` kodlu bir `503`. `422 IDEMPOTENCY_KEY_REUSED`, bu
+isteğin hiçbir şey satın almadığı anlamına gelir; ancak aynı anahtarla yapılan önceki bir istek satın
+almış olabilir. Kodu [Hatalar](/tr/errors) sayfasında anlatıldığı gibi okuyun.
 
 ### Ornek
 
@@ -132,8 +180,12 @@ console.log(await resp.json());
 ```json Response
 {
   "id": 12345,
+  "status": "filled",
+  "txid": "a1b2c3d4e5f6...",
   "price_trx": "2.75",
-  "status": "pending"
+  "reclaim_at": "2026-06-10T05:30:00+00:00",
+  "activation_cost_trx": "0",
+  "provider_outcome": null
 }
 ```
 

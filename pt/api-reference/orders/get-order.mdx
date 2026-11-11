@@ -1,6 +1,6 @@
 ---
 title: Obter pedido
-api: GET /api/v1/orders/{order_id}
+api: GET /v1/orders/{order_id}
 description: "Verifique o status de um pedido de energia ou largura de banda por ID"
 ---
 
@@ -32,12 +32,28 @@ Retorna o objeto completo do pedido, incluindo `status`, `type`, `volume`, `pric
 
 ### Status do pedido
 
-| Status | Descrição |
-|--------|-------------|
-| `pending` | Pedido recebido, delegação em andamento |
-| `filled` | Energia ou largura de banda delegada com sucesso |
-| `failed` | A delegação falhou |
-| `reclaimed` | Largura de banda devolvida após o período de aluguel ou por [Recuperar pedido](/pt/api-reference/orders/reclaim-order) (apenas pedidos de largura de banda) |
+| Status | Final | Descrição |
+|--------|-------|-------------|
+| `created` | não | Pedido registrado, entrega ainda não iniciada |
+| `processing` | não | Um pedido grande de energia (acima de 1.000.000) está sendo entregue em partes |
+| `submitted_unknown` | não | Delegação transmitida, aguardando confirmação em um bloco — pedidos de largura de banda e de energia abaixo de 32.000 |
+| `filled` | sim | Energia ou largura de banda delegada |
+| `partial` | sim | Um pedido grande de energia foi entregue em parte; o preço da parte não entregue voltou ao seu saldo |
+| `failed` | sim | A entrega falhou; o preço integral voltou ao seu saldo |
+| `reclaiming` | não | Entregue; o recurso está sendo recuperado — ao fim do aluguel ou após [Recuperar pedido](/pt/api-reference/orders/reclaim-order) |
+| `reclaimed` | sim | Entregue; o período de aluguel terminou ou você chamou [Recuperar pedido](/pt/api-reference/orders/reclaim-order), e o recurso foi recuperado |
+| `reclaim_failed` | sim | Entregue; a recuperação do recurso após o aluguel não foi concluída do nosso lado. Nada a fazer da sua parte |
+
+Um pedido em andamento normalmente se torna final em segundos, no máximo em minutos. Consulte este
+endpoint a cada 5–10 segundos, ou assine o [webhook](/pt/api-reference/webhooks/overview) `order.updated`
+para receber o estado final. Se um pedido ficar em andamento por mais de 15 minutos, fale com o
+suporte informando o ID dele.
+
+Um status final não muda, com uma exceção: um pedido `filled` pode passar depois a `reclaimed` ou
+`reclaim_failed` quando o aluguel termina. Um pedido `failed` ou `partial` nunca é entregue mais nem
+cobrado de novo. Se a resposta da compra tinha `provider_outcome: "unknown"`, a energia reembolsada
+ainda pode chegar ao endereço em poucos minutos, e você não é cobrado por ela — veja
+[Comprar Energia](/pt/api-reference/energy/buy-energy).
 
 ### Exemplo
 

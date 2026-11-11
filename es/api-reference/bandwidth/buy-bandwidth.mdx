@@ -1,6 +1,6 @@
 ---
 title: Comprar bandwidth
-api: POST /api/v1/bandwidth/buy
+api: POST /v1/bandwidth/buy
 description: "Comprar bandwidth para una dirección TRON"
 ---
 
@@ -46,6 +46,13 @@ Delega bandwidth a la dirección TRON especificada. El costo se deduce del saldo
   incluido un `max_price_trx` distinto — devuelve `422 IDEMPOTENCY_KEY_REUSED`. Tras un rechazo que
   no cobró nada, como `409 PRICE_CHANGED` o `402 INSUFFICIENT_BALANCE`, la clave vuelve a quedar libre:
   reintente con ella y el nuevo precio.
+
+  Mientras la primera solicitud con la clave sigue en curso, un reintento recibe
+  `409 IDEMPOTENT_REQUEST_IN_PROGRESS`: espere unos segundos y reintente con la misma clave. Si no se
+  puede comprobar la clave, la solicitud se rechaza con `503 IDEMPOTENCY_UNAVAILABLE` antes de comprar
+  nada: reintente con la misma clave. Una clave se conserva 24 horas; después inicia una compra nueva.
+  Los reintentos funcionan como se describe en
+  [Comprar energía → Tiempos de espera y reintentos](/es/api-reference/energy/buy-energy).
 </ParamField>
 
 ### Respuesta
@@ -55,11 +62,13 @@ Delega bandwidth a la dirección TRON especificada. El costo se deduce del saldo
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Estado del pedido: `pending`, `filled`, `failed`
+  Estado del pedido: `filled`, `failed` o `submitted_unknown` — la delegación se transmitió pero aún no
+  está confirmada en un bloque; en pocos minutos pasa a `filled`, o a `failed` con reembolso completo:
+  consulte [Obtener orden](/es/api-reference/orders/get-order).
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  ID de transacción on-chain tras el broadcast de la delegación (null mientras `pending`)
+  ID de transacción on-chain tras el broadcast de la delegación
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">

@@ -72,6 +72,8 @@ description: "API 错误代码及处理方式"
 | `PRICE_CHANGED` | `409` | 订单费用高于您传入的 `max_price_trx`。未扣除任何费用——请重新获取报价并重试 |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | 此 Idempotency-Key 已用于不同的请求体 |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | Idempotency-Key 超过 64 个字符 |
+| `IDEMPOTENT_REQUEST_IN_PROGRESS` | `409` | 使用此 Idempotency-Key 的请求仍在处理中。请等待几秒，并使用同一个键重试——不要换用新的键 |
+| `IDEMPOTENCY_UNAVAILABLE` | `503` | 无法检查该 Idempotency-Key，因此没有购买任何内容。请使用同一个键重试 |
 | `INVALID_ADDRESS` | `400` | 不是有效的 TRON 地址 |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | 目标是智能合约——TRON 禁止向其代理资源 |
 | `INVALID_VOLUME` | `400` | 请求数量超出允许范围 |

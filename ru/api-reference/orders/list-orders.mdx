@@ -1,6 +1,6 @@
 ---
 title: Список заказов
-api: GET /api/v1/orders
+api: GET /v1/orders
 description: "Список ваших заказов с пагинацией и фильтрами"
 ---
 
@@ -19,7 +19,7 @@ description: "Список ваших заказов с пагинацией и 
 </ParamField>
 
 <ParamField query="status" type="string">
-  Фильтр по статусу (например, `filled`, `pending`, `failed`)
+  Фильтр по статусу (например, `filled`, `partial`, `failed`). Все значения: [Статусы заказа](/ru/api-reference/orders/get-order)
 </ParamField>
 
 <ParamField query="type" type="string">

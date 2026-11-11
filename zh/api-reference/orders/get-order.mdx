@@ -1,6 +1,6 @@
 ---
 title: 查询订单
-api: GET /api/v1/orders/{order_id}
+api: GET /v1/orders/{order_id}
 description: "通过 ID 查询能量或带宽订单的状态"
 ---
 
@@ -32,12 +32,21 @@ description: "通过 ID 查询能量或带宽订单的状态"
 
 ### 订单状态
 
-| 状态 | 说明 |
-|--------|-------------|
-| `pending` | 订单已接收，正在委托中 |
-| `filled` | 能量或带宽委托成功 |
-| `failed` | 委托失败 |
-| `reclaimed` | 租用期结束后或通过[提前回收](/zh/api-reference/orders/reclaim-order)带宽已回收（仅带宽订单） |
+| 状态 | 最终 | 说明 |
+|--------|-------|-------------|
+| `created` | 否 | 订单已记录，尚未开始交付 |
+| `processing` | 否 | 大额能量订单（超过 1,000,000）正在分批交付 |
+| `submitted_unknown` | 否 | 委托已广播，等待区块确认——带宽订单和少于 32,000 的能量订单 |
+| `filled` | 是 | 能量或带宽已委托 |
+| `partial` | 是 | 大额能量订单仅部分交付；未交付部分的价格已退回您的余额 |
+| `failed` | 是 | 交付失败；全部费用已退回您的余额 |
+| `reclaiming` | 否 | 已交付；资源正在收回——租用结束时或调用[提前回收](/zh/api-reference/orders/reclaim-order)后 |
+| `reclaimed` | 是 | 已交付；租用期结束或您调用了[提前回收](/zh/api-reference/orders/reclaim-order)，资源已收回 |
+| `reclaim_failed` | 是 | 已交付；租用结束后，我们这边未能完成资源的收回。您无需做任何事 |
+
+处理中的订单通常会在几秒内变为最终状态，最长几分钟。请每 5–10 秒轮询此接口，或订阅 `order.updated` [Webhook](/zh/api-reference/webhooks/overview)，由我们将最终状态推送给您。如果订单处理中超过 15 分钟，请带上其 ID 联系支持。
+
+最终状态不会再变化，只有一个例外：`filled` 订单在租用结束时，之后可能变为 `reclaimed` 或 `reclaim_failed`。`failed` 或 `partial` 订单不会再继续交付，也不会再次扣费。如果其购买响应中带有 `provider_outcome: "unknown"`，已退款的能量仍可能在几分钟内到达该地址，且您无需为其付费——见[购买能量](/zh/api-reference/energy/buy-energy)。
 
 ### 示例
 

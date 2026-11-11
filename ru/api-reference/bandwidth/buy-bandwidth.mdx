@@ -1,6 +1,6 @@
 ---
 title: Купить bandwidth
-api: POST /api/v1/bandwidth/buy
+api: POST /v1/bandwidth/buy
 description: "Покупка bandwidth для адреса TRON"
 ---
 
@@ -36,6 +36,12 @@ description: "Покупка bandwidth для адреса TRON"
 
 <ParamField header="Idempotency-Key" type="string">
   Необязательный, до 64 символов. Повтор с тем же ключом и тем же телом запроса возвращает исходный заказ, а не покупает заново. После успешного заказа тот же ключ с другим телом — в том числе с другим `max_price_trx` — возвращает `422 IDEMPOTENCY_KEY_REUSED`. После отказа, при котором ничего не списано, например `409 PRICE_CHANGED` или `402 INSUFFICIENT_BALANCE`, ключ снова свободен: повторите запрос с ним и новой ценой.
+
+  Пока первый запрос с этим ключом ещё выполняется, повтор получает
+  `409 IDEMPOTENT_REQUEST_IN_PROGRESS`: подождите несколько секунд и повторите запрос с тем же ключом. Если ключ
+  не удалось проверить, запрос отклоняется с `503 IDEMPOTENCY_UNAVAILABLE` до какой-либо покупки:
+  повторите запрос с тем же ключом. Ключ хранится 24 часа; после этого запрос с ним — новая покупка.
+  Повторы работают так, как описано в разделе [Купить энергию → Таймауты и повторы](/ru/api-reference/energy/buy-energy).
 </ParamField>
 
 ### Ответ
@@ -45,11 +51,13 @@ description: "Покупка bandwidth для адреса TRON"
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Статус заказа: `pending`, `filled`, `failed`
+  Статус заказа: `filled`, `failed` или `submitted_unknown` — делегирование отправлено в сеть, но ещё не
+  подтверждено в блоке; в течение нескольких минут оно переходит в `filled` или в `failed` с полным возвратом:
+  опрашивайте [Получить заказ](/ru/api-reference/orders/get-order).
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  ID on-chain транзакции после broadcast делегирования (null пока `pending`)
+  ID on-chain транзакции после broadcast делегирования
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
