@@ -76,6 +76,8 @@ Returned in the standard shape, under `detail.error.code`:
 | `PRICE_CHANGED` | `409` | The order costs more than the `max_price_trx` you sent. Nothing was charged — get a new quote and retry |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | This Idempotency-Key was already used with a different request body |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | Idempotency-Key is longer than 64 characters |
+| `IDEMPOTENT_REQUEST_IN_PROGRESS` | `409` | A request with this Idempotency-Key is still being processed. Wait a few seconds and retry with the same key — do not switch to a new one |
+| `IDEMPOTENCY_UNAVAILABLE` | `503` | The Idempotency-Key could not be checked, so nothing was bought. Retry with the same key |
 | `INVALID_ADDRESS` | `400` | Not a valid TRON address |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | Target is a smart contract — TRON forbids delegating resources to it |
 | `INVALID_VOLUME` | `400` | Requested amount is outside the allowed range |

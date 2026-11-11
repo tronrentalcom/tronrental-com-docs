@@ -32,12 +32,27 @@ Returns the full order object including `status`, `type`, `volume`, `price_trx`,
 
 ### Order statuses
 
-| Status | Description |
-|--------|-------------|
-| `pending` | Order received, delegation in progress |
-| `filled` | Energy or bandwidth successfully delegated |
-| `failed` | Delegation failed |
-| `reclaimed` | Bandwidth returned after the rental period (bandwidth orders only) |
+| Status | Final | Description |
+|--------|-------|-------------|
+| `created` | no | Order recorded, delivery not started yet |
+| `processing` | no | A large energy order (over 1,000,000) is being delivered in parts |
+| `submitted_unknown` | no | Delegation broadcast, waiting for confirmation in a block — bandwidth orders and energy orders under 32,000 |
+| `filled` | yes | Energy or bandwidth delegated |
+| `partial` | yes | A large energy order was delivered in part; the price of the undelivered part is back on your balance |
+| `failed` | yes | Delivery failed; the full price is back on your balance |
+| `reclaimed` | yes | Delivered; the rental period is over and the resource was taken back |
+| `reclaim_failed` | yes | Delivered; taking the resource back after the rental did not go through on our side. Nothing for you to do |
+
+An order in progress normally becomes final within seconds, at most minutes. Poll this endpoint every
+5–10 seconds, or subscribe to the `order.updated` [webhook](/api-reference/webhooks/overview) to get the
+final state pushed to you. If an order stays in progress for more than 15 minutes, contact support with
+its ID.
+
+A final status does not change, with one exception: a `filled` order may later move to `reclaimed` or
+`reclaim_failed` when its rental ends. A `failed` or `partial` order is never delivered further or
+charged again. If its purchase response had `provider_outcome: "unknown"`, the refunded energy may
+still reach the address within minutes, and you are not charged for it — see
+[Buy Energy](/api-reference/energy/buy-energy).
 
 ### Example
 

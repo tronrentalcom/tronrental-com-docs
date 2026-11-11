@@ -46,6 +46,13 @@ Delega bandwidth para o endereço TRON especificado. O custo é deduzido do sald
   inclusive com outro `max_price_trx` — retorna `422 IDEMPOTENCY_KEY_REUSED`. Depois de uma recusa que
   não cobrou nada, como `409 PRICE_CHANGED` ou `402 INSUFFICIENT_BALANCE`, a chave fica livre de novo:
   repita com ela e o novo preço.
+
+  Enquanto a primeira requisição com a chave ainda está em execução, uma repetição recebe
+  `409 IDEMPOTENT_REQUEST_IN_PROGRESS`: aguarde alguns segundos e repita com a mesma chave. Se a chave
+  não puder ser verificada, a requisição é recusada com `503 IDEMPOTENCY_UNAVAILABLE` antes de qualquer
+  compra: repita com a mesma chave. Uma chave é mantida por 24 horas; depois disso, ela inicia uma nova compra.
+  As repetições funcionam como descrito em
+  [Comprar Energia → Timeouts e novas tentativas](/pt/api-reference/energy/buy-energy).
 </ParamField>
 
 ### Resposta
@@ -55,11 +62,13 @@ Delega bandwidth para o endereço TRON especificado. O custo é deduzido do sald
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Status do pedido: `pending`, `filled`, `failed`
+  Status do pedido: `filled`, `failed` ou `submitted_unknown` — a delegação foi transmitida, mas ainda
+  não foi confirmada em um bloco; em poucos minutos ela passa a `filled`, ou a `failed` com reembolso
+  integral: consulte [Get Order](/pt/api-reference/orders/get-order).
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  ID da transação on-chain após o broadcast da delegação (null enquanto `pending`)
+  ID da transação on-chain após o broadcast da delegação
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
