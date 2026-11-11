@@ -45,6 +45,12 @@ description: "TRON पते के लिए bandwidth खरीदें"
   लौटाता है। सफल ऑर्डर के बाद वही कुंजी अलग body के साथ — अलग `max_price_trx` सहित — `422 IDEMPOTENCY_KEY_REUSED`
   लौटाती है। ऐसे इनकार के बाद जिसमें कुछ भी चार्ज नहीं हुआ, जैसे `409 PRICE_CHANGED` या
   `402 INSUFFICIENT_BALANCE`, कुंजी फिर से मुक्त हो जाती है: उसी कुंजी और नई कीमत के साथ पुनः प्रयास करें।
+
+  जब तक इस कुंजी वाला पहला अनुरोध चल रहा है, पुनः प्रयास को `409 IDEMPOTENT_REQUEST_IN_PROGRESS` मिलता है:
+  कुछ सेकंड रुकें और उसी कुंजी के साथ फिर कोशिश करें। यदि कुंजी जाँची नहीं जा सकती, तो कुछ भी खरीदे जाने से
+  पहले अनुरोध `503 IDEMPOTENCY_UNAVAILABLE` के साथ अस्वीकार हो जाता है: उसी कुंजी के साथ पुनः प्रयास करें।
+  कुंजी 24 घंटे तक रखी जाती है; उसके बाद वह नई खरीद शुरू करती है।
+  पुनः प्रयास कैसे काम करते हैं, इसके लिए देखें [एनर्जी खरीदें → टाइमआउट और पुनः प्रयास](/hi/api-reference/energy/buy-energy)।
 </ParamField>
 
 ### प्रतिक्रिया
@@ -54,11 +60,13 @@ description: "TRON पते के लिए bandwidth खरीदें"
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  ऑर्डर स्थिति: `pending`, `filled`, `failed`
+  ऑर्डर स्थिति: `filled`, `failed`, या `submitted_unknown` — डेलिगेशन ब्रॉडकास्ट हो चुका है, पर अभी ब्लॉक में
+  पुष्टि नहीं हुई; यह कुछ मिनटों में `filled` हो जाता है, या पूरे रिफंड के साथ `failed`:
+  [Get Order](/hi/api-reference/orders/get-order) से जाँचें।
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  Delegation broadcast के बाद on-chain transaction id (`pending` पर null)
+  Delegation broadcast के बाद on-chain transaction id
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">

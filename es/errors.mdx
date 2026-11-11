@@ -77,6 +77,8 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `PRICE_CHANGED` | `409` | El pedido cuesta más que el `max_price_trx` que enviaste. No se cobró nada — obtén una nueva cotización y reintenta |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | Esta Idempotency-Key ya se usó con otro cuerpo de solicitud |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | La Idempotency-Key tiene más de 64 caracteres |
+| `IDEMPOTENT_REQUEST_IN_PROGRESS` | `409` | Una solicitud con esta Idempotency-Key aún se está procesando. Espera unos segundos y reintenta con la misma clave — no cambies a una nueva |
+| `IDEMPOTENCY_UNAVAILABLE` | `503` | No se pudo comprobar la Idempotency-Key, así que no se compró nada. Reintenta con la misma clave |
 | `INVALID_ADDRESS` | `400` | Dirección TRON no válida |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | El destino es un contrato inteligente — TRON prohíbe delegarle recursos |
 | `INVALID_VOLUME` | `400` | La cantidad solicitada está fuera del rango permitido |

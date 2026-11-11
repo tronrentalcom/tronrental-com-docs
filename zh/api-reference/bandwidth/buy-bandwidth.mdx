@@ -36,6 +36,9 @@ description: "为 TRON 地址购买带宽"
 
 <ParamField header="Idempotency-Key" type="string">
   可选，最多 64 个字符。使用同一个键和相同的请求体重试时，会返回原订单，而不会再次购买。订单成功后，同一个键配合不同的请求体——包括不同的 `max_price_trx`——会返回 `422 IDEMPOTENCY_KEY_REUSED`。若请求被拒绝且未扣除任何费用，例如 `409 PRICE_CHANGED` 或 `402 INSUFFICIENT_BALANCE`，该键可再次使用：用它和新价格重试即可。
+
+  第一个带此键的请求仍在处理时，重试会收到 `409 IDEMPOTENT_REQUEST_IN_PROGRESS`：请等待几秒，并使用同一个键重试。如果无法检查该键，请求会在购买任何内容之前以 `503 IDEMPOTENCY_UNAVAILABLE` 被拒绝：请使用同一个键重试。键保留 24 小时；超过后，它将开启一次新的购买。
+  重试的做法见[购买能量 → 超时与重试](/zh/api-reference/energy/buy-energy)。
 </ParamField>
 
 ### 响应
@@ -45,11 +48,11 @@ description: "为 TRON 地址购买带宽"
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  订单状态：`pending`、`filled`、`failed`
+  订单状态：`filled`、`failed` 或 `submitted_unknown` —— 委托已广播，但尚未在区块中确认；几分钟内会变为 `filled`，或变为 `failed` 并全额退款：请通过[查询订单](/zh/api-reference/orders/get-order)轮询。
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  委托广播后的链上交易 ID（`pending` 时为 null）
+  委托广播后的链上交易 ID
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">

@@ -32,12 +32,27 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
 
 ### Sipariş durumları
 
-| Durum | Açıklama |
-|--------|-------------|
-| `pending` | Sipariş alındı, delegasyon devam ediyor |
-| `filled` | Enerji veya bant genişliği başarıyla delege edildi |
-| `failed` | Delegasyon başarısız oldu |
-| `reclaimed` | Kiralama süresi sonunda bant genişliği geri alındı (yalnızca bant genişliği siparişleri) |
+| Durum | Nihai | Açıklama |
+|--------|-------|-------------|
+| `created` | hayır | Sipariş kaydedildi, teslimat henüz başlamadı |
+| `processing` | hayır | Büyük bir enerji siparişi (1.000.000'un üzerinde) parçalar hâlinde teslim ediliyor |
+| `submitted_unknown` | hayır | Delegasyon yayınlandı, bir blokta onay bekleniyor — bant genişliği siparişleri ve 32.000'in altındaki enerji siparişleri |
+| `filled` | evet | Enerji veya bant genişliği delege edildi |
+| `partial` | evet | Büyük bir enerji siparişi kısmen teslim edildi; teslim edilmeyen kısmın fiyatı bakiyenize geri döndü |
+| `failed` | evet | Teslimat başarısız oldu; fiyatın tamamı bakiyenize geri döndü |
+| `reclaimed` | evet | Teslim edildi; kiralama süresi doldu ve kaynak geri alındı |
+| `reclaim_failed` | evet | Teslim edildi; kiralama sonunda kaynağı geri alma bizim tarafımızda gerçekleşmedi. Sizin yapmanız gereken bir şey yok |
+
+İşlemdeki bir sipariş normalde saniyeler içinde, en fazla birkaç dakikada nihai duruma geçer. Bu
+endpoint'i her 5–10 saniyede bir sorgulayın veya nihai durumun size iletilmesi için `order.updated`
+[webhook](/tr/api-reference/webhooks/overview)'una abone olun. Bir sipariş 15 dakikadan uzun süre
+işlemde kalırsa, ID'siyle birlikte destekle iletişime geçin.
+
+Nihai bir durum değişmez; tek istisna: `filled` bir sipariş, kiralaması bittiğinde daha sonra
+`reclaimed` veya `reclaim_failed` durumuna geçebilir. `failed` veya `partial` bir sipariş asla daha
+fazla teslim edilmez ve yeniden ücretlendirilmez. Satın alma yanıtında `provider_outcome: "unknown"`
+varsa, iade edilen enerji birkaç dakika içinde yine de adrese ulaşabilir ve bunun için ücret
+alınmaz — bkz. [Buy Energy](/tr/api-reference/energy/buy-energy).
 
 ### Örnek
 

@@ -38,6 +38,12 @@ Delegates energy to the specified TRON address. The cost is deducted from your a
   a different `max_price_trx` included — returns `422 IDEMPOTENCY_KEY_REUSED`. After a refusal that
   charged nothing, such as `409 PRICE_CHANGED` or `402 INSUFFICIENT_BALANCE`, the key is free again:
   retry with it and the new price.
+
+  While the first request with the key is still running, a retry gets
+  `409 IDEMPOTENT_REQUEST_IN_PROGRESS`: wait a few seconds and retry with the same key. If the key
+  cannot be checked, the request is refused with `503 IDEMPOTENCY_UNAVAILABLE` before anything is
+  bought: retry with the same key. A key is kept for 24 hours; after that it starts a new purchase.
+  See [Timeouts and retries](#timeouts-and-retries).
 </ParamField>
 
 ### Response
@@ -47,11 +53,15 @@ Delegates energy to the specified TRON address. The cost is deducted from your a
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Order status: `pending`, `filled`, `failed`, `submitted_unknown` (orders under 32,000 — see the note below)
+  Order status. Orders up to 1,000,000 energy normally come back final: `filled` or `failed`.
+  Larger orders are delivered in parts and may come back as `processing`, then end as `filled`,
+  `partial` or `failed`. Orders under 32,000 may come back as `submitted_unknown` (see the note
+  below). All statuses: [Get Order](/api-reference/orders/get-order#order-statuses).
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  On-chain transaction id once the delegation is broadcast (null while `pending`)
+  On-chain transaction id once the delegation is broadcast. Empty when `provider_outcome` is
+  `unknown_delivered`.
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
@@ -64,6 +74,19 @@ Delegates energy to the specified TRON address. The cost is deducted from your a
 
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
+</ResponseField>
+
+<ResponseField name="provider_outcome" type="string | null">
+  `null` for an ordinary result. Otherwise it explains a result that was not a plain success:
+
+  - `rejected` — delivery definitely did not happen. The order is `failed`, the full price is back
+    on your balance, and the `Idempotency-Key` is free again.
+  - `unknown` — the delivery confirmation was lost. The order is `failed` (`partial` for a large
+    order) and the unconfirmed part is refunded, but that energy may still reach the address within
+    minutes. If it does, you are not charged for it. A retry with the same `Idempotency-Key` returns
+    this same result; a new key buys again, and the address may then receive energy twice.
+  - `unknown_delivered` — the confirmation was lost, but the delegation was found on-chain. The
+    order is `filled` and charged; `txid` is empty.
 </ResponseField>
 
 ### Show the price, then buy at that price
@@ -81,6 +104,29 @@ charged — get a new quote, show it, and retry, with the same `Idempotency-Key`
   the activation is charged on top (`activation_cost_trx`) and is not checked against
   `max_price_trx`.
 </Warning>
+
+### Timeouts and retries
+
+Once your request reaches us, it is processed to the end even if your connection drops: an order
+can be created and charged although you never saw the response. To retry safely:
+
+1. Create one `Idempotency-Key` per purchase on your side (your own order ID works) and save it
+   before the call.
+2. On a timeout, a connection error or a `5xx` response, send the same request again with the same
+   key, with a short pause. You get the original order; if the first request never reached us, this
+   one makes the purchase.
+3. On `409 IDEMPOTENT_REQUEST_IN_PROGRESS`, wait a few seconds and retry with the same key.
+
+Never switch to a new key while the outcome is unclear: a new key is a new purchase. If retries keep
+getting `409 IDEMPOTENT_REQUEST_IN_PROGRESS` for more than a minute, the first request ended in an
+unexpected state on our side — find it in [List Orders](/api-reference/orders/list-orders) or
+contact support before buying again. Without a key, a retry is always a new purchase.
+
+These answers are final — nothing was charged, and the request will never be processed later: any
+`4xx` error except `409 IDEMPOTENT_REQUEST_IN_PROGRESS` and `422 IDEMPOTENCY_KEY_REUSED`, and a `503`
+with code `POOL_EXHAUSTED` or `IDEMPOTENCY_UNAVAILABLE`. `422 IDEMPOTENCY_KEY_REUSED` means this
+request bought nothing, but an earlier request with the same key may have. Read the code as
+described in [Errors](/errors).
 
 ### Example
 
@@ -131,8 +177,12 @@ console.log(await resp.json());
 ```json Response
 {
   "id": 12345,
+  "status": "filled",
+  "txid": "a1b2c3d4e5f6...",
   "price_trx": "2.75",
-  "status": "pending"
+  "reclaim_at": "2026-06-10T05:30:00+00:00",
+  "activation_cost_trx": "0",
+  "provider_outcome": null
 }
 ```
 

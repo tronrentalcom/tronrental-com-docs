@@ -37,6 +37,12 @@ description: "TRON एड्रेस के लिए एनर्जी खर
   लौटाता है। सफल ऑर्डर के बाद वही कुंजी अलग body के साथ — अलग `max_price_trx` सहित — `422 IDEMPOTENCY_KEY_REUSED`
   लौटाती है। ऐसे इनकार के बाद जिसमें कुछ भी चार्ज नहीं हुआ, जैसे `409 PRICE_CHANGED` या
   `402 INSUFFICIENT_BALANCE`, कुंजी फिर से मुक्त हो जाती है: उसी कुंजी और नई कीमत के साथ पुनः प्रयास करें।
+
+  जब तक इस कुंजी वाला पहला अनुरोध चल रहा है, पुनः प्रयास को `409 IDEMPOTENT_REQUEST_IN_PROGRESS` मिलता है:
+  कुछ सेकंड रुकें और उसी कुंजी के साथ फिर कोशिश करें। यदि कुंजी जाँची नहीं जा सकती, तो कुछ भी खरीदे जाने से
+  पहले अनुरोध `503 IDEMPOTENCY_UNAVAILABLE` के साथ अस्वीकार हो जाता है: उसी कुंजी के साथ पुनः प्रयास करें।
+  कुंजी 24 घंटे तक रखी जाती है; उसके बाद वह नई खरीद शुरू करती है।
+  नीचे «टाइमआउट और पुनः प्रयास» अनुभाग देखें।
 </ParamField>
 
 ### रिस्पॉन्स
@@ -46,11 +52,14 @@ description: "TRON एड्रेस के लिए एनर्जी खर
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Order status: `pending`, `filled`, `failed`, `submitted_unknown` (32,000 से कम के ऑर्डर — नीचे नोट देखें)
+  ऑर्डर स्थिति। 1,000,000 एनर्जी तक के ऑर्डर सामान्यतः अंतिम स्थिति में लौटते हैं: `filled` या `failed`।
+  बड़े ऑर्डर हिस्सों में डिलीवर होते हैं और `processing` के रूप में लौट सकते हैं, फिर `filled`, `partial` या
+  `failed` पर समाप्त होते हैं। 32,000 से कम के ऑर्डर `submitted_unknown` के साथ लौट सकते हैं (नीचे नोट देखें)।
+  सभी स्थितियाँ: [Get Order](/hi/api-reference/orders/get-order)।
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  On-chain transaction id once the delegation is broadcast (null while `pending`)
+  Delegation broadcast के बाद on-chain transaction id। `provider_outcome` के `unknown_delivered` होने पर खाली रहता है।
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">
@@ -63,6 +72,19 @@ description: "TRON एड्रेस के लिए एनर्जी खर
 
 <ResponseField name="activation_cost_trx" type="string">
   Address activation cost in TRX (`"0"` if the recipient is already activated)
+</ResponseField>
+
+<ResponseField name="provider_outcome" type="string | null">
+  सामान्य परिणाम के लिए `null`। अन्यथा यह उस परिणाम को समझाता है जो सीधी सफलता नहीं था:
+
+  - `rejected` — डिलीवरी निश्चित रूप से नहीं हुई। ऑर्डर `failed` है, पूरी कीमत आपकी शेष राशि पर लौट आई है,
+    और `Idempotency-Key` फिर से मुक्त है।
+  - `unknown` — डिलीवरी की पुष्टि खो गई। ऑर्डर `failed` है (बड़े ऑर्डर के लिए `partial`) और अपुष्ट हिस्सा
+    रिफंड हो गया है, लेकिन वह एनर्जी कुछ मिनटों में फिर भी एड्रेस तक पहुँच सकती है। ऐसा होने पर उसका शुल्क
+    आपसे नहीं लिया जाता। उसी `Idempotency-Key` के साथ पुनः प्रयास यही परिणाम लौटाता है; नई कुंजी दोबारा
+    खरीदती है, और तब एड्रेस को दो बार एनर्जी मिल सकती है।
+  - `unknown_delivered` — पुष्टि खो गई, पर डेलिगेशन on-chain मिल गया। ऑर्डर `filled` है और चार्ज हो चुका है;
+    `txid` खाली है।
 </ResponseField>
 
 ### कीमत दिखाएँ, फिर उसी कीमत पर खरीदें
@@ -79,6 +101,27 @@ description: "TRON एड्रेस के लिए एनर्जी खर
   `max_price_trx` केवल एनर्जी ऑर्डर को कवर करता है। यदि `target_address` अभी on-chain सक्रिय नहीं है, तो
   सक्रियण का शुल्क ऊपर से लिया जाता है (`activation_cost_trx`) और उसे `max_price_trx` से नहीं जाँचा जाता।
 </Warning>
+
+### टाइमआउट और पुनः प्रयास
+
+आपका अनुरोध हम तक पहुँचने के बाद, आपका कनेक्शन टूटने पर भी उसे अंत तक प्रोसेस किया जाता है: ऑर्डर बन सकता है
+और चार्ज हो सकता है, भले ही आपको रिस्पॉन्स न दिखा हो। सुरक्षित पुनः प्रयास के लिए:
+
+1. अपनी ओर से हर खरीद के लिए एक `Idempotency-Key` बनाएँ (आपका अपना ऑर्डर ID चलेगा) और कॉल से पहले उसे
+   सहेज लें।
+2. टाइमआउट, कनेक्शन त्रुटि या `5xx` रिस्पॉन्स पर, थोड़े विराम के साथ उसी कुंजी के साथ वही अनुरोध फिर भेजें।
+   आपको मूल ऑर्डर मिलता है; यदि पहला अनुरोध हम तक पहुँचा ही नहीं था, तो यह अनुरोध खरीद कर देता है।
+3. `409 IDEMPOTENT_REQUEST_IN_PROGRESS` पर, कुछ सेकंड रुकें और उसी कुंजी के साथ पुनः प्रयास करें।
+
+परिणाम अस्पष्ट होने पर कभी नई कुंजी पर न जाएँ: नई कुंजी नई खरीद है। यदि पुनः प्रयासों को एक मिनट से अधिक
+समय तक `409 IDEMPOTENT_REQUEST_IN_PROGRESS` मिलता रहे, तो पहला अनुरोध हमारी ओर अप्रत्याशित स्थिति में समाप्त
+हुआ है — दोबारा खरीदने से पहले उसे [ऑर्डर सूची](/hi/api-reference/orders/list-orders) में खोजें या सपोर्ट से
+संपर्क करें। कुंजी के बिना पुनः प्रयास हमेशा नई खरीद होती है।
+
+ये उत्तर अंतिम हैं — कुछ भी चार्ज नहीं हुआ, और अनुरोध बाद में कभी प्रोसेस नहीं होगा: `409 IDEMPOTENT_REQUEST_IN_PROGRESS`
+और `422 IDEMPOTENCY_KEY_REUSED` को छोड़कर कोई भी `4xx` त्रुटि, तथा कोड `POOL_EXHAUSTED` या `IDEMPOTENCY_UNAVAILABLE`
+वाला `503`। `422 IDEMPOTENCY_KEY_REUSED` का अर्थ है कि इस अनुरोध ने कुछ नहीं खरीदा, पर उसी कुंजी वाले पिछले
+अनुरोध ने खरीदा हो सकता है। कोड को [त्रुटियां](/hi/errors) में बताए अनुसार पढ़ें।
 
 ### उदाहरण
 
@@ -129,8 +172,12 @@ console.log(await resp.json());
 ```json Response
 {
   "id": 12345,
+  "status": "filled",
+  "txid": "a1b2c3d4e5f6...",
   "price_trx": "2.75",
-  "status": "pending"
+  "reclaim_at": "2026-06-10T05:30:00+00:00",
+  "activation_cost_trx": "0",
+  "provider_outcome": null
 }
 ```
 
