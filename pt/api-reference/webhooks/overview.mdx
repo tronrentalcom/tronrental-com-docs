@@ -96,6 +96,14 @@ Cabeçalhos:
   Quando o recurso está agendado para ser retomado, ISO-8601, ou `null` para pedidos que não são retomados por temporizador.
 </ResponseField>
 
+<ResponseField name="fail_reason" type="string | null">
+  Por que um pedido `failed` falhou, como um código da tabela **Motivos de falha** em [Get Order](/pt/api-reference/orders/get-order); `null` em qualquer outro status. Trate um código desconhecido como `internal_error`: novos códigos podem ser adicionados.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  O que voltou ao seu saldo, em TRX, como string decimal: o `price_trx` inteiro em `failed`, o preço da parte não entregue em `partial`; `null` quando não houve reembolso.
+</ResponseField>
+
 ```json Response
 {
   "event": "order.updated",
@@ -111,7 +119,9 @@ Cabeçalhos:
     "price_trx": "2.75",
     "delegate_txid": "a1b2c3d4e5f6...",
     "undelegate_txid": null,
-    "reclaim_at": "2026-09-15T07:44:56+00:00"
+    "reclaim_at": "2026-09-15T07:44:56+00:00",
+    "fail_reason": null,
+    "refunded_trx": null
   },
   "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }

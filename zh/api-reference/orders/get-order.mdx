@@ -34,6 +34,14 @@ description: "通过 ID 查询能量或带宽订单的状态"
 **是 `null`，不是 `"0"`。** 当订单未支付激活时（接收方账户已存在，或由他人的交易创建），两个字段均为 `null`。请注意与 Buy Energy 响应中 `activation_cost_trx` 的区别：那里此种情况为字符串 `"0"`。在此接口用 `"0"` 比较将永远不会匹配。
 </Note>
 
+<ResponseField name="fail_reason" type="string | null">
+  `failed` 订单失败的原因，取值为 [Get Order](/zh/api-reference/orders/get-order) 页面 **失败原因** 表中的代码；其他状态下为 `null`。遇到不认识的代码按 `internal_error` 处理：今后可能新增代码。
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  退回到余额的金额（TRX，十进制字符串）：`failed` 为全部 `price_trx`，`partial` 为未交付部分的价格；没有退款时为 `null`。
+</ResponseField>
+
 ### 订单状态
 
 | 状态 | 最终 | 说明 |
@@ -51,6 +59,33 @@ description: "通过 ID 查询能量或带宽订单的状态"
 处理中的订单通常会在几秒内变为最终状态，最长几分钟。请每 5–10 秒轮询此接口，或订阅 `order.updated` [Webhook](/zh/api-reference/webhooks/overview)，由我们将最终状态推送给您。如果订单处理中超过 15 分钟，请带上其 ID 联系支持。
 
 最终状态不会再变化，只有一个例外：`filled` 订单在租用结束时，之后可能变为 `reclaimed` 或 `reclaim_failed`。`failed` 或 `partial` 订单不会再继续交付，也不会再次扣费。如果其购买响应中带有 `provider_outcome: "unknown"`，已退款的能量仍可能在几分钟内到达该地址，且您无需为其付费——见[购买能量](/zh/api-reference/energy/buy-energy)。
+
+### 失败原因
+
+`failed` 订单总会把全部价格退回到余额，金额见 `refunded_trx`。`fail_reason` 说明出了什么问题，以及是否值得重试：
+
+| `fail_reason` | 发生了什么 | 怎么办 |
+|---|---|---|
+| `insufficient_supply` | 当时可用资源不足 | 稍后重试 |
+| `delivery_timeout` | 未能按时确认交付，因此已退款。对于能量，资源仍可能在几分钟内到达地址 —— 不会因此向你收费 | 重试前先检查地址 |
+| `order_rejected` | 该地址的订单被拒绝 —— 例如地址已有自己质押的资源 | 同样的订单可能再次失败；稍后重试或换一个地址可能有用 |
+| `transaction_failed` | 网络拒绝了代理交易 | 重试 |
+| `address_not_activated` | 收款地址尚未在链上存在 | 用 [Activate Address](/zh/api-reference/energy/activate-address) 激活后重试 |
+| `internal_error` | 我们这边的其他任何故障 | 重试；如果反复出现，请带上订单 ID 联系客服 |
+
+```json
+{
+  "id": 12346,
+  "status": "failed",
+  "price_trx": "2.15",
+  "fail_reason": "insufficient_supply",
+  "refunded_trx": "2.15"
+}
+```
+
+<Note>
+此列表今后可能新增代码。遇到不认识的代码按 `internal_error` 处理。
+</Note>
 
 ### 示例
 
@@ -75,6 +110,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "source": "api",
   "activation_id": 8891,
   "activation_cost_trx": "1.20",
+  "fail_reason": null,
+  "refunded_trx": null,
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```
