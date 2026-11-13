@@ -96,6 +96,14 @@ description: "实时接收账户事件通知"
   计划收回资源的时间，ISO-8601；不按计时器收回的订单为 `null`。
 </ResponseField>
 
+<ResponseField name="fail_reason" type="string | null">
+  `failed` 订单失败的原因，取值为 [Get Order](/zh/api-reference/orders/get-order) 页面 **失败原因** 表中的代码；其他状态下为 `null`。遇到不认识的代码按 `internal_error` 处理：今后可能新增代码。
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  退回到余额的金额（TRX，十进制字符串）：`failed` 为全部 `price_trx`，`partial` 为未交付部分的价格；没有退款时为 `null`。
+</ResponseField>
+
 ```json Response
 {
   "event": "order.updated",
@@ -111,7 +119,9 @@ description: "实时接收账户事件通知"
     "price_trx": "2.75",
     "delegate_txid": "a1b2c3d4e5f6...",
     "undelegate_txid": null,
-    "reclaim_at": "2026-09-15T07:44:56+00:00"
+    "reclaim_at": "2026-09-15T07:44:56+00:00",
+    "fail_reason": null,
+    "refunded_trx": null
   },
   "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }

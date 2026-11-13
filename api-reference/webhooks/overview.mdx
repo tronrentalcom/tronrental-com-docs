@@ -96,6 +96,14 @@ Headers:
   When the resource is scheduled to be reclaimed, ISO-8601, or `null` for orders that are not reclaimed on a timer.
 </ResponseField>
 
+<ResponseField name="fail_reason" type="string | null">
+  Why a `failed` order failed, as a code from the **Failure reasons** table on [Get Order](/api-reference/orders/get-order); `null` for any other status. Treat a code you do not know as `internal_error`: new codes may be added.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  What went back to your balance, in TRX, as a decimal string: the full `price_trx` for `failed`, the price of the undelivered part for `partial`; `null` when nothing was refunded.
+</ResponseField>
+
 ```json Response
 {
   "event": "order.updated",
@@ -111,7 +119,9 @@ Headers:
     "price_trx": "2.75",
     "delegate_txid": "a1b2c3d4e5f6...",
     "undelegate_txid": null,
-    "reclaim_at": "2026-09-15T07:44:56+00:00"
+    "reclaim_at": "2026-09-15T07:44:56+00:00",
+    "fail_reason": null,
+    "refunded_trx": null
   },
   "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }

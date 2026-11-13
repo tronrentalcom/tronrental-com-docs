@@ -96,6 +96,14 @@ Başlıklar:
   Kaynağın geri alınmasının planlandığı an, ISO-8601; zamanlayıcıyla geri alınmayan siparişlerde `null`.
 </ResponseField>
 
+<ResponseField name="fail_reason" type="string | null">
+  `failed` bir siparişin neden başarısız olduğu, [Get Order](/tr/api-reference/orders/get-order) sayfasındaki **Başarısızlık nedenleri** tablosundan bir kod olarak; diğer durumlarda `null`. Bilmediğiniz bir kodu `internal_error` olarak değerlendirin: yeni kodlar eklenebilir.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  Bakiyenize geri dönen tutar, TRX cinsinden ondalık dize olarak: `failed` için `price_trx`'in tamamı, `partial` için teslim edilmeyen kısmın fiyatı; iade yoksa `null`.
+</ResponseField>
+
 ```json Response
 {
   "event": "order.updated",
@@ -111,7 +119,9 @@ Başlıklar:
     "price_trx": "2.75",
     "delegate_txid": "a1b2c3d4e5f6...",
     "undelegate_txid": null,
-    "reclaim_at": "2026-09-15T07:44:56+00:00"
+    "reclaim_at": "2026-09-15T07:44:56+00:00",
+    "fail_reason": null,
+    "refunded_trx": null
   },
   "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }

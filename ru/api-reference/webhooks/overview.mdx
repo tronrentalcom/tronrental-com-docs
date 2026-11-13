@@ -96,6 +96,14 @@ description: "Получайте уведомления о событиях ак
   Когда ресурс запланировано отозвать, ISO-8601, либо `null` для заказов без таймера отзыва.
 </ResponseField>
 
+<ResponseField name="fail_reason" type="string | null">
+  Почему заказ в статусе `failed` не исполнен — код из таблицы **Причины отказа** на странице [Get Order](/ru/api-reference/orders/get-order); `null` при любом другом статусе. Незнакомый код считайте `internal_error`: список может пополняться.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  Сколько вернулось на баланс, в TRX, десятичной строкой: вся `price_trx` у `failed`, цена недоставленной части у `partial`; `null`, если возврата не было.
+</ResponseField>
+
 ```json Response
 {
   "event": "order.updated",
@@ -111,7 +119,9 @@ description: "Получайте уведомления о событиях ак
     "price_trx": "2.75",
     "delegate_txid": "a1b2c3d4e5f6...",
     "undelegate_txid": null,
-    "reclaim_at": "2026-09-15T07:44:56+00:00"
+    "reclaim_at": "2026-09-15T07:44:56+00:00",
+    "fail_reason": null,
+    "refunded_trx": null
   },
   "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }

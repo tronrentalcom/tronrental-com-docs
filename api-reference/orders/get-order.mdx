@@ -30,6 +30,14 @@ Returns the full order object including `status`, `type`, `volume`, `price_trx`,
   What that activation cost, in TRX, **on top of** `price_trx` — this is the difference between the order price and the amount that left your balance.
 </ResponseField>
 
+<ResponseField name="fail_reason" type="string | null">
+  Why a `failed` order failed, as a code from the **Failure reasons** table on [Get Order](/api-reference/orders/get-order); `null` for any other status. Treat a code you do not know as `internal_error`: new codes may be added.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  What went back to your balance, in TRX, as a decimal string: the full `price_trx` for `failed`, the price of the undelivered part for `partial`; `null` when nothing was refunded.
+</ResponseField>
+
 <Note>
 **`null`, not `"0"`.** Both fields are `null` when the order paid for no activation — either the recipient account already existed, or somebody else's transaction created it. Note the difference from `activation_cost_trx` on the Buy Energy response, which is the string `"0"` in that case: comparing against `"0"` here would never match.
 </Note>
@@ -59,6 +67,33 @@ charged again. If its purchase response had `provider_outcome: "unknown"`, the r
 still reach the address within minutes, and you are not charged for it — see
 [Buy Energy](/api-reference/energy/buy-energy).
 
+### Failure reasons
+
+A `failed` order always returns its full price to your balance, and `refunded_trx` shows the amount. `fail_reason` says what went wrong and whether a retry makes sense:
+
+| `fail_reason` | What happened | What to do |
+|---|---|---|
+| `insufficient_supply` | Not enough resource was available at that moment | Retry later |
+| `delivery_timeout` | Delivery was not confirmed in time, so we refunded. For energy, the resource may still reach the address within minutes — you are not charged for it | Check the address before you retry |
+| `order_rejected` | The order was declined for this address — for example, when the address already has its own staked resource | The same order may fail again; retrying later or with another address may help |
+| `transaction_failed` | The network rejected the delegation transaction | Retry |
+| `address_not_activated` | The recipient address does not exist on-chain yet | Activate it with [Activate Address](/api-reference/energy/activate-address) and retry |
+| `internal_error` | Any other failure on our side | Retry; if it repeats, contact support with the order ID |
+
+```json
+{
+  "id": 12346,
+  "status": "failed",
+  "price_trx": "2.15",
+  "fail_reason": "insufficient_supply",
+  "refunded_trx": "2.15"
+}
+```
+
+<Note>
+New codes may be added to this list. Treat a code you do not know as `internal_error`.
+</Note>
+
 ### Example
 
 ```bash
@@ -82,6 +117,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "source": "api",
   "activation_id": 8891,
   "activation_cost_trx": "1.20",
+  "fail_reason": null,
+  "refunded_trx": null,
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```
