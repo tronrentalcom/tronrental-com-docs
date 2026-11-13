@@ -9,12 +9,14 @@ description: "अपने खाते की घटनाओं की सू�
 
 ### घटनाएँ
 
-आज आठ घटनाएँ मौजूद हैं।
+आज दस घटनाएँ मौजूद हैं।
 
 | घटना | कब भेजी जाती है |
 |-------|-----------|
 | `order.updated` | आपके खाते के एनर्जी या बैंडविड्थ ऑर्डर की स्थिति बदली — ऑर्डर चाहे जहाँ से दिया गया हो: API, वेबसाइट, Telegram बॉट या ऑटो रिफिल |
 | `activation.updated` | आपके बैलेंस से भुगतान किया गया एड्रेस सक्रियण पूरा हुआ |
+| `withdrawal.completed` | आपके बैलेंस से निकासी भेज दी गई |
+| `withdrawal.failed` | निकासी अस्वीकार हुई और राशि आपके बैलेंस में लौट गई |
 | `invoice.updated` | आपके खाते के इनवॉइस की स्थिति बदली |
 | `subscription.transfer` | Smart Mode ने किसी निगरानी वाले पते से हुए ट्रांसफ़र का भुगतान किया |
 | `package.transfer` | Transfer Package ने अपने पते से हुए ट्रांसफ़र का भुगतान किया |
@@ -165,6 +167,78 @@ description: "अपने खाते की घटनाओं की सू�
 
 <Note>
   `pending` दुर्लभ है, और आज उसका अंतिम परिणाम दूसरी घटना नहीं भेजता। अगर कोई सक्रियण `pending` में ही रहे, तो सपोर्ट से संपर्क करें।
+</Note>
+
+### `withdrawal.completed` और `withdrawal.failed`
+
+आपके बैलेंस से निकासी का परिणाम आने पर भेजे जाते हैं, चाहे अनुरोध कैसे भी किया गया हो: [निकासी बनाएं](/hi/api-reference/account/withdrawals), वेबसाइट या Telegram बॉट। `withdrawal.completed` — लेनदेन TRON नेटवर्क पर भेज दिया गया; `withdrawal.failed` — निकासी अस्वीकार हुई और `total_trx` आपके बैलेंस में लौटा दिया गया।
+
+<ResponseField name="id" type="number">
+  निकासी ID — वही `id` जो निकासी बनाएं लौटाता है।
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` या `failed` — इवेंट के नाम जैसा ही।
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  `TRX` या `USDT`।
+</ResponseField>
+
+<ResponseField name="to_address" type="string">
+  प्राप्तकर्ता का पता।
+</ResponseField>
+
+<ResponseField name="amount_trx" type="string">
+  भेजी गई राशि TRX में, दशमलव स्ट्रिंग के रूप में। USDT निकासी में — काटा गया उसका TRX समतुल्य।
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  शुल्क TRX में।
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  बैलेंस से काटी गई राशि: `amount_trx` + `fee_trx`।
+</ResponseField>
+
+<ResponseField name="amount_usdt" type="string | null">
+  USDT निकासी में भेजी गई USDT राशि; अन्यथा `null`।
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  `withdrawal.completed` में लेनदेन; `withdrawal.failed` में `null`।
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  `withdrawal.failed` में बैलेंस में लौटाई गई राशि (`total_trx`); `withdrawal.completed` में `null`।
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  निकासी का अनुरोध कब हुआ, ISO-8601 UTC।
+</ResponseField>
+
+```json Response
+{
+  "event": "withdrawal.completed",
+  "data": {
+    "id": 4821,
+    "status": "completed",
+    "currency": "TRX",
+    "to_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "amount_trx": "250",
+    "fee_trx": "1",
+    "total_trx": "251",
+    "amount_usdt": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "refunded_trx": null,
+    "created_at": "2026-11-13T09:12:44.118203+00:00"
+  },
+  "timestamp": "2026-11-13T09:13:05.402911+00:00"
+}
+```
+
+<Note>
+  कभी-कभी निकासी `pending` में रुकती है जब तक हम उसकी जाँच करते हैं। इस पर कोई इवेंट नहीं आता — परिणाम पर आता है। मौजूदा स्थिति देखने के लिए निकासी को [निकासी सूची](/hi/api-reference/account/withdrawals) से पढ़ें।
 </Note>
 
 ### `invoice.updated`

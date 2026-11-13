@@ -9,12 +9,14 @@ Sua conta tem **uma única URL de webhook**, e todos os eventos vão para ela. D
 
 ### Eventos
 
-Hoje existem oito eventos.
+Hoje existem dez eventos.
 
 | Evento | Quando é enviado |
 |-------|-----------|
 | `order.updated` | Um pedido de energia ou largura de banda da sua conta muda de estado, seja qual for a origem: API, site, bot do Telegram ou recarga automática |
 | `activation.updated` | Uma ativação de endereço paga com o seu saldo foi concluída |
+| `withdrawal.completed` | Um saque do seu saldo foi enviado |
+| `withdrawal.failed` | Um saque foi recusado e o valor voltou ao seu saldo |
 | `invoice.updated` | Uma fatura da sua conta muda de status |
 | `subscription.transfer` | O Smart Mode pagou por uma transferência de um endereço monitorado |
 | `package.transfer` | Um Transfer Package pagou por uma transferência do seu endereço |
@@ -165,6 +167,78 @@ Enviado quando uma ativação paga com o seu saldo é concluída: feita com [Ati
 
 <Note>
   `pending` é raro, e hoje o resultado final não envia um segundo evento. Se uma ativação continuar em `pending`, fale com o suporte.
+</Note>
+
+### `withdrawal.completed` e `withdrawal.failed`
+
+Enviados quando um saque do seu saldo tem resultado, seja qual for a forma do pedido: [Criar Saque](/pt/api-reference/account/withdrawals), o site ou o bot do Telegram. `withdrawal.completed` — a transação foi enviada à rede TRON; `withdrawal.failed` — o saque foi recusado e `total_trx` voltou ao seu saldo.
+
+<ResponseField name="id" type="number">
+  ID do saque — o `id` que Criar Saque retorna.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` ou `failed` — o mesmo valor do nome do evento.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  `TRX` ou `USDT`.
+</ResponseField>
+
+<ResponseField name="to_address" type="string">
+  O endereço de destino.
+</ResponseField>
+
+<ResponseField name="amount_trx" type="string">
+  O valor enviado em TRX, como string decimal. Num saque de USDT, o equivalente em TRX que foi cobrado.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  A taxa em TRX.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  O que foi cobrado do seu saldo: `amount_trx` + `fee_trx`.
+</ResponseField>
+
+<ResponseField name="amount_usdt" type="string | null">
+  O valor em USDT enviado num saque de USDT; caso contrário, `null`.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  A transação em `withdrawal.completed`; `null` em `withdrawal.failed`.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  O que voltou ao seu saldo em `withdrawal.failed` (`total_trx`); `null` em `withdrawal.completed`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Quando o saque foi pedido, ISO-8601 UTC.
+</ResponseField>
+
+```json Response
+{
+  "event": "withdrawal.completed",
+  "data": {
+    "id": 4821,
+    "status": "completed",
+    "currency": "TRX",
+    "to_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "amount_trx": "250",
+    "fee_trx": "1",
+    "total_trx": "251",
+    "amount_usdt": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "refunded_trx": null,
+    "created_at": "2026-11-13T09:12:44.118203+00:00"
+  },
+  "timestamp": "2026-11-13T09:13:05.402911+00:00"
+}
+```
+
+<Note>
+  Às vezes um saque fica em `pending` enquanto o verificamos. Isso não envia evento — o resultado envia. Para ver o estado atual, leia o saque com [Listar Saques](/pt/api-reference/account/withdrawals).
 </Note>
 
 ### `invoice.updated`
