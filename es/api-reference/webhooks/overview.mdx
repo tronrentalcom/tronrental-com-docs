@@ -9,12 +9,14 @@ Su cuenta tiene **una sola URL de webhook** y todos los eventos se envían a ell
 
 ### Eventos
 
-Hoy existen ocho eventos.
+Hoy existen diez eventos.
 
 | Evento | Cuándo se envía |
 |-------|-----------|
 | `order.updated` | Un pedido de energía o ancho de banda de su cuenta cambia de estado, sin importar cómo se hizo: API, sitio web, bot de Telegram o recarga automática |
 | `activation.updated` | Se resolvió una activación de dirección pagada con su saldo |
+| `withdrawal.completed` | Se envió un retiro de su saldo |
+| `withdrawal.failed` | Se rechazó un retiro y su importe volvió a su saldo |
 | `invoice.updated` | Una factura de su cuenta cambia de estado |
 | `subscription.transfer` | Smart Mode pagó una transferencia de una dirección vigilada |
 | `package.transfer` | Un Transfer Package pagó una transferencia desde su dirección |
@@ -165,6 +167,78 @@ Se envía cuando se resuelve una activación pagada con su saldo: una hecha con 
 
 <Note>
   `pending` es poco frecuente, y hoy su resultado final no envía un segundo evento. Si una activación se queda en `pending`, contacte con soporte.
+</Note>
+
+### `withdrawal.completed` y `withdrawal.failed`
+
+Se envían cuando un retiro de su saldo tiene resultado, sin importar cómo se solicitó: [Crear retiro](/es/api-reference/account/withdrawals), el sitio web o el bot de Telegram. `withdrawal.completed`: la transacción se envió a la red TRON; `withdrawal.failed`: el retiro se rechazó y `total_trx` volvió a su saldo.
+
+<ResponseField name="id" type="number">
+  ID del retiro: el `id` que devuelve Crear retiro.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` o `failed`, igual que el nombre del evento.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  `TRX` o `USDT`.
+</ResponseField>
+
+<ResponseField name="to_address" type="string">
+  La dirección de destino.
+</ResponseField>
+
+<ResponseField name="amount_trx" type="string">
+  El importe enviado en TRX, como cadena decimal. En un retiro de USDT, su equivalente en TRX que se cobró.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  La comisión en TRX.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  Lo cobrado de su saldo: `amount_trx` + `fee_trx`.
+</ResponseField>
+
+<ResponseField name="amount_usdt" type="string | null">
+  El importe en USDT enviado en un retiro de USDT; si no, `null`.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  La transacción en `withdrawal.completed`; `null` en `withdrawal.failed`.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  Lo devuelto a su saldo en `withdrawal.failed` (`total_trx`); `null` en `withdrawal.completed`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Cuándo se solicitó el retiro, ISO-8601 UTC.
+</ResponseField>
+
+```json Response
+{
+  "event": "withdrawal.completed",
+  "data": {
+    "id": 4821,
+    "status": "completed",
+    "currency": "TRX",
+    "to_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "amount_trx": "250",
+    "fee_trx": "1",
+    "total_trx": "251",
+    "amount_usdt": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "refunded_trx": null,
+    "created_at": "2026-11-13T09:12:44.118203+00:00"
+  },
+  "timestamp": "2026-11-13T09:13:05.402911+00:00"
+}
+```
+
+<Note>
+  A veces un retiro espera en `pending` mientras lo revisamos. Eso no envía evento; su resultado sí. Para ver el estado actual, consulte el retiro con [Listar retiros](/es/api-reference/account/withdrawals).
 </Note>
 
 ### `invoice.updated`

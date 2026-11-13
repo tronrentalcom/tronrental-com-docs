@@ -9,12 +9,14 @@ description: "Получайте уведомления о событиях ак
 
 ### События
 
-Сегодня существует восемь событий.
+Сегодня существует десять событий.
 
 | Событие | Когда отправляется |
 |-------|-----------|
 | `order.updated` | Заказ энергии или bandwidth вашего аккаунта сменил состояние — откуда бы он ни пришёл: API, сайт, Telegram-бот или автопополнение |
 | `activation.updated` | Завершилась активация адреса, оплаченная с баланса |
+| `withdrawal.completed` | Вывод с баланса отправлен |
+| `withdrawal.failed` | Вывод отклонён, сумма возвращена на баланс |
 | `invoice.updated` | Инвойс вашего аккаунта сменил статус |
 | `subscription.transfer` | Smart Mode оплатил перевод с отслеживаемого адреса |
 | `package.transfer` | Transfer Package оплатил перевод со своего адреса |
@@ -165,6 +167,78 @@ description: "Получайте уведомления о событиях ак
 
 <Note>
   `pending` бывает редко, и итог по нему второго события сегодня не присылает. Если активация остаётся в `pending`, напишите в поддержку.
+</Note>
+
+### `withdrawal.completed` и `withdrawal.failed`
+
+Приходят, когда у вывода с баланса появился исход, как бы он ни был запрошен: через [Создать вывод](/ru/api-reference/account/withdrawals), на сайте или в Telegram-боте. `withdrawal.completed` — транзакция отправлена в сеть TRON; `withdrawal.failed` — вывод отклонён, `total_trx` возвращён на баланс.
+
+<ResponseField name="id" type="number">
+  ID вывода — тот `id`, что возвращает Создать вывод.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` или `failed` — то же, что в имени события.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  `TRX` или `USDT`.
+</ResponseField>
+
+<ResponseField name="to_address" type="string">
+  Адрес получателя.
+</ResponseField>
+
+<ResponseField name="amount_trx" type="string">
+  Отправленная сумма в TRX, десятичной строкой. У USDT-вывода — её списанный TRX-эквивалент.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  Комиссия в TRX.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  Сколько списано с баланса: `amount_trx` + `fee_trx`.
+</ResponseField>
+
+<ResponseField name="amount_usdt" type="string | null">
+  Отправленная сумма в USDT у USDT-вывода, иначе `null`.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  Транзакция у `withdrawal.completed`; `null` у `withdrawal.failed`.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  Сколько возвращено на баланс у `withdrawal.failed` (`total_trx`); `null` у `withdrawal.completed`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Когда вывод запрошен, ISO-8601 UTC.
+</ResponseField>
+
+```json Response
+{
+  "event": "withdrawal.completed",
+  "data": {
+    "id": 4821,
+    "status": "completed",
+    "currency": "TRX",
+    "to_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "amount_trx": "250",
+    "fee_trx": "1",
+    "total_trx": "251",
+    "amount_usdt": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "refunded_trx": null,
+    "created_at": "2026-11-13T09:12:44.118203+00:00"
+  },
+  "timestamp": "2026-11-13T09:13:05.402911+00:00"
+}
+```
+
+<Note>
+  Иногда вывод ждёт в `pending`, пока мы его проверяем. Об этом событие не приходит — придёт об исходе. Текущее состояние вывода — в [Список выводов](/ru/api-reference/account/withdrawals).
 </Note>
 
 ### `invoice.updated`

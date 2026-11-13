@@ -9,12 +9,14 @@ description: "实时接收账户事件通知"
 
 ### 事件
 
-目前共有八个事件。
+目前共有十个事件。
 
 | 事件 | 触发时机 |
 |-------|-----------|
 | `order.updated` | 您账户的能量或带宽订单状态变化——无论订单来自哪里：API、网站、Telegram 机器人或自动补充 |
 | `activation.updated` | 用余额支付的地址激活有了结果 |
+| `withdrawal.completed` | 从余额发起的提现已发送 |
+| `withdrawal.failed` | 提现被拒绝，金额已退回余额 |
 | `invoice.updated` | 属于您账户的账单状态变化 |
 | `subscription.transfer` | Smart Mode 为受监控地址的一笔转账付费时 |
 | `package.transfer` | Transfer Package 为其地址的一笔转账付费时 |
@@ -165,6 +167,78 @@ description: "实时接收账户事件通知"
 
 <Note>
   `pending` 很少见，目前其最终结果不会再发送第二个事件。如果激活一直处于 `pending`，请联系客服。
+</Note>
+
+### `withdrawal.completed` 和 `withdrawal.failed`
+
+从余额发起的提现有了结果时发送，无论通过何种方式发起：[创建提现](/zh/api-reference/account/withdrawals)、网站或 Telegram 机器人。`withdrawal.completed` — 交易已发送到 TRON 网络；`withdrawal.failed` — 提现被拒绝，`total_trx` 已退回余额。
+
+<ResponseField name="id" type="number">
+  提现 ID — 创建提现返回的 `id`。
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` 或 `failed` — 与事件名一致。
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  `TRX` 或 `USDT`。
+</ResponseField>
+
+<ResponseField name="to_address" type="string">
+  收款地址。
+</ResponseField>
+
+<ResponseField name="amount_trx" type="string">
+  发送金额（TRX，十进制字符串）。USDT 提现为实际扣除的 TRX 等值。
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  手续费（TRX）。
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  从余额扣除的金额：`amount_trx` + `fee_trx`。
+</ResponseField>
+
+<ResponseField name="amount_usdt" type="string | null">
+  USDT 提现发送的 USDT 金额；否则为 `null`。
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  `withdrawal.completed` 时为交易哈希；`withdrawal.failed` 时为 `null`。
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  `withdrawal.failed` 时退回余额的金额（`total_trx`）；`withdrawal.completed` 时为 `null`。
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  提现发起时间，ISO-8601 UTC。
+</ResponseField>
+
+```json Response
+{
+  "event": "withdrawal.completed",
+  "data": {
+    "id": 4821,
+    "status": "completed",
+    "currency": "TRX",
+    "to_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "amount_trx": "250",
+    "fee_trx": "1",
+    "total_trx": "251",
+    "amount_usdt": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "refunded_trx": null,
+    "created_at": "2026-11-13T09:12:44.118203+00:00"
+  },
+  "timestamp": "2026-11-13T09:13:05.402911+00:00"
+}
+```
+
+<Note>
+  提现有时会在我们核查期间停留在 `pending`。这不会发送事件——结果会发送。要查看当前状态，请通过[提现列表](/zh/api-reference/account/withdrawals)读取。
 </Note>
 
 ### `invoice.updated`

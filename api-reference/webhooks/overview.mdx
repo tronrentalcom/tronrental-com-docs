@@ -9,12 +9,14 @@ Your account has **one webhook URL**, and every event goes to it. Set it in [Das
 
 ### Events
 
-Eight events exist today.
+Ten events exist today.
 
 | Event | Sent when |
 |-------|-----------|
 | `order.updated` | An energy or bandwidth order of your account changes state — however it was placed: API, website, Telegram bot or auto-refill |
 | `activation.updated` | An address activation paid from your balance is settled |
+| `withdrawal.completed` | A withdrawal from your balance was sent |
+| `withdrawal.failed` | A withdrawal was declined and its sum returned to your balance |
 | `invoice.updated` | An invoice that belongs to your account changes status |
 | `subscription.transfer` | Smart Mode paid for a transfer on a watched address |
 | `package.transfer` | A Transfer Package paid for a transfer from its address |
@@ -165,6 +167,78 @@ Sent when an activation paid from your balance is settled: one made with [Activa
 
 <Note>
   `pending` is rare, and its final outcome does not send a second event today. If an activation stays `pending`, contact support.
+</Note>
+
+### `withdrawal.completed` and `withdrawal.failed`
+
+Sent when a withdrawal from your balance reaches its outcome, however it was requested: [Create Withdrawal](/api-reference/account/withdrawals), the website or the Telegram bot. `withdrawal.completed` — the transaction was sent to the TRON network; `withdrawal.failed` — the withdrawal was declined and `total_trx` returned to your balance.
+
+<ResponseField name="id" type="number">
+  Withdrawal ID — the `id` that Create Withdrawal returns.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` or `failed` — the same value as the event name.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  `TRX` or `USDT`.
+</ResponseField>
+
+<ResponseField name="to_address" type="string">
+  The recipient address.
+</ResponseField>
+
+<ResponseField name="amount_trx" type="string">
+  The amount sent, in TRX, as a decimal string. For a USDT withdrawal — its TRX equivalent that was charged.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  The fee, in TRX.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  What was charged from your balance: `amount_trx` + `fee_trx`.
+</ResponseField>
+
+<ResponseField name="amount_usdt" type="string | null">
+  The USDT amount sent, for a USDT withdrawal; otherwise `null`.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  The transaction for `withdrawal.completed`; `null` for `withdrawal.failed`.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  What was returned to your balance for `withdrawal.failed` (`total_trx`); `null` for `withdrawal.completed`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  When the withdrawal was requested, ISO-8601 UTC.
+</ResponseField>
+
+```json Response
+{
+  "event": "withdrawal.completed",
+  "data": {
+    "id": 4821,
+    "status": "completed",
+    "currency": "TRX",
+    "to_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "amount_trx": "250",
+    "fee_trx": "1",
+    "total_trx": "251",
+    "amount_usdt": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "refunded_trx": null,
+    "created_at": "2026-11-13T09:12:44.118203+00:00"
+  },
+  "timestamp": "2026-11-13T09:13:05.402911+00:00"
+}
+```
+
+<Note>
+  Sometimes a withdrawal waits in `pending` while we check it. That sends no event — its outcome does. To see the current state, read the withdrawal with [List Withdrawals](/api-reference/account/withdrawals).
 </Note>
 
 ### `invoice.updated`
