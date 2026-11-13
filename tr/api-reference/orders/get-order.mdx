@@ -30,6 +30,10 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
   Bu aktivasyonun TRX cinsinden maliyeti, `price_trx` **uzerine** — siparis fiyati ile bakiyenizden cikan tutar arasindaki fark tam olarak budur.
 </ResponseField>
 
+<Note>
+**`"0"` degil, `null`.** Siparis herhangi bir aktivasyon odemediginde (alici hesap zaten vardi ya da baskasinin islemi olusturdu) her iki alan da `null` olur. Buy Energy yanitindaki `activation_cost_trx` ile farkina dikkat edin: orada bu durumda `"0"` metnidir. Burada `"0"` ile karsilastirmak hicbir zaman eslesmez.
+</Note>
+
 <ResponseField name="fail_reason" type="string | null">
   `failed` bir siparişin neden başarısız olduğu, [Get Order](/tr/api-reference/orders/get-order) sayfasındaki **Başarısızlık nedenleri** tablosundan bir kod olarak; diğer durumlarda `null`. Bilmediğiniz bir kodu `internal_error` olarak değerlendirin: yeni kodlar eklenebilir.
 </ResponseField>
@@ -37,10 +41,6 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
 <ResponseField name="refunded_trx" type="string | null">
   Bakiyenize geri dönen tutar, TRX cinsinden ondalık dize olarak: `failed` için `price_trx`'in tamamı, `partial` için teslim edilmeyen kısmın fiyatı; iade yoksa `null`.
 </ResponseField>
-
-<Note>
-**`"0"` degil, `null`.** Siparis herhangi bir aktivasyon odemediginde (alici hesap zaten vardi ya da baskasinin islemi olusturdu) her iki alan da `null` olur. Buy Energy yanitindaki `activation_cost_trx` ile farkina dikkat edin: orada bu durumda `"0"` metnidir. Burada `"0"` ile karsilastirmak hicbir zaman eslesmez.
-</Note>
 
 ### Sipariş durumları
 

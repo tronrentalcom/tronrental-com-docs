@@ -30,6 +30,10 @@ Returns the full order object including `status`, `type`, `volume`, `price_trx`,
   What that activation cost, in TRX, **on top of** `price_trx` — this is the difference between the order price and the amount that left your balance.
 </ResponseField>
 
+<Note>
+**`null`, not `"0"`.** Both fields are `null` when the order paid for no activation — either the recipient account already existed, or somebody else's transaction created it. Note the difference from `activation_cost_trx` on the Buy Energy response, which is the string `"0"` in that case: comparing against `"0"` here would never match.
+</Note>
+
 <ResponseField name="fail_reason" type="string | null">
   Why a `failed` order failed, as a code from the **Failure reasons** table on [Get Order](/api-reference/orders/get-order); `null` for any other status. Treat a code you do not know as `internal_error`: new codes may be added.
 </ResponseField>
@@ -37,10 +41,6 @@ Returns the full order object including `status`, `type`, `volume`, `price_trx`,
 <ResponseField name="refunded_trx" type="string | null">
   What went back to your balance, in TRX, as a decimal string: the full `price_trx` for `failed`, the price of the undelivered part for `partial`; `null` when nothing was refunded.
 </ResponseField>
-
-<Note>
-**`null`, not `"0"`.** Both fields are `null` when the order paid for no activation — either the recipient account already existed, or somebody else's transaction created it. Note the difference from `activation_cost_trx` on the Buy Energy response, which is the string `"0"` in that case: comparing against `"0"` here would never match.
-</Note>
 
 ### Order statuses
 

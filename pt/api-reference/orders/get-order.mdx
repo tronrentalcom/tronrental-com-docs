@@ -30,6 +30,10 @@ Retorna o objeto completo do pedido, incluindo `status`, `type`, `volume`, `pric
   Quanto custou essa ativacao, em TRX, **alem** de `price_trx` — e exatamente a diferenca entre o preco do pedido e o valor que saiu do seu saldo.
 </ResponseField>
 
+<Note>
+**`null`, nao `"0"`.** Ambos os campos sao `null` quando o pedido nao pagou nenhuma ativacao: a conta destinataria ja existia ou foi criada pela transacao de outra pessoa. Atencao a diferenca em relacao a `activation_cost_trx` na resposta de Buy Energy, que nesse caso e a string `"0"`: comparar com `"0"` aqui nunca daria correspondencia.
+</Note>
+
 <ResponseField name="fail_reason" type="string | null">
   Por que um pedido `failed` falhou, como um código da tabela **Motivos de falha** em [Get Order](/pt/api-reference/orders/get-order); `null` em qualquer outro status. Trate um código desconhecido como `internal_error`: novos códigos podem ser adicionados.
 </ResponseField>
@@ -37,10 +41,6 @@ Retorna o objeto completo do pedido, incluindo `status`, `type`, `volume`, `pric
 <ResponseField name="refunded_trx" type="string | null">
   O que voltou ao seu saldo, em TRX, como string decimal: o `price_trx` inteiro em `failed`, o preço da parte não entregue em `partial`; `null` quando não houve reembolso.
 </ResponseField>
-
-<Note>
-**`null`, nao `"0"`.** Ambos os campos sao `null` quando o pedido nao pagou nenhuma ativacao: a conta destinataria ja existia ou foi criada pela transacao de outra pessoa. Atencao a diferenca em relacao a `activation_cost_trx` na resposta de Buy Energy, que nesse caso e a string `"0"`: comparar com `"0"` aqui nunca daria correspondencia.
-</Note>
 
 ### Status do pedido
 

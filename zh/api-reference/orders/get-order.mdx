@@ -30,6 +30,10 @@ description: "通过 ID 查询能量或带宽订单的状态"
   该激活的费用（TRX），**在 `price_trx` 之外**——这正是订单价格与实际从余额扣除金额之间的差额。
 </ResponseField>
 
+<Note>
+**是 `null`，不是 `"0"`。** 当订单未支付激活时（接收方账户已存在，或由他人的交易创建），两个字段均为 `null`。请注意与 Buy Energy 响应中 `activation_cost_trx` 的区别：那里此种情况为字符串 `"0"`。在此接口用 `"0"` 比较将永远不会匹配。
+</Note>
+
 <ResponseField name="fail_reason" type="string | null">
   `failed` 订单失败的原因，取值为 [Get Order](/zh/api-reference/orders/get-order) 页面 **失败原因** 表中的代码；其他状态下为 `null`。遇到不认识的代码按 `internal_error` 处理：今后可能新增代码。
 </ResponseField>
@@ -37,10 +41,6 @@ description: "通过 ID 查询能量或带宽订单的状态"
 <ResponseField name="refunded_trx" type="string | null">
   退回到余额的金额（TRX，十进制字符串）：`failed` 为全部 `price_trx`，`partial` 为未交付部分的价格；没有退款时为 `null`。
 </ResponseField>
-
-<Note>
-**是 `null`，不是 `"0"`。** 当订单未支付激活时（接收方账户已存在，或由他人的交易创建），两个字段均为 `null`。请注意与 Buy Energy 响应中 `activation_cost_trx` 的区别：那里此种情况为字符串 `"0"`。在此接口用 `"0"` 比较将永远不会匹配。
-</Note>
 
 ### 订单状态
 
