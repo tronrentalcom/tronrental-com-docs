@@ -1,0 +1,103 @@
+---
+title: Visão Geral do Bandwidth automático
+description: "Mantenha largura de banda em um endereço para cada transferência, renovada após cada uma"
+---
+
+## Bandwidth automático
+
+Uma assinatura de Bandwidth automático mantém uma quantidade fixa de largura de banda delegada ao seu endereço TRON, para que as transferências do endereço não queimem TRX em largura de banda. Quando uma transferência esgota a largura de banda delegada, nós a renovamos na hora. Não há data de término: a assinatura segue até você pausá-la ou excluí-la.
+
+### Como funciona
+
+1. Crie uma assinatura para um endereço com o `volume` de largura de banda a manter nele — para uma transferência USDT, cerca de 350.
+2. Delegamos `volume` de largura de banda ao endereço e cobramos a tarifa das primeiras 24 horas.
+3. Verificamos o endereço **uma vez por minuto** e **logo após cada transferência USDT de saída** dele. As transferências de TRX, USDD ou de outros tokens são captadas pela verificação por minuto.
+4. Quando uma transferência esgota a largura de banda que delegamos, cobramos uma tarifa de transferência e delegamos `volume` de novo.
+
+A renovação leva cerca de dois blocos (aproximadamente 6 segundos). Uma segunda transferência enviada antes de a renovação chegar é paga com a largura de banda gratuita do endereço e queima TRX quando ela não basta.
+
+Criar uma assinatura não cobra nada na própria requisição: verificamos que o seu saldo cobre o primeiro dia e uma transferência, e a primeira delegação acontece na verificação seguinte, normalmente em segundos.
+
+### Custo
+
+| Tarifa | Quando é cobrada | Campos da resposta |
+|---|---|---|
+| Tarifa da assinatura (por 24 horas) | Antecipadamente, quando a largura de banda é delegada, e a cada 24 horas depois disso enquanto ela permanece no endereço | `daily_trx` |
+| Tarifa de transferência | Uma vez por cada delegação que uma transferência esgotou | `transfer_trx` = `transfer_bw_trx` + `transfer_fee_trx` |
+
+As duas tarifas são iguais ao preço de um pedido de largura de banda de uma hora de `volume` para a sua conta: a largura de banda pela sua tarifa mais a taxa fixa. `transfer_bw_trx` e `transfer_fee_trx` mostram essa divisão. Uma assinatura criada com uma chave de API tem o preço de uma compra feita com essa chave; uma criada no site, o de uma compra feita no site. Para ver o preço antes de assinar, use a [Cotação do Bandwidth automático](/pt/api-reference/auto-bandwidth/quote).
+
+- Uma transferência paga inteiramente com a largura de banda gratuita do endereço ou com o seu próprio stake não usa a nossa largura de banda, e não há tarifa de transferência para ela.
+- Nenhuma tarifa de assinatura é cobrada enquanto a assinatura está pausada, parada ou em pausa automática.
+- Aumentar o `volume` dentro de um dia pago cobra a diferença pelo restante desse dia. Diminuí-lo não gera reembolso.
+- Se o endereço ainda não existe na blockchain, a primeira delegação também o ativa, e a ativação é cobrada à parte.
+
+### Saldo
+
+Antes de cada delegação, o seu saldo deve cobrir uma tarifa de transferência, mais a tarifa da assinatura se o dia atual ainda não está pago. Quando não cobre, a assinatura para com `status: "stopped_balance"` e retiramos a largura de banda. Ela é retomada sozinha após um depósito que cubra um dia e uma transferência. Se a sua conta do Telegram estiver vinculada, você recebe uma mensagem quando ela para.
+
+Criar uma assinatura, ou ligá-la de novo, verifica de antemão o mesmo valor e retorna `402 INSUFFICIENT_BALANCE` quando o saldo é insuficiente, com os valores em `error.required_trx` e `error.available_trx`.
+
+### Status
+
+| `status` | Significado |
+|---|---|
+| `active` | Mantemos largura de banda no endereço e a renovamos após cada transferência |
+| `free_bw` | Pausa automática: o endereço tem ao menos `threshold` de largura de banda gratuita, então não seguramos nada e não cobramos nada. Delegamos de novo quando a largura de banda gratuita cai abaixo de `threshold` |
+| `paused` | Desligada — por você, por uma transferência (veja `stop_after_transfer`) ou pelo suporte. Nada é mantido nem cobrado |
+| `stopped_balance` | O seu saldo não cobriu a próxima delegação. É retomada sozinha após um depósito |
+
+| `stopped_reason` | Significado |
+|---|---|
+| `insufficient_balance` | Parada por saldo |
+| `transfer` | Pausada por uma transferência do token da assinatura, porque `stop_after_transfer` estava ligado |
+| `admin` | Desligada pelo suporte; você não pode ligá-la de novo por conta própria — entre em contato conosco |
+| `null` | Nenhuma parada registrada, ou pausada por você |
+
+`delivery_state` mostra como foi a última delegação: `ok`, `waiting_stake` (a largura de banda está temporariamente indisponível para delegar — tentamos de novo, nada é cobrado) ou `failed` (a delegação não foi concluída — tentamos de novo).
+
+### Opções
+
+**Token.** `token` indica qual token o endereço envia: `USDT`, `TRX`, `USDD`, `CUSTOM` (um token TRC-20 seu, definido em `contract`) ou `OWN` (o seu próprio `volume`, opcionalmente com um `contract`). Ele não limita o que cobrimos — toda transferência que esgota a nossa largura de banda é renovada. Define o token de `stop_after_transfer` e, no painel, sugere um `volume`: 350 para USDT e USDD, 300 para TRX. Para um token seu, [adicione o contrato](/pt/api-reference/auto-bandwidth/add-contract) antes; a resposta informa quanta largura de banda uma transferência dele consome.
+
+**Pausa automática.** Com `auto_pause: true`, não seguramos largura de banda enquanto a largura de banda gratuita diária do endereço (600 por conta) é de ao menos `threshold`, e a assinatura mostra `free_bw`. O `threshold` deve então ficar entre o maior valor entre `volume` e 345, e 600.
+
+**Notificação de largura de banda gratuita.** Com `notify_free_bw: true`, enviamos uma mensagem ao seu Telegram e e-mail toda vez que a largura de banda gratuita do endereço volta a `threshold` depois de ter caído abaixo dele. Usa o mesmo `threshold` e a mesma faixa, exceto que, sem pausa automática, um `volume` acima de 600 permite `threshold: 600`.
+
+**Parar após a próxima transferência.** Com `stop_after_transfer: true`, a primeira transferência do token da assinatura enviada depois de você ativá-lo pausa a assinatura com `stopped_reason: "transfer"`. Essa transferência ainda é coberta.
+
+**Mudança de endereço.** Definir um novo `address` em [Atualizar assinatura](/pt/api-reference/auto-bandwidth/update-subscription) move a assinatura: retiramos a largura de banda do endereço antigo e depois delegamos ao novo. Até a mudança terminar, `address_change_to` mostra o novo endereço.
+
+### Limites
+
+- **Uma assinatura por endereço** em cada conta. Uma segunda para o mesmo endereço retorna `409 AUTO_BW_ADDRESS_TAKEN`.
+- **20 assinaturas** por conta; as excluídas não contam. Acima do limite: `409 AUTO_BW_LIMIT_REACHED`.
+- **20 contratos de token** na sua lista. Acima do limite: `409 AUTO_BW_CONTRACT_LIMIT`.
+- **Sem endereços de contrato**, como o contrato do token USDT: a TRON não permite delegar recursos a eles.
+- **Sem endereços já cobertos pela largura de banda do Smart Mode ou por um pacote de transferências com largura de banda**: `409 AUTO_BW_ADDRESS_COVERED`.
+- **Limites de requisições** para criar e editar assinaturas e para adicionar contratos — veja [Limites de Taxa](/pt/resources/rate-limits).
+
+Se o Bandwidth automático estiver temporariamente desligado, criar uma assinatura, ligar uma e adicionar um contrato retornam `503 AUTO_BW_DISABLED`. Nada é criado nem alterado — tente novamente mais tarde.
+
+### Comparação com a Recarga automática e o Smart Mode
+
+| | Bandwidth automático | [Recarga automática de largura de banda](/pt/api-reference/auto-refill/overview) | [Smart Mode](/pt/api-reference/smart-mode/overview) |
+|---|---|---|---|
+| Recurso | Largura de banda | Largura de banda (ou energia) | Energia, mais largura de banda opcional |
+| Quando entrega | Mantida no endereço, renovada após cada transferência que a usa | Quando o nível cai abaixo do seu limiar | A cada transferência USDT de saída |
+| O que você paga | Uma tarifa por 24 horas mais uma tarifa por delegação usada | Cada recarga, como um pedido comum | Uma assinatura diária mais cada transferência USDT |
+
+### Endpoints
+
+| Ação | Endpoint |
+|---|---|
+| Preço de um dia e de uma transferência | [`GET /bandwidth/auto/quote`](/pt/api-reference/auto-bandwidth/quote) |
+| Criar uma assinatura | [`POST /bandwidth/auto`](/pt/api-reference/auto-bandwidth/create-subscription) |
+| Listar assinaturas | [`GET /bandwidth/auto`](/pt/api-reference/auto-bandwidth/list-subscriptions) |
+| Editar, pausar, retomar, mudar de endereço | [`PATCH /bandwidth/auto/{sub_id}`](/pt/api-reference/auto-bandwidth/update-subscription) |
+| Excluir | [`DELETE /bandwidth/auto/{sub_id}`](/pt/api-reference/auto-bandwidth/delete-subscription) |
+| Os seus contratos de token | [`GET /bandwidth/auto/contracts`](/pt/api-reference/auto-bandwidth/list-contracts) |
+| Adicionar um contrato de token | [`POST /bandwidth/auto/contracts`](/pt/api-reference/auto-bandwidth/add-contract) |
+| Remover um contrato de token | [`DELETE /bandwidth/auto/contracts/{address}`](/pt/api-reference/auto-bandwidth/delete-contract) |
+
+Criar, editar e excluir assinaturas e contratos exige o escopo `buy_bandwidth`; listar e cotar exigem `view`.

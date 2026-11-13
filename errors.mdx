@@ -111,6 +111,26 @@ Returned in the standard shape by the [Auto Refill](/api-reference/auto-refill/o
 | `AUTOREFILL_DISABLED` | `503` | Auto Refill for this resource is temporarily switched off; returned only when creating a rule. No rule was created — try again later |
 | `NOT_FOUND` | `404` | No such rule on the account |
 
+## Auto Bandwidth codes
+
+Returned in the standard shape by the [Auto Bandwidth](/api-reference/auto-bandwidth/overview) endpoints:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `AUTO_BW_INVALID_THRESHOLD` | `400` | `threshold` is outside the allowed range for the subscription's `volume` |
+| `AUTO_BW_INVALID_CONTRACT` | `400` | The `contract` does not fit the `token`, or is not in your token list |
+| `AUTO_BW_NOT_A_CONTRACT` | `400` | There is no smart contract at the address |
+| `AUTO_BW_NOT_A_TOKEN` | `400` | The contract is not a TRC-20 token |
+| `AUTO_BW_TRANSFER_REVERTS` | `400` | A transfer of the token fails in simulation |
+| `AUTO_BW_ADDRESS_TAKEN` | `409` | The account already has a subscription for this address |
+| `AUTO_BW_LIMIT_REACHED` | `409` | The account already has 20 subscriptions |
+| `AUTO_BW_ADDRESS_COVERED` | `409` | Bandwidth on the address is already kept by Smart Mode or a transfer package |
+| `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | The subscription was switched off by support — contact us to resume it |
+| `AUTO_BW_CONTRACT_LISTED` | `409` | The contract is USDT or USDD — choose it with `token`; the token is in `error.token` |
+| `AUTO_BW_CONTRACT_LIMIT` | `409` | The token list already has 20 contracts |
+| `AUTO_BW_CONTRACT_IN_USE` | `409` | A subscription is set up for this contract |
+| `AUTO_BW_DISABLED` | `503` | Auto Bandwidth is temporarily switched off; returned when creating or resuming a subscription and when adding a contract. Nothing was changed — try again later |
+
 ## Withdrawal verification codes
 
 `POST /api/v1/account/withdrawal` returns these verification codes in the flat shape, with `code` next

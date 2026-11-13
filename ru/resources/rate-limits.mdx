@@ -44,6 +44,9 @@ description: "Политика ограничения частоты запро�
 | `POST /api/v1/account/withdrawal` | 5 с после вывода, созданного с `Idempotency-Key`, 60 с — после вывода без него | аккаунту |
 | `POST /api/v1/energy/auto-refill` | 10 запросов/минута | аккаунту |
 | `POST /api/v1/bandwidth/auto-refill` | 10 запросов/минута | аккаунту |
+| `POST /api/v1/bandwidth/auto` | 20 запросов/минута | аккаунту |
+| `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 запросов/минута | аккаунту |
+| `POST /api/v1/bandwidth/auto/contracts` | 10 новых контрактов/час | аккаунту |
 
 Обратите внимание: `POST /api/v1/invoices` считается по **IP-адресу**, а не по аккаунту. Если
 несколько ваших клиентов отправляют запросы с одного исходящего IP, они делят общий бюджет в 10

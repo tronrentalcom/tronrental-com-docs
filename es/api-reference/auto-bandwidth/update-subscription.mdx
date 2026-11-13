@@ -1,0 +1,144 @@
+---
+title: Actualizar suscripción
+api: PATCH /v1/bandwidth/auto/{sub_id}
+description: "Cambia, pausa, reanuda o mueve una suscripción de Bandwidth automático"
+---
+
+## Actualizar suscripción
+
+Cambia los ajustes de una suscripción, la pausa o la reanuda, o la mueve a otra dirección. Envía solo los campos que quieras cambiar; los demás se quedan como están. Los cambios se aplican de inmediato: volvemos a comprobar la suscripción después de cada edición. Requiere el alcance `buy_bandwidth`.
+
+### Parámetros de ruta
+
+<ParamField path="sub_id" type="number" required>
+  ID de la suscripción — el `id` de Crear o Listar suscripciones
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="enabled" type="boolean">
+  `false` pausa la suscripción: recuperamos el ancho de banda y no cobramos nada hasta que la reanudes. `true` reanuda una suscripción pausada o detenida; tu saldo debe cubrir 24 horas y una transferencia, igual que al crearla. Una suscripción desactivada por soporte (`stopped_reason: "admin"`) no se puede reanudar de esta forma.
+</ParamField>
+
+<ParamField body="volume" type="number">
+  Nueva cantidad de ancho de banda. De 1 a 5,000. Subirla dentro de un día ya pagado cobra la diferencia por el resto del día.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Mueve la suscripción a otra dirección. Recuperamos el ancho de banda de la dirección anterior y luego delegamos a la nueva; `address_change_to` muestra el cambio hasta que termina. La nueva dirección pasa por las mismas comprobaciones que al crear. Enviar la dirección actual cancela un cambio que no ha terminado.
+</ParamField>
+
+<ParamField body="token" type="string">
+  `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` u `"OWN"`. Cambiar a `USDT`, `TRX` o `USDD` elimina el `contract`.
+</ParamField>
+
+<ParamField body="contract" type="string | null">
+  Un contrato de [tu lista de tokens](/es/api-reference/auto-bandwidth/list-contracts), para `CUSTOM` u `OWN`. `null` lo elimina (no es posible con `CUSTOM`).
+</ParamField>
+
+<ParamField body="label" type="string | null">
+  Nueva etiqueta, hasta 50 caracteres. `null` o una cadena vacía la elimina.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean">
+  Activa o desactiva la pausa automática.
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  Nuevo nivel de ancho de banda gratuito, con el mismo rango que al crear.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean">
+  Activa o desactiva la notificación de ancho de banda gratuito.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean">
+  `true` pausa la suscripción después de la siguiente transferencia de su token, contada desde ahora. `false` lo cancela.
+</ParamField>
+
+### Respuesta
+
+La suscripción actualizada, con los mismos campos que en [Listar suscripciones](/es/api-reference/auto-bandwidth/list-subscriptions).
+
+### Ejemplo
+
+Pausar una suscripción:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+    json={"enabled": False},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: false }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "paused",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": 330,
+  "delegated_bw": 350,
+  "transfers": 12,
+  "delivery_state": "ok",
+  "paid_until": "2026-11-14T08:15:04Z",
+  "total_charged_trx": "5.100000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-10T08:15:00Z"
+}
+```
+
+`delegated_bw` baja a `0` cuando el ancho de banda se ha recuperado, en unos pocos segundos.
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `400` | `INVALID_ADDRESS` | La nueva `address` no es una dirección TRON válida, o no se puede conectar |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | La nueva `address` es un contrato inteligente |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` está fuera del rango permitido para el `volume` |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `CUSTOM` sin contrato, un contrato con otro token, o un contrato que no está en tu lista de tokens |
+| `402` | `INSUFFICIENT_BALANCE` | Al reanudar, el saldo no cubre 24 horas y una transferencia |
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
+| `404` | `NOT_FOUND` | No hay ninguna suscripción con este ID en tu cuenta (o fue eliminada) |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Otra de tus suscripciones ya usa la nueva dirección |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | El ancho de banda de la nueva dirección ya lo mantiene Smart Mode o un paquete de transferencias |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` es el contrato de USDT o USDD — usa `token` en su lugar |
+| `409` | `AUTO_BW_DISABLED_BY_SUPPORT` | La suscripción fue desactivada por soporte — contáctanos para reanudarla |
+| `422` | — | Un campo tiene el tipo incorrecto o está fuera de rango |
+| `429` | `RATE_LIMIT_EXCEEDED` | Demasiadas solicitudes de edición — ver [Límites de tasa](/es/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | `enabled: true` mientras Bandwidth automático está desactivado temporalmente; no se cambió nada — reintenta más tarde |

@@ -1,0 +1,174 @@
+---
+title: Create Subscription
+api: POST /v1/bandwidth/auto
+description: "Keep bandwidth on an address and renew it after every transfer"
+---
+
+## Create Subscription
+
+Creates an Auto Bandwidth subscription for one address. From the next check on — usually within seconds — we keep `volume` bandwidth delegated to the address and renew it after each transfer that uses it up. See the [overview](/api-reference/auto-bandwidth/overview) for how renewal, cost and statuses work.
+
+The request itself charges nothing, but your balance must cover the first 24 hours and one transfer — plus activation, if the address does not exist on-chain yet — or it returns `402 INSUFFICIENT_BALANCE`. Requires the `buy_bandwidth` scope. To see the price first, use [Auto Bandwidth Quote](/api-reference/auto-bandwidth/quote).
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  TRON address to keep bandwidth on — the address that sends the transfers (T... format, 34 characters). Contract addresses are rejected.
+</ParamField>
+
+<ParamField body="volume" type="number" default="350">
+  Bandwidth to keep on the address. From 1 to 5,000. One USDT or USDD transfer takes about 345, a TRX transfer about 270.
+</ParamField>
+
+<ParamField body="token" type="string" default="USDT">
+  The token the address sends: `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` or `"OWN"`. It does not limit which transfers are covered — see [Token](/api-reference/auto-bandwidth/overview#options).
+</ParamField>
+
+<ParamField body="contract" type="string">
+  Address of a TRC-20 contract from [your token list](/api-reference/auto-bandwidth/list-contracts). Required with `token: "CUSTOM"`, optional with `"OWN"`, not accepted with the other tokens.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Your own name for the subscription, up to 50 characters. Optional.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean" default="false">
+  Hold no bandwidth while the address has at least `threshold` free bandwidth.
+</ParamField>
+
+<ParamField body="threshold" type="number" default="600">
+  Free bandwidth level for `auto_pause` and `notify_free_bw`. From 1 to 600; when either option is on, it must be between the larger of `volume` and 345, and 600. Without `auto_pause`, a `volume` above 600 allows `600`.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean" default="false">
+  Send a Telegram and email message each time the address's free bandwidth recovers to `threshold`.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Pause the subscription after the next transfer of its token.
+</ParamField>
+
+### Response
+
+The new subscription, with the same fields as in [List Subscriptions](/api-reference/auto-bandwidth/list-subscriptions). Right after creation `delegated_bw` is `0` and `paid_until` is `null`: the first delegation follows within seconds.
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourSenderAddress12345678901234ab",
+    "volume": 350,
+    "token": "USDT",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourSenderAddress12345678901234ab",
+        "volume": 350,
+        "token": "USDT",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    address: "TYourSenderAddress12345678901234ab",
+    volume: 350,
+    token: "USDT",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "active",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": null,
+  "delegated_bw": 0,
+  "transfers": 0,
+  "delivery_state": "ok",
+  "paid_until": null,
+  "total_charged_trx": "0.000000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-13T08:15:00Z"
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` is not a valid TRON address, or cannot be connected |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `address` is a smart contract |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` is outside the allowed range for this `volume`; the range is in the message |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `token: "CUSTOM"` without `contract`, a `contract` with another token, or a contract that is not in your token list |
+| `402` | `INSUFFICIENT_BALANCE` | The balance does not cover 24 hours and one transfer (plus activation); the amounts are in `error.required_trx` and `error.available_trx` |
+| `403` | `FORBIDDEN` | The API key lacks the `buy_bandwidth` scope |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Your account already has a subscription for this address |
+| `409` | `AUTO_BW_LIMIT_REACHED` | Your account already has 20 subscriptions |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | Bandwidth on this address is already kept by Smart Mode or a transfer package |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` is the USDT or USDD contract — use `token` instead; the token is in `error.token` |
+| `422` | — | A field has the wrong type or is out of range |
+| `429` | `RATE_LIMIT_EXCEEDED` | Too many create requests — see [Rate Limits](/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | Auto Bandwidth is temporarily switched off; no subscription was created — try again later |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Insufficient balance. Required: 0.680000 TRX, available: 0.500000 TRX",
+      "required_trx": "0.680000",
+      "available_trx": "0.500000"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_DISABLED",
+      "message": "Auto-Bandwidth is temporarily unavailable; please try again later"
+    }
+  }
+}
+```
+
+<Tip>
+Retrying a create after a timeout is safe. If the first request went through, the retry returns `409 AUTO_BW_ADDRESS_TAKEN` instead of making a second subscription; [list your subscriptions](/api-reference/auto-bandwidth/list-subscriptions) to get its `id`.
+</Tip>

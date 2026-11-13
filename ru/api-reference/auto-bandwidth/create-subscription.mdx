@@ -1,0 +1,174 @@
+---
+title: Создать подписку
+api: POST /v1/bandwidth/auto
+description: "Держать bandwidth на адресе и обновлять его после каждого перевода"
+---
+
+## Создать подписку
+
+Создаёт подписку Авто-bandwidth для одного адреса. Начиная со следующей проверки — обычно в течение нескольких секунд — мы держим на адресе делегированными `volume` bandwidth и обновляем их после каждого перевода, который их израсходовал. Как устроены обновление, стоимость и статусы, — в [обзоре](/ru/api-reference/auto-bandwidth/overview).
+
+Сам запрос ничего не списывает, но баланса должно хватать на первые 24 часа и один перевод — плюс активацию, если адреса ещё нет в сети, — иначе вернётся `402 INSUFFICIENT_BALANCE`. Нужен скоуп `buy_bandwidth`. Чтобы сначала узнать цену, используйте [Расчёт цены Авто-bandwidth](/ru/api-reference/auto-bandwidth/quote).
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Адрес TRON, на котором нужно держать bandwidth, — адрес, отправляющий переводы (формат T..., 34 символа). Адреса контрактов отклоняются.
+</ParamField>
+
+<ParamField body="volume" type="number" default="350">
+  Bandwidth, который нужно держать на адресе. От 1 до 5 000. Один перевод USDT или USDD занимает около 345, перевод TRX — около 270.
+</ParamField>
+
+<ParamField body="token" type="string" default="USDT">
+  Токен, который отправляет адрес: `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` или `"OWN"`. Он не ограничивает, какие переводы покрываются, — см. [Токен](/ru/api-reference/auto-bandwidth/overview#параметры).
+</ParamField>
+
+<ParamField body="contract" type="string">
+  Адрес контракта TRC-20 из [вашего списка токенов](/ru/api-reference/auto-bandwidth/list-contracts). Обязателен с `token: "CUSTOM"`, необязателен с `"OWN"`, с остальными токенами не принимается.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Ваше собственное название подписки, до 50 символов. Необязательно.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean" default="false">
+  Не держать bandwidth, пока на адресе бесплатного bandwidth не меньше `threshold`.
+</ParamField>
+
+<ParamField body="threshold" type="number" default="600">
+  Уровень бесплатного bandwidth для `auto_pause` и `notify_free_bw`. От 1 до 600; если включена любая из этих опций, он должен быть от большего из `volume` и 345 до 600. Без `auto_pause` при `volume` больше 600 допускается `600`.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean" default="false">
+  Отправлять сообщение в Telegram и на email каждый раз, когда бесплатный bandwidth адреса восстанавливается до `threshold`.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Поставить подписку на паузу после следующего перевода её токена.
+</ParamField>
+
+### Ответ
+
+Новая подписка — с теми же полями, что в [Списке подписок](/ru/api-reference/auto-bandwidth/list-subscriptions). Сразу после создания `delegated_bw` равен `0`, а `paid_until` — `null`: первая делегация следует в течение нескольких секунд.
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourSenderAddress12345678901234ab",
+    "volume": 350,
+    "token": "USDT",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourSenderAddress12345678901234ab",
+        "volume": 350,
+        "token": "USDT",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    address: "TYourSenderAddress12345678901234ab",
+    volume: 350,
+    token: "USDT",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "active",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": null,
+  "delegated_bw": 0,
+  "transfers": 0,
+  "delivery_state": "ok",
+  "paid_until": null,
+  "total_charged_trx": "0.000000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-13T08:15:00Z"
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` — некорректный адрес TRON, либо к нему не удалось подключиться |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `address` — смарт-контракт |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` вне допустимого диапазона для этого `volume`; диапазон указан в сообщении |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `token: "CUSTOM"` без `contract`, `contract` с другим токеном либо контракт, которого нет в вашем списке токенов |
+| `402` | `INSUFFICIENT_BALANCE` | Баланса не хватает на 24 часа и один перевод (плюс активацию); суммы указаны в `error.required_trx` и `error.available_trx` |
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_bandwidth` |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | В вашем аккаунте уже есть подписка для этого адреса |
+| `409` | `AUTO_BW_LIMIT_REACHED` | В вашем аккаунте уже 20 подписок |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | Bandwidth на этом адресе уже держится через Smart Mode или пакет переводов |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` — контракт USDT или USDD: вместо этого используйте `token`; токен указан в `error.token` |
+| `422` | — | Поле имеет неверный тип или вне диапазона |
+| `429` | `RATE_LIMIT_EXCEEDED` | Слишком много запросов на создание — см. [Лимиты запросов](/ru/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | Авто-bandwidth временно выключен; подписка не создана — повторите позже |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Insufficient balance. Required: 0.680000 TRX, available: 0.500000 TRX",
+      "required_trx": "0.680000",
+      "available_trx": "0.500000"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_DISABLED",
+      "message": "Auto-Bandwidth is temporarily unavailable; please try again later"
+    }
+  }
+}
+```
+
+<Tip>
+Повторять создание после таймаута безопасно. Если первый запрос прошёл, повтор вернёт `409 AUTO_BW_ADDRESS_TAKEN`, а не создаст вторую подписку; чтобы узнать её `id`, [запросите список подписок](/ru/api-reference/auto-bandwidth/list-subscriptions).
+</Tip>

@@ -1,0 +1,103 @@
+---
+title: Auto Bandwidth Overview
+description: "Keep bandwidth on an address for every transfer, renewed after each one"
+---
+
+## Auto Bandwidth
+
+An Auto Bandwidth subscription keeps a fixed amount of bandwidth delegated to your TRON address, so that the address's transfers do not burn TRX for bandwidth. When a transfer uses up the delegated bandwidth, we renew it right away. There is no end date: the subscription runs until you pause or delete it.
+
+### How it works
+
+1. Create a subscription for an address with the `volume` of bandwidth to keep there — for one USDT transfer that is about 350.
+2. We delegate `volume` bandwidth to the address and charge the fee for the first 24 hours.
+3. We check the address **once a minute**, and **right after every outgoing USDT transfer** from it. Transfers of TRX, USDD or other tokens are picked up by the minute check.
+4. When a transfer has used up the bandwidth we delegated, we charge one transfer fee and delegate `volume` again.
+
+Renewing takes about two blocks (around 6 seconds). A second transfer sent before the renewal lands is paid from the address's free bandwidth, and burns TRX when that is not enough.
+
+Creating a subscription does not charge anything in the request itself: we check that your balance covers the first day and one transfer, and the first delegation happens at the next check, usually within seconds.
+
+### Cost
+
+| Fee | When it is charged | Response fields |
+|---|---|---|
+| Subscription fee (per 24 hours) | In advance, when bandwidth is delegated, and every 24 hours after that while it stays on the address | `daily_trx` |
+| Transfer fee | Once for each delegation a transfer has used up | `transfer_trx` = `transfer_bw_trx` + `transfer_fee_trx` |
+
+Both fees equal the price of a one-hour bandwidth order of `volume` for your account: the bandwidth at your rate plus the fixed fee. `transfer_bw_trx` and `transfer_fee_trx` show that split. A subscription created with an API key is priced like a purchase made with that key; one created on the website, like a website purchase. To see the price before you subscribe, use [Auto Bandwidth Quote](/api-reference/auto-bandwidth/quote).
+
+- A transfer paid entirely from the address's free bandwidth or its own stake does not touch our bandwidth, and there is no transfer fee for it.
+- No subscription fee is charged while the subscription is paused, stopped or on auto-pause.
+- Raising `volume` within a paid day charges the difference for the rest of that day. Lowering it is not refunded.
+- If the address does not exist on-chain yet, the first delegation also activates it, and the activation is charged on top.
+
+### Balance
+
+Before every delegation your balance must cover one transfer fee, plus the subscription fee if the current day is not paid yet. When it does not, the subscription stops with `status: "stopped_balance"` and we take the bandwidth back. It resumes on its own after a deposit that covers a day and a transfer. If your Telegram account is linked, you get a message when it stops.
+
+Creating or switching a subscription back on checks the same amount up front and returns `402 INSUFFICIENT_BALANCE` when the balance is short, with the amounts in `error.required_trx` and `error.available_trx`.
+
+### Status
+
+| `status` | Meaning |
+|---|---|
+| `active` | We keep bandwidth on the address and renew it after each transfer |
+| `free_bw` | Auto-pause: the address has at least `threshold` free bandwidth, so we hold nothing and charge nothing. We delegate again when the free bandwidth falls below `threshold` |
+| `paused` | Switched off — by you, by a transfer (see `stop_after_transfer`), or by support. Nothing is held or charged |
+| `stopped_balance` | Your balance did not cover the next delegation. Resumes on its own after a deposit |
+
+| `stopped_reason` | Meaning |
+|---|---|
+| `insufficient_balance` | Stopped for balance |
+| `transfer` | Paused by a transfer of the subscription's token, because `stop_after_transfer` was on |
+| `admin` | Switched off by support; you cannot switch it back on yourself — contact us |
+| `null` | No stop on record, or paused by you |
+
+`delivery_state` shows how the last delegation went: `ok`, `waiting_stake` (bandwidth is temporarily not available to delegate — we retry, nothing is charged) or `failed` (the delegation did not go through — we retry).
+
+### Options
+
+**Token.** `token` tells which token the address sends: `USDT`, `TRX`, `USDD`, `CUSTOM` (a TRC-20 token of your own, set in `contract`) or `OWN` (your own `volume`, optionally with a `contract`). It does not limit what we cover — any transfer that uses up our bandwidth is renewed. It sets the token for `stop_after_transfer`, and in the dashboard it suggests a `volume`: 350 for USDT and USDD, 300 for TRX. For a token of your own, [add its contract](/api-reference/auto-bandwidth/add-contract) first; the response tells how much bandwidth one transfer of it takes.
+
+**Auto-pause.** With `auto_pause: true` we hold no bandwidth while the address's free daily bandwidth (600 per account) is at least `threshold`, and the subscription shows `free_bw`. `threshold` must then be between the larger of `volume` and 345, and 600.
+
+**Free bandwidth notification.** With `notify_free_bw: true` we send a message to your Telegram and email each time the address's free bandwidth recovers to `threshold` after falling below it. It uses the same `threshold` and the same range, except that without auto-pause a `volume` above 600 allows `threshold: 600`.
+
+**Stop after the next transfer.** With `stop_after_transfer: true` the first transfer of the subscription's token sent after you set it pauses the subscription with `stopped_reason: "transfer"`. That transfer is still covered.
+
+**Changing the address.** Setting a new `address` in [Update Subscription](/api-reference/auto-bandwidth/update-subscription) moves the subscription: we take the bandwidth back from the old address, then delegate to the new one. Until the move is done, `address_change_to` shows the new address.
+
+### Limits
+
+- **One subscription per address** on an account. A second one for the same address returns `409 AUTO_BW_ADDRESS_TAKEN`.
+- **20 subscriptions** per account; deleted ones do not count. Over the limit: `409 AUTO_BW_LIMIT_REACHED`.
+- **20 token contracts** in your list. Over the limit: `409 AUTO_BW_CONTRACT_LIMIT`.
+- **No contract addresses**, such as the USDT token contract: TRON does not allow delegating resources to them.
+- **No addresses already covered by Smart Mode bandwidth or a transfer package with bandwidth**: `409 AUTO_BW_ADDRESS_COVERED`.
+- **Request limits** on creating and editing subscriptions and on adding contracts — see [Rate Limits](/resources/rate-limits).
+
+If Auto Bandwidth is temporarily switched off, creating a subscription, switching one on and adding a contract return `503 AUTO_BW_DISABLED`. Nothing is created or changed — try again later.
+
+### Compared with Auto Refill and Smart Mode
+
+| | Auto Bandwidth | [Bandwidth Auto Refill](/api-reference/auto-refill/overview) | [Smart Mode](/api-reference/smart-mode/overview) |
+|---|---|---|---|
+| Resource | Bandwidth | Bandwidth (or energy) | Energy, plus optional bandwidth |
+| When it delivers | Kept on the address, renewed after each transfer that uses it | When the level drops below your threshold | On every outgoing USDT transfer |
+| What you pay | A fee per 24 hours plus a fee per used delegation | Each refill, as a regular order | A daily subscription plus each USDT transfer |
+
+### Endpoints
+
+| Action | Endpoint |
+|---|---|
+| Price of a day and of one transfer | [`GET /bandwidth/auto/quote`](/api-reference/auto-bandwidth/quote) |
+| Create a subscription | [`POST /bandwidth/auto`](/api-reference/auto-bandwidth/create-subscription) |
+| List subscriptions | [`GET /bandwidth/auto`](/api-reference/auto-bandwidth/list-subscriptions) |
+| Edit, pause, resume, change address | [`PATCH /bandwidth/auto/{sub_id}`](/api-reference/auto-bandwidth/update-subscription) |
+| Delete | [`DELETE /bandwidth/auto/{sub_id}`](/api-reference/auto-bandwidth/delete-subscription) |
+| Your token contracts | [`GET /bandwidth/auto/contracts`](/api-reference/auto-bandwidth/list-contracts) |
+| Add a token contract | [`POST /bandwidth/auto/contracts`](/api-reference/auto-bandwidth/add-contract) |
+| Remove a token contract | [`DELETE /bandwidth/auto/contracts/{address}`](/api-reference/auto-bandwidth/delete-contract) |
+
+Creating, editing and deleting subscriptions and contracts requires the `buy_bandwidth` scope; listing and quotes require `view`.

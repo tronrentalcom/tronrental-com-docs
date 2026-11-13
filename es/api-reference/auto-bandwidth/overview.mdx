@@ -1,0 +1,103 @@
+---
+title: Descripción general de Bandwidth automático
+description: "Mantén ancho de banda en una dirección para cada transferencia, renovado después de cada una"
+---
+
+## Bandwidth automático
+
+Una suscripción de Bandwidth automático mantiene una cantidad fija de ancho de banda delegada a tu dirección TRON, para que las transferencias de la dirección no quemen TRX en concepto de ancho de banda. Cuando una transferencia agota el ancho de banda delegado, lo renovamos de inmediato. No hay fecha de fin: la suscripción funciona hasta que la pausas o la eliminas.
+
+### Cómo funciona
+
+1. Crea una suscripción para una dirección con el `volume` de ancho de banda que se mantendrá en ella — para una transferencia USDT son unos 350.
+2. Delegamos `volume` de ancho de banda a la dirección y cobramos la comisión de las primeras 24 horas.
+3. Comprobamos la dirección **una vez por minuto** y **justo después de cada transferencia USDT saliente** desde ella. Las transferencias de TRX, USDD u otros tokens las detecta la comprobación por minuto.
+4. Cuando una transferencia ha agotado el ancho de banda que delegamos, cobramos una comisión por transferencia y volvemos a delegar `volume`.
+
+La renovación tarda unos dos bloques (alrededor de 6 segundos). Una segunda transferencia enviada antes de que llegue la renovación se paga con el ancho de banda gratuito de la dirección, y quema TRX cuando eso no alcanza.
+
+Crear una suscripción no cobra nada en la propia solicitud: comprobamos que tu saldo cubre el primer día y una transferencia, y la primera delegación ocurre en la siguiente comprobación, normalmente en unos segundos.
+
+### Coste
+
+| Comisión | Cuándo se cobra | Campos de la respuesta |
+|---|---|---|
+| Comisión de suscripción (cada 24 horas) | Por adelantado, cuando se delega el ancho de banda, y cada 24 horas después mientras siga en la dirección | `daily_trx` |
+| Comisión por transferencia | Una vez por cada delegación que una transferencia ha agotado | `transfer_trx` = `transfer_bw_trx` + `transfer_fee_trx` |
+
+Ambas comisiones equivalen al precio de una orden de ancho de banda de una hora de `volume` para tu cuenta: el ancho de banda a tu tarifa más la comisión fija. `transfer_bw_trx` y `transfer_fee_trx` muestran ese desglose. Una suscripción creada con una clave API tiene el precio de una compra hecha con esa clave; una creada en el sitio web, el de una compra en el sitio web. Para ver el precio antes de suscribirte, usa [Cotización de Bandwidth automático](/es/api-reference/auto-bandwidth/quote).
+
+- Una transferencia pagada por completo con el ancho de banda gratuito de la dirección o con su propio stake no toca nuestro ancho de banda, y no tiene comisión por transferencia.
+- No se cobra comisión de suscripción mientras la suscripción está pausada, detenida o en pausa automática.
+- Subir `volume` dentro de un día ya pagado cobra la diferencia por el resto de ese día. Bajarlo no se reembolsa.
+- Si la dirección todavía no existe on-chain, la primera delegación también la activa, y la activación se cobra aparte.
+
+### Saldo
+
+Antes de cada delegación, tu saldo debe cubrir una comisión por transferencia, más la comisión de suscripción si el día en curso aún no está pagado. Cuando no es así, la suscripción se detiene con `status: "stopped_balance"` y recuperamos el ancho de banda. Se reanuda sola tras un depósito que cubra un día y una transferencia. Si tu cuenta de Telegram está vinculada, recibes un mensaje cuando se detiene.
+
+Crear una suscripción o volver a activarla comprueba de antemano la misma cantidad y devuelve `402 INSUFFICIENT_BALANCE` cuando el saldo no alcanza, con los importes en `error.required_trx` y `error.available_trx`.
+
+### Estado
+
+| `status` | Significado |
+|---|---|
+| `active` | Mantenemos ancho de banda en la dirección y lo renovamos después de cada transferencia |
+| `free_bw` | Pausa automática: la dirección tiene al menos `threshold` de ancho de banda gratuito, así que no mantenemos nada y no cobramos nada. Volvemos a delegar cuando el ancho de banda gratuito cae por debajo de `threshold` |
+| `paused` | Desactivada — por ti, por una transferencia (ver `stop_after_transfer`) o por soporte. No se mantiene ni se cobra nada |
+| `stopped_balance` | Tu saldo no cubrió la siguiente delegación. Se reanuda sola tras un depósito |
+
+| `stopped_reason` | Significado |
+|---|---|
+| `insufficient_balance` | Detenida por saldo |
+| `transfer` | Pausada por una transferencia del token de la suscripción, porque `stop_after_transfer` estaba activado |
+| `admin` | Desactivada por soporte; no puedes volver a activarla tú — contáctanos |
+| `null` | No hay ninguna detención registrada, o la pausaste tú |
+
+`delivery_state` muestra cómo fue la última delegación: `ok`, `waiting_stake` (el ancho de banda no está disponible para delegar por el momento — reintentamos, no se cobra nada) o `failed` (la delegación no se completó — reintentamos).
+
+### Opciones
+
+**Token.** `token` indica qué token envía la dirección: `USDT`, `TRX`, `USDD`, `CUSTOM` (un token TRC-20 propio, indicado en `contract`) u `OWN` (tu propio `volume`, opcionalmente con un `contract`). No limita lo que cubrimos — se renueva cualquier transferencia que agote nuestro ancho de banda. Fija el token para `stop_after_transfer` y, en el panel, sugiere un `volume`: 350 para USDT y USDD, 300 para TRX. Para un token propio, [añade primero su contrato](/es/api-reference/auto-bandwidth/add-contract); la respuesta indica cuánto ancho de banda consume una transferencia de ese token.
+
+**Pausa automática.** Con `auto_pause: true` no mantenemos ancho de banda mientras el ancho de banda gratuito diario de la dirección (600 por cuenta) sea al menos `threshold`, y la suscripción muestra `free_bw`. `threshold` debe estar entonces entre el mayor de `volume` y 345, y 600.
+
+**Notificación de ancho de banda gratuito.** Con `notify_free_bw: true` enviamos un mensaje a tu Telegram y a tu correo cada vez que el ancho de banda gratuito de la dirección se recupera hasta `threshold` tras haber caído por debajo. Usa el mismo `threshold` y el mismo rango, salvo que sin pausa automática un `volume` superior a 600 permite `threshold: 600`.
+
+**Detener tras la siguiente transferencia.** Con `stop_after_transfer: true`, la primera transferencia del token de la suscripción enviada después de activarlo pausa la suscripción con `stopped_reason: "transfer"`. Esa transferencia sigue cubierta.
+
+**Cambio de dirección.** Indicar una nueva `address` en [Actualizar suscripción](/es/api-reference/auto-bandwidth/update-subscription) mueve la suscripción: recuperamos el ancho de banda de la dirección anterior y luego delegamos a la nueva. Hasta que el cambio termina, `address_change_to` muestra la nueva dirección.
+
+### Límites
+
+- **Una suscripción por dirección** en cada cuenta. Una segunda para la misma dirección devuelve `409 AUTO_BW_ADDRESS_TAKEN`.
+- **20 suscripciones** por cuenta; las eliminadas no cuentan. Por encima del límite: `409 AUTO_BW_LIMIT_REACHED`.
+- **20 contratos de token** en tu lista. Por encima del límite: `409 AUTO_BW_CONTRACT_LIMIT`.
+- **Sin direcciones de contrato**, como el contrato del token USDT: TRON no permite delegarles recursos.
+- **Sin direcciones ya cubiertas por el ancho de banda de Smart Mode ni por un paquete de transferencias con ancho de banda**: `409 AUTO_BW_ADDRESS_COVERED`.
+- **Límites de solicitudes** al crear y editar suscripciones y al añadir contratos — ver [Límites de tasa](/es/resources/rate-limits).
+
+Si Bandwidth automático está desactivado temporalmente, crear una suscripción, activar una y añadir un contrato devuelven `503 AUTO_BW_DISABLED`. No se crea ni se cambia nada — reintenta más tarde.
+
+### Comparación con la Recarga automática y Smart Mode
+
+| | Bandwidth automático | [Recarga automática de ancho de banda](/es/api-reference/auto-refill/overview) | [Smart Mode](/es/api-reference/smart-mode/overview) |
+|---|---|---|---|
+| Recurso | Ancho de banda | Ancho de banda (o energía) | Energía, más ancho de banda opcional |
+| Cuándo entrega | Se mantiene en la dirección y se renueva después de cada transferencia que lo usa | Cuando el nivel cae por debajo de tu umbral | En cada transferencia USDT saliente |
+| Qué pagas | Una comisión cada 24 horas más una comisión por cada delegación usada | Cada recarga, como una orden normal | Una suscripción diaria más cada transferencia USDT |
+
+### Endpoints
+
+| Acción | Endpoint |
+|---|---|
+| Precio de un día y de una transferencia | [`GET /bandwidth/auto/quote`](/es/api-reference/auto-bandwidth/quote) |
+| Crear una suscripción | [`POST /bandwidth/auto`](/es/api-reference/auto-bandwidth/create-subscription) |
+| Listar suscripciones | [`GET /bandwidth/auto`](/es/api-reference/auto-bandwidth/list-subscriptions) |
+| Editar, pausar, reanudar, cambiar de dirección | [`PATCH /bandwidth/auto/{sub_id}`](/es/api-reference/auto-bandwidth/update-subscription) |
+| Eliminar | [`DELETE /bandwidth/auto/{sub_id}`](/es/api-reference/auto-bandwidth/delete-subscription) |
+| Tus contratos de token | [`GET /bandwidth/auto/contracts`](/es/api-reference/auto-bandwidth/list-contracts) |
+| Añadir un contrato de token | [`POST /bandwidth/auto/contracts`](/es/api-reference/auto-bandwidth/add-contract) |
+| Quitar un contrato de token | [`DELETE /bandwidth/auto/contracts/{address}`](/es/api-reference/auto-bandwidth/delete-contract) |
+
+Crear, editar y eliminar suscripciones y contratos requiere el alcance `buy_bandwidth`; listar y cotizar requieren `view`.

@@ -1,0 +1,68 @@
+---
+title: Token Sözleşmesini Kaldır
+api: DELETE /v1/bandwidth/auto/contracts/{address}
+description: "Bir TRC-20 sözleşmesini Otomatik Bandwidth token listenizden kaldırın"
+---
+
+## Token Sözleşmesini Kaldır
+
+Bir sözleşmeyi token listenizden kaldırır. Aboneliklerinizden birinin hâlâ kullandığı bir sözleşme kaldırılamaz: önce o aboneliğin `token` veya `contract` değerini değiştirin ya da aboneliği silin. `buy_bandwidth` kapsamını gerektirir.
+
+### Yol parametreleri
+
+<ParamField path="address" type="string" required>
+  Kaldırılacak sözleşmenin adresi
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="address" type="string">
+  Kaldırılan sözleşmenin adresi
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean">
+  Her zaman `true`
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+  { method: "DELETE", headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "deleted": true
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` geçerli bir TRON adresi değil |
+| `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
+| `404` | `NOT_FOUND` | Bu sözleşme listenizde yok |
+| `409` | `AUTO_BW_CONTRACT_IN_USE` | Bu sözleşme için kurulmuş bir abonelik var |

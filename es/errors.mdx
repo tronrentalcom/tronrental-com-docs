@@ -112,6 +112,26 @@ Se devuelven en la forma estándar desde los endpoints de [Recarga automática](
 | `AUTOREFILL_DISABLED` | `503` | La Recarga automática de este recurso está desactivada temporalmente; solo se devuelve al crear una regla. No se creó ninguna regla — reintenta más tarde |
 | `NOT_FOUND` | `404` | No existe esa regla en la cuenta |
 
+## Códigos de Bandwidth automático
+
+Se devuelven en la forma estándar desde los endpoints de [Bandwidth automático](/es/api-reference/auto-bandwidth/overview):
+
+| Código | Estado | Descripción |
+|------|--------|-------------|
+| `AUTO_BW_INVALID_THRESHOLD` | `400` | `threshold` está fuera del rango permitido para el `volume` de la suscripción |
+| `AUTO_BW_INVALID_CONTRACT` | `400` | El `contract` no corresponde al `token`, o no está en tu lista de tokens |
+| `AUTO_BW_NOT_A_CONTRACT` | `400` | No hay ningún contrato inteligente en la dirección |
+| `AUTO_BW_NOT_A_TOKEN` | `400` | El contrato no es un token TRC-20 |
+| `AUTO_BW_TRANSFER_REVERTS` | `400` | Una transferencia del token falla en la simulación |
+| `AUTO_BW_ADDRESS_TAKEN` | `409` | La cuenta ya tiene una suscripción para esta dirección |
+| `AUTO_BW_LIMIT_REACHED` | `409` | La cuenta ya tiene 20 suscripciones |
+| `AUTO_BW_ADDRESS_COVERED` | `409` | El ancho de banda de la dirección ya lo mantiene Smart Mode o un paquete de transferencias |
+| `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | La suscripción fue desactivada por soporte — contáctanos para reanudarla |
+| `AUTO_BW_CONTRACT_LISTED` | `409` | El contrato es USDT o USDD — elígelo con `token`; el token figura en `error.token` |
+| `AUTO_BW_CONTRACT_LIMIT` | `409` | La lista de tokens ya tiene 20 contratos |
+| `AUTO_BW_CONTRACT_IN_USE` | `409` | Hay una suscripción configurada para este contrato |
+| `AUTO_BW_DISABLED` | `503` | Bandwidth automático está desactivado temporalmente; se devuelve al crear o reanudar una suscripción y al añadir un contrato. No se cambió nada — reintenta más tarde |
+
 ## Códigos de verificación de retiro
 
 `POST /api/v1/account/withdrawal` devuelve estos códigos de verificación en la forma plana, con `code`

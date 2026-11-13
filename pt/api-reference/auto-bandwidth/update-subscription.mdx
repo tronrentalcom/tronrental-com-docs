@@ -1,0 +1,144 @@
+---
+title: Atualizar assinatura
+api: PATCH /v1/bandwidth/auto/{sub_id}
+description: "Altere, pause, retome ou mova uma assinatura de Bandwidth automático"
+---
+
+## Atualizar assinatura
+
+Altera as configurações de uma assinatura, pausa-a ou retoma-a, ou a move para outro endereço. Envie apenas os campos que quiser alterar; os demais ficam como estão. As alterações valem na hora: verificamos a assinatura de novo após cada edição. Exige o escopo `buy_bandwidth`.
+
+### Parâmetros de caminho
+
+<ParamField path="sub_id" type="number" required>
+  ID da assinatura — o `id` de Criar ou Listar assinaturas
+</ParamField>
+
+### Corpo da requisição
+
+<ParamField body="enabled" type="boolean">
+  `false` pausa a assinatura: retiramos a largura de banda e não cobramos nada até você retomá-la. `true` retoma uma assinatura pausada ou parada; o seu saldo deve cobrir 24 horas e uma transferência, como ao criar. Uma assinatura desligada pelo suporte (`stopped_reason: "admin"`) não pode ser retomada assim.
+</ParamField>
+
+<ParamField body="volume" type="number">
+  Nova quantidade de largura de banda. De 1 a 5.000. Aumentá-la dentro de um dia pago cobra a diferença pelo restante do dia.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Mover a assinatura para outro endereço. Retiramos a largura de banda do endereço antigo e depois delegamos ao novo; `address_change_to` mostra a mudança até ela terminar. O novo endereço passa pelas mesmas verificações da criação. Enviar o endereço atual cancela uma mudança que não terminou.
+</ParamField>
+
+<ParamField body="token" type="string">
+  `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` ou `"OWN"`. Mudar para `USDT`, `TRX` ou `USDD` remove o `contract`.
+</ParamField>
+
+<ParamField body="contract" type="string | null">
+  Um contrato da [sua lista de tokens](/pt/api-reference/auto-bandwidth/list-contracts), para `CUSTOM` ou `OWN`. `null` o remove (não é possível com `CUSTOM`).
+</ParamField>
+
+<ParamField body="label" type="string | null">
+  Novo nome, até 50 caracteres. `null` ou uma string vazia o remove.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean">
+  Liga ou desliga a pausa automática.
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  Novo nível de largura de banda gratuita, com o mesmo intervalo da criação.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean">
+  Liga ou desliga a notificação de largura de banda gratuita.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean">
+  `true` pausa a assinatura após a próxima transferência do seu token, contada a partir de agora. `false` cancela isso.
+</ParamField>
+
+### Resposta
+
+A assinatura atualizada, com os mesmos campos de [Listar assinaturas](/pt/api-reference/auto-bandwidth/list-subscriptions).
+
+### Exemplo
+
+Pausar uma assinatura:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+    json={"enabled": False},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: false }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "paused",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": 330,
+  "delegated_bw": 350,
+  "transfers": 12,
+  "delivery_state": "ok",
+  "paid_until": "2026-11-14T08:15:04Z",
+  "total_charged_trx": "5.100000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-10T08:15:00Z"
+}
+```
+
+`delegated_bw` cai para `0` assim que a largura de banda é retirada, em poucos segundos.
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | O novo `address` não é um endereço TRON válido, ou não foi possível conectá-lo |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | O novo `address` é um contrato inteligente |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` está fora do intervalo permitido para o `volume` |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `CUSTOM` sem contrato, um contrato com outro token, ou um contrato que não está na sua lista de tokens |
+| `402` | `INSUFFICIENT_BALANCE` | Ao retomar, o saldo não cobre 24 horas e uma transferência |
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_bandwidth` |
+| `404` | `NOT_FOUND` | Não existe assinatura com este ID na sua conta (ou ela foi excluída) |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Outra das suas assinaturas já usa o novo endereço |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | A largura de banda do novo endereço já é mantida pelo Smart Mode ou por um pacote de transferências |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` é o contrato do USDT ou do USDD — use `token` |
+| `409` | `AUTO_BW_DISABLED_BY_SUPPORT` | A assinatura foi desligada pelo suporte — entre em contato conosco para retomá-la |
+| `422` | — | Um campo tem o tipo errado ou está fora do intervalo |
+| `429` | `RATE_LIMIT_EXCEEDED` | Requisições de edição demais — veja [Limites de Taxa](/pt/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | `enabled: true` enquanto o Bandwidth automático está temporariamente desligado; nada foi alterado — tente novamente mais tarde |

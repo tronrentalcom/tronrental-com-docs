@@ -111,6 +111,26 @@ koda bakarak tespit etmeyin.
 | `AUTOREFILL_DISABLED` | `503` | Bu kaynak için Otomatik Dolum geçici olarak kapalı; yalnızca kural oluşturulurken döner. Kural oluşturulmadı — daha sonra yeniden deneyin |
 | `NOT_FOUND` | `404` | Hesapta böyle bir kural yok |
 
+## Otomatik Bandwidth kodları
+
+[Otomatik Bandwidth](/tr/api-reference/auto-bandwidth/overview) uç noktaları bu kodları standart biçimde döndürür:
+
+| Kod | Durum | Açıklama |
+|------|--------|-------------|
+| `AUTO_BW_INVALID_THRESHOLD` | `400` | `threshold`, aboneliğin `volume` değeri için izin verilen aralığın dışında |
+| `AUTO_BW_INVALID_CONTRACT` | `400` | `contract`, `token` ile uyuşmuyor veya token listenizde yok |
+| `AUTO_BW_NOT_A_CONTRACT` | `400` | Adreste akıllı sözleşme yok |
+| `AUTO_BW_NOT_A_TOKEN` | `400` | Sözleşme bir TRC-20 tokeni değil |
+| `AUTO_BW_TRANSFER_REVERTS` | `400` | Tokenın bir transferi simülasyonda başarısız oluyor |
+| `AUTO_BW_ADDRESS_TAKEN` | `409` | Hesapta bu adres için zaten bir abonelik var |
+| `AUTO_BW_LIMIT_REACHED` | `409` | Hesapta zaten 20 abonelik var |
+| `AUTO_BW_ADDRESS_COVERED` | `409` | Adresteki bant genişliği zaten Akıllı Mod veya bir transfer paketi tarafından tutuluyor |
+| `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | Abonelik destek tarafından kapatıldı — devam ettirmek için bizimle iletişime geçin |
+| `AUTO_BW_CONTRACT_LISTED` | `409` | Sözleşme USDT veya USDD — `token` ile seçin; token `error.token` içinde |
+| `AUTO_BW_CONTRACT_LIMIT` | `409` | Token listesinde zaten 20 sözleşme var |
+| `AUTO_BW_CONTRACT_IN_USE` | `409` | Bu sözleşme için kurulmuş bir abonelik var |
+| `AUTO_BW_DISABLED` | `503` | Otomatik Bandwidth geçici olarak kapalı; abonelik oluşturulurken veya devam ettirilirken ve sözleşme eklenirken döner. Hiçbir şey değiştirilmedi — daha sonra yeniden deneyin |
+
 ## Para çekme doğrulama kodları
 
 `POST /api/v1/account/withdrawal` bu doğrulama kodlarını düz biçimde, `code` ile `detail` yan yana

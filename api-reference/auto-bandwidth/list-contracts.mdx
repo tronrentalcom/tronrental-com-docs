@@ -1,0 +1,85 @@
+---
+title: List Token Contracts
+api: GET /v1/bandwidth/auto/contracts
+description: "Your TRC-20 token contracts for Auto Bandwidth"
+---
+
+## List Token Contracts
+
+Returns the TRC-20 contracts you have added for Auto Bandwidth. A subscription with `token: "CUSTOM"` or `"OWN"` can use any of them in `contract`. Requires the `view` scope.
+
+USDT and USDD are built in and never appear here: choose them with `token`.
+
+### Response
+
+<ResponseField name="contracts" type="array">
+  Your contracts.
+
+  <Expandable title="contract object">
+    <ResponseField name="address" type="string">
+      Contract address
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Token symbol, as the contract reports it (up to 16 characters)
+    </ResponseField>
+    <ResponseField name="name" type="string | null">
+      Token name, as the contract reports it (up to 40 characters); `null` if it has none
+    </ResponseField>
+    <ResponseField name="decimals" type="number">
+      Token decimals
+    </ResponseField>
+    <ResponseField name="bandwidth" type="number">
+      Bandwidth one transfer of this token takes — a guide for the subscription `volume`
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Warning>
+`symbol` and `name` come from the contract itself, and anyone can deploy a token that calls itself "Tether USD". Always identify a token by its `address`.
+</Warning>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "contracts": [
+    {
+      "address": "TYourTokenContract1234567890abcdef",
+      "symbol": "MTK",
+      "name": "My Token",
+      "decimals": 6,
+      "bandwidth": 345
+    }
+  ]
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `view` scope |

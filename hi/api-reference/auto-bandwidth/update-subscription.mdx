@@ -1,0 +1,144 @@
+---
+title: सब्सक्रिप्शन अपडेट करें
+api: PATCH /v1/bandwidth/auto/{sub_id}
+description: "ऑटो बैंडविड्थ सब्सक्रिप्शन को बदलें, रोकें, फिर शुरू करें या दूसरे एड्रेस पर ले जाएं"
+---
+
+## सब्सक्रिप्शन अपडेट करें
+
+सब्सक्रिप्शन की सेटिंग बदलता है, उसे रोकता या फिर शुरू करता है, या दूसरे एड्रेस पर ले जाता है। केवल वही फ़ील्ड भेजें जिन्हें बदलना है; बाकी जैसे हैं वैसे रहते हैं। बदलाव तुरंत लागू होते हैं: हर बदलाव के बाद हम सब्सक्रिप्शन की दोबारा जाँच करते हैं। `buy_bandwidth` स्कोप आवश्यक है।
+
+### पाथ पैरामीटर
+
+<ParamField path="sub_id" type="number" required>
+  सब्सक्रिप्शन ID — सब्सक्रिप्शन बनाने या उनकी सूची के रिस्पॉन्स का `id`
+</ParamField>
+
+### अनुरोध बॉडी
+
+<ParamField body="enabled" type="boolean">
+  `false` सब्सक्रिप्शन को रोक देता है: हम बैंडविड्थ वापस ले लेते हैं और आपके फिर शुरू करने तक कुछ नहीं लेते। `true` रुके हुए या बंद सब्सक्रिप्शन को फिर शुरू करता है; आपका बैलेंस 24 घंटे और एक ट्रांसफर को कवर करना चाहिए, जैसा बनाते समय। सपोर्ट द्वारा बंद किया गया सब्सक्रिप्शन (`stopped_reason: "admin"`) इस तरह फिर शुरू नहीं किया जा सकता।
+</ParamField>
+
+<ParamField body="volume" type="number">
+  बैंडविड्थ की नई मात्रा। 1 से 5,000 तक। भुगतान किए गए दिन के भीतर बढ़ाने पर दिन के बाकी हिस्से का अंतर लिया जाता है।
+</ParamField>
+
+<ParamField body="address" type="string">
+  सब्सक्रिप्शन को दूसरे एड्रेस पर ले जाएं। हम पुराने एड्रेस से बैंडविड्थ वापस लेते हैं, फिर नए पर डेलिगेट करते हैं; पूरा होने तक `address_change_to` स्थानांतरण दिखाता है। नया एड्रेस वही जाँचें पास करता है जो बनाते समय होती हैं। मौजूदा एड्रेस भेजने पर अधूरा स्थानांतरण रद्द हो जाता है।
+</ParamField>
+
+<ParamField body="token" type="string">
+  `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` या `"OWN"`। `USDT`, `TRX` या `USDD` पर बदलने से `contract` हट जाता है।
+</ParamField>
+
+<ParamField body="contract" type="string | null">
+  [आपकी टोकन सूची](/hi/api-reference/auto-bandwidth/list-contracts) का कॉन्ट्रैक्ट, `CUSTOM` या `OWN` के लिए। `null` उसे हटा देता है (`CUSTOM` के साथ संभव नहीं)।
+</ParamField>
+
+<ParamField body="label" type="string | null">
+  नया लेबल, अधिकतम 50 अक्षर। `null` या खाली स्ट्रिंग उसे हटा देती है।
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean">
+  ऑटो-पॉज़ चालू या बंद करें।
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  मुफ़्त बैंडविड्थ का नया स्तर, वही सीमा जो बनाते समय है।
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean">
+  मुफ़्त बैंडविड्थ सूचना चालू या बंद करें।
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean">
+  `true` अभी से गिनकर अपने टोकन के अगले ट्रांसफर के बाद सब्सक्रिप्शन को रोक देता है। `false` उसे रद्द कर देता है।
+</ParamField>
+
+### रिस्पॉन्स
+
+अपडेट किया गया सब्सक्रिप्शन, वही फ़ील्ड जो [सब्सक्रिप्शन की सूची](/hi/api-reference/auto-bandwidth/list-subscriptions) में हैं।
+
+### उदाहरण
+
+सब्सक्रिप्शन को रोकें:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+    json={"enabled": False},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: false }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "paused",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": 330,
+  "delegated_bw": 350,
+  "transfers": 12,
+  "delivery_state": "ok",
+  "paid_until": "2026-11-14T08:15:04Z",
+  "total_charged_trx": "5.100000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-10T08:15:00Z"
+}
+```
+
+बैंडविड्थ वापस लिए जाने के बाद, कुछ सेकंड में, `delegated_bw` `0` हो जाता है।
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | नया `address` मान्य TRON एड्रेस नहीं है, या उससे कनेक्ट नहीं किया जा सकता |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | नया `address` एक स्मार्ट कॉन्ट्रैक्ट है |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` इस `volume` के लिए अनुमत सीमा से बाहर है |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `CUSTOM` बिना कॉन्ट्रैक्ट के, अन्य टोकन के साथ कॉन्ट्रैक्ट, या ऐसा कॉन्ट्रैक्ट जो आपकी टोकन सूची में नहीं है |
+| `402` | `INSUFFICIENT_BALANCE` | फिर शुरू करते समय बैलेंस 24 घंटे और एक ट्रांसफर को कवर नहीं करता |
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
+| `404` | `NOT_FOUND` | आपके खाते में इस ID का कोई सब्सक्रिप्शन नहीं है (या वह हटा दिया गया) |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | आपका कोई और सब्सक्रिप्शन पहले से नए एड्रेस का उपयोग करता है |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | नए एड्रेस की बैंडविड्थ पहले से Smart Mode या ट्रांसफर पैकेज द्वारा बनाए रखी जा रही है |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` USDT या USDD का कॉन्ट्रैक्ट है — इसके बजाय `token` का उपयोग करें |
+| `409` | `AUTO_BW_DISABLED_BY_SUPPORT` | सब्सक्रिप्शन सपोर्ट द्वारा बंद किया गया था — फिर शुरू करने के लिए हमसे संपर्क करें |
+| `422` | — | किसी फ़ील्ड का प्रकार गलत है या वह सीमा से बाहर है |
+| `429` | `RATE_LIMIT_EXCEEDED` | बदलाव के बहुत अधिक अनुरोध — देखें [रेट लिमिट](/hi/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | ऑटो बैंडविड्थ अस्थायी रूप से बंद होने पर `enabled: true`; कुछ नहीं बदला — कुछ देर बाद पुनः प्रयास करें |

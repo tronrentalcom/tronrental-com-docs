@@ -1,0 +1,103 @@
+---
+title: 自动带宽概述
+description: "为地址的每一笔转账保持带宽，并在每次使用后续期"
+---
+
+## 自动带宽
+
+自动带宽订阅会为您的 TRON 地址持续委托固定数量的带宽，使该地址的转账不必为带宽燃烧 TRX。当一笔转账用完所委托的带宽时，我们会立即续期。没有结束日期：订阅会一直运行，直到您暂停或删除它。
+
+### 工作原理
+
+1. 为地址创建订阅，设置要保持的带宽数量 `volume`——一笔 USDT 转账约为 350。
+2. 我们向该地址委托 `volume` 带宽，并收取前 24 小时的费用。
+3. 我们**每分钟一次**检查该地址，并在该地址**每次转出 USDT 后立即**检查。TRX、USDD 或其他代币的转账由每分钟的检查发现。
+4. 当一笔转账用完我们委托的带宽时，我们收取一次转账费，并重新委托 `volume`。
+
+续期大约需要两个区块（约 6 秒）。在续期到账之前发出的第二笔转账，会使用该地址的免费带宽支付，不够时会燃烧 TRX。
+
+创建订阅的请求本身不会收取任何费用：我们会检查您的余额是否足以支付第一天和一笔转账，首次委托在下一次检查时进行，通常在几秒之内。
+
+### 费用
+
+| 费用 | 收取时间 | 响应字段 |
+|---|---|---|
+| 订阅费（每 24 小时） | 委托带宽时提前收取，此后带宽留在地址上期间每 24 小时收取一次 | `daily_trx` |
+| 转账费 | 每次转账用完一次委托时收取一次 | `transfer_trx` = `transfer_bw_trx` + `transfer_fee_trx` |
+
+两种费用都等于您的账户购买 `volume` 数量、一小时期限的带宽订单的价格：按您的费率计算的带宽，加上固定手续费。`transfer_bw_trx` 和 `transfer_fee_trx` 显示这一拆分。通过 API 密钥创建的订阅，按使用该密钥购买的价格计费；在网站上创建的订阅，按网站购买的价格计费。如需在订阅之前查看价格，请使用[自动带宽报价](/zh/api-reference/auto-bandwidth/quote)。
+
+- 完全由地址的免费带宽或其自有质押支付的转账，不会动用我们的带宽，也没有转账费。
+- 订阅处于暂停、停止或自动暂停状态时，不收取订阅费。
+- 在已付费的一天内提高 `volume`，会收取当天剩余时间的差额。降低 `volume` 不退款。
+- 如果该地址在链上尚不存在，首次委托还会将其激活，激活费用另行收取。
+
+### 余额
+
+每次委托之前，您的余额必须足以支付一次转账费；如果当天尚未付费，还要加上订阅费。余额不足时，订阅会以 `status: "stopped_balance"` 停止，我们会收回带宽。充值后，只要余额足以支付一天和一笔转账，订阅会自动恢复。如果您已绑定 Telegram 账户，订阅停止时您会收到一条消息。
+
+创建订阅或将订阅重新开启时，会预先检查同样的金额；余额不足时返回 `402 INSUFFICIENT_BALANCE`，金额见 `error.required_trx` 和 `error.available_trx`。
+
+### 状态
+
+| `status` | 含义 |
+|---|---|
+| `active` | 我们在地址上保持带宽，并在每笔转账后续期 |
+| `free_bw` | 自动暂停：该地址的免费带宽至少为 `threshold`，因此我们不持有也不收费。当免费带宽低于 `threshold` 时，我们会重新委托 |
+| `paused` | 已关闭——由您、由一笔转账（参见 `stop_after_transfer`）或由客服关闭。不持有也不收费 |
+| `stopped_balance` | 您的余额不足以支付下一次委托。充值后会自动恢复 |
+
+| `stopped_reason` | 含义 |
+|---|---|
+| `insufficient_balance` | 因余额不足而停止 |
+| `transfer` | 因订阅代币的一笔转账而暂停，原因是开启了 `stop_after_transfer` |
+| `admin` | 已被客服关闭；您无法自行重新开启——请联系我们 |
+| `null` | 没有停止记录，或由您暂停 |
+
+`delivery_state` 显示最近一次委托的情况：`ok`、`waiting_stake`（暂时没有可委托的带宽——我们会重试，不收取任何费用）或 `failed`（委托未成功——我们会重试）。
+
+### 选项
+
+**代币。** `token` 表示地址发送的代币：`USDT`、`TRX`、`USDD`、`CUSTOM`（您自己的 TRC-20 代币，在 `contract` 中设置）或 `OWN`（您自己的 `volume`，可附带 `contract`）。它并不限制我们覆盖的范围——任何用完我们带宽的转账都会续期。它为 `stop_after_transfer` 指定代币，并在控制面板中给出 `volume` 的建议值：USDT 和 USDD 为 350，TRX 为 300。对于您自己的代币，请先[添加其合约](/zh/api-reference/auto-bandwidth/add-contract)；响应会告知该代币一笔转账需要多少带宽。
+
+**自动暂停。** 设置 `auto_pause: true` 后，只要地址的每日免费带宽（每个账户 600）至少为 `threshold`，我们就不持有带宽，订阅显示为 `free_bw`。此时 `threshold` 必须介于 `volume` 与 345 中较大者和 600 之间。
+
+**免费带宽通知。** 设置 `notify_free_bw: true` 后，每当地址的免费带宽在降到 `threshold` 以下之后又恢复到 `threshold`，我们都会向您的 Telegram 和电子邮件发送一条消息。它使用同一个 `threshold` 和同样的范围，区别在于未开启自动暂停时，`volume` 高于 600 允许 `threshold: 600`。
+
+**下一笔转账后停止。** 设置 `stop_after_transfer: true` 后，设置之后发出的第一笔订阅代币转账会将订阅暂停，`stopped_reason: "transfer"`。该笔转账仍然会被覆盖。
+
+**更改地址。** 在[更新订阅](/zh/api-reference/auto-bandwidth/update-subscription)中设置新的 `address` 会迁移订阅：我们先从旧地址收回带宽，再向新地址委托。迁移完成之前，`address_change_to` 显示新地址。
+
+### 限制
+
+- 一个账户中**每个地址只能有一个订阅**。为同一地址创建第二个订阅会返回 `409 AUTO_BW_ADDRESS_TAKEN`。
+- 每个账户最多 **20 个订阅**；已删除的不计入。超出上限时返回 `409 AUTO_BW_LIMIT_REACHED`。
+- 您的列表中最多 **20 个代币合约**。超出上限时返回 `409 AUTO_BW_CONTRACT_LIMIT`。
+- **不支持合约地址**，例如 USDT 代币合约：TRON 不允许向其委托资源。
+- **不支持已由智能模式带宽或带带宽的转账套餐覆盖的地址**：`409 AUTO_BW_ADDRESS_COVERED`。
+- 创建和编辑订阅以及添加合约的**请求限制**——参见[速率限制](/zh/resources/rate-limits)。
+
+如果自动带宽暂时关闭，创建订阅、开启订阅和添加合约会返回 `503 AUTO_BW_DISABLED`。未创建或更改任何内容——请稍后重试。
+
+### 与自动补充和智能模式的比较
+
+| | 自动带宽 | [带宽自动补充](/zh/api-reference/auto-refill/overview) | [智能模式](/zh/api-reference/smart-mode/overview) |
+|---|---|---|---|
+| 资源 | 带宽 | 带宽（或能量） | 能量，外加可选的带宽 |
+| 何时提供 | 一直保持在地址上，并在每笔用掉它的转账后续期 | 可用量低于您的阈值时 | 每次转出 USDT 时 |
+| 您支付什么 | 每 24 小时一笔费用，加上每次用掉的委托一笔费用 | 每次补充，按普通订单计费 | 每日订阅费，加上每笔 USDT 转账的费用 |
+
+### 端点
+
+| 操作 | 端点 |
+|---|---|
+| 一天和一笔转账的价格 | [`GET /bandwidth/auto/quote`](/zh/api-reference/auto-bandwidth/quote) |
+| 创建订阅 | [`POST /bandwidth/auto`](/zh/api-reference/auto-bandwidth/create-subscription) |
+| 列出订阅 | [`GET /bandwidth/auto`](/zh/api-reference/auto-bandwidth/list-subscriptions) |
+| 编辑、暂停、恢复、更改地址 | [`PATCH /bandwidth/auto/{sub_id}`](/zh/api-reference/auto-bandwidth/update-subscription) |
+| 删除 | [`DELETE /bandwidth/auto/{sub_id}`](/zh/api-reference/auto-bandwidth/delete-subscription) |
+| 您的代币合约 | [`GET /bandwidth/auto/contracts`](/zh/api-reference/auto-bandwidth/list-contracts) |
+| 添加代币合约 | [`POST /bandwidth/auto/contracts`](/zh/api-reference/auto-bandwidth/add-contract) |
+| 移除代币合约 | [`DELETE /bandwidth/auto/contracts/{address}`](/zh/api-reference/auto-bandwidth/delete-contract) |
+
+创建、编辑和删除订阅及合约需要 `buy_bandwidth` 权限；查看列表和报价需要 `view` 权限。

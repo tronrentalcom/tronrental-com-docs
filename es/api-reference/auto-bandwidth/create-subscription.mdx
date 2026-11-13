@@ -1,0 +1,174 @@
+---
+title: Crear suscripción
+api: POST /v1/bandwidth/auto
+description: "Mantén ancho de banda en una dirección y renuévalo después de cada transferencia"
+---
+
+## Crear suscripción
+
+Crea una suscripción de Bandwidth automático para una dirección. A partir de la siguiente comprobación — normalmente en unos segundos — mantenemos `volume` de ancho de banda delegado a la dirección y lo renovamos después de cada transferencia que lo agota. Consulta la [descripción general](/es/api-reference/auto-bandwidth/overview) para ver cómo funcionan la renovación, el coste y los estados.
+
+La solicitud en sí no cobra nada, pero tu saldo debe cubrir las primeras 24 horas y una transferencia — más la activación, si la dirección todavía no existe on-chain — o devuelve `402 INSUFFICIENT_BALANCE`. Requiere el alcance `buy_bandwidth`. Para ver antes el precio, usa [Cotización de Bandwidth automático](/es/api-reference/auto-bandwidth/quote).
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Dirección TRON en la que se mantendrá el ancho de banda — la dirección que envía las transferencias (formato T..., 34 caracteres). Las direcciones de contrato se rechazan.
+</ParamField>
+
+<ParamField body="volume" type="number" default="350">
+  Ancho de banda que se mantendrá en la dirección. De 1 a 5,000. Una transferencia USDT o USDD consume unos 345, una transferencia TRX unos 270.
+</ParamField>
+
+<ParamField body="token" type="string" default="USDT">
+  El token que envía la dirección: `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` u `"OWN"`. No limita qué transferencias se cubren — ver [Token](/es/api-reference/auto-bandwidth/overview#opciones).
+</ParamField>
+
+<ParamField body="contract" type="string">
+  Dirección de un contrato TRC-20 de [tu lista de tokens](/es/api-reference/auto-bandwidth/list-contracts). Obligatorio con `token: "CUSTOM"`, opcional con `"OWN"`, no se acepta con los demás tokens.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Tu propio nombre para la suscripción, hasta 50 caracteres. Opcional.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean" default="false">
+  No mantener ancho de banda mientras la dirección tenga al menos `threshold` de ancho de banda gratuito.
+</ParamField>
+
+<ParamField body="threshold" type="number" default="600">
+  Nivel de ancho de banda gratuito para `auto_pause` y `notify_free_bw`. De 1 a 600; cuando alguna de las dos opciones está activada, debe estar entre el mayor de `volume` y 345, y 600. Sin `auto_pause`, un `volume` superior a 600 permite `600`.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean" default="false">
+  Enviar un mensaje por Telegram y por correo cada vez que el ancho de banda gratuito de la dirección se recupere hasta `threshold`.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Pausar la suscripción después de la siguiente transferencia de su token.
+</ParamField>
+
+### Respuesta
+
+La nueva suscripción, con los mismos campos que en [Listar suscripciones](/es/api-reference/auto-bandwidth/list-subscriptions). Justo después de crearla, `delegated_bw` es `0` y `paid_until` es `null`: la primera delegación llega en unos segundos.
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourSenderAddress12345678901234ab",
+    "volume": 350,
+    "token": "USDT",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourSenderAddress12345678901234ab",
+        "volume": 350,
+        "token": "USDT",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    address: "TYourSenderAddress12345678901234ab",
+    volume: 350,
+    token: "USDT",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "active",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": null,
+  "delegated_bw": 0,
+  "transfers": 0,
+  "delivery_state": "ok",
+  "paid_until": null,
+  "total_charged_trx": "0.000000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-13T08:15:00Z"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `400` | `INVALID_ADDRESS` | `address` no es una dirección TRON válida, o no se puede conectar |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `address` es un contrato inteligente |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` está fuera del rango permitido para este `volume`; el rango figura en el mensaje |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `token: "CUSTOM"` sin `contract`, un `contract` con otro token, o un contrato que no está en tu lista de tokens |
+| `402` | `INSUFFICIENT_BALANCE` | El saldo no cubre 24 horas y una transferencia (más la activación); los importes figuran en `error.required_trx` y `error.available_trx` |
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Tu cuenta ya tiene una suscripción para esta dirección |
+| `409` | `AUTO_BW_LIMIT_REACHED` | Tu cuenta ya tiene 20 suscripciones |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | El ancho de banda de esta dirección ya lo mantiene Smart Mode o un paquete de transferencias |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` es el contrato de USDT o USDD — usa `token` en su lugar; el token figura en `error.token` |
+| `422` | — | Un campo tiene el tipo incorrecto o está fuera de rango |
+| `429` | `RATE_LIMIT_EXCEEDED` | Demasiadas solicitudes de creación — ver [Límites de tasa](/es/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | Bandwidth automático está desactivado temporalmente; no se creó ninguna suscripción — reintenta más tarde |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Insufficient balance. Required: 0.680000 TRX, available: 0.500000 TRX",
+      "required_trx": "0.680000",
+      "available_trx": "0.500000"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_DISABLED",
+      "message": "Auto-Bandwidth is temporarily unavailable; please try again later"
+    }
+  }
+}
+```
+
+<Tip>
+Reintentar una creación tras agotarse el tiempo de espera es seguro. Si la primera solicitud se completó, el reintento devuelve `409 AUTO_BW_ADDRESS_TAKEN` en lugar de crear una segunda suscripción; [lista tus suscripciones](/es/api-reference/auto-bandwidth/list-subscriptions) para obtener su `id`.
+</Tip>

@@ -1,0 +1,89 @@
+---
+title: 自动带宽报价
+api: GET /v1/bandwidth/auto/quote
+description: "某个订阅数量的 24 小时价格和一笔转账的价格"
+---
+
+## 自动带宽报价
+
+返回具有该 `volume` 的订阅对您的账户收费多少：每 24 小时的费用和每笔转账的费用，其中转账费拆分为带宽和固定手续费。不会创建或收取任何费用。需要 `view` 权限。各项费用何时收取，参见[费用](/zh/api-reference/auto-bandwidth/overview#费用)。
+
+不带 `subscription_id` 时，价格取决于您的调用方式：使用 API 密钥时，是用该密钥创建的订阅的价格；从网站调用时，是在网站上创建的订阅的价格。带 `subscription_id` 时，是该订阅的价格，按其创建时所用的密钥计价——可用它查看新的 `volume` 会是什么价格。价格不包括激活链上尚不存在的地址的费用。
+
+### 查询参数
+
+<ParamField query="volume" type="number" required>
+  要在地址上保持的带宽。范围 1 至 5,000。
+</ParamField>
+
+<ParamField query="subscription_id" type="number">
+  您的某个订阅的 ID。可选。
+</ParamField>
+
+### 响应
+
+<ResponseField name="volume" type="number">
+  您查询的数量
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  每 24 小时的订阅费
+</ResponseField>
+
+<ResponseField name="transfer_trx" type="string">
+  每笔用完所委托带宽的转账的费用：`transfer_bw_trx` + `transfer_fee_trx`
+</ResponseField>
+
+<ResponseField name="transfer_bw_trx" type="string">
+  转账费中的带宽部分
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  转账费中的固定手续费部分。您的账户没有带宽固定手续费时为 `"0.000000"`。
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "volume": 350,
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000"
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API 密钥缺少 `view` 权限 |
+| `404` | `NOT_FOUND` | `subscription_id` 不是您的订阅 |
+| `422` | — | 缺少 `volume`，或其超出 1 – 5,000 的范围 |
