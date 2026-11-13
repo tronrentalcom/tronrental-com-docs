@@ -1,0 +1,89 @@
+---
+title: Cotação do Bandwidth automático
+api: GET /v1/bandwidth/auto/quote
+description: "Preço de 24 horas e de uma transferência para um volume de assinatura"
+---
+
+## Cotação do Bandwidth automático
+
+Retorna quanto custa para a sua conta uma assinatura com este `volume`: a tarifa por 24 horas e a tarifa por transferência, com a tarifa de transferência dividida em largura de banda e taxa fixa. Nada é criado nem cobrado. Exige o escopo `view`. Veja [Custo](/pt/api-reference/auto-bandwidth/overview#custo) para saber quando cada tarifa é cobrada.
+
+Sem `subscription_id`, o preço depende de como você chama: com uma chave de API, é o preço de uma assinatura criada com essa chave; pelo site, o de uma criada no site. Com `subscription_id`, é o preço dessa assinatura, calculado pela chave com a qual ela foi criada — use-o para ver quanto custaria um novo `volume`. Não inclui a ativação de um endereço que ainda não existe na blockchain.
+
+### Parâmetros de consulta
+
+<ParamField query="volume" type="number" required>
+  Largura de banda a manter no endereço. De 1 a 5.000.
+</ParamField>
+
+<ParamField query="subscription_id" type="number">
+  ID de uma das suas assinaturas. Opcional.
+</ParamField>
+
+### Resposta
+
+<ResponseField name="volume" type="number">
+  O volume sobre o qual você perguntou
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  Tarifa da assinatura por 24 horas
+</ResponseField>
+
+<ResponseField name="transfer_trx" type="string">
+  Tarifa por transferência que esgota a largura de banda delegada: `transfer_bw_trx` + `transfer_fee_trx`
+</ResponseField>
+
+<ResponseField name="transfer_bw_trx" type="string">
+  A parte de largura de banda da tarifa de transferência
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  A parte de taxa fixa da tarifa de transferência. `"0.000000"` quando a sua conta não tem taxa fixa em largura de banda.
+</ResponseField>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "volume": 350,
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000"
+}
+```
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `view` |
+| `404` | `NOT_FOUND` | `subscription_id` não é uma das suas assinaturas |
+| `422` | — | `volume` está ausente ou fora do intervalo 1 – 5.000 |

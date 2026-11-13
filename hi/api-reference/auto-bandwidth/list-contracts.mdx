@@ -1,0 +1,85 @@
+---
+title: टोकन कॉन्ट्रैक्ट की सूची
+api: GET /v1/bandwidth/auto/contracts
+description: "ऑटो बैंडविड्थ के लिए आपके TRC-20 टोकन कॉन्ट्रैक्ट"
+---
+
+## टोकन कॉन्ट्रैक्ट की सूची
+
+ऑटो बैंडविड्थ के लिए आपके जोड़े गए TRC-20 कॉन्ट्रैक्ट लौटाता है। `token: "CUSTOM"` या `"OWN"` वाला सब्सक्रिप्शन `contract` में इनमें से किसी का भी उपयोग कर सकता है। `view` स्कोप आवश्यक है।
+
+USDT और USDD पहले से अंतर्निहित हैं और यहाँ कभी नहीं दिखते: उन्हें `token` से चुनें।
+
+### रिस्पॉन्स
+
+<ResponseField name="contracts" type="array">
+  आपके कॉन्ट्रैक्ट।
+
+  <Expandable title="कॉन्ट्रैक्ट ऑब्जेक्ट">
+    <ResponseField name="address" type="string">
+      कॉन्ट्रैक्ट एड्रेस
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      टोकन का सिंबल, जैसा कॉन्ट्रैक्ट बताता है (अधिकतम 16 अक्षर)
+    </ResponseField>
+    <ResponseField name="name" type="string | null">
+      टोकन का नाम, जैसा कॉन्ट्रैक्ट बताता है (अधिकतम 40 अक्षर); यदि कोई नहीं तो `null`
+    </ResponseField>
+    <ResponseField name="decimals" type="number">
+      टोकन के दशमलव स्थान
+    </ResponseField>
+    <ResponseField name="bandwidth" type="number">
+      इस टोकन के एक ट्रांसफर में लगने वाली बैंडविड्थ — सब्सक्रिप्शन के `volume` के लिए एक संकेत
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Warning>
+`symbol` और `name` कॉन्ट्रैक्ट से ही आते हैं, और कोई भी ऐसा टोकन डिप्लॉय कर सकता है जो खुद को "Tether USD" कहे। टोकन की पहचान हमेशा उसके `address` से करें।
+</Warning>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "contracts": [
+    {
+      "address": "TYourTokenContract1234567890abcdef",
+      "symbol": "MTK",
+      "name": "My Token",
+      "decimals": 6,
+      "bandwidth": 345
+    }
+  ]
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `view` स्कोप नहीं है |

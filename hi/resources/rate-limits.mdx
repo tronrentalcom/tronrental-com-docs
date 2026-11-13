@@ -43,6 +43,9 @@ description: "API रेट लिमिटिंग नीति"
 | `POST /api/v1/account/withdrawal` | `Idempotency-Key` के साथ बनी निकासी के बाद 5 सेकंड, उसके बिना बनी निकासी के बाद 60 सेकंड | खाता |
 | `POST /api/v1/energy/auto-refill` | 10 अनुरोध/मिनट | खाता |
 | `POST /api/v1/bandwidth/auto-refill` | 10 अनुरोध/मिनट | खाता |
+| `POST /api/v1/bandwidth/auto` | 20 अनुरोध/मिनट | खाता |
+| `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 अनुरोध/मिनट | खाता |
+| `POST /api/v1/bandwidth/auto/contracts` | 10 नए कॉन्ट्रैक्ट/घंटा | खाता |
 
 ध्यान दें कि `POST /api/v1/invoices` की गणना **IP पते** के हिसाब से होती है, खाते के नहीं: यदि आपके कई
 क्लाइंट एक ही आउटगोइंग IP से अनुरोध भेजते हैं, तो वे प्रति मिनट 10 का एक ही बजट साझा करते हैं।

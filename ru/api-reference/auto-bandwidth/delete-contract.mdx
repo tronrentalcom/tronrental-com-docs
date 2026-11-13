@@ -1,0 +1,68 @@
+---
+title: Удалить контракт токена
+api: DELETE /v1/bandwidth/auto/contracts/{address}
+description: "Удалить контракт TRC-20 из списка токенов Авто-bandwidth"
+---
+
+## Удалить контракт токена
+
+Удаляет контракт из вашего списка токенов. Контракт, который всё ещё используется одной из ваших подписок, удалить нельзя: сначала измените `token` или `contract` этой подписки либо удалите её. Нужен скоуп `buy_bandwidth`.
+
+### Параметры пути
+
+<ParamField path="address" type="string" required>
+  Адрес контракта, который нужно удалить
+</ParamField>
+
+### Ответ
+
+<ResponseField name="address" type="string">
+  Адрес удалённого контракта
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean">
+  Всегда `true`
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+  { method: "DELETE", headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "deleted": true
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` — некорректный адрес TRON |
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_bandwidth` |
+| `404` | `NOT_FOUND` | Этого контракта нет в вашем списке |
+| `409` | `AUTO_BW_CONTRACT_IN_USE` | Для этого контракта настроена подписка |

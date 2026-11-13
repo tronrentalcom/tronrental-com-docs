@@ -1,0 +1,79 @@
+---
+title: सब्सक्रिप्शन हटाएं
+api: DELETE /v1/bandwidth/auto/{sub_id}
+description: "ऑटो बैंडविड्थ सब्सक्रिप्शन हटाएं"
+---
+
+## सब्सक्रिप्शन हटाएं
+
+सब्सक्रिप्शन हटाता है। हम एड्रेस पर नज़र रखना बंद कर देते हैं और उस पर डेलिगेट की गई बैंडविड्थ कुछ सेकंड में वापस ले लेते हैं; एड्रेस नए सब्सक्रिप्शन के लिए खाली हो जाता है। हटाने से पहले जिस ट्रांसफर ने हमारी बैंडविड्थ इस्तेमाल की, उसका शुल्क फिर भी लिया जाता है। `buy_bandwidth` स्कोप आवश्यक है।
+
+सेटिंग खोए बिना कुछ समय के लिए रोकने के लिए, इसके बजाय `enabled: false` के साथ [सब्सक्रिप्शन को रोकें](/hi/api-reference/auto-bandwidth/update-subscription)।
+
+### पाथ पैरामीटर
+
+<ParamField path="sub_id" type="number" required>
+  सब्सक्रिप्शन ID — सब्सक्रिप्शन बनाने या उनकी सूची के रिस्पॉन्स का `id`
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="id" type="number">
+  हटाए गए सब्सक्रिप्शन की ID
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `deleted`
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "status": "deleted"
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
+| `404` | `NOT_FOUND` | आपके खाते में इस ID का कोई सब्सक्रिप्शन नहीं है (या वह पहले ही हटाया जा चुका है) |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-Bandwidth subscription not found"
+    }
+  }
+}
+```

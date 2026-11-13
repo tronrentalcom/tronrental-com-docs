@@ -112,6 +112,26 @@ Retornados no formato padrão pelos endpoints de [Recarga automática](/pt/api-r
 | `AUTOREFILL_DISABLED` | `503` | A Recarga automática deste recurso está temporariamente desativada; retornado apenas ao criar uma regra. Nenhuma regra foi criada — tente novamente mais tarde |
 | `NOT_FOUND` | `404` | Não existe essa regra na conta |
 
+## Códigos do Bandwidth automático
+
+Retornados no formato padrão pelos endpoints de [Bandwidth automático](/pt/api-reference/auto-bandwidth/overview):
+
+| Código | Status | Descrição |
+|--------|--------|-------------|
+| `AUTO_BW_INVALID_THRESHOLD` | `400` | `threshold` está fora do intervalo permitido para o `volume` da assinatura |
+| `AUTO_BW_INVALID_CONTRACT` | `400` | O `contract` não combina com o `token`, ou não está na sua lista de tokens |
+| `AUTO_BW_NOT_A_CONTRACT` | `400` | Não há contrato inteligente no endereço |
+| `AUTO_BW_NOT_A_TOKEN` | `400` | O contrato não é um token TRC-20 |
+| `AUTO_BW_TRANSFER_REVERTS` | `400` | Uma transferência do token falha na simulação |
+| `AUTO_BW_ADDRESS_TAKEN` | `409` | A conta já tem uma assinatura para este endereço |
+| `AUTO_BW_LIMIT_REACHED` | `409` | A conta já tem 20 assinaturas |
+| `AUTO_BW_ADDRESS_COVERED` | `409` | A largura de banda do endereço já é mantida pelo Smart Mode ou por um pacote de transferências |
+| `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | A assinatura foi desligada pelo suporte — entre em contato conosco para retomá-la |
+| `AUTO_BW_CONTRACT_LISTED` | `409` | O contrato é o USDT ou o USDD — escolha-o com `token`; o token vem em `error.token` |
+| `AUTO_BW_CONTRACT_LIMIT` | `409` | A lista de tokens já tem 20 contratos |
+| `AUTO_BW_CONTRACT_IN_USE` | `409` | Há uma assinatura configurada para este contrato |
+| `AUTO_BW_DISABLED` | `503` | O Bandwidth automático está temporariamente desligado; retornado ao criar ou retomar uma assinatura e ao adicionar um contrato. Nada foi alterado — tente novamente mais tarde |
+
 ## Códigos de verificação de saque
 
 `POST /api/v1/account/withdrawal` retorna estes códigos de verificação no formato plano, com `code` ao

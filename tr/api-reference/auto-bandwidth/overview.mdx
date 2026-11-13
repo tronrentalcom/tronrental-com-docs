@@ -1,0 +1,103 @@
+---
+title: Otomatik Bandwidth Genel Bakış
+description: "Her transfer için adreste bant genişliğini tutun, her transferden sonra yenileyin"
+---
+
+## Otomatik Bandwidth
+
+Otomatik Bandwidth aboneliği, TRON adresinize sabit miktarda bant genişliği devredilmiş halde tutar; böylece adresin transferleri bant genişliği için TRX yakmaz. Bir transfer devredilen bant genişliğini tükettiğinde, onu hemen yenileriz. Bitiş tarihi yoktur: abonelik, siz duraklatana veya silene kadar çalışır.
+
+### Nasıl çalışır
+
+1. Bir adres için, orada tutulacak `volume` kadar bant genişliğiyle bir abonelik oluşturun — bir USDT transferi için bu yaklaşık 350'dir.
+2. Adrese `volume` kadar bant genişliği devreder ve ilk 24 saatin ücretini alırız.
+3. Adresi **dakikada bir kez** ve o adresten yapılan **her giden USDT transferinin hemen ardından** kontrol ederiz. TRX, USDD veya diğer token transferleri dakikalık kontrolde yakalanır.
+4. Bir transfer devrettiğimiz bant genişliğini tükettiğinde, bir transfer ücreti alır ve `volume` kadarını yeniden devrederiz.
+
+Yenileme yaklaşık iki blok (yaklaşık 6 saniye) sürer. Yenileme tamamlanmadan gönderilen ikinci bir transfer, adresin ücretsiz bant genişliğinden ödenir; bu yetmezse TRX yakılır.
+
+Abonelik oluşturmak isteğin kendisinde hiçbir ücret almaz: bakiyenizin ilk günü ve bir transferi karşılayıp karşılamadığını kontrol ederiz; ilk devretme bir sonraki kontrolde, genellikle birkaç saniye içinde yapılır.
+
+### Maliyet
+
+| Ücret | Ne zaman alınır | Yanıt alanları |
+|---|---|---|
+| Abonelik ücreti (24 saatte bir) | Bant genişliği devredilirken peşin ve bant genişliği adreste kaldığı sürece her 24 saatte bir | `daily_trx` |
+| Transfer ücreti | Bir transferin tükettiği her devretme için bir kez | `transfer_trx` = `transfer_bw_trx` + `transfer_fee_trx` |
+
+Her iki ücret de hesabınız için `volume` kadar bir saatlik bant genişliği siparişinin fiyatına eşittir: sizin tarifenizle bant genişliği artı sabit ücret. `transfer_bw_trx` ve `transfer_fee_trx` bu dağılımı gösterir. API anahtarıyla oluşturulan bir abonelik, o anahtarla yapılan bir alım gibi fiyatlandırılır; web sitesinde oluşturulan ise web sitesinden yapılan bir alım gibi. Abone olmadan önce fiyatı görmek için [Otomatik Bandwidth Fiyatı](/tr/api-reference/auto-bandwidth/quote) uç noktasını kullanın.
+
+- Tamamen adresin ücretsiz bant genişliğinden veya kendi stake'inden ödenen bir transfer bizim bant genişliğimize dokunmaz ve bunun için transfer ücreti alınmaz.
+- Abonelik duraklatılmış, durdurulmuş veya otomatik duraklatmadayken abonelik ücreti alınmaz.
+- Ödenmiş bir gün içinde `volume` değerini yükseltmek, günün geri kalanı için farkı ücretlendirir. Düşürmek iade edilmez.
+- Adres zincirde henüz yoksa ilk devretme adresi de etkinleştirir ve aktivasyon ayrıca ücretlendirilir.
+
+### Bakiye
+
+Her devretmeden önce bakiyeniz bir transfer ücretini, ayrıca geçerli gün henüz ödenmemişse abonelik ücretini karşılamalıdır. Karşılamadığında abonelik `status: "stopped_balance"` ile durur ve bant genişliğini geri alırız. Bir günü ve bir transferi karşılayan para yatırma işleminden sonra kendiliğinden devam eder. Telegram hesabınız bağlıysa, durduğunda mesaj alırsınız.
+
+Aboneliği oluşturmak veya yeniden açmak aynı tutarı baştan kontrol eder ve bakiye yetersizse `402 INSUFFICIENT_BALANCE` döndürür; tutarlar `error.required_trx` ve `error.available_trx` içinde yer alır.
+
+### Durum
+
+| `status` | Anlamı |
+|---|---|
+| `active` | Adreste bant genişliğini tutar ve her transferden sonra yenileriz |
+| `free_bw` | Otomatik duraklatma: adreste en az `threshold` kadar ücretsiz bant genişliği var, bu yüzden hiçbir şey tutmaz ve ücret almayız. Ücretsiz bant genişliği `threshold` değerinin altına düştüğünde yeniden devrederiz |
+| `paused` | Kapatılmış — sizin tarafınızdan, bir transferle (bkz. `stop_after_transfer`) veya destek tarafından. Hiçbir şey tutulmaz ve ücret alınmaz |
+| `stopped_balance` | Bakiyeniz bir sonraki devretmeyi karşılamadı. Para yatırıldıktan sonra kendiliğinden devam eder |
+
+| `stopped_reason` | Anlamı |
+|---|---|
+| `insufficient_balance` | Bakiye nedeniyle durduruldu |
+| `transfer` | `stop_after_transfer` açık olduğu için aboneliğin tokenına ait bir transferle duraklatıldı |
+| `admin` | Destek tarafından kapatıldı; kendiniz yeniden açamazsınız — bizimle iletişime geçin |
+| `null` | Kayıtlı bir durdurma yok veya siz duraklattınız |
+
+`delivery_state` son devretmenin nasıl gittiğini gösterir: `ok`, `waiting_stake` (bant genişliği geçici olarak devredilemiyor — yeniden denenir, ücret alınmaz) veya `failed` (devretme gerçekleşmedi — yeniden denenir).
+
+### Seçenekler
+
+**Token.** `token`, adresin hangi tokeni gönderdiğini belirtir: `USDT`, `TRX`, `USDD`, `CUSTOM` (`contract` içinde belirttiğiniz kendi TRC-20 tokeniniz) veya `OWN` (kendi `volume` değeriniz, isteğe bağlı olarak bir `contract` ile). Neyi karşıladığımızı sınırlamaz — bizim bant genişliğimizi tüketen her transfer yenilenir. `stop_after_transfer` için tokeni belirler ve kontrol panelinde bir `volume` önerir: USDT ve USDD için 350, TRX için 300. Kendi tokeniniz için önce [sözleşmesini ekleyin](/tr/api-reference/auto-bandwidth/add-contract); yanıt, onun bir transferinin ne kadar bant genişliği aldığını bildirir.
+
+**Otomatik duraklatma.** `auto_pause: true` ile adresin günlük ücretsiz bant genişliği (hesap başına 600) en az `threshold` kadar olduğu sürece bant genişliği tutmayız ve abonelik `free_bw` olarak görünür. Bu durumda `threshold`, `volume` ile 345'in büyüğü ile 600 arasında olmalıdır.
+
+**Ücretsiz bant genişliği bildirimi.** `notify_free_bw: true` ile adresin ücretsiz bant genişliği `threshold` değerinin altına düştükten sonra tekrar ona ulaştığında her seferinde Telegram'ınıza ve e-postanıza mesaj göndeririz. Aynı `threshold` değerini ve aynı aralığı kullanır; tek fark, otomatik duraklatma olmadan 600'ün üzerindeki bir `volume` değerinin `threshold: 600` değerine izin vermesidir.
+
+**Bir sonraki transferden sonra durdurma.** `stop_after_transfer: true` ile bunu ayarladıktan sonra gönderilen, aboneliğin tokenına ait ilk transfer aboneliği `stopped_reason: "transfer"` ile duraklatır. O transfer yine de karşılanır.
+
+**Adresi değiştirme.** [Aboneliği Güncelle](/tr/api-reference/auto-bandwidth/update-subscription) uç noktasında yeni bir `address` ayarlamak aboneliği taşır: bant genişliğini eski adresten geri alır, ardından yeni adrese devrederiz. Taşıma bitene kadar `address_change_to` yeni adresi gösterir.
+
+### Sınırlar
+
+- Bir hesapta **adres başına bir abonelik**. Aynı adres için ikinci bir abonelik `409 AUTO_BW_ADDRESS_TAKEN` döndürür.
+- Hesap başına **20 abonelik**; silinmiş olanlar sayılmaz. Sınır aşıldığında: `409 AUTO_BW_LIMIT_REACHED`.
+- Listenizde **20 token sözleşmesi**. Sınır aşıldığında: `409 AUTO_BW_CONTRACT_LIMIT`.
+- USDT token sözleşmesi gibi **sözleşme adresleri kabul edilmez**: TRON onlara kaynak devredilmesine izin vermez.
+- **Akıllı Mod bant genişliği veya bant genişlikli bir transfer paketi tarafından zaten karşılanan adresler kabul edilmez**: `409 AUTO_BW_ADDRESS_COVERED`.
+- Abonelik oluşturma ve düzenleme ile sözleşme ekleme için **istek sınırları** — bkz. [Hız Sınırları](/tr/resources/rate-limits).
+
+Otomatik Bandwidth geçici olarak kapatılırsa abonelik oluşturma, bir aboneliği açma ve sözleşme ekleme `503 AUTO_BW_DISABLED` döndürür. Hiçbir şey oluşturulmaz veya değiştirilmez — daha sonra yeniden deneyin.
+
+### Otomatik Dolum ve Akıllı Mod ile karşılaştırma
+
+| | Otomatik Bandwidth | [Bant Genişliği Otomatik Dolum](/tr/api-reference/auto-refill/overview) | [Akıllı Mod](/tr/api-reference/smart-mode/overview) |
+|---|---|---|---|
+| Kaynak | Bant genişliği | Bant genişliği (veya enerji) | Enerji, isteğe bağlı olarak bant genişliği |
+| Ne zaman teslim edilir | Adreste tutulur, onu tüketen her transferden sonra yenilenir | Seviye eşiğinizin altına düştüğünde | Her giden USDT transferinde |
+| Ne ödersiniz | 24 saatte bir ücret artı tüketilen her devretme için bir ücret | Her dolumu, normal bir sipariş olarak | Günlük abonelik artı her USDT transferi |
+
+### Uç noktalar
+
+| İşlem | Uç nokta |
+|---|---|
+| Bir günün ve bir transferin fiyatı | [`GET /bandwidth/auto/quote`](/tr/api-reference/auto-bandwidth/quote) |
+| Abonelik oluşturma | [`POST /bandwidth/auto`](/tr/api-reference/auto-bandwidth/create-subscription) |
+| Abonelikleri listeleme | [`GET /bandwidth/auto`](/tr/api-reference/auto-bandwidth/list-subscriptions) |
+| Düzenleme, duraklatma, devam ettirme, adres değiştirme | [`PATCH /bandwidth/auto/{sub_id}`](/tr/api-reference/auto-bandwidth/update-subscription) |
+| Silme | [`DELETE /bandwidth/auto/{sub_id}`](/tr/api-reference/auto-bandwidth/delete-subscription) |
+| Token sözleşmeleriniz | [`GET /bandwidth/auto/contracts`](/tr/api-reference/auto-bandwidth/list-contracts) |
+| Token sözleşmesi ekleme | [`POST /bandwidth/auto/contracts`](/tr/api-reference/auto-bandwidth/add-contract) |
+| Token sözleşmesi kaldırma | [`DELETE /bandwidth/auto/contracts/{address}`](/tr/api-reference/auto-bandwidth/delete-contract) |
+
+Abonelik ve sözleşme oluşturma, düzenleme ve silme `buy_bandwidth` kapsamını gerektirir; listeleme ve fiyat sorgulama `view` kapsamını gerektirir.

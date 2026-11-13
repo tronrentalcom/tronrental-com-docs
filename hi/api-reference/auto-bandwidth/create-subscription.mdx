@@ -1,0 +1,174 @@
+---
+title: सब्सक्रिप्शन बनाएं
+api: POST /v1/bandwidth/auto
+description: "एड्रेस पर बैंडविड्थ बनाए रखें और हर ट्रांसफर के बाद उसे रिन्यू करें"
+---
+
+## सब्सक्रिप्शन बनाएं
+
+एक एड्रेस के लिए ऑटो बैंडविड्थ सब्सक्रिप्शन बनाता है। अगली जाँच से — आमतौर पर कुछ सेकंड में — हम एड्रेस पर `volume` बैंडविड्थ डेलिगेट रखते हैं और उसे खर्च करने वाले हर ट्रांसफर के बाद रिन्यू करते हैं। रिन्यूअल, लागत और स्थितियाँ कैसे काम करती हैं, यह जानने के लिए [अवलोकन](/hi/api-reference/auto-bandwidth/overview) देखें।
+
+अनुरोध खुद कोई शुल्क नहीं लेता, लेकिन आपका बैलेंस पहले 24 घंटे और एक ट्रांसफर को कवर करना चाहिए — और यदि एड्रेस अभी ऑन-चेन मौजूद नहीं है तो सक्रियण को भी — वरना यह `402 INSUFFICIENT_BALANCE` लौटाता है। `buy_bandwidth` स्कोप आवश्यक है। पहले कीमत देखने के लिए [ऑटो बैंडविड्थ मूल्य अनुमान](/hi/api-reference/auto-bandwidth/quote) का उपयोग करें।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  वह TRON एड्रेस जिस पर बैंडविड्थ बनाए रखनी है — जो एड्रेस ट्रांसफर भेजता है (T... प्रारूप, 34 अक्षर)। कॉन्ट्रैक्ट एड्रेस अस्वीकार किए जाते हैं।
+</ParamField>
+
+<ParamField body="volume" type="number" default="350">
+  एड्रेस पर रखी जाने वाली बैंडविड्थ। 1 से 5,000 तक। एक USDT या USDD ट्रांसफर में लगभग 345 लगती है, TRX ट्रांसफर में लगभग 270।
+</ParamField>
+
+<ParamField body="token" type="string" default="USDT">
+  वह टोकन जो एड्रेस भेजता है: `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` या `"OWN"`। यह सीमित नहीं करता कि कौन से ट्रांसफर कवर होते हैं — देखें [टोकन](/hi/api-reference/auto-bandwidth/overview#विकल्प)।
+</ParamField>
+
+<ParamField body="contract" type="string">
+  [आपकी टोकन सूची](/hi/api-reference/auto-bandwidth/list-contracts) के किसी TRC-20 कॉन्ट्रैक्ट का एड्रेस। `token: "CUSTOM"` के साथ आवश्यक, `"OWN"` के साथ वैकल्पिक, अन्य टोकन के साथ स्वीकार नहीं।
+</ParamField>
+
+<ParamField body="label" type="string">
+  सब्सक्रिप्शन के लिए आपका अपना नाम, अधिकतम 50 अक्षर। वैकल्पिक।
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean" default="false">
+  जब तक एड्रेस के पास कम से कम `threshold` मुफ़्त बैंडविड्थ है, कोई बैंडविड्थ न रखें।
+</ParamField>
+
+<ParamField body="threshold" type="number" default="600">
+  `auto_pause` और `notify_free_bw` के लिए मुफ़्त बैंडविड्थ का स्तर। 1 से 600 तक; इनमें से कोई भी विकल्प चालू होने पर यह `volume` और 345 में से जो बड़ा हो, उससे लेकर 600 तक होना चाहिए। `auto_pause` के बिना, 600 से ऊपर का `volume` `600` की अनुमति देता है।
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean" default="false">
+  जब भी एड्रेस की मुफ़्त बैंडविड्थ `threshold` तक लौटे, Telegram और ईमेल पर संदेश भेजें।
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  अपने टोकन के अगले ट्रांसफर के बाद सब्सक्रिप्शन को रोक दें।
+</ParamField>
+
+### रिस्पॉन्स
+
+नया सब्सक्रिप्शन, वही फ़ील्ड जो [सब्सक्रिप्शन की सूची](/hi/api-reference/auto-bandwidth/list-subscriptions) में हैं। बनाने के तुरंत बाद `delegated_bw` `0` और `paid_until` `null` होता है: पहली डेलिगेशन कुछ सेकंड में होती है।
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourSenderAddress12345678901234ab",
+    "volume": 350,
+    "token": "USDT",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourSenderAddress12345678901234ab",
+        "volume": 350,
+        "token": "USDT",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    address: "TYourSenderAddress12345678901234ab",
+    volume: 350,
+    token: "USDT",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "active",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": null,
+  "delegated_bw": 0,
+  "transfers": 0,
+  "delivery_state": "ok",
+  "paid_until": null,
+  "total_charged_trx": "0.000000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-13T08:15:00Z"
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` मान्य TRON एड्रेस नहीं है, या उससे कनेक्ट नहीं किया जा सकता |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `address` एक स्मार्ट कॉन्ट्रैक्ट है |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` इस `volume` के लिए अनुमत सीमा से बाहर है; सीमा संदेश में दी जाती है |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `token: "CUSTOM"` बिना `contract` के, अन्य टोकन के साथ `contract`, या ऐसा कॉन्ट्रैक्ट जो आपकी टोकन सूची में नहीं है |
+| `402` | `INSUFFICIENT_BALANCE` | बैलेंस 24 घंटे और एक ट्रांसफर (साथ में सक्रियण) को कवर नहीं करता; राशियाँ `error.required_trx` और `error.available_trx` में हैं |
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | आपके खाते में इस एड्रेस के लिए पहले से सब्सक्रिप्शन है |
+| `409` | `AUTO_BW_LIMIT_REACHED` | आपके खाते में पहले से 20 सब्सक्रिप्शन हैं |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | इस एड्रेस की बैंडविड्थ पहले से Smart Mode या ट्रांसफर पैकेज द्वारा बनाए रखी जा रही है |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` USDT या USDD का कॉन्ट्रैक्ट है — इसके बजाय `token` का उपयोग करें; टोकन `error.token` में है |
+| `422` | — | किसी फ़ील्ड का प्रकार गलत है या वह सीमा से बाहर है |
+| `429` | `RATE_LIMIT_EXCEEDED` | बनाने के बहुत अधिक अनुरोध — देखें [रेट लिमिट](/hi/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | ऑटो बैंडविड्थ अस्थायी रूप से बंद है; कोई सब्सक्रिप्शन नहीं बना — कुछ देर बाद पुनः प्रयास करें |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Insufficient balance. Required: 0.680000 TRX, available: 0.500000 TRX",
+      "required_trx": "0.680000",
+      "available_trx": "0.500000"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_DISABLED",
+      "message": "Auto-Bandwidth is temporarily unavailable; please try again later"
+    }
+  }
+}
+```
+
+<Tip>
+टाइमआउट के बाद सब्सक्रिप्शन बनाने का अनुरोध दोबारा भेजना सुरक्षित है। यदि पहला अनुरोध सफल हो गया था, तो दोबारा भेजा गया अनुरोध दूसरा सब्सक्रिप्शन बनाने के बजाय `409 AUTO_BW_ADDRESS_TAKEN` लौटाता है; उसका `id` पाने के लिए [अपने सब्सक्रिप्शन की सूची देखें](/hi/api-reference/auto-bandwidth/list-subscriptions)।
+</Tip>

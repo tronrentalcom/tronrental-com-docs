@@ -1,0 +1,174 @@
+---
+title: 创建订阅
+api: POST /v1/bandwidth/auto
+description: "在地址上保持带宽，并在每笔转账后续期"
+---
+
+## 创建订阅
+
+为一个地址创建自动带宽订阅。从下一次检查起——通常在几秒之内——我们会为该地址保持委托 `volume` 带宽，并在每笔用完它的转账后续期。续期、费用和状态的工作方式参见[概述](/zh/api-reference/auto-bandwidth/overview)。
+
+请求本身不收取任何费用，但您的余额必须足以支付前 24 小时和一笔转账——如果地址在链上尚不存在，还要加上激活费用——否则返回 `402 INSUFFICIENT_BALANCE`。需要 `buy_bandwidth` 权限。如需先查看价格，请使用[自动带宽报价](/zh/api-reference/auto-bandwidth/quote)。
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  需要保持带宽的 TRON 地址——即发出转账的地址（T... 格式，34 个字符）。不接受合约地址。
+</ParamField>
+
+<ParamField body="volume" type="number" default="350">
+  要在地址上保持的带宽。范围 1 至 5,000。一笔 USDT 或 USDD 转账约需 345，一笔 TRX 转账约需 270。
+</ParamField>
+
+<ParamField body="token" type="string" default="USDT">
+  地址发送的代币：`"USDT"`、`"TRX"`、`"USDD"`、`"CUSTOM"` 或 `"OWN"`。它并不限制覆盖哪些转账——参见[代币](/zh/api-reference/auto-bandwidth/overview#选项)。
+</ParamField>
+
+<ParamField body="contract" type="string">
+  来自[您的代币列表](/zh/api-reference/auto-bandwidth/list-contracts)的 TRC-20 合约地址。`token: "CUSTOM"` 时必填，`"OWN"` 时可选，其他代币不接受。
+</ParamField>
+
+<ParamField body="label" type="string">
+  您为订阅起的名称，最多 50 个字符。可选。
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean" default="false">
+  当地址的免费带宽至少为 `threshold` 时，不持有任何带宽。
+</ParamField>
+
+<ParamField body="threshold" type="number" default="600">
+  用于 `auto_pause` 和 `notify_free_bw` 的免费带宽水平。范围 1 至 600；开启其中任一选项时，必须介于 `volume` 与 345 中较大者和 600 之间。未开启 `auto_pause` 时，`volume` 高于 600 允许取 `600`。
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean" default="false">
+  每当地址的免费带宽恢复到 `threshold` 时，发送 Telegram 和电子邮件消息。
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  在其代币的下一笔转账之后暂停订阅。
+</ParamField>
+
+### 响应
+
+新建的订阅，字段与[列出订阅](/zh/api-reference/auto-bandwidth/list-subscriptions)中的相同。刚创建时，`delegated_bw` 为 `0`，`paid_until` 为 `null`：首次委托会在几秒之内进行。
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourSenderAddress12345678901234ab",
+    "volume": 350,
+    "token": "USDT",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourSenderAddress12345678901234ab",
+        "volume": 350,
+        "token": "USDT",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    address: "TYourSenderAddress12345678901234ab",
+    volume: 350,
+    token: "USDT",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "active",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": null,
+  "delegated_bw": 0,
+  "transfers": 0,
+  "delivery_state": "ok",
+  "paid_until": null,
+  "total_charged_trx": "0.000000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-13T08:15:00Z"
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` 不是有效的 TRON 地址，或无法连接 |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `address` 是智能合约 |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` 超出该 `volume` 所允许的范围；范围见消息 |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `token: "CUSTOM"` 但没有 `contract`，或 `contract` 搭配了其他代币，或该合约不在您的代币列表中 |
+| `402` | `INSUFFICIENT_BALANCE` | 余额不足以支付 24 小时和一笔转账（加上激活费用）；金额见 `error.required_trx` 和 `error.available_trx` |
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | 您的账户已有该地址的订阅 |
+| `409` | `AUTO_BW_LIMIT_REACHED` | 您的账户已有 20 个订阅 |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | 该地址上的带宽已由智能模式或转账套餐维持 |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` 是 USDT 或 USDD 合约——请改用 `token`；代币在 `error.token` 中给出 |
+| `422` | — | 字段类型错误或超出范围 |
+| `429` | `RATE_LIMIT_EXCEEDED` | 创建请求过多——参见[速率限制](/zh/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | 自动带宽暂时关闭；未创建订阅——请稍后重试 |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Insufficient balance. Required: 0.680000 TRX, available: 0.500000 TRX",
+      "required_trx": "0.680000",
+      "available_trx": "0.500000"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_DISABLED",
+      "message": "Auto-Bandwidth is temporarily unavailable; please try again later"
+    }
+  }
+}
+```
+
+<Tip>
+超时后重试创建请求是安全的。如果第一次请求已经成功，重试会返回 `409 AUTO_BW_ADDRESS_TAKEN`，而不会创建第二个订阅；[列出您的订阅](/zh/api-reference/auto-bandwidth/list-subscriptions)即可获取其 `id`。
+</Tip>

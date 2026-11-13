@@ -1,0 +1,89 @@
+---
+title: Auto Bandwidth Quote
+api: GET /v1/bandwidth/auto/quote
+description: "Price of 24 hours and of one transfer for a subscription volume"
+---
+
+## Auto Bandwidth Quote
+
+Returns what a subscription with this `volume` costs your account: the fee per 24 hours and the fee per transfer, with the transfer fee split into bandwidth and fixed fee. Nothing is created or charged. Requires the `view` scope. See [Cost](/api-reference/auto-bandwidth/overview#cost) for when each fee is charged.
+
+Without `subscription_id` the price depends on how you call it: with an API key, it is the price of a subscription created with that key; from the website, of one created on the website. With `subscription_id`, it is the price for that subscription, priced by the key it was created with — use it to see what a new `volume` would cost. It does not include activating an address that does not exist on-chain yet.
+
+### Query parameters
+
+<ParamField query="volume" type="number" required>
+  Bandwidth to keep on the address. From 1 to 5,000.
+</ParamField>
+
+<ParamField query="subscription_id" type="number">
+  ID of one of your subscriptions. Optional.
+</ParamField>
+
+### Response
+
+<ResponseField name="volume" type="number">
+  The volume you asked about
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  Subscription fee per 24 hours
+</ResponseField>
+
+<ResponseField name="transfer_trx" type="string">
+  Fee per transfer that uses up the delegated bandwidth: `transfer_bw_trx` + `transfer_fee_trx`
+</ResponseField>
+
+<ResponseField name="transfer_bw_trx" type="string">
+  The bandwidth part of the transfer fee
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  The fixed fee part of the transfer fee. `"0.000000"` when your account has no fixed fee on bandwidth.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "volume": 350,
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000"
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `view` scope |
+| `404` | `NOT_FOUND` | `subscription_id` is not one of your subscriptions |
+| `422` | — | `volume` is missing or outside 1 – 5,000 |

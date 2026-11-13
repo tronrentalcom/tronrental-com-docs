@@ -1,0 +1,89 @@
+---
+title: Otomatik Bandwidth Fiyatı
+api: GET /v1/bandwidth/auto/quote
+description: "Bir abonelik hacmi için 24 saatin ve bir transferin fiyatı"
+---
+
+## Otomatik Bandwidth Fiyatı
+
+Bu `volume` değerine sahip bir aboneliğin hesabınıza maliyetini döndürür: 24 saatlik ücret ve transfer başına ücret; transfer ücreti bant genişliği ve sabit ücret olarak ayrılır. Hiçbir şey oluşturulmaz veya ücretlendirilmez. `view` kapsamını gerektirir. Her ücretin ne zaman alındığı için [Maliyet](/tr/api-reference/auto-bandwidth/overview#maliyet) bölümüne bakın.
+
+`subscription_id` olmadan fiyat, çağrı biçiminize bağlıdır: API anahtarıyla, o anahtarla oluşturulan bir aboneliğin fiyatıdır; web sitesinden, web sitesinde oluşturulanın fiyatı. `subscription_id` ile, o abonelik için, oluşturulduğu anahtara göre belirlenen fiyattır — yeni bir `volume` değerinin maliyetini görmek için kullanın. Zincirde henüz bulunmayan bir adresin aktivasyonunu içermez.
+
+### Sorgu parametreleri
+
+<ParamField query="volume" type="number" required>
+  Adreste tutulacak bant genişliği. 1 ile 5.000 arasında.
+</ParamField>
+
+<ParamField query="subscription_id" type="number">
+  Aboneliklerinizden birinin kimliği. İsteğe bağlı.
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="volume" type="number">
+  Sorguladığınız hacim
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  24 saatlik abonelik ücreti
+</ResponseField>
+
+<ResponseField name="transfer_trx" type="string">
+  Devredilen bant genişliğini tüketen transfer başına ücret: `transfer_bw_trx` + `transfer_fee_trx`
+</ResponseField>
+
+<ResponseField name="transfer_bw_trx" type="string">
+  Transfer ücretinin bant genişliği kısmı
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  Transfer ücretinin sabit ücret kısmı. Hesabınızda bant genişliği için sabit ücret yoksa `"0.000000"`.
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "volume": 350,
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000"
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `view` kapsamı yok |
+| `404` | `NOT_FOUND` | `subscription_id` aboneliklerinizden biri değil |
+| `422` | — | `volume` eksik veya 1 – 5.000 aralığının dışında |

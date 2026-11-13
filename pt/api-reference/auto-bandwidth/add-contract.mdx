@@ -1,0 +1,89 @@
+---
+title: Adicionar contrato de token
+api: POST /v1/bandwidth/auto/contracts
+description: "Adicione um token TRC-20 seu para o Bandwidth automático"
+---
+
+## Adicionar contrato de token
+
+Adiciona um contrato TRC-20 à sua lista de tokens, para que uma assinatura possa usá-lo com `token: "CUSTOM"` ou `"OWN"`. Perguntamos à rede se o endereço é um token TRC-20 cujas transferências funcionam, e lemos o seu símbolo, nome, casas decimais e quanta largura de banda uma transferência consome. Exige o escopo `buy_bandwidth`.
+
+Adicionar um contrato que já está na sua lista o retorna de novo, sem nova verificação e sem contar para o limite de requisições.
+
+### Corpo da requisição
+
+<ParamField body="address" type="string" required>
+  Endereço do contrato TRC-20 (formato T..., 34 caracteres). USDT e USDD são recusados — escolha-os com `token`.
+</ParamField>
+
+### Resposta
+
+O contrato, com os mesmos campos de [Listar contratos de token](/pt/api-reference/auto-bandwidth/list-contracts). Use `bandwidth` como referência para o `volume` da assinatura, com uma pequena margem.
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"address": "TYourTokenContract1234567890abcdef"}'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+    json={"address": "TYourTokenContract1234567890abcdef"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ address: "TYourTokenContract1234567890abcdef" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "symbol": "MTK",
+  "name": "My Token",
+  "decimals": 6,
+  "bandwidth": 345
+}
+```
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` não é um endereço TRON válido |
+| `400` | `AUTO_BW_NOT_A_CONTRACT` | Não há contrato inteligente neste endereço |
+| `400` | `AUTO_BW_NOT_A_TOKEN` | O contrato não é um token TRC-20 |
+| `400` | `AUTO_BW_TRANSFER_REVERTS` | Uma transferência deste token falha na simulação — por exemplo, o token está pausado |
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_bandwidth` |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | É o USDT ou o USDD — escolha-o com `token`; o token vem em `error.token` |
+| `409` | `AUTO_BW_CONTRACT_LIMIT` | A sua lista já tem 20 contratos — remova um antes |
+| `429` | `RATE_LIMIT_EXCEEDED` | Contratos novos demais — veja [Limites de Taxa](/pt/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | O Bandwidth automático está temporariamente desligado — tente novamente mais tarde |
+| `503` | `TEMPORARILY_UNAVAILABLE` | Não foi possível ler a rede agora; nada foi salvo — tente de novo após os segundos de `Retry-After` |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_CONTRACT_LISTED",
+      "message": "This is USDT; pick it in the token list",
+      "token": "USDT"
+    }
+  }
+}
+```

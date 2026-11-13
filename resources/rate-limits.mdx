@@ -44,6 +44,9 @@ halved for the next ten minutes; three more such minutes block it entirely for t
 | `POST /api/v1/account/withdrawal` | 5 s after a withdrawal created with `Idempotency-Key`, 60 s after one without | account |
 | `POST /api/v1/energy/auto-refill` | 10 requests/minute | account |
 | `POST /api/v1/bandwidth/auto-refill` | 10 requests/minute | account |
+| `POST /api/v1/bandwidth/auto` | 20 requests/minute | account |
+| `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 requests/minute | account |
+| `POST /api/v1/bandwidth/auto/contracts` | 10 new contracts/hour | account |
 
 Note that `POST /api/v1/invoices` is counted per **IP address**, not per account: if several of your
 clients send requests from the same egress IP, they share one budget of 10 per minute.

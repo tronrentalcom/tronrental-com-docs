@@ -1,0 +1,68 @@
+---
+title: 移除代币合约
+api: DELETE /v1/bandwidth/auto/contracts/{address}
+description: "从您的自动带宽代币列表中移除一个 TRC-20 合约"
+---
+
+## 移除代币合约
+
+从您的代币列表中移除一个合约。仍有订阅在使用的合约无法移除：请先更改该订阅的 `token` 或 `contract`，或将其删除。需要 `buy_bandwidth` 权限。
+
+### 路径参数
+
+<ParamField path="address" type="string" required>
+  要移除的合约地址
+</ParamField>
+
+### 响应
+
+<ResponseField name="address" type="string">
+  已移除合约的地址
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean">
+  始终为 `true`
+</ResponseField>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+  { method: "DELETE", headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "deleted": true
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` 不是有效的 TRON 地址 |
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
+| `404` | `NOT_FOUND` | 该合约不在您的列表中 |
+| `409` | `AUTO_BW_CONTRACT_IN_USE` | 有订阅是为该合约设置的 |

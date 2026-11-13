@@ -1,0 +1,89 @@
+---
+title: Cotización de Bandwidth automático
+api: GET /v1/bandwidth/auto/quote
+description: "Precio de 24 horas y de una transferencia para un volumen de suscripción"
+---
+
+## Cotización de Bandwidth automático
+
+Devuelve lo que cuesta a tu cuenta una suscripción con este `volume`: la comisión cada 24 horas y la comisión por transferencia, con la comisión por transferencia desglosada en ancho de banda y comisión fija. No se crea ni se cobra nada. Requiere el alcance `view`. Consulta [Coste](/es/api-reference/auto-bandwidth/overview#coste) para saber cuándo se cobra cada comisión.
+
+Sin `subscription_id`, el precio depende de cómo la llames: con una clave API, es el precio de una suscripción creada con esa clave; desde el sitio web, el de una creada en el sitio web. Con `subscription_id`, es el precio de esa suscripción, calculado según la clave con la que se creó — úsalo para ver cuánto costaría un nuevo `volume`. No incluye la activación de una dirección que todavía no existe on-chain.
+
+### Parámetros de consulta
+
+<ParamField query="volume" type="number" required>
+  Ancho de banda que se mantendrá en la dirección. De 1 a 5,000.
+</ParamField>
+
+<ParamField query="subscription_id" type="number">
+  ID de una de tus suscripciones. Opcional.
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="volume" type="number">
+  El volumen por el que preguntaste
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  Comisión de suscripción cada 24 horas
+</ResponseField>
+
+<ResponseField name="transfer_trx" type="string">
+  Comisión por cada transferencia que agota el ancho de banda delegado: `transfer_bw_trx` + `transfer_fee_trx`
+</ResponseField>
+
+<ResponseField name="transfer_bw_trx" type="string">
+  La parte de ancho de banda de la comisión por transferencia
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  La parte de comisión fija de la comisión por transferencia. `"0.000000"` cuando tu cuenta no tiene comisión fija en el ancho de banda.
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "volume": 350,
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `view` |
+| `404` | `NOT_FOUND` | `subscription_id` no es una de tus suscripciones |
+| `422` | — | Falta `volume` o está fuera del rango 1 – 5,000 |

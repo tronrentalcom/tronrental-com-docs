@@ -1,0 +1,68 @@
+---
+title: टोकन कॉन्ट्रैक्ट हटाएं
+api: DELETE /v1/bandwidth/auto/contracts/{address}
+description: "अपनी ऑटो बैंडविड्थ टोकन सूची से TRC-20 कॉन्ट्रैक्ट हटाएं"
+---
+
+## टोकन कॉन्ट्रैक्ट हटाएं
+
+आपकी टोकन सूची से कॉन्ट्रैक्ट हटाता है। जिस कॉन्ट्रैक्ट का उपयोग आपका कोई सब्सक्रिप्शन अब भी करता है, उसे हटाया नहीं जा सकता: पहले उस सब्सक्रिप्शन का `token` या `contract` बदलें, या उसे हटा दें। `buy_bandwidth` स्कोप आवश्यक है।
+
+### पाथ पैरामीटर
+
+<ParamField path="address" type="string" required>
+  हटाए जाने वाले कॉन्ट्रैक्ट का एड्रेस
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="address" type="string">
+  हटाए गए कॉन्ट्रैक्ट का एड्रेस
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean">
+  हमेशा `true`
+</ResponseField>
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+  { method: "DELETE", headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "deleted": true
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` मान्य TRON एड्रेस नहीं है |
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
+| `404` | `NOT_FOUND` | यह कॉन्ट्रैक्ट आपकी सूची में नहीं है |
+| `409` | `AUTO_BW_CONTRACT_IN_USE` | इस कॉन्ट्रैक्ट के लिए कोई सब्सक्रिप्शन बना हुआ है |

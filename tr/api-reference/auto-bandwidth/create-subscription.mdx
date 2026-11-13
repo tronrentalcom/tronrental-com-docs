@@ -1,0 +1,174 @@
+---
+title: Abonelik Oluştur
+api: POST /v1/bandwidth/auto
+description: "Bir adreste bant genişliğini tutun ve her transferden sonra yenileyin"
+---
+
+## Abonelik Oluştur
+
+Bir adres için Otomatik Bandwidth aboneliği oluşturur. Bir sonraki kontrolden itibaren — genellikle birkaç saniye içinde — adrese `volume` kadar bant genişliği devredilmiş halde tutar ve onu tüketen her transferden sonra yenileriz. Yenilemenin, maliyetin ve durumların nasıl işlediği için [genel bakışa](/tr/api-reference/auto-bandwidth/overview) bakın.
+
+İsteğin kendisi hiçbir ücret almaz, ancak bakiyeniz ilk 24 saati ve bir transferi — adres zincirde henüz yoksa aktivasyonu da — karşılamalıdır; aksi halde `402 INSUFFICIENT_BALANCE` döner. `buy_bandwidth` kapsamını gerektirir. Fiyatı önce görmek için [Otomatik Bandwidth Fiyatı](/tr/api-reference/auto-bandwidth/quote) uç noktasını kullanın.
+
+### İstek gövdesi
+
+<ParamField body="address" type="string" required>
+  Bant genişliğinin tutulacağı TRON adresi — transferleri gönderen adres (T... formatı, 34 karakter). Sözleşme adresleri reddedilir.
+</ParamField>
+
+<ParamField body="volume" type="number" default="350">
+  Adreste tutulacak bant genişliği. 1 ile 5.000 arasında. Bir USDT veya USDD transferi yaklaşık 345, bir TRX transferi yaklaşık 270 alır.
+</ParamField>
+
+<ParamField body="token" type="string" default="USDT">
+  Adresin gönderdiği token: `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` veya `"OWN"`. Hangi transferlerin karşılandığını sınırlamaz — bkz. [Token](/tr/api-reference/auto-bandwidth/overview#seçenekler).
+</ParamField>
+
+<ParamField body="contract" type="string">
+  [Token listenizden](/tr/api-reference/auto-bandwidth/list-contracts) bir TRC-20 sözleşmesinin adresi. `token: "CUSTOM"` ile zorunlu, `"OWN"` ile isteğe bağlı, diğer tokenlarla kabul edilmez.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Aboneliğe kendi verdiğiniz ad, en fazla 50 karakter. İsteğe bağlı.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean" default="false">
+  Adreste en az `threshold` kadar ücretsiz bant genişliği olduğu sürece bant genişliği tutma.
+</ParamField>
+
+<ParamField body="threshold" type="number" default="600">
+  `auto_pause` ve `notify_free_bw` için ücretsiz bant genişliği seviyesi. 1 ile 600 arasında; seçeneklerden biri açıkken `volume` ile 345'in büyüğü ile 600 arasında olmalıdır. `auto_pause` olmadan, 600'ün üzerindeki bir `volume` değeri `600` değerine izin verir.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean" default="false">
+  Adresin ücretsiz bant genişliği `threshold` değerine ulaştığında her seferinde Telegram ve e-posta mesajı gönder.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean" default="false">
+  Aboneliği, tokenına ait bir sonraki transferden sonra duraklat.
+</ParamField>
+
+### Yanıt
+
+Yeni abonelik; [Abonelikleri Listele](/tr/api-reference/auto-bandwidth/list-subscriptions) ile aynı alanlara sahiptir. Oluşturmanın hemen ardından `delegated_bw` `0`, `paid_until` ise `null` olur: ilk devretme birkaç saniye içinde gerçekleşir.
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourSenderAddress12345678901234ab",
+    "volume": 350,
+    "token": "USDT",
+    "label": "Payouts"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+    json={
+        "address": "TYourSenderAddress12345678901234ab",
+        "volume": 350,
+        "token": "USDT",
+        "label": "Payouts",
+    },
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    address: "TYourSenderAddress12345678901234ab",
+    volume: 350,
+    token: "USDT",
+    label: "Payouts",
+  }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "active",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": null,
+  "delegated_bw": 0,
+  "transfers": 0,
+  "delivery_state": "ok",
+  "paid_until": null,
+  "total_charged_trx": "0.000000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-13T08:15:00Z"
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` geçerli bir TRON adresi değil veya bağlanılamıyor |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `address` bir akıllı sözleşme |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold`, bu `volume` için izin verilen aralığın dışında; aralık mesajda yer alır |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `contract` olmadan `token: "CUSTOM"`, başka bir tokenla `contract` veya token listenizde bulunmayan bir sözleşme |
+| `402` | `INSUFFICIENT_BALANCE` | Bakiye 24 saati ve bir transferi (artı aktivasyonu) karşılamıyor; tutarlar `error.required_trx` ve `error.available_trx` içinde |
+| `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Hesabınızda bu adres için zaten bir abonelik var |
+| `409` | `AUTO_BW_LIMIT_REACHED` | Hesabınızda zaten 20 abonelik var |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | Bu adresteki bant genişliği zaten Akıllı Mod veya bir transfer paketi tarafından tutuluyor |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` USDT veya USDD sözleşmesi — bunun yerine `token` kullanın; token `error.token` içinde |
+| `422` | — | Bir alanın türü yanlış veya aralık dışında |
+| `429` | `RATE_LIMIT_EXCEEDED` | Çok fazla oluşturma isteği — bkz. [Hız Sınırları](/tr/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | Otomatik Bandwidth geçici olarak kapalı; abonelik oluşturulmadı — daha sonra yeniden deneyin |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "INSUFFICIENT_BALANCE",
+      "message": "Insufficient balance. Required: 0.680000 TRX, available: 0.500000 TRX",
+      "required_trx": "0.680000",
+      "available_trx": "0.500000"
+    }
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_DISABLED",
+      "message": "Auto-Bandwidth is temporarily unavailable; please try again later"
+    }
+  }
+}
+```
+
+<Tip>
+Zaman aşımından sonra oluşturma isteğini yeniden denemek güvenlidir. İlk istek başarılı olduysa yeniden deneme ikinci bir abonelik oluşturmaz, `409 AUTO_BW_ADDRESS_TAKEN` döndürür; aboneliğin `id` değerini almak için [aboneliklerinizi listeleyin](/tr/api-reference/auto-bandwidth/list-subscriptions).
+</Tip>

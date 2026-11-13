@@ -105,6 +105,20 @@
                 ]
               },
               {
+                "group": "Auto Bandwidth",
+                "pages": [
+                  "api-reference/auto-bandwidth/overview",
+                  "api-reference/auto-bandwidth/quote",
+                  "api-reference/auto-bandwidth/create-subscription",
+                  "api-reference/auto-bandwidth/list-subscriptions",
+                  "api-reference/auto-bandwidth/update-subscription",
+                  "api-reference/auto-bandwidth/delete-subscription",
+                  "api-reference/auto-bandwidth/list-contracts",
+                  "api-reference/auto-bandwidth/add-contract",
+                  "api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Orders",
                 "pages": [
                   "api-reference/orders/get-order",
@@ -261,6 +275,20 @@
                   "ru/api-reference/auto-refill/list-bandwidth-rules",
                   "ru/api-reference/auto-refill/update-bandwidth-rule",
                   "ru/api-reference/auto-refill/delete-bandwidth-rule"
+                ]
+              },
+              {
+                "group": "Авто-bandwidth",
+                "pages": [
+                  "ru/api-reference/auto-bandwidth/overview",
+                  "ru/api-reference/auto-bandwidth/quote",
+                  "ru/api-reference/auto-bandwidth/create-subscription",
+                  "ru/api-reference/auto-bandwidth/list-subscriptions",
+                  "ru/api-reference/auto-bandwidth/update-subscription",
+                  "ru/api-reference/auto-bandwidth/delete-subscription",
+                  "ru/api-reference/auto-bandwidth/list-contracts",
+                  "ru/api-reference/auto-bandwidth/add-contract",
+                  "ru/api-reference/auto-bandwidth/delete-contract"
                 ]
               },
               {
@@ -422,6 +450,20 @@
                 ]
               },
               {
+                "group": "自动带宽",
+                "pages": [
+                  "zh/api-reference/auto-bandwidth/overview",
+                  "zh/api-reference/auto-bandwidth/quote",
+                  "zh/api-reference/auto-bandwidth/create-subscription",
+                  "zh/api-reference/auto-bandwidth/list-subscriptions",
+                  "zh/api-reference/auto-bandwidth/update-subscription",
+                  "zh/api-reference/auto-bandwidth/delete-subscription",
+                  "zh/api-reference/auto-bandwidth/list-contracts",
+                  "zh/api-reference/auto-bandwidth/add-contract",
+                  "zh/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "订单",
                 "pages": [
                   "zh/api-reference/orders/get-order",
@@ -577,6 +619,20 @@
                   "es/api-reference/auto-refill/list-bandwidth-rules",
                   "es/api-reference/auto-refill/update-bandwidth-rule",
                   "es/api-reference/auto-refill/delete-bandwidth-rule"
+                ]
+              },
+              {
+                "group": "Bandwidth automático",
+                "pages": [
+                  "es/api-reference/auto-bandwidth/overview",
+                  "es/api-reference/auto-bandwidth/quote",
+                  "es/api-reference/auto-bandwidth/create-subscription",
+                  "es/api-reference/auto-bandwidth/list-subscriptions",
+                  "es/api-reference/auto-bandwidth/update-subscription",
+                  "es/api-reference/auto-bandwidth/delete-subscription",
+                  "es/api-reference/auto-bandwidth/list-contracts",
+                  "es/api-reference/auto-bandwidth/add-contract",
+                  "es/api-reference/auto-bandwidth/delete-contract"
                 ]
               },
               {
@@ -738,6 +794,20 @@
                 ]
               },
               {
+                "group": "Otomatik Bandwidth",
+                "pages": [
+                  "tr/api-reference/auto-bandwidth/overview",
+                  "tr/api-reference/auto-bandwidth/quote",
+                  "tr/api-reference/auto-bandwidth/create-subscription",
+                  "tr/api-reference/auto-bandwidth/list-subscriptions",
+                  "tr/api-reference/auto-bandwidth/update-subscription",
+                  "tr/api-reference/auto-bandwidth/delete-subscription",
+                  "tr/api-reference/auto-bandwidth/list-contracts",
+                  "tr/api-reference/auto-bandwidth/add-contract",
+                  "tr/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Siparişler",
                 "pages": [
                   "tr/api-reference/orders/get-order",
@@ -896,6 +966,20 @@
                 ]
               },
               {
+                "group": "Bandwidth automático",
+                "pages": [
+                  "pt/api-reference/auto-bandwidth/overview",
+                  "pt/api-reference/auto-bandwidth/quote",
+                  "pt/api-reference/auto-bandwidth/create-subscription",
+                  "pt/api-reference/auto-bandwidth/list-subscriptions",
+                  "pt/api-reference/auto-bandwidth/update-subscription",
+                  "pt/api-reference/auto-bandwidth/delete-subscription",
+                  "pt/api-reference/auto-bandwidth/list-contracts",
+                  "pt/api-reference/auto-bandwidth/add-contract",
+                  "pt/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Pedidos",
                 "pages": [
                   "pt/api-reference/orders/get-order",
@@ -1051,6 +1135,20 @@
                   "hi/api-reference/auto-refill/list-bandwidth-rules",
                   "hi/api-reference/auto-refill/update-bandwidth-rule",
                   "hi/api-reference/auto-refill/delete-bandwidth-rule"
+                ]
+              },
+              {
+                "group": "ऑटो बैंडविड्थ",
+                "pages": [
+                  "hi/api-reference/auto-bandwidth/overview",
+                  "hi/api-reference/auto-bandwidth/quote",
+                  "hi/api-reference/auto-bandwidth/create-subscription",
+                  "hi/api-reference/auto-bandwidth/list-subscriptions",
+                  "hi/api-reference/auto-bandwidth/update-subscription",
+                  "hi/api-reference/auto-bandwidth/delete-subscription",
+                  "hi/api-reference/auto-bandwidth/list-contracts",
+                  "hi/api-reference/auto-bandwidth/add-contract",
+                  "hi/api-reference/auto-bandwidth/delete-contract"
                 ]
               },
               {

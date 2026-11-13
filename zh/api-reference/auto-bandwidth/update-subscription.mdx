@@ -1,0 +1,144 @@
+---
+title: 更新订阅
+api: PATCH /v1/bandwidth/auto/{sub_id}
+description: "更改、暂停、恢复或迁移自动带宽订阅"
+---
+
+## 更新订阅
+
+更改订阅的设置、暂停或恢复订阅，或将其迁移到另一个地址。只需发送要更改的字段，其余保持不变。更改立即生效：每次编辑之后我们都会重新检查该订阅。需要 `buy_bandwidth` 权限。
+
+### 路径参数
+
+<ParamField path="sub_id" type="number" required>
+  订阅 ID——创建或列出订阅返回的 `id`
+</ParamField>
+
+### 请求体
+
+<ParamField body="enabled" type="boolean">
+  `false` 暂停订阅：我们会收回带宽，并在您恢复之前不收取任何费用。`true` 恢复已暂停或已停止的订阅；与创建时一样，您的余额必须足以支付 24 小时和一笔转账。被客服关闭的订阅（`stopped_reason: "admin"`）无法通过此方式恢复。
+</ParamField>
+
+<ParamField body="volume" type="number">
+  新的带宽数量。范围 1 至 5,000。在已付费的一天内提高它，会收取当天剩余时间的差额。
+</ParamField>
+
+<ParamField body="address" type="string">
+  将订阅迁移到另一个地址。我们先从旧地址收回带宽，再向新地址委托；迁移完成之前，`address_change_to` 会显示该迁移。新地址要通过与创建时相同的检查。发送当前地址会取消尚未完成的迁移。
+</ParamField>
+
+<ParamField body="token" type="string">
+  `"USDT"`、`"TRX"`、`"USDD"`、`"CUSTOM"` 或 `"OWN"`。切换到 `USDT`、`TRX` 或 `USDD` 会移除 `contract`。
+</ParamField>
+
+<ParamField body="contract" type="string | null">
+  来自[您的代币列表](/zh/api-reference/auto-bandwidth/list-contracts)的合约，用于 `CUSTOM` 或 `OWN`。`null` 将其移除（`CUSTOM` 时不可）。
+</ParamField>
+
+<ParamField body="label" type="string | null">
+  新的标签，最多 50 个字符。`null` 或空字符串将其移除。
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean">
+  开启或关闭自动暂停。
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  新的免费带宽水平，范围与创建时相同。
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean">
+  开启或关闭免费带宽通知。
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean">
+  `true` 在其代币的下一笔转账之后暂停订阅，从现在起计。`false` 取消该设置。
+</ParamField>
+
+### 响应
+
+更新后的订阅，字段与[列出订阅](/zh/api-reference/auto-bandwidth/list-subscriptions)中的相同。
+
+### 示例
+
+暂停订阅：
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+    json={"enabled": False},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: false }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "paused",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": 330,
+  "delegated_bw": 350,
+  "transfers": 12,
+  "delivery_state": "ok",
+  "paid_until": "2026-11-14T08:15:04Z",
+  "total_charged_trx": "5.100000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-10T08:15:00Z"
+}
+```
+
+带宽被收回后，`delegated_bw` 会在几秒之内降为 `0`。
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | 新的 `address` 不是有效的 TRON 地址，或无法连接 |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | 新的 `address` 是智能合约 |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` 超出该 `volume` 所允许的范围 |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `CUSTOM` 但没有合约，或合约搭配了其他代币，或该合约不在您的代币列表中 |
+| `402` | `INSUFFICIENT_BALANCE` | 恢复订阅时，余额不足以支付 24 小时和一笔转账 |
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
+| `404` | `NOT_FOUND` | 您的账户中没有该 ID 的订阅（或已被删除） |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | 您的另一个订阅已在使用新地址 |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | 新地址上的带宽已由智能模式或转账套餐维持 |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` 是 USDT 或 USDD 合约——请改用 `token` |
+| `409` | `AUTO_BW_DISABLED_BY_SUPPORT` | 该订阅已被客服关闭——请联系我们以恢复 |
+| `422` | — | 字段类型错误或超出范围 |
+| `429` | `RATE_LIMIT_EXCEEDED` | 编辑请求过多——参见[速率限制](/zh/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | 自动带宽暂时关闭时设置 `enabled: true`；未做任何更改——请稍后重试 |

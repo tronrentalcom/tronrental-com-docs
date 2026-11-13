@@ -1,0 +1,85 @@
+---
+title: Token Sözleşmelerini Listele
+api: GET /v1/bandwidth/auto/contracts
+description: "Otomatik Bandwidth için TRC-20 token sözleşmeleriniz"
+---
+
+## Token Sözleşmelerini Listele
+
+Otomatik Bandwidth için eklediğiniz TRC-20 sözleşmelerini döndürür. `token: "CUSTOM"` veya `"OWN"` olan bir abonelik, bunlardan herhangi birini `contract` alanında kullanabilir. `view` kapsamını gerektirir.
+
+USDT ve USDD yerleşiktir ve burada hiçbir zaman görünmez: bunları `token` ile seçin.
+
+### Yanıt
+
+<ResponseField name="contracts" type="array">
+  Sözleşmeleriniz.
+
+  <Expandable title="sözleşme nesnesi">
+    <ResponseField name="address" type="string">
+      Sözleşme adresi
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Sözleşmenin bildirdiği token sembolü (en fazla 16 karakter)
+    </ResponseField>
+    <ResponseField name="name" type="string | null">
+      Sözleşmenin bildirdiği token adı (en fazla 40 karakter); yoksa `null`
+    </ResponseField>
+    <ResponseField name="decimals" type="number">
+      Token ondalık basamakları
+    </ResponseField>
+    <ResponseField name="bandwidth" type="number">
+      Bu tokenın bir transferinin aldığı bant genişliği — abonelik `volume` değeri için bir kılavuz
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Warning>
+`symbol` ve `name` sözleşmenin kendisinden gelir ve herkes kendine "Tether USD" diyen bir token dağıtabilir. Bir tokenı her zaman `address` ile tanımlayın.
+</Warning>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "contracts": [
+    {
+      "address": "TYourTokenContract1234567890abcdef",
+      "symbol": "MTK",
+      "name": "My Token",
+      "decimals": 6,
+      "bandwidth": 345
+    }
+  ]
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `view` kapsamı yok |

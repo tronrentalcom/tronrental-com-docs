@@ -105,6 +105,26 @@ Node API（`node.tronrental.com`）有自己的错误代码，格式也不同—
 | `AUTOREFILL_DISABLED` | `503` | 该资源的自动补充暂时关闭；仅在创建规则时返回。未创建规则——请稍后重试 |
 | `NOT_FOUND` | `404` | 账户中没有该规则 |
 
+## 自动带宽代码
+
+[自动带宽](/zh/api-reference/auto-bandwidth/overview)端点以标准形式返回：
+
+| 代码 | 状态 | 说明 |
+|------|--------|-------------|
+| `AUTO_BW_INVALID_THRESHOLD` | `400` | `threshold` 超出该订阅 `volume` 所允许的范围 |
+| `AUTO_BW_INVALID_CONTRACT` | `400` | `contract` 与 `token` 不匹配，或不在您的代币列表中 |
+| `AUTO_BW_NOT_A_CONTRACT` | `400` | 该地址上没有智能合约 |
+| `AUTO_BW_NOT_A_TOKEN` | `400` | 该合约不是 TRC-20 代币 |
+| `AUTO_BW_TRANSFER_REVERTS` | `400` | 该代币的转账在模拟中失败 |
+| `AUTO_BW_ADDRESS_TAKEN` | `409` | 账户中已有该地址的订阅 |
+| `AUTO_BW_LIMIT_REACHED` | `409` | 账户中已有 20 个订阅 |
+| `AUTO_BW_ADDRESS_COVERED` | `409` | 该地址上的带宽已由智能模式或转账套餐维持 |
+| `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | 该订阅已被客服关闭——请联系我们以恢复 |
+| `AUTO_BW_CONTRACT_LISTED` | `409` | 该合约是 USDT 或 USDD——请通过 `token` 选择；代币在 `error.token` 中给出 |
+| `AUTO_BW_CONTRACT_LIMIT` | `409` | 代币列表中已有 20 个合约 |
+| `AUTO_BW_CONTRACT_IN_USE` | `409` | 有订阅正在使用该合约 |
+| `AUTO_BW_DISABLED` | `503` | 自动带宽暂时关闭；在创建或恢复订阅以及添加合约时返回。未做任何更改——请稍后重试 |
+
 ## 提现验证代码
 
 `POST /api/v1/account/withdrawal` 以扁平形式返回这些验证代码，`code` 与 `detail` 并列；该端点的其他
