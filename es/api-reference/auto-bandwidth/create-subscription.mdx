@@ -138,7 +138,6 @@ console.log(await resp.json());
 | `402` | `INSUFFICIENT_BALANCE` | El saldo no cubre 24 horas y una transferencia (más la activación); los importes figuran en `error.required_trx` y `error.available_trx` |
 | `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
 | `409` | `AUTO_BW_ADDRESS_TAKEN` | Tu cuenta ya tiene una suscripción para esta dirección |
-| `409` | `AUTO_BW_LIMIT_REACHED` | Tu cuenta ya tiene 20 suscripciones |
 | `409` | `AUTO_BW_ADDRESS_COVERED` | El ancho de banda de esta dirección ya lo mantiene Smart Mode o un paquete de transferencias |
 | `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` es el contrato de USDT o USDD — usa `token` en su lugar; el token figura en `error.token` |
 | `422` | — | Un campo tiene el tipo incorrecto o está fuera de rango |

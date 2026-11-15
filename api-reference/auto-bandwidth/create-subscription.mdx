@@ -138,7 +138,6 @@ console.log(await resp.json());
 | `402` | `INSUFFICIENT_BALANCE` | The balance does not cover 24 hours and one transfer (plus activation); the amounts are in `error.required_trx` and `error.available_trx` |
 | `403` | `FORBIDDEN` | The API key lacks the `buy_bandwidth` scope |
 | `409` | `AUTO_BW_ADDRESS_TAKEN` | Your account already has a subscription for this address |
-| `409` | `AUTO_BW_LIMIT_REACHED` | Your account already has 20 subscriptions |
 | `409` | `AUTO_BW_ADDRESS_COVERED` | Bandwidth on this address is already kept by Smart Mode or a transfer package |
 | `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` is the USDT or USDD contract — use `token` instead; the token is in `error.token` |
 | `422` | — | A field has the wrong type or is out of range |

@@ -138,7 +138,6 @@ console.log(await resp.json());
 | `402` | `INSUFFICIENT_BALANCE` | बैलेंस 24 घंटे और एक ट्रांसफर (साथ में सक्रियण) को कवर नहीं करता; राशियाँ `error.required_trx` और `error.available_trx` में हैं |
 | `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
 | `409` | `AUTO_BW_ADDRESS_TAKEN` | आपके खाते में इस एड्रेस के लिए पहले से सब्सक्रिप्शन है |
-| `409` | `AUTO_BW_LIMIT_REACHED` | आपके खाते में पहले से 20 सब्सक्रिप्शन हैं |
 | `409` | `AUTO_BW_ADDRESS_COVERED` | इस एड्रेस की बैंडविड्थ पहले से Smart Mode या ट्रांसफर पैकेज द्वारा बनाए रखी जा रही है |
 | `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` USDT या USDD का कॉन्ट्रैक्ट है — इसके बजाय `token` का उपयोग करें; टोकन `error.token` में है |
 | `422` | — | किसी फ़ील्ड का प्रकार गलत है या वह सीमा से बाहर है |

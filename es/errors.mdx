@@ -107,7 +107,6 @@ Se devuelven en la forma estándar desde los endpoints de [Recarga automática](
 | Código | Estado | Descripción |
 |--------|--------|-------------|
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | La cuenta ya tiene una regla para esta dirección y este recurso — edita esa regla en su lugar |
-| `AUTOREFILL_LIMIT_REACHED` | `409` | La cuenta ya tiene 20 reglas para este recurso; el límite también figura en `error.limit` |
 | `AUTOREFILL_IN_PROGRESS` | `409` | Se está comprando una recarga para la regla en este momento — reintenta la edición o la eliminación en un minuto |
 | `AUTOREFILL_DISABLED` | `503` | La Recarga automática de este recurso está desactivada temporalmente; solo se devuelve al crear una regla. No se creó ninguna regla — reintenta más tarde |
 | `NOT_FOUND` | `404` | No existe esa regla en la cuenta |
@@ -124,7 +123,6 @@ Se devuelven en la forma estándar desde los endpoints de [Bandwidth automático
 | `AUTO_BW_NOT_A_TOKEN` | `400` | El contrato no es un token TRC-20 |
 | `AUTO_BW_TRANSFER_REVERTS` | `400` | Una transferencia del token falla en la simulación |
 | `AUTO_BW_ADDRESS_TAKEN` | `409` | La cuenta ya tiene una suscripción para esta dirección |
-| `AUTO_BW_LIMIT_REACHED` | `409` | La cuenta ya tiene 20 suscripciones |
 | `AUTO_BW_ADDRESS_COVERED` | `409` | El ancho de banda de la dirección ya lo mantiene Smart Mode o un paquete de transferencias |
 | `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | La suscripción fue desactivada por soporte — contáctanos para reanudarla |
 | `AUTO_BW_CONTRACT_LISTED` | `409` | El contrato es USDT o USDD — elígelo con `token`; el token figura en `error.token` |

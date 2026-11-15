@@ -71,7 +71,7 @@ Aboneliği oluşturmak veya yeniden açmak aynı tutarı baştan kontrol eder ve
 ### Sınırlar
 
 - Bir hesapta **adres başına bir abonelik**. Aynı adres için ikinci bir abonelik `409 AUTO_BW_ADDRESS_TAKEN` döndürür.
-- Hesap başına **20 abonelik**; silinmiş olanlar sayılmaz. Sınır aşıldığında: `409 AUTO_BW_LIMIT_REACHED`.
+- Hesap başına **abonelik sayısı sınırsızdır**; etkin ve duraklatılmış olanlar dahil.
 - Listenizde **20 token sözleşmesi**. Sınır aşıldığında: `409 AUTO_BW_CONTRACT_LIMIT`.
 - USDT token sözleşmesi gibi **sözleşme adresleri kabul edilmez**: TRON onlara kaynak devredilmesine izin vermez.
 - **Akıllı Mod bant genişliği veya bant genişlikli bir transfer paketi tarafından zaten karşılanan adresler kabul edilmez**: `409 AUTO_BW_ADDRESS_COVERED`.

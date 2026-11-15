@@ -138,7 +138,6 @@ console.log(await resp.json());
 | `402` | `INSUFFICIENT_BALANCE` | 余额不足以支付 24 小时和一笔转账（加上激活费用）；金额见 `error.required_trx` 和 `error.available_trx` |
 | `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
 | `409` | `AUTO_BW_ADDRESS_TAKEN` | 您的账户已有该地址的订阅 |
-| `409` | `AUTO_BW_LIMIT_REACHED` | 您的账户已有 20 个订阅 |
 | `409` | `AUTO_BW_ADDRESS_COVERED` | 该地址上的带宽已由智能模式或转账套餐维持 |
 | `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` 是 USDT 或 USDD 合约——请改用 `token`；代币在 `error.token` 中给出 |
 | `422` | — | 字段类型错误或超出范围 |
