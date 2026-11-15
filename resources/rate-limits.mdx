@@ -47,6 +47,7 @@ halved for the next ten minutes; three more such minutes block it entirely for t
 | `POST /api/v1/bandwidth/auto` | 20 requests/minute | account |
 | `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 requests/minute | account |
 | `POST /api/v1/bandwidth/auto/contracts` | 10 new contracts/hour | account |
+| `POST /api/v1/webhooks/configure` | 10 requests/minute, shared with `PATCH /api/v1/account/webhook` | account |
 
 Note that `POST /api/v1/invoices` is counted per **IP address**, not per account: if several of your
 clients send requests from the same egress IP, they share one budget of 10 per minute.
@@ -57,7 +58,8 @@ requests per minute counted **per IP address** (the two bandwidth endpoints shar
 single account it is never the binding limit, but clients behind one egress IP share it with each
 other.
 
-The webhook management endpoints (`/api/v1/webhooks/...`) are not covered by the account-level limit.
+The webhook management endpoints (`/api/v1/webhooks/...`) are not covered by the account-level limit;
+`POST /api/v1/webhooks/configure` has a limit of its own, listed in the table above.
 Every other documented endpoint has no limit of its own — the account-level limit is the only one that
 applies to it.
 

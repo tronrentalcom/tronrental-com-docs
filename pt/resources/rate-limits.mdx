@@ -47,6 +47,7 @@ por trinta, com `Retry-After: 1800`. Contas no nível de 1000/minuto estão isen
 | `POST /api/v1/bandwidth/auto` | 20 requisições/minuto | conta |
 | `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 requisições/minuto | conta |
 | `POST /api/v1/bandwidth/auto/contracts` | 10 novos contratos/hora | conta |
+| `POST /api/v1/webhooks/configure` | 10 requisições/minuto, compartilhado com `PATCH /api/v1/account/webhook` | conta |
 
 Observe que `POST /api/v1/invoices` é contado por **endereço IP**, não por conta: se vários dos seus
 clientes enviam requisições a partir do mesmo IP de saída, eles compartilham um único orçamento de 10
@@ -59,7 +60,7 @@ Os endpoints de compra — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activ
 IP de saída o compartilham entre si.
 
 Os endpoints de gerenciamento de webhook (`/api/v1/webhooks/...`) não são cobertos pelo limite no nível
-da conta. Todos os demais endpoints documentados não têm limite próprio — apenas o limite no nível da
+da conta; `POST /api/v1/webhooks/configure` tem um limite próprio, listado na tabela acima. Todos os demais endpoints documentados não têm limite próprio — apenas o limite no nível da
 conta se aplica a eles.
 
 ### Como é uma resposta 429

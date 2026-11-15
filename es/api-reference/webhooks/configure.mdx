@@ -28,7 +28,7 @@ De lo contrario, una clave robada bastaría para dirigir sus eventos al servidor
 ### Cuerpo de la petición
 
 <ParamField body="url" type="string" required>
-  URL del webhook. En este endpoint **solo HTTPS**, y no debe apuntar a `localhost`, `127.0.0.1`, `0.0.0.0` ni `::1`. Además, la entrega se rechaza en el momento del envío hacia cualquier host que resuelva a una dirección privada, loopback o link-local.
+  URL del webhook. En este endpoint **solo HTTPS**, y no debe apuntar a `localhost`, `127.0.0.1`, `0.0.0.0` ni `::1`. Además, la entrega se rechaza en el momento del envío hacia cualquier host que resuelva a una dirección privada, loopback o link-local. Un host que no se resuelve en 3 segundos se rechaza de la misma forma.
 </ParamField>
 
 ### Respuesta
@@ -47,6 +47,23 @@ De lo contrario, una clave robada bastaría para dirigir sus eventos al servidor
   "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
+
+### Límite de solicitudes
+
+La URL del webhook se puede cambiar hasta **10 veces por minuto** por cuenta. El presupuesto se comparte con la puerta del panel descrita más abajo (`PATCH /api/v1/account/webhook`). Por encima de él, la solicitud se rechaza con `429` y la URL se queda como estaba:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "message": "Too many requests. Please try again later."
+    }
+  }
+}
+```
+
+La ventana es de un minuto y no hay cabecera `Retry-After`. Una solicitud rechazada por venir de una clave de API no cuenta para el presupuesto.
 
 ### La puerta del panel
 

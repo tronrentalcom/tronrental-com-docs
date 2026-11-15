@@ -45,6 +45,7 @@ description: "API 速率限制策略"
 | `POST /api/v1/bandwidth/auto` | 20 次请求/分钟 | 账户 |
 | `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 次请求/分钟 | 账户 |
 | `POST /api/v1/bandwidth/auto/contracts` | 10 个新合约/小时 | 账户 |
+| `POST /api/v1/webhooks/configure` | 10 次请求/分钟，与 `PATCH /api/v1/account/webhook` 共享 | 账户 |
 
 请注意，`POST /api/v1/invoices` 按 **IP 地址**计数，而非按账户：如果您的多个客户端从同一出口 IP 发送
 请求，它们将共用每分钟 10 次的同一份配额。
@@ -54,7 +55,7 @@ description: "API 速率限制策略"
 请求，按 **IP 地址**计数（两个 bandwidth 端点共用一份配额）。对单个账户而言它从不是起约束作用的限制，
 但位于同一出口 IP 之后的客户端会彼此共享它。
 
-Webhook 管理端点（`/api/v1/webhooks/...`）不在账户级限制的覆盖范围内。其他所有已记录的端点都没有自身
+Webhook 管理端点（`/api/v1/webhooks/...`）不在账户级限制的覆盖范围内，其中 `POST /api/v1/webhooks/configure` 有自身的限制，见上表。其他所有已记录的端点都没有自身
 限制——只有账户级限制适用于它们。
 
 ### 429 响应的样子
