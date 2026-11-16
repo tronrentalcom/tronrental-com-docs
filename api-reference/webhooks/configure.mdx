@@ -28,7 +28,7 @@ A stolen key would otherwise be enough to point your events at someone else's se
 ### Request body
 
 <ParamField body="url" type="string" required>
-  Webhook URL. **HTTPS only** on this endpoint, and it must not point at `localhost`, `127.0.0.1`, `0.0.0.0` or `::1`. Deliveries are additionally refused at send time to any host that resolves to a private, loopback or link-local address.
+  Webhook URL. **HTTPS only** on this endpoint, and it must not point at `localhost`, `127.0.0.1`, `0.0.0.0` or `::1`. Deliveries are additionally refused at send time to any host that resolves to a private, loopback or link-local address. A host that does not resolve within 3 seconds is refused the same way.
 </ParamField>
 
 ### Response
@@ -47,6 +47,23 @@ A stolen key would otherwise be enough to point your events at someone else's se
   "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
+
+### Rate limit
+
+The webhook URL can be changed up to **10 times a minute** per account. The budget is shared with the dashboard door described below (`PATCH /api/v1/account/webhook`). Over it, the request is refused with `429` and the URL stays as it was:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "message": "Too many requests. Please try again later."
+    }
+  }
+}
+```
+
+The window is one minute and there is no `Retry-After` header. A request refused for an API key does not count against the budget.
 
 ### The dashboard door
 
