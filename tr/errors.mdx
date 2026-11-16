@@ -106,7 +106,6 @@ koda bakarak tespit etmeyin.
 | Kod | Durum | Açıklama |
 |------|--------|-------------|
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | Hesapta bu adres ve kaynak için zaten bir kural var — bunun yerine o kuralı düzenleyin |
-| `AUTOREFILL_LIMIT_REACHED` | `409` | Hesapta bu kaynak için zaten 20 kural var; sınır `error.limit` içinde de yer alır |
 | `AUTOREFILL_IN_PROGRESS` | `409` | Kural için şu anda bir dolum satın alınıyor — düzenlemeyi veya silmeyi bir dakika sonra yeniden deneyin |
 | `AUTOREFILL_DISABLED` | `503` | Bu kaynak için Otomatik Dolum geçici olarak kapalı; yalnızca kural oluşturulurken döner. Kural oluşturulmadı — daha sonra yeniden deneyin |
 | `NOT_FOUND` | `404` | Hesapta böyle bir kural yok |
@@ -123,7 +122,6 @@ koda bakarak tespit etmeyin.
 | `AUTO_BW_NOT_A_TOKEN` | `400` | Sözleşme bir TRC-20 tokeni değil |
 | `AUTO_BW_TRANSFER_REVERTS` | `400` | Tokenın bir transferi simülasyonda başarısız oluyor |
 | `AUTO_BW_ADDRESS_TAKEN` | `409` | Hesapta bu adres için zaten bir abonelik var |
-| `AUTO_BW_LIMIT_REACHED` | `409` | Hesapta zaten 20 abonelik var |
 | `AUTO_BW_ADDRESS_COVERED` | `409` | Adresteki bant genişliği zaten Akıllı Mod veya bir transfer paketi tarafından tutuluyor |
 | `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | Abonelik destek tarafından kapatıldı — devam ettirmek için bizimle iletişime geçin |
 | `AUTO_BW_CONTRACT_LISTED` | `409` | Sözleşme USDT veya USDD — `token` ile seçin; token `error.token` içinde |

@@ -130,7 +130,6 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` es un contrato inteligente |
 | `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | Tu cuenta ya tiene una regla de ancho de banda para esta dirección — edítala en su lugar |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | Tu cuenta ya tiene 20 reglas de ancho de banda; el límite también figura en `error.limit` |
 | `422` | — | Falta un campo o está fuera de rango, o `duration` no es `"1h"` ni `"1d"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | Más de 10 solicitudes de creación en un minuto |
 | `503` | `AUTOREFILL_DISABLED` | La Recarga automática de ancho de banda está desactivada temporalmente; no se creó ninguna regla — reintenta más tarde |

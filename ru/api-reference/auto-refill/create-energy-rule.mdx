@@ -126,22 +126,9 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` — смарт-контракт |
 | `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_energy` |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | В вашем аккаунте уже есть правило для энергии на этот адрес — вместо этого измените его |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | В вашем аккаунте уже 20 правил для энергии; лимит также передаётся в `error.limit` |
 | `422` | — | Поле отсутствует или вне диапазона, либо `duration` — не `"1h"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | Больше 10 запросов на создание за минуту |
 | `503` | `AUTOREFILL_DISABLED` | Автопополнение энергии временно выключено; правило не создано — повторите позже |
-
-```json
-{
-  "detail": {
-    "error": {
-      "code": "AUTOREFILL_LIMIT_REACHED",
-      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
-      "limit": 20
-    }
-  }
-}
-```
 
 ```json
 {

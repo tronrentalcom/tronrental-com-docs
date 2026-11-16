@@ -89,7 +89,7 @@ Telegram hesabınız bağlıysa, bir kuralın ilk dolumunda ve bir kural durakla
 ### Sınırlar
 
 - Bir hesapta **adres ve kaynak başına bir kural**. Aynı adres için ikinci bir enerji kuralı (veya ikinci bir bant genişliği kuralı) oluşturmak `409 AUTOREFILL_ADDRESS_TAKEN` döndürür — bunun yerine mevcut kuralı düzenleyin.
-- Hesap başına **20 enerji kuralı ve 20 bant genişliği kuralı**. Silinmiş kurallar sayılmaz. Sınır aşıldığında: `409 AUTOREFILL_LIMIT_REACHED`.
+- Hesap başına **kural sayısı sınırsızdır**; enerji ve bandwidth için, etkin ve duraklatılmış olanlar dahil.
 - USDT token sözleşmesi gibi **sözleşme adresleri kabul edilmez**: TRON onlara kaynak devredilmesine izin vermez.
 - **Kural oluşturma**, her kaynak için hesap başına dakikada 10 istekle sınırlıdır. Bkz. [Hız Sınırları](/tr/resources/rate-limits).
 

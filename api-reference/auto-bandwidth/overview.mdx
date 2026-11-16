@@ -71,7 +71,7 @@ Creating or switching a subscription back on checks the same amount up front and
 ### Limits
 
 - **One subscription per address** on an account. A second one for the same address returns `409 AUTO_BW_ADDRESS_TAKEN`.
-- **20 subscriptions** per account; deleted ones do not count. Over the limit: `409 AUTO_BW_LIMIT_REACHED`.
+- **No limit on the number of subscriptions** per account, active or paused.
 - **20 token contracts** in your list. Over the limit: `409 AUTO_BW_CONTRACT_LIMIT`.
 - **No contract addresses**, such as the USDT token contract: TRON does not allow delegating resources to them.
 - **No addresses already covered by Smart Mode bandwidth or a transfer package with bandwidth**: `409 AUTO_BW_ADDRESS_COVERED`.

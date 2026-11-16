@@ -126,22 +126,9 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` é um contrato inteligente |
 | `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_energy` |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | A sua conta já tem uma regra de energia para este endereço — edite-a |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | A sua conta já tem 20 regras de energia; o limite também vem em `error.limit` |
 | `422` | — | Um campo está ausente ou fora do intervalo, ou `duration` não é `"1h"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | Mais de 10 requisições de criação em um minuto |
 | `503` | `AUTOREFILL_DISABLED` | A Recarga automática de energia está temporariamente desativada; nenhuma regra foi criada — tente novamente mais tarde |
-
-```json
-{
-  "detail": {
-    "error": {
-      "code": "AUTOREFILL_LIMIT_REACHED",
-      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
-      "limit": 20
-    }
-  }
-}
-```
 
 ```json
 {

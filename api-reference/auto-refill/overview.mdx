@@ -89,7 +89,7 @@ If your Telegram account is linked, you get a message on the first refill of a r
 ### Limits
 
 - **One rule per address and resource** on an account. Creating a second energy rule (or a second bandwidth rule) for the same address returns `409 AUTOREFILL_ADDRESS_TAKEN` — edit the existing rule instead.
-- **20 energy rules and 20 bandwidth rules** per account. Deleted rules do not count. Over the limit: `409 AUTOREFILL_LIMIT_REACHED`.
+- **No limit on the number of rules** per account, for energy or bandwidth, active or paused.
 - **No contract addresses**, such as the USDT token contract: TRON does not allow delegating resources to them.
 - **Creating rules** is limited to 10 requests per minute per account, for each resource. See [Rate Limits](/resources/rate-limits).
 

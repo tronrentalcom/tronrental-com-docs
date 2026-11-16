@@ -100,7 +100,6 @@ Node API（`node.tronrental.com`）有自己的错误代码，格式也不同—
 | 代码 | 状态 | 说明 |
 |------|--------|-------------|
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | 账户中已有该地址和该资源的规则——请改为编辑那条规则 |
-| `AUTOREFILL_LIMIT_REACHED` | `409` | 账户中该资源的规则已达 20 条；该上限也在 `error.limit` 中给出 |
 | `AUTOREFILL_IN_PROGRESS` | `409` | 该规则的一次补充正在购买中——请一分钟后重试编辑或删除 |
 | `AUTOREFILL_DISABLED` | `503` | 该资源的自动补充暂时关闭；仅在创建规则时返回。未创建规则——请稍后重试 |
 | `NOT_FOUND` | `404` | 账户中没有该规则 |
@@ -117,7 +116,6 @@ Node API（`node.tronrental.com`）有自己的错误代码，格式也不同—
 | `AUTO_BW_NOT_A_TOKEN` | `400` | 该合约不是 TRC-20 代币 |
 | `AUTO_BW_TRANSFER_REVERTS` | `400` | 该代币的转账在模拟中失败 |
 | `AUTO_BW_ADDRESS_TAKEN` | `409` | 账户中已有该地址的订阅 |
-| `AUTO_BW_LIMIT_REACHED` | `409` | 账户中已有 20 个订阅 |
 | `AUTO_BW_ADDRESS_COVERED` | `409` | 该地址上的带宽已由智能模式或转账套餐维持 |
 | `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | 该订阅已被客服关闭——请联系我们以恢复 |
 | `AUTO_BW_CONTRACT_LISTED` | `409` | 该合约是 USDT 或 USDD——请通过 `token` 选择；代币在 `error.token` 中给出 |

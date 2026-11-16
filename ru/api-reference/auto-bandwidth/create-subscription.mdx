@@ -138,7 +138,6 @@ console.log(await resp.json());
 | `402` | `INSUFFICIENT_BALANCE` | Баланса не хватает на 24 часа и один перевод (плюс активацию); суммы указаны в `error.required_trx` и `error.available_trx` |
 | `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_bandwidth` |
 | `409` | `AUTO_BW_ADDRESS_TAKEN` | В вашем аккаунте уже есть подписка для этого адреса |
-| `409` | `AUTO_BW_LIMIT_REACHED` | В вашем аккаунте уже 20 подписок |
 | `409` | `AUTO_BW_ADDRESS_COVERED` | Bandwidth на этом адресе уже держится через Smart Mode или пакет переводов |
 | `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` — контракт USDT или USDD: вместо этого используйте `token`; токен указан в `error.token` |
 | `422` | — | Поле имеет неверный тип или вне диапазона |

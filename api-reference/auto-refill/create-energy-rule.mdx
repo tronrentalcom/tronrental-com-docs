@@ -126,22 +126,9 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` is a smart contract |
 | `403` | `FORBIDDEN` | The API key lacks the `buy_energy` scope |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | Your account already has an energy rule for this address — edit it instead |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | Your account already has 20 energy rules; the limit is also in `error.limit` |
 | `422` | — | A field is missing or out of range, or `duration` is not `"1h"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | More than 10 create requests in a minute |
 | `503` | `AUTOREFILL_DISABLED` | Auto Refill for energy is temporarily switched off; no rule was created — try again later |
-
-```json
-{
-  "detail": {
-    "error": {
-      "code": "AUTOREFILL_LIMIT_REACHED",
-      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
-      "limit": 20
-    }
-  }
-}
-```
 
 ```json
 {

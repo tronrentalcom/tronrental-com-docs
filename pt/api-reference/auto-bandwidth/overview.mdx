@@ -71,7 +71,7 @@ Criar uma assinatura, ou ligá-la de novo, verifica de antemão o mesmo valor e 
 ### Limites
 
 - **Uma assinatura por endereço** em cada conta. Uma segunda para o mesmo endereço retorna `409 AUTO_BW_ADDRESS_TAKEN`.
-- **20 assinaturas** por conta; as excluídas não contam. Acima do limite: `409 AUTO_BW_LIMIT_REACHED`.
+- **Sem limite de assinaturas** por conta, nem ativas nem pausadas.
 - **20 contratos de token** na sua lista. Acima do limite: `409 AUTO_BW_CONTRACT_LIMIT`.
 - **Sem endereços de contrato**, como o contrato do token USDT: a TRON não permite delegar recursos a eles.
 - **Sem endereços já cobertos pela largura de banda do Smart Mode ou por um pacote de transferências com largura de banda**: `409 AUTO_BW_ADDRESS_COVERED`.

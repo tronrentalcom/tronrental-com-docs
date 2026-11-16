@@ -106,7 +106,6 @@ Returned in the standard shape by the [Auto Refill](/api-reference/auto-refill/o
 | Code | Status | Description |
 |------|--------|-------------|
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | The account already has a rule for this address and resource — edit that rule instead |
-| `AUTOREFILL_LIMIT_REACHED` | `409` | The account already has 20 rules for this resource; the limit is also in `error.limit` |
 | `AUTOREFILL_IN_PROGRESS` | `409` | A refill for the rule is being bought right now — retry the edit or delete in a minute |
 | `AUTOREFILL_DISABLED` | `503` | Auto Refill for this resource is temporarily switched off; returned only when creating a rule. No rule was created — try again later |
 | `NOT_FOUND` | `404` | No such rule on the account |
@@ -123,7 +122,6 @@ Returned in the standard shape by the [Auto Bandwidth](/api-reference/auto-bandw
 | `AUTO_BW_NOT_A_TOKEN` | `400` | The contract is not a TRC-20 token |
 | `AUTO_BW_TRANSFER_REVERTS` | `400` | A transfer of the token fails in simulation |
 | `AUTO_BW_ADDRESS_TAKEN` | `409` | The account already has a subscription for this address |
-| `AUTO_BW_LIMIT_REACHED` | `409` | The account already has 20 subscriptions |
 | `AUTO_BW_ADDRESS_COVERED` | `409` | Bandwidth on the address is already kept by Smart Mode or a transfer package |
 | `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | The subscription was switched off by support — contact us to resume it |
 | `AUTO_BW_CONTRACT_LISTED` | `409` | The contract is USDT or USDD — choose it with `token`; the token is in `error.token` |

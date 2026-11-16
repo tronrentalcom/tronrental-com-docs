@@ -126,22 +126,9 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` 是智能合约 |
 | `403` | `FORBIDDEN` | API 密钥缺少 `buy_energy` 权限 |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | 您的账户已有该地址的能量规则——请改为编辑它 |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | 您的账户已有 20 条能量规则；该上限也在 `error.limit` 中给出 |
 | `422` | — | 缺少字段或字段超出范围，或 `duration` 不是 `"1h"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | 一分钟内的创建请求超过 10 次 |
 | `503` | `AUTOREFILL_DISABLED` | 能量自动补充暂时关闭；未创建规则——请稍后重试 |
-
-```json
-{
-  "detail": {
-    "error": {
-      "code": "AUTOREFILL_LIMIT_REACHED",
-      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
-      "limit": 20
-    }
-  }
-}
-```
 
 ```json
 {
