@@ -20,8 +20,8 @@ Get Order ile aynı şekilde sipariş nesnesini döndürür. `status` ne olduğu
 
 | Durum | Anlamı |
 |--------|-------------|
-| `reclaimed` | Bant genişliği bu istek içinde geri alındı; `undelegate_txid` zincirdeki işlemdir |
-| `filled` | Sipariş bir sonraki geri alma döngüsüne alındı, genellikle 30 saniye içinde. Sonuç `order.updated` webhook'u ile gelir veya Get Order'ı sorgulayın |
+| `reclaimed` | Bant genişliği istek beklerken geri alındı (istek en fazla yaklaşık 10 saniye bekler); `undelegate_txid` zincirdeki işlemdir |
+| `filled` | Geri alma istek süresi içinde tamamlanmadı; bir sonraki geri alma döngüsü onu tamamlar, genellikle 30 saniye içinde. Sonuç `order.updated` webhook'u ile gelir veya Get Order'ı sorgulayın |
 | `reclaiming` | Bu siparişin geri alınması zaten sürüyor |
 | `reclaim_failed` | Geri alma, tekrar denemelerden sonra bizim tarafımızda gerçekleşmedi. Sizin yapmanız gereken bir şey yok |
 

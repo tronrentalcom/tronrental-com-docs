@@ -20,8 +20,8 @@ description: "在租期结束前收回订单的带宽"
 
 | 状态 | 含义 |
 |--------|-------------|
-| `reclaimed` | 带宽已在本次请求中取消委托；`undelegate_txid` 为链上交易 |
-| `filled` | 订单已排入下一个回收周期，通常在 30 秒内完成。结果通过 `order.updated` webhook 通知，或轮询 Get Order |
+| `reclaimed` | 带宽已在请求等待期间取消委托（请求最多等待约 10 秒）；`undelegate_txid` 为链上交易 |
+| `filled` | 取消委托未在请求期间完成，将由下一个回收周期完成，通常在 30 秒内。结果通过 `order.updated` webhook 通知，或轮询 Get Order |
 | `reclaiming` | 该订单的回收正在进行中 |
 | `reclaim_failed` | 多次重试后，我们这边未能完成取消委托。您无需做任何事 |
 

@@ -20,8 +20,8 @@ Devuelve el objeto de la orden, igual que Get Order. `status` indica lo que pas�
 
 | Estado | Significado |
 |--------|-------------|
-| `reclaimed` | El ancho de banda se retiró en esta misma solicitud; `undelegate_txid` es la transacción en la cadena |
-| `filled` | La orden quedó en cola para el siguiente ciclo de recuperación, normalmente en menos de 30 segundos. El resultado llega en el webhook `order.updated`, o consulta Get Order |
+| `reclaimed` | El ancho de banda se retiró mientras la solicitud esperaba (espera hasta unos 10 segundos); `undelegate_txid` es la transacción en la cadena |
+| `filled` | La retirada no terminó durante la solicitud; la completa el siguiente ciclo de recuperación, normalmente en menos de 30 segundos. El resultado llega en el webhook `order.updated`, o consulta Get Order |
 | `reclaiming` | Ya hay una recuperación de esta orden en curso |
 | `reclaim_failed` | La retirada no se completó de nuestro lado tras los reintentos. No tiene que hacer nada |
 
