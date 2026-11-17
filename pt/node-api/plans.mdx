@@ -8,10 +8,10 @@ description: "Planos do Node API, limites, excedente, teste, renovação e como 
 | Plano | Preço | Período | Cota | Leituras | Requisições de blocos | Envio de transações | Endpoints | Acima da cota |
 |---|---|---|---|---|---|---|---|---|
 | Teste | grátis | 7 dias | 5M WU | 20 WU/s | 1/s | 2/s | 1 | recusa `429` |
-| Start | 19.90 USDT | 30 dias | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.80 USDT por 1M WU |
-| Growth | 49 USDT | 30 dias | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.70 USDT por 1M WU |
-| Pro | 149 USDT | 30 dias | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.60 USDT por 1M WU |
-| Slot de nó | 1.50 USDT por 1 WU/s | 30 dias | sem cota | 50–300 WU/s | 5/s | 30/s | 10 | — |
+| Start | 18.90 USDT | 30 dias | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.75 USDT por 1M WU |
+| Growth | 47.90 USDT | 30 dias | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.65 USDT por 1M WU |
+| Pro | 139.90 USDT | 30 dias | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.55 USDT por 1M WU |
+| Slot de nó | 1.40 USDT por 1 WU/s | 30 dias | sem cota | 50–300 WU/s | 5/s | 30/s | 10 | — |
 
 - **Leituras** — toda chamada que não é de bloco nem de envio de transação, limitada em WU por segundo.
 - **Requisições de blocos** — blocos inteiros, recibos de blocos e intervalos de blocos, limitadas em
@@ -29,8 +29,8 @@ página. Se algum dia divergirem desta tabela, valem o catálogo e o painel.
 ### Slot de nó
 
 Um slot de nó não tem cota: você compra uma velocidade de leitura fixa, de 50 a 300 WU/s, e faz quantas
-requisições essa velocidade permitir, durante todo o período. O preço é 1.50 USDT por 1 WU/s — por
-exemplo, 100 WU/s custam 150 USDT por 30 dias. Requisições de blocos, envio de transações e endpoints
+requisições essa velocidade permitir, durante todo o período. O preço é 1.40 USDT por 1 WU/s — por
+exemplo, 100 WU/s custam 140 USDT por 30 dias. Requisições de blocos, envio de transações e endpoints
 são como no Pro.
 
 ### Teste
@@ -58,7 +58,7 @@ e o valor em TRX, aparece em **Cobranças** em [Painel → Node API](https://tro
 Só o proprietário da conta pode assinar um plano.
 
 **Desconto para quem compra energia.** Se a conta comprou energia por 3000 TRX ou mais nos últimos 30
-dias, qualquer plano custa 19.90 USDT a menos (nunca abaixo de zero). Verificamos isso a cada compra e a
+dias, qualquer plano custa 18.90 USDT a menos (nunca abaixo de zero). Verificamos isso a cada compra e a
 cada renovação.
 
 ## Cota e excedente
