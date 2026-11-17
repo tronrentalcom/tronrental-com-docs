@@ -10,7 +10,7 @@ description: "Список ваших пакетов переводов"
 
 ### Ответ
 
-Массив объектов пакетов. Основные поля: `id`, `address`, `package_size`, `quota_total` (переводов в пакете), `quota_used` (переводов обслужено), `subscription_used` (переводов списано суточной платой, по одному в день), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `created_at`.
+Массив объектов пакетов. Основные поля: `id`, `address`, `package_size`, `quota_total` (переводов в пакете), `quota_used` (переводов обслужено), `subscription_used` (переводов списано суточной платой, по одному в день), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (когда пакет приостановлен; `null`, если `status` не `paused`), `created_at`.
 
 ### Статусы пакетов
 
@@ -19,6 +19,7 @@ description: "Список ваших пакетов переводов"
 | `pending_payment` | Ожидание оплаты инвойса |
 | `provisioning` | Оплачен с баланса, идёт активация |
 | `active` | Мониторинг адреса, переводы доступны |
+| `paused` | [Приостановлен](/ru/api-reference/transfer-packages/pause) вами: суточная плата не списывается, переводы не обслуживаются и не учитываются, оставшиеся переводы сохраняются |
 | `completed` | Все переводы использованы |
 | `cancelled` | Отменён пользователем |
 | `expired` | Инвойс не оплачен вовремя |
@@ -44,6 +45,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "remaining": 312,
     "bw_guarantee": true,
     "status": "active",
+    "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"
   }
 ]

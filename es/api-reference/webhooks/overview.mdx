@@ -9,7 +9,7 @@ Su cuenta tiene **una sola URL de webhook** y todos los eventos se envían a ell
 
 ### Eventos
 
-Hoy existen diez eventos.
+Hoy existen doce eventos.
 
 | Evento | Cuándo se envía |
 |-------|-----------|
@@ -23,6 +23,8 @@ Hoy existen diez eventos.
 | `package.completed` | Un Transfer Package dejó de cubrir transferencias |
 | `package.activated` | Un Transfer Package se activó |
 | `package.expired` | Venció la factura sin pagar de un Transfer Package |
+| `package.paused` | Un Transfer Package se puso en pausa |
+| `package.resumed` | Un Transfer Package pausado vuelve a estar activo |
 
 <Note>
   Desde el 3 de noviembre de 2026, `order.updated` cubre **todos los pedidos de la cuenta**; antes solo se enviaba para pedidos creados con una clave API. Distinga los canales por el campo `source`. Los [alquileres de ancho de banda](/es/api-reference/bandwidth-rentals/create-rental) no envían eventos.
@@ -357,7 +359,7 @@ Una factura pertenece a su cuenta cuando la creó con la sesión iniciada en el 
 
 ### Eventos de Transfer Package
 
-Los cuatro eventos `package.*` se envían a la cuenta **propietaria del paquete**. Un paquete comprado por factura sin iniciar sesión ni usar una clave API no tiene propietario y no genera eventos. Tampoco los generan las facturas canceladas, las compras rechazadas ni las compras en revisión manual; un paquete en revisión envía `package.activated` cuando se activa.
+Los seis eventos `package.*` se envían a la cuenta **propietaria del paquete**. Un paquete comprado por factura sin iniciar sesión ni usar una clave API no tiene propietario y no genera eventos. Tampoco los generan las facturas canceladas, las compras rechazadas ni las compras en revisión manual; un paquete en revisión envía `package.activated` cuando se activa.
 
 Cada evento `package.*` incluye estos campos en `data`:
 
@@ -370,7 +372,7 @@ Cada evento `package.*` incluye estos campos en `data`:
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Estado del paquete después del evento: `active` o `completed` en `package.transfer`, `completed` en `package.completed`, `active` en `package.activated`, `expired` en `package.expired`.
+  Estado del paquete después del evento: `active` o `completed` en `package.transfer`, `completed` en `package.completed`, `active` en `package.activated`, `expired` en `package.expired`, `paused` en `package.paused`, `active` en `package.resumed`.
 </ResponseField>
 
 <ResponseField name="quota_total" type="number">
@@ -389,7 +391,7 @@ Cada evento `package.*` incluye estos campos en `data`:
   `remaining` también puede bajar sin evento. Un paquete de varias transferencias consume una transferencia al día como suscripción diaria —la primera al activarse, por eso un paquete de 500 transferencias empieza con `remaining: 499`— y ese cargo no se notifica. Dos transferencias desde la misma dirección en el mismo bloque pueden informar el mismo `remaining`. Tome `remaining` como una indicación y [Listar paquetes](/es/api-reference/transfer-packages/list) como la fuente de verdad.
 </Note>
 
-Para reconocer un reintento, use `(package_id, tx_hash)` en `package.transfer` y `(event, package_id)` en los demás: un reintento trae el mismo cuerpo, el mismo `timestamp` y la misma firma.
+Para reconocer un reintento, use `(package_id, tx_hash)` en `package.transfer`, `(event, package_id, timestamp)` en `package.paused` y `package.resumed` —un paquete se puede pausar y reanudar muchas veces— y `(event, package_id)` en los demás: un reintento trae el mismo cuerpo, el mismo `timestamp` y la misma firma.
 
 #### `package.transfer`
 
@@ -491,6 +493,44 @@ La factura de un paquete no se pagó dentro de su plazo de 30 minutos. No se cob
   "timestamp": "2026-10-15T15:21:16.986341+00:00"
 }
 ```
+
+#### `package.paused`
+
+El paquete se pausó con [Pausar paquetes](/es/api-reference/transfer-packages/pause): desde ahora no cobra la transferencia diaria y las transferencias desde la dirección no se atienden ni se cuentan. Se envía una vez por cada paquete que la llamada pausó; una llamada repetida que no pausó nada no envía nada. Sin campos adicionales.
+
+```json Response
+{
+  "event": "package.paused",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310
+  },
+  "timestamp": "2026-11-17T14:30:15.986341+00:00"
+}
+```
+
+#### `package.resumed`
+
+El paquete vuelve a estar activo tras [Reanudar paquetes](/es/api-reference/transfer-packages/resume). Se envía una vez por cada paquete que la llamada reanudó. Sin campos adicionales. `remaining` es uno menos que antes de la pausa cuando la reanudación cobró la transferencia diaria.
+
+```json Response
+{
+  "event": "package.resumed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 309
+  },
+  "timestamp": "2026-11-20T09:12:40.986341+00:00"
+}
+```
+
+Un `package.paused` y el `package.resumed` que le sigue pueden llegar en cualquier orden: compare el `timestamp` del sobre o lea el estado actual en [Listar paquetes](/es/api-reference/transfer-packages/list).
 
 ### Entrega
 

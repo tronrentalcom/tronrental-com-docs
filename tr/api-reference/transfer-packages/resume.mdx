@@ -1,0 +1,104 @@
+---
+title: Paketleri Devam Ettir
+api: POST /v1/transfer-packages/resume
+description: "Bir adresteki duraklatılmış transfer paketlerinizi devam ettirin"
+---
+
+## Paketleri Devam Ettir
+
+**Hesabınızın adresteki tüm duraklatılmış paketlerini** devam ettirir. Adresten yapılan transferler yeniden enerji alır ve sayılır; BW Garantisi de, bu seçeneğe sahip paketler için geri gelir.
+
+### Devam ettirmede ne düşülür
+
+Bir paket, aktif olduğu her 24 saat için bir transfer öder. Ödenmiş 24 saat, paket duraklatılmışken de işlemeye devam eder — duraklatma bu sayacı durdurmaz.
+
+| Ne zaman devam ettirirsiniz | Ne düşülür |
+|-----------------|-----------------|
+| Ödenmiş 24 saat henüz dolmadı | Hiçbir şey. Sonraki günlük transfer, `next_subscription_at` içinde zaten belirlenmiş olan zamanda düşülür |
+| Ödenmiş 24 saat duraklatma sırasında doldu | Bir transfer, hemen. Sonraki 24 saat devam ettirme anından itibaren sayılır |
+| Pakette bir transfer kaldı | Hiçbir şey — son transfer sizde kalır |
+
+### İstek gövdesi
+
+<ParamField body="address" type="string" required>
+  Paketleri devam ettirilecek TRON adresi
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="address" type="string">
+  İstekteki adres.
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Her zaman `false`.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Adresteki yeniden aktif olan paketleriniz — [Paketleri Listele](/tr/api-reference/transfer-packages/list) yanıtındakiyle aynı nesneler. `paused_at` değeri `null` olur.
+</ResponseField>
+
+Duraklatılmış hiçbir şey yokken yeniden çağırmak hiçbir şeyi değiştirmez ve hiçbir şey düşmez: adresteki aktif paketlerinizi geri alırsınız.
+
+<Note>
+  Enerji adrese yanıttan birkaç saniye sonra ulaşabilir. İlk transferi göndermeden önce kısa bir süre bekleyin.
+</Note>
+
+### Örnek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/resume \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+Burada ödenmiş 24 saat duraklatma sırasında doldu, bu yüzden devam ettirme bir transfer düştü: `subscription_used` `3` değerinden `4` değerine, `remaining` `310` değerinden `309` değerine geçti.
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": false,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 4,
+      "remaining": 309,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-21T09:12:40Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Hatalar
+
+[Standart biçimde](/tr/errors), `detail.error.code` altında döner. Bunların herhangi birinden sonra paketler duraklatılmış kalır ve hiçbir şey düşülmez.
+
+| Kod | Durum | Ne zaman |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | Hesabınızın adreste duraklatılmış veya aktif paketi yok |
+| `PACKAGE_NOT_SETTLED` | `400` | Adresteki bir paketin etkinleştirilmesi hâlâ sürüyor — daha sonra yeniden deneyin |
+| `SMART_MODE_ACTIVE` | `400` | Adreste Akıllı Mod aktif — önce onu kapatın |
+| `ADDRESS_BUSY` | `409` | Adreste başka bir işlem sürüyor — bir dakika sonra yeniden deneyin |
+| `PROVIDER_UNAVAILABLE` | `503` | Adrese enerji teslimatı başlatılamadı — bir dakika sonra yeniden deneyin |

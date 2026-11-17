@@ -53,6 +53,12 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
 }
 ```
 
+### 错误
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `ADDRESS_PAUSED` | `400` | 您在该地址上的套餐已[暂停](/zh/api-reference/transfer-packages/pause)——请先恢复。通过账单购买（`buy-invoice`）时返回同样的错误 |
+
 <Info>
   您也可以通过 `POST /api/v1/transfer-packages/buy-invoice` 使用账单付款 —
   这将生成一个用于 TRX/USDT 付款的地址。

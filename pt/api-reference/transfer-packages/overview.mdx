@@ -12,7 +12,18 @@ Os Pacotes de Transferência são pacotes pré-pagos de transferências USDT. Co
 1. **Compre um pacote** para um endereço TRON específico (ex.: 500 transferências)
 2. Cada transferência USDT de saída **recebe energia automaticamente**
 3. O contador do pacote diminui a cada transferência
-4. Quando o pacote é esgotado, o monitoramento é interrompido
+4. Um pacote ativo também paga **uma transferência a cada 24 horas** como taxa diária — a primeira na ativação, por isso um pacote de 500 transferências começa com 499 restantes. Uma transferência única (`single_transfer: true`) não tem taxa diária
+5. Quando o pacote é esgotado, o monitoramento é interrompido
+
+### Pausa
+
+Se o endereço vai ficar um tempo sem enviar transferências, [pause](/pt/api-reference/transfer-packages/pause) os pacotes dele para que a taxa diária pare de ser cobrada. A pausa vale de uma vez para todos os pacotes ativos da sua conta no endereço.
+
+- Durante a pausa, a transferência diária não é cobrada, as transferências do endereço não recebem energia e não são contadas, e o BW Guarantee é retirado. As transferências restantes são mantidas, sem limite de tempo.
+- A requisição de pausa responde em cerca de 15 segundos e vale a partir da resposta; uma transferência enviada antes da resposta ainda é contada.
+- [Retome](/pt/api-reference/transfer-packages/resume) quando precisar do endereço de novo. Se as 24 horas pagas acabaram durante a pausa, uma transferência é cobrada na hora e as próximas 24 horas contam a partir da retomada; caso contrário, nada é cobrado. Um pacote com uma única transferência restante nunca é cobrado na retomada.
+- Repetir uma pausa ou uma retomada não altera nada e não cobra nada.
+- Enquanto seus pacotes em um endereço estão pausados, você não pode comprar um novo pacote para esse endereço — retome primeiro.
 
 ### Preços
 
@@ -31,6 +42,7 @@ Os Pacotes de Transferência são pacotes pré-pagos de transferências USDT. Co
 | Cobrança | Pré-pago (único) | Assinatura diária + por transferência |
 | Duração | Até esgotar as transferências | Contínuo |
 | Ideal para | Volume previsível | Uso contínuo |
+| Pausa | Sim — todos os seus pacotes em um endereço | Sim — por assinatura |
 
 <Warning>
   Um endereço não pode ter um Pacote de Transferência ativo e o Smart Mode ao mesmo tempo.

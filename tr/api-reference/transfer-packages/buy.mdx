@@ -53,6 +53,12 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
 }
 ```
 
+### Hatalar
+
+| Kod | Durum | Ne zaman |
+|------|--------|------|
+| `ADDRESS_PAUSED` | `400` | Bu adresteki paketleriniz [duraklatilmis](/tr/api-reference/transfer-packages/pause) — once devam ettirin. Faturayla satin alma (`buy-invoice`) ayni hatayi dondurur |
+
 <Info>
   Ayrica `POST /api/v1/transfer-packages/buy-invoice` kullanarak fatura ile de odeme yapabilirsiniz —
   bu, TRX/USDT icin bir odeme adresi olusturur.

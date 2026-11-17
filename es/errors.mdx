@@ -130,6 +130,21 @@ Se devuelven en la forma estándar desde los endpoints de [Bandwidth automático
 | `AUTO_BW_CONTRACT_IN_USE` | `409` | Hay una suscripción configurada para este contrato |
 | `AUTO_BW_DISABLED` | `503` | Bandwidth automático está desactivado temporalmente; se devuelve al crear o reanudar una suscripción y al añadir un contrato. No se cambió nada — reintenta más tarde |
 
+## Códigos de Paquetes de Transferencias
+
+Se devuelven en la forma estándar desde los endpoints de [Paquetes de Transferencias](/es/api-reference/transfer-packages/overview):
+
+| Código | Estado | Descripción |
+|--------|--------|-------------|
+| `ADDRESS_PAUSED` | `400` | Compra de un paquete: tus paquetes en esta dirección están en pausa — reanúdalos primero |
+| `PACKAGE_NOT_FOUND` | `404` | Pausa o reanudación: la cuenta no tiene ningún paquete en el estado requerido en la dirección |
+| `PACKAGE_NOT_SETTLED` | `400` | Pausa o reanudación: un paquete de la dirección todavía se está activando — reintenta más tarde |
+| `ADDRESS_SHARED` | `400` | Pausa: otra cuenta tiene un paquete activo en la dirección |
+| `SMART_MODE_ACTIVE` | `400` | Pausa o reanudación: Smart Mode está activo en la dirección — desactívalo primero |
+| `ADDRESS_BUSY` | `409` | Hay otra operación en curso sobre la dirección — reintenta en un minuto |
+| `PAUSE_BUSY` | `429` | Hay demasiadas pausas en curso a la vez — reintenta en un minuto. No es un límite de tasa |
+| `PROVIDER_UNAVAILABLE` | `503` | Pausa o reanudación: no se pudo cambiar la entrega de energía a la dirección. No se cambió nada — reintenta en un minuto |
+
 ## Códigos de verificación de retiro
 
 `POST /api/v1/account/withdrawal` devuelve estos códigos de verificación en la forma plana, con `code`

@@ -1,0 +1,104 @@
+---
+title: Retomar Pacotes
+api: POST /v1/transfer-packages/resume
+description: "Retomar seus pacotes de transferência pausados em um endereço"
+---
+
+## Retomar Pacotes
+
+Retoma **todos os pacotes pausados da sua conta no endereço**. As transferências do endereço voltam a receber energia e a ser contadas, e o BW Guarantee volta para os pacotes que o têm.
+
+### O que a retomada cobra
+
+Um pacote paga uma transferência a cada 24 horas em que está ativo. As 24 horas já pagas continuam correndo enquanto o pacote está pausado — a pausa não para esse relógio.
+
+| Quando você retoma | O que é cobrado |
+|--------------------|-----------------|
+| As 24 horas pagas ainda não acabaram | Nada. A próxima transferência diária é cobrada no horário já definido em `next_subscription_at` |
+| As 24 horas pagas acabaram durante a pausa | Uma transferência, na hora. As próximas 24 horas contam a partir do momento da retomada |
+| Resta uma transferência no pacote | Nada — a última transferência continua sendo sua |
+
+### Corpo da requisição
+
+<ParamField body="address" type="string" required>
+  Endereço TRON cujos pacotes serão retomados
+</ParamField>
+
+### Resposta
+
+<ResponseField name="address" type="string">
+  O endereço da requisição.
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Sempre `false`.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Seus pacotes no endereço que voltaram a ficar ativos — os mesmos objetos de [Listar Pacotes](/pt/api-reference/transfer-packages/list). `paused_at` é `null`.
+</ResponseField>
+
+Chamar de novo quando nada está pausado não altera nada e não cobra nada: você recebe de volta seus pacotes ativos no endereço.
+
+<Note>
+  A energia pode chegar ao endereço alguns segundos depois da resposta. Aguarde um instante antes de enviar a primeira transferência.
+</Note>
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/resume \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+Aqui as 24 horas pagas acabaram durante a pausa, então a retomada cobrou uma transferência: `subscription_used` passou de `3` para `4`, e `remaining`, de `310` para `309`.
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": false,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 4,
+      "remaining": 309,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-21T09:12:40Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Erros
+
+Retornados no [formato padrão](/pt/errors), em `detail.error.code`. Depois de qualquer um deles, os pacotes continuam pausados e nada é cobrado.
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| `PACKAGE_NOT_FOUND` | `404` | Sua conta não tem nenhum pacote pausado ou ativo no endereço |
+| `PACKAGE_NOT_SETTLED` | `400` | Um pacote no endereço ainda está sendo ativado — tente novamente mais tarde |
+| `SMART_MODE_ACTIVE` | `400` | O Smart Mode está ativo no endereço — desative-o primeiro |
+| `ADDRESS_BUSY` | `409` | Outra operação no endereço está em andamento — tente novamente em um minuto |
+| `PROVIDER_UNAVAILABLE` | `503` | Não foi possível iniciar a entrega de energia ao endereço — tente novamente em um minuto |

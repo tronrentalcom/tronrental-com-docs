@@ -10,7 +10,7 @@ Tum transfer paketlerinizi dondurur.
 
 ### Yanit
 
-Paket nesneleri dizisi. Ana alanlar: `id`, `address`, `package_size`, `quota_total` (paketteki transfer sayisi), `quota_used` (hizmet verilen transferler), `subscription_used` (gunluk abonelik ucretinin kullandigi transferler, gunde bir), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `created_at`.
+Paket nesneleri dizisi. Ana alanlar: `id`, `address`, `package_size`, `quota_total` (paketteki transfer sayisi), `quota_used` (hizmet verilen transferler), `subscription_used` (gunluk abonelik ucretinin kullandigi transferler, gunde bir), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (paketin duraklatildigi an; `status` `paused` degilse `null`), `created_at`.
 
 ### Paket durumlari
 
@@ -19,6 +19,7 @@ Paket nesneleri dizisi. Ana alanlar: `id`, `address`, `package_size`, `quota_tot
 | `pending_payment` | Fatura odemesi bekleniyor |
 | `provisioning` | Bakiyeden odendi, aktivasyon suruyor |
 | `active` | Adres izleniyor, transferler mevcut |
+| `paused` | Sizin tarafinizdan [duraklatildi](/tr/api-reference/transfer-packages/pause): gunluk ucret yok, transferlere hizmet verilmez ve sayilmaz, kalan transferler korunur |
 | `completed` | Tum transferler kullanildi |
 | `cancelled` | Kullanici tarafindan iptal edildi |
 | `expired` | Fatura zamaninda odenmedi |
@@ -44,6 +45,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "remaining": 312,
     "bw_guarantee": true,
     "status": "active",
+    "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"
   }
 ]

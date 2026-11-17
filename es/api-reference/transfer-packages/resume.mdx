@@ -1,0 +1,104 @@
+---
+title: Reanudar paquetes
+api: POST /v1/transfer-packages/resume
+description: "Reanudar tus paquetes de transferencias pausados en una dirección"
+---
+
+## Reanudar paquetes
+
+Reanuda **todos los paquetes pausados de tu cuenta en la dirección**. Las transferencias desde la dirección vuelven a recibir energía y a contarse, y la Garantía de BW vuelve para los paquetes que la tienen.
+
+### Qué cobra una reanudación
+
+Un paquete paga una transferencia por cada 24 horas que está activo. Las 24 horas ya pagadas siguen corriendo mientras el paquete está en pausa: la pausa no detiene ese reloj.
+
+| Cuándo reanudas | Qué se cobra |
+|-----------------|--------------|
+| Las 24 horas pagadas aún no se han agotado | Nada. La siguiente transferencia diaria se cobra en el momento ya fijado en `next_subscription_at` |
+| Las 24 horas pagadas se agotaron durante la pausa | Una transferencia, de inmediato. Las siguientes 24 horas se cuentan desde el momento de la reanudación |
+| Al paquete le queda una transferencia | Nada: la última transferencia sigue siendo tuya |
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Dirección TRON cuyos paquetes se van a reanudar
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="address" type="string">
+  La dirección de la solicitud.
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Siempre `false`.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Tus paquetes en la dirección que vuelven a estar activos: los mismos objetos que en [Listar paquetes](/es/api-reference/transfer-packages/list). `paused_at` es `null`.
+</ResponseField>
+
+Llamarlo otra vez cuando no hay nada en pausa no cambia nada ni cobra nada: recibes tus paquetes activos en la dirección.
+
+<Note>
+  La energía puede llegar a la dirección unos segundos después de la respuesta. Deja una breve pausa antes de enviar la primera transferencia.
+</Note>
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/resume \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+En este caso las 24 horas pagadas se agotaron durante la pausa, así que la reanudación cobró una transferencia: `subscription_used` pasó de `3` a `4` y `remaining` de `310` a `309`.
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": false,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 4,
+      "remaining": 309,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-21T09:12:40Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Errores
+
+Se devuelven en la [forma estándar](/es/errors), en `detail.error.code`. Después de cualquiera de ellos los paquetes siguen en pausa y no se cobra nada.
+
+| Código | Estado | Cuándo |
+|--------|--------|--------|
+| `PACKAGE_NOT_FOUND` | `404` | Tu cuenta no tiene ningún paquete pausado ni activo en la dirección |
+| `PACKAGE_NOT_SETTLED` | `400` | Un paquete de la dirección todavía se está activando — reintenta más tarde |
+| `SMART_MODE_ACTIVE` | `400` | Smart Mode está activo en la dirección — desactívalo primero |
+| `ADDRESS_BUSY` | `409` | Hay otra operación en curso sobre la dirección — reintenta en un minuto |
+| `PROVIDER_UNAVAILABLE` | `503` | No se pudo iniciar la entrega de energía a la dirección — reintenta en un minuto |

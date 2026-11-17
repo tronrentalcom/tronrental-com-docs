@@ -1,0 +1,107 @@
+---
+title: Приостановить пакеты
+api: POST /v1/transfer-packages/pause
+description: "Приостановка ваших пакетов переводов на адресе"
+---
+
+## Приостановить пакеты
+
+Приостанавливает сразу **все активные пакеты вашего аккаунта на адресе**. Приостановить один пакет отдельно нельзя.
+
+Пока пакеты приостановлены:
+
+- суточный перевод не списывается;
+- переводы с адреса не получают энергию и не учитываются;
+- BW Guarantee с адреса снимается;
+- оставшиеся переводы сохраняются, без ограничения по времени.
+
+Пакеты остаются на паузе, пока вы не вызовете [Возобновить пакеты](/ru/api-reference/transfer-packages/resume), — сами они не возобновляются.
+
+<Warning>
+  **Вызов отвечает примерно за 15 секунд** — задайте таймаут клиента 30 секунд или больше. Пауза действует с момента, когда вы получили ответ. Перевод, отправленный до ответа, всё ещё учитывается, поэтому считайте адрес приостановленным только после ответа.
+</Warning>
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Адрес TRON, пакеты которого нужно приостановить
+</ParamField>
+
+### Ответ
+
+<ResponseField name="address" type="string">
+  Адрес из запроса.
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Всегда `true`.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Ваши приостановленные пакеты на адресе — те же объекты, что в [Списке пакетов](/ru/api-reference/transfer-packages/list), теперь со `status: "paused"` и `paused_at`.
+</ResponseField>
+
+Повторный вызов для адреса, который уже на паузе, ничего не меняет и ничего не списывает: вы получите те же приостановленные пакеты.
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/pause \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": true,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "paused",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": "2026-11-17T14:30:15Z",
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Ошибки
+
+Приходят в [стандартной форме](/ru/errors), в `detail.error.code`. После любой из них ничего не изменилось: пакеты работают как раньше.
+
+| Код | Статус | Когда |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | У вашего аккаунта нет активного пакета на адресе |
+| `PACKAGE_NOT_SETTLED` | `400` | Пакет на адресе ещё активируется — повторите позже |
+| `ADDRESS_SHARED` | `400` | На адресе есть активный пакет другого аккаунта |
+| `SMART_MODE_ACTIVE` | `400` | На адресе активен Smart Mode — сначала отключите его |
+| `ADDRESS_BUSY` | `409` | По адресу выполняется другая операция — повторите через минуту |
+| `PAUSE_BUSY` | `429` | Одновременно выполняется слишком много приостановок — повторите через минуту |
+| `PROVIDER_UNAVAILABLE` | `503` | Не удалось остановить доставку энергии на адрес — повторите через минуту |
+
+<Note>
+  Пока ваши пакеты на адресе приостановлены, купить новый пакет для этого адреса нельзя: покупка отклоняется с `ADDRESS_PAUSED`. Сначала возобновите пакеты.
+</Note>
