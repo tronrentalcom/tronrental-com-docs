@@ -151,7 +151,9 @@
                   "api-reference/transfer-packages/overview",
                   "api-reference/transfer-packages/get-tiers",
                   "api-reference/transfer-packages/buy",
-                  "api-reference/transfer-packages/list"
+                  "api-reference/transfer-packages/list",
+                  "api-reference/transfer-packages/pause",
+                  "api-reference/transfer-packages/resume"
                 ]
               },
               {
@@ -324,7 +326,9 @@
                   "ru/api-reference/transfer-packages/overview",
                   "ru/api-reference/transfer-packages/get-tiers",
                   "ru/api-reference/transfer-packages/buy",
-                  "ru/api-reference/transfer-packages/list"
+                  "ru/api-reference/transfer-packages/list",
+                  "ru/api-reference/transfer-packages/pause",
+                  "ru/api-reference/transfer-packages/resume"
                 ]
               },
               {
@@ -496,7 +500,9 @@
                   "zh/api-reference/transfer-packages/overview",
                   "zh/api-reference/transfer-packages/get-tiers",
                   "zh/api-reference/transfer-packages/buy",
-                  "zh/api-reference/transfer-packages/list"
+                  "zh/api-reference/transfer-packages/list",
+                  "zh/api-reference/transfer-packages/pause",
+                  "zh/api-reference/transfer-packages/resume"
                 ]
               },
               {
@@ -668,7 +674,9 @@
                   "es/api-reference/transfer-packages/overview",
                   "es/api-reference/transfer-packages/get-tiers",
                   "es/api-reference/transfer-packages/buy",
-                  "es/api-reference/transfer-packages/list"
+                  "es/api-reference/transfer-packages/list",
+                  "es/api-reference/transfer-packages/pause",
+                  "es/api-reference/transfer-packages/resume"
                 ]
               },
               {
@@ -840,7 +848,9 @@
                   "tr/api-reference/transfer-packages/overview",
                   "tr/api-reference/transfer-packages/get-tiers",
                   "tr/api-reference/transfer-packages/buy",
-                  "tr/api-reference/transfer-packages/list"
+                  "tr/api-reference/transfer-packages/list",
+                  "tr/api-reference/transfer-packages/pause",
+                  "tr/api-reference/transfer-packages/resume"
                 ]
               },
               {
@@ -1012,7 +1022,9 @@
                   "pt/api-reference/transfer-packages/overview",
                   "pt/api-reference/transfer-packages/get-tiers",
                   "pt/api-reference/transfer-packages/buy",
-                  "pt/api-reference/transfer-packages/list"
+                  "pt/api-reference/transfer-packages/list",
+                  "pt/api-reference/transfer-packages/pause",
+                  "pt/api-reference/transfer-packages/resume"
                 ]
               },
               {
@@ -1184,7 +1196,9 @@
                   "hi/api-reference/transfer-packages/overview",
                   "hi/api-reference/transfer-packages/get-tiers",
                   "hi/api-reference/transfer-packages/buy",
-                  "hi/api-reference/transfer-packages/list"
+                  "hi/api-reference/transfer-packages/list",
+                  "hi/api-reference/transfer-packages/pause",
+                  "hi/api-reference/transfer-packages/resume"
                 ]
               },
               {

@@ -10,7 +10,7 @@ Returns all your transfer packages.
 
 ### Response
 
-Array of package objects. Main fields: `id`, `address`, `package_size`, `quota_total` (transfers in the package), `quota_used` (transfers delivered), `subscription_used` (transfers taken by the daily subscription fee, one per day), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `created_at`.
+Array of package objects. Main fields: `id`, `address`, `package_size`, `quota_total` (transfers in the package), `quota_used` (transfers delivered), `subscription_used` (transfers taken by the daily subscription fee, one per day), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (when the package was paused; `null` unless `status` is `paused`), `created_at`.
 
 ### Package statuses
 
@@ -19,6 +19,7 @@ Array of package objects. Main fields: `id`, `address`, `package_size`, `quota_t
 | `pending_payment` | Awaiting invoice payment |
 | `provisioning` | Paid from balance, activation in progress |
 | `active` | Monitoring address, transfers available |
+| `paused` | [Paused](/api-reference/transfer-packages/pause) by you: no daily fee, transfers are not served or counted, remaining transfers are kept |
 | `completed` | All transfers used |
 | `cancelled` | Cancelled by user |
 | `expired` | Invoice not paid in time |
@@ -44,6 +45,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "remaining": 312,
     "bw_guarantee": true,
     "status": "active",
+    "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"
   }
 ]

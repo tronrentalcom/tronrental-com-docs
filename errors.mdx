@@ -129,6 +129,21 @@ Returned in the standard shape by the [Auto Bandwidth](/api-reference/auto-bandw
 | `AUTO_BW_CONTRACT_IN_USE` | `409` | A subscription is set up for this contract |
 | `AUTO_BW_DISABLED` | `503` | Auto Bandwidth is temporarily switched off; returned when creating or resuming a subscription and when adding a contract. Nothing was changed — try again later |
 
+## Transfer Package codes
+
+Returned in the standard shape by the [Transfer Packages](/api-reference/transfer-packages/overview) endpoints:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `ADDRESS_PAUSED` | `400` | Buying a package: your packages on this address are paused — resume them first |
+| `PACKAGE_NOT_FOUND` | `404` | Pause or resume: the account has no package in the required state on the address |
+| `PACKAGE_NOT_SETTLED` | `400` | Pause or resume: a package on the address is still being activated — try again later |
+| `ADDRESS_SHARED` | `400` | Pause: another account has an active package on the address |
+| `SMART_MODE_ACTIVE` | `400` | Pause or resume: Smart Mode is active on the address — turn it off first |
+| `ADDRESS_BUSY` | `409` | Another operation on the address is in progress — try again in a minute |
+| `PAUSE_BUSY` | `429` | Too many pauses are in progress at once — try again in a minute. Not a rate limit |
+| `PROVIDER_UNAVAILABLE` | `503` | Pause or resume: energy delivery to the address could not be switched. Nothing was changed — try again in a minute |
+
 ## Withdrawal verification codes
 
 `POST /api/v1/account/withdrawal` returns these verification codes in the flat shape, with `code` next
