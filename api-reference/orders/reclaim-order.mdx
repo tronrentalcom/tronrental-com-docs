@@ -20,8 +20,8 @@ Returns the order object, the same as Get Order. `status` tells what happened:
 
 | Status | Meaning |
 |--------|-------------|
-| `reclaimed` | The bandwidth was undelegated within this request; `undelegate_txid` is the on-chain transaction |
-| `filled` | The order is queued for the next reclaim cycle, usually within 30 seconds. The result arrives in the `order.updated` webhook, or poll Get Order |
+| `reclaimed` | The bandwidth was undelegated while this request waited (it waits up to about 10 seconds); `undelegate_txid` is the on-chain transaction |
+| `filled` | The undelegation did not finish within the request; the next reclaim cycle completes it, usually within 30 seconds. The result arrives in the `order.updated` webhook, or poll Get Order |
 | `reclaiming` | A reclaim of this order is already running |
 | `reclaim_failed` | The undelegation did not go through on our side after retries. Nothing for you to do |
 
