@@ -53,10 +53,9 @@ Observe que `POST /api/v1/invoices` é contado por **endereço IP**, não por co
 clientes enviam requisições a partir do mesmo IP de saída, eles compartilham um único orçamento de 10
 por minuto.
 
-Os endpoints de compra — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
-`POST /api/v1/bandwidth/buy` e `POST /api/v1/bandwidth/rentals` — carregam um orçamento mais antigo de
-1000 requisições por minuto contado **por endereço IP** (os dois endpoints de bandwidth compartilham um
-único orçamento). Para uma única conta ele nunca é o limite determinante, mas clientes atrás de um mesmo
+Os endpoints de compra — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`
+e `POST /api/v1/bandwidth/buy` — carregam um orçamento mais antigo de
+1000 requisições por minuto contado **por endereço IP**. Para uma única conta ele nunca é o limite determinante, mas clientes atrás de um mesmo
 IP de saída o compartilham entre si.
 
 Os endpoints de gerenciamento de webhook (`/api/v1/webhooks/...`) não são cobertos pelo limite no nível

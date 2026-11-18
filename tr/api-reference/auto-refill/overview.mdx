@@ -97,14 +97,14 @@ Telegram hesabınız bağlıysa, bir kuralın ilk dolumunda ve bir kural durakla
 
 Değişiklikler bir sonraki kontrolden itibaren geçerli olur. Kural için bir dolum satın alınırken `PATCH` ve `DELETE`, `409 AUTOREFILL_IN_PROGRESS` döndürür — bir dakika sonra yeniden deneyin. Bir kuralı silmek, zaten satın alınmış enerjiyi veya bant genişliğini geri almaz; bu kiralamalar süreleri bitene kadar devam eder.
 
-### Akıllı Mod ve otomatik yenilenen kiralamalarla karşılaştırma
+### Akıllı Mod ile karşılaştırma
 
-| | Otomatik Dolum | [Akıllı Mod](/tr/api-reference/smart-mode/overview) | [Otomatik yenilenen kiralama](/tr/api-reference/bandwidth-rentals/create-rental) |
-|---|---|---|---|
-| Kaynak | Enerji veya bant genişliği | Enerji, isteğe bağlı olarak bant genişliği | Bant genişliği |
-| Ne zaman teslim edilir | Seviye eşiğinizin altına düştüğünde | Her giden USDT transferinde | Bir kez devredilir ve kiralama sürdükçe korunur |
-| Ne ödersiniz | Her dolumu, normal bir sipariş olarak | Günlük abonelik artı her USDT transferi | Günde bir kez |
-| Neyi karşılar | Her türlü harcamayı — USDT, TRX, sözleşme çağrıları | USDT transferleri | Sürekli bir bant genişliği ihtiyacı |
+| | Otomatik Dolum | [Akıllı Mod](/tr/api-reference/smart-mode/overview) |
+|---|---|---|
+| Kaynak | Enerji veya bant genişliği | Enerji, isteğe bağlı olarak bant genişliği |
+| Ne zaman teslim edilir | Seviye eşiğinizin altına düştüğünde | Her giden USDT transferinde |
+| Ne ödersiniz | Her dolumu, normal bir sipariş olarak | Günlük abonelik artı her USDT transferi |
+| Neyi karşılar | Her türlü harcamayı — USDT, TRX, sözleşme çağrıları | USDT transferleri |
 
 ### Uç noktalar
 

@@ -97,14 +97,14 @@ Se a sua conta do Telegram estiver vinculada, você recebe uma mensagem na prime
 
 As alterações valem a partir da verificação seguinte. Enquanto uma recarga da regra está sendo comprada, `PATCH` e `DELETE` retornam `409 AUTOREFILL_IN_PROGRESS` — tente novamente em um minuto. Excluir uma regra não recupera a energia ou a largura de banda já compradas; esses aluguéis seguem até o fim do seu prazo.
 
-### Comparação com o Smart Mode e os aluguéis com renovação automática
+### Comparação com o Smart Mode
 
-| | Recarga automática | [Smart Mode](/pt/api-reference/smart-mode/overview) | [Aluguel com renovação automática](/pt/api-reference/bandwidth-rentals/create-rental) |
-|---|---|---|---|
-| Recurso | Energia ou largura de banda | Energia, mais largura de banda opcional | Largura de banda |
-| Quando entrega | Quando o nível cai abaixo do seu limiar | A cada transferência USDT de saída | Delegada uma vez e mantida enquanto o aluguel dura |
-| O que você paga | Cada recarga, como um pedido comum | Uma assinatura diária mais cada transferência USDT | Uma vez por dia |
-| Cobre | Qualquer gasto — USDT, TRX, chamadas de contrato | Transferências USDT | Uma necessidade constante de largura de banda |
+| | Recarga automática | [Smart Mode](/pt/api-reference/smart-mode/overview) |
+|---|---|---|
+| Recurso | Energia ou largura de banda | Energia, mais largura de banda opcional |
+| Quando entrega | Quando o nível cai abaixo do seu limiar | A cada transferência USDT de saída |
+| O que você paga | Cada recarga, como um pedido comum | Uma assinatura diária mais cada transferência USDT |
+| Cobre | Qualquer gasto — USDT, TRX, chamadas de contrato | Transferências USDT |
 
 ### Endpoints
 

@@ -53,8 +53,8 @@ Note that `POST /api/v1/invoices` is counted per **IP address**, not per account
 clients send requests from the same egress IP, they share one budget of 10 per minute.
 
 The purchase endpoints — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
-`POST /api/v1/bandwidth/buy` and `POST /api/v1/bandwidth/rentals` — carry an older budget of 1000
-requests per minute counted **per IP address** (the two bandwidth endpoints share one budget). For a
+and `POST /api/v1/bandwidth/buy` — carry an older budget of 1000
+requests per minute counted **per IP address**. For a
 single account it is never the binding limit, but clients behind one egress IP share it with each
 other.
 
