@@ -1,0 +1,107 @@
+---
+title: 暂停套餐
+api: POST /v1/transfer-packages/pause
+description: "暂停某个地址上您的转账套餐"
+---
+
+## 暂停套餐
+
+一次暂停**您账户在该地址上的所有活跃套餐**。不能单独暂停其中某一个套餐。
+
+套餐暂停期间：
+
+- 不扣除每日转账；
+- 该地址的转账不会获得能量，也不计入套餐；
+- 该地址的带宽保障被撤回；
+- 剩余转账次数保留，没有时间限制。
+
+套餐会一直保持暂停，直到您调用[恢复套餐](/zh/api-reference/transfer-packages/resume)——不会自行恢复。
+
+<Warning>
+  **该调用约 15 秒后返回**——请把客户端超时设为 30 秒或更长。暂停从您收到响应的那一刻起生效。在响应之前发出的转账仍会计入套餐，因此请等到响应后再把该地址视为已暂停。
+</Warning>
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  要暂停其套餐的 TRON 地址
+</ParamField>
+
+### 响应
+
+<ResponseField name="address" type="string">
+  请求中的地址。
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  始终为 `true`。
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  该地址上您已暂停的套餐——与[套餐列表](/zh/api-reference/transfer-packages/list)中的对象相同，此时带有 `status: "paused"` 和 `paused_at`。
+</ResponseField>
+
+对已暂停的地址再次调用不会改变任何内容，也不会扣除任何费用：您会收到同样的已暂停套餐。
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/pause \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": true,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "paused",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": "2026-11-17T14:30:15Z",
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### 错误
+
+以[标准形式](/zh/errors)返回，错误码位于 `detail.error.code`。出现其中任何一个错误后，一切保持不变：套餐照常工作。
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | 您的账户在该地址上没有活跃套餐 |
+| `PACKAGE_NOT_SETTLED` | `400` | 该地址上有套餐仍在激活中——请稍后重试 |
+| `ADDRESS_SHARED` | `400` | 另一个账户在该地址上有活跃套餐 |
+| `SMART_MODE_ACTIVE` | `400` | 该地址上的智能模式处于活跃状态——请先将其关闭 |
+| `ADDRESS_BUSY` | `409` | 该地址上有另一项操作正在进行——请一分钟后重试 |
+| `PAUSE_BUSY` | `429` | 同时进行的暂停操作过多——请一分钟后重试 |
+| `PROVIDER_UNAVAILABLE` | `503` | 未能停止向该地址提供能量——请一分钟后重试 |
+
+<Note>
+  您在某个地址上的套餐暂停期间，无法为该地址购买新套餐：购买会被拒绝并返回 `ADDRESS_PAUSED`。请先恢复。
+</Note>

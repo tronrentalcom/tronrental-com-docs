@@ -53,6 +53,12 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
 }
 ```
 
+### Erros
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| `ADDRESS_PAUSED` | `400` | Seus pacotes neste endereço estão [pausados](/pt/api-reference/transfer-packages/pause) — retome-os primeiro. A compra por fatura (`buy-invoice`) retorna o mesmo erro |
+
 <Info>
   Você também pode pagar via fatura usando `POST /api/v1/transfer-packages/buy-invoice` —
   isso gera um endereço de pagamento para TRX/USDT.

@@ -1,0 +1,107 @@
+---
+title: Pausar Pacotes
+api: POST /v1/transfer-packages/pause
+description: "Pausar seus pacotes de transferência em um endereço"
+---
+
+## Pausar Pacotes
+
+Pausa de uma vez **todos os pacotes ativos da sua conta no endereço**. Não é possível pausar um único pacote separadamente.
+
+Enquanto os pacotes estão pausados:
+
+- a transferência diária não é cobrada;
+- as transferências do endereço não recebem energia e não são contadas;
+- o BW Guarantee é retirado do endereço;
+- as transferências restantes são mantidas, sem limite de tempo.
+
+Os pacotes ficam pausados até você chamar [Retomar Pacotes](/pt/api-reference/transfer-packages/resume) — eles não são retomados sozinhos.
+
+<Warning>
+  **A chamada responde em cerca de 15 segundos** — defina o tempo limite do seu cliente em 30 segundos ou mais. A pausa vale a partir do momento em que você recebe a resposta. Uma transferência enviada antes da resposta ainda é contada, então espere a resposta antes de considerar o endereço pausado.
+</Warning>
+
+### Corpo da requisição
+
+<ParamField body="address" type="string" required>
+  Endereço TRON cujos pacotes serão pausados
+</ParamField>
+
+### Resposta
+
+<ResponseField name="address" type="string">
+  O endereço da requisição.
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Sempre `true`.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Seus pacotes pausados no endereço — os mesmos objetos de [Listar Pacotes](/pt/api-reference/transfer-packages/list), agora com `status: "paused"` e `paused_at`.
+</ResponseField>
+
+Chamar de novo para um endereço que já está pausado não altera nada e não cobra nada: você recebe de volta os mesmos pacotes pausados.
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/pause \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": true,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "paused",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": "2026-11-17T14:30:15Z",
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Erros
+
+Retornados no [formato padrão](/pt/errors), em `detail.error.code`. Depois de qualquer um deles, nada mudou: os pacotes continuam funcionando como antes.
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| `PACKAGE_NOT_FOUND` | `404` | Sua conta não tem nenhum pacote ativo no endereço |
+| `PACKAGE_NOT_SETTLED` | `400` | Um pacote no endereço ainda está sendo ativado — tente novamente mais tarde |
+| `ADDRESS_SHARED` | `400` | Outra conta tem um pacote ativo no endereço |
+| `SMART_MODE_ACTIVE` | `400` | O Smart Mode está ativo no endereço — desative-o primeiro |
+| `ADDRESS_BUSY` | `409` | Outra operação no endereço está em andamento — tente novamente em um minuto |
+| `PAUSE_BUSY` | `429` | Há pausas demais em andamento ao mesmo tempo — tente novamente em um minuto |
+| `PROVIDER_UNAVAILABLE` | `503` | Não foi possível interromper a entrega de energia ao endereço — tente novamente em um minuto |
+
+<Note>
+  Enquanto seus pacotes em um endereço estão pausados, você não pode comprar um novo pacote para esse endereço: a compra é recusada com `ADDRESS_PAUSED`. Retome primeiro.
+</Note>

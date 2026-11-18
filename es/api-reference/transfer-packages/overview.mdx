@@ -12,7 +12,18 @@ Los Paquetes de Transferencias son paquetes prepagados de transferencias USDT. C
 1. **Compra un paquete** para una direccion TRON especifica (ej., 500 transferencias)
 2. Cada transferencia USDT saliente **recibe energia automaticamente**
 3. El contador del paquete disminuye con cada transferencia
-4. Cuando el paquete se agota, el monitoreo se detiene
+4. Un paquete activo también paga **una transferencia cada 24 horas** como tarifa diaria: la primera al activarse, así que un paquete de 500 transferencias empieza con 499 restantes. Una transferencia individual (`single_transfer: true`) no tiene tarifa diaria
+5. Cuando el paquete se agota, el monitoreo se detiene
+
+### Pausa
+
+Si la dirección no va a enviar transferencias durante un tiempo, [pausa](/es/api-reference/transfer-packages/pause) sus paquetes para que deje de cobrarse la tarifa diaria. Una pausa abarca de una vez todos los paquetes activos de tu cuenta en la dirección.
+
+- Durante la pausa no se cobra la transferencia diaria, las transferencias desde la dirección no reciben energía y no se cuentan, y la Garantía de BW se retira. Las transferencias restantes se conservan sin límite de tiempo.
+- La solicitud de pausa responde en unos 15 segundos y rige desde la respuesta; una transferencia enviada antes de la respuesta todavía se cuenta.
+- [Reanuda](/es/api-reference/transfer-packages/resume) cuando vuelvas a necesitar la dirección. Si las 24 horas pagadas se agotaron durante la pausa, se cobra una transferencia de inmediato y las siguientes 24 horas se cuentan desde la reanudación; si no, no se cobra nada. A un paquete al que le queda una transferencia nunca se le cobra al reanudar.
+- Repetir una pausa o una reanudación no cambia nada ni cobra nada.
+- Mientras tus paquetes en una dirección están en pausa, no puedes comprar un paquete nuevo para esa dirección: reanúdalos primero.
 
 ### Precios
 
@@ -31,6 +42,7 @@ Los Paquetes de Transferencias son paquetes prepagados de transferencias USDT. C
 | Facturacion | Prepago (unico) | Suscripcion diaria + por transferencia |
 | Duracion | Hasta agotar transferencias | Continuo |
 | Ideal para | Volumen predecible | Uso continuo |
+| Pausa | Sí: todos tus paquetes en una dirección | Sí: por suscripción |
 
 <Warning>
   Una direccion no puede tener un Paquete de Transferencias activo y Smart Mode al mismo tiempo.

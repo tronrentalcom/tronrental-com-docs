@@ -129,6 +129,21 @@ koda bakarak tespit etmeyin.
 | `AUTO_BW_CONTRACT_IN_USE` | `409` | Bu sözleşme için kurulmuş bir abonelik var |
 | `AUTO_BW_DISABLED` | `503` | Otomatik Bandwidth geçici olarak kapalı; abonelik oluşturulurken veya devam ettirilirken ve sözleşme eklenirken döner. Hiçbir şey değiştirilmedi — daha sonra yeniden deneyin |
 
+## Transfer Paketi kodları
+
+[Transfer Paketleri](/tr/api-reference/transfer-packages/overview) uç noktaları bu kodları standart biçimde döndürür:
+
+| Kod | Durum | Açıklama |
+|------|--------|-------------|
+| `ADDRESS_PAUSED` | `400` | Paket satın alma: bu adresteki paketleriniz duraklatılmış — önce devam ettirin |
+| `PACKAGE_NOT_FOUND` | `404` | Duraklatma veya devam ettirme: hesabın adreste gereken durumda paketi yok |
+| `PACKAGE_NOT_SETTLED` | `400` | Duraklatma veya devam ettirme: adresteki bir paketin etkinleştirilmesi hâlâ sürüyor — daha sonra yeniden deneyin |
+| `ADDRESS_SHARED` | `400` | Duraklatma: adreste başka bir hesabın aktif paketi var |
+| `SMART_MODE_ACTIVE` | `400` | Duraklatma veya devam ettirme: adreste Akıllı Mod aktif — önce onu kapatın |
+| `ADDRESS_BUSY` | `409` | Adreste başka bir işlem sürüyor — bir dakika sonra yeniden deneyin |
+| `PAUSE_BUSY` | `429` | Aynı anda çok fazla duraklatma sürüyor — bir dakika sonra yeniden deneyin. Hız sınırı değildir |
+| `PROVIDER_UNAVAILABLE` | `503` | Duraklatma veya devam ettirme: adrese enerji teslimatı değiştirilemedi. Hiçbir şey değiştirilmedi — bir dakika sonra yeniden deneyin |
+
 ## Para çekme doğrulama kodları
 
 `POST /api/v1/account/withdrawal` bu doğrulama kodlarını düz biçimde, `code` ile `detail` yan yana

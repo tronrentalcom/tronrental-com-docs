@@ -10,7 +10,7 @@ Retorna todos os seus pacotes de transferência.
 
 ### Resposta
 
-Array de objetos de pacote. Campos principais: `id`, `address`, `package_size`, `quota_total` (transferências do pacote), `quota_used` (transferências atendidas), `subscription_used` (transferências consumidas pela taxa diária, uma por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `created_at`.
+Array de objetos de pacote. Campos principais: `id`, `address`, `package_size`, `quota_total` (transferências do pacote), `quota_used` (transferências atendidas), `subscription_used` (transferências consumidas pela taxa diária, uma por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (quando o pacote foi pausado; `null` a menos que `status` seja `paused`), `created_at`.
 
 ### Status dos pacotes
 
@@ -19,6 +19,7 @@ Array de objetos de pacote. Campos principais: `id`, `address`, `package_size`, 
 | `pending_payment` | Aguardando pagamento da fatura |
 | `provisioning` | Pago com o saldo, ativação em andamento |
 | `active` | Monitorando endereço, transferências disponíveis |
+| `paused` | [Pausado](/pt/api-reference/transfer-packages/pause) por você: sem taxa diária, as transferências não são atendidas nem contadas, as transferências restantes são mantidas |
 | `completed` | Todas as transferências utilizadas |
 | `cancelled` | Cancelado pelo usuário |
 | `expired` | A fatura não foi paga a tempo |
@@ -44,6 +45,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "remaining": 312,
     "bw_guarantee": true,
     "status": "active",
+    "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"
   }
 ]

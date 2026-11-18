@@ -123,6 +123,21 @@ Node API（`node.tronrental.com`）有自己的错误代码，格式也不同—
 | `AUTO_BW_CONTRACT_IN_USE` | `409` | 有订阅正在使用该合约 |
 | `AUTO_BW_DISABLED` | `503` | 自动带宽暂时关闭；在创建或恢复订阅以及添加合约时返回。未做任何更改——请稍后重试 |
 
+## 转账套餐代码
+
+[转账套餐](/zh/api-reference/transfer-packages/overview)端点以标准形式返回：
+
+| 代码 | 状态 | 说明 |
+|------|--------|-------------|
+| `ADDRESS_PAUSED` | `400` | 购买套餐：您在该地址上的套餐已暂停——请先恢复 |
+| `PACKAGE_NOT_FOUND` | `404` | 暂停或恢复：账户在该地址上没有处于所需状态的套餐 |
+| `PACKAGE_NOT_SETTLED` | `400` | 暂停或恢复：该地址上有套餐仍在激活中——请稍后重试 |
+| `ADDRESS_SHARED` | `400` | 暂停：另一个账户在该地址上有活跃套餐 |
+| `SMART_MODE_ACTIVE` | `400` | 暂停或恢复：该地址上的智能模式处于活跃状态——请先将其关闭 |
+| `ADDRESS_BUSY` | `409` | 该地址上有另一项操作正在进行——请一分钟后重试 |
+| `PAUSE_BUSY` | `429` | 同时进行的暂停操作过多——请一分钟后重试。这不是速率限制 |
+| `PROVIDER_UNAVAILABLE` | `503` | 暂停或恢复：未能切换向该地址的能量供应。未做任何更改——请一分钟后重试 |
+
 ## 提现验证代码
 
 `POST /api/v1/account/withdrawal` 以扁平形式返回这些验证代码，`code` 与 `detail` 并列；该端点的其他
