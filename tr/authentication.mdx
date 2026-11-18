@@ -15,15 +15,35 @@ curl https://api.tronrental.com/v1/account/balance \
 ### API anahtari edinme
 
 1. [tronrental.com](https://tronrental.com/auth/register) adresinden kaydolun
-2. [Kontrol Paneli → API Anahtarlari](https://tronrental.com/dashboard/api) sayfasina gidin
-3. **API Anahtari Olustur** butonuna tiklayin
-4. Anahtarinizi kopyalayin ve guvenli bir sekilde saklayin — yalnizca bir kez gosterilir
+2. [Kontrol Paneli → Yatırım](https://tronrental.com/dashboard/deposit) sayfasından bakiyenizi yükleyin: API anahtarı, yüklemelerinizin toplamı en az **100 TRX** olduğunda verilir
+3. [Kontrol Paneli → API Anahtarlari](https://tronrental.com/dashboard/api) sayfasina gidin
+4. **API Anahtari Olustur** butonuna tiklayin
+5. Anahtarinizi kopyalayin ve guvenli bir sekilde saklayin — yalnizca bir kez gosterilir
 
 E-posta ile açılan yeni bir hesap ancak adres onaylandıktan sonra oluşturulur: TronRental 6 haneli bir kod gönderir ve hesap bu kod girildiğinde oluşur.
 
+### İlk anahtardan önce yükleme
+
+100 TRX, hesaba bugüne kadar geçen tüm yüklemelerin toplamıdır; USDT yüklemesi hesaba geçtiği TRX tutarıyla sayılır. Sayılan geçmiştir, bakiye değil: bakiyeyi harcamak anahtarı geri almaz. Toplam 100 TRX'e ulaşana kadar `POST /v1/auth/api-keys` `403` döner:
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "API_KEY_DEPOSIT_REQUIRED",
+      "message": "API keys are available after a top-up of 100 TRX in total: top up 60 TRX more.",
+      "required_trx": "100",
+      "missing_trx": "60"
+    }
+  }
+}
+```
+
+`required_trx` eşiği, `missing_trx` ise yüklenmesi gereken kalan tutarı gösterir; ikisi de TRX cinsinden, metin olarak. [API anahtarı limitleri](/tr/api-reference/account/api-key-limits) aynı iki sayıyı denemeden önce `deposit_required_trx` ve `deposit_missing_trx` olarak gösterir. Aynı kontrol, hesabı hiç yükleme yapmadığı için kapatılmış bir anahtarı açarken de uygulanır. Node API anahtarları bu kurala tabi değildir: onları Node API planı belirler.
+
 ### API üzerinden kayıt (AI ajanları)
 
-Bir ajan veya betik, web sitesine girmeden hesap açabilir ve ilk anahtarını oluşturabilir. Bunun için kullanıcının **gerçek** e-posta adresi gerekir: hesap yalnızca o gelen kutusuna gelen kodla oluşturulur.
+Bir ajan veya betik, web sitesine girmeden hesap açabilir, bakiye yükleyebilir ve yüklemeler 100 TRX'e ulaştığında anahtar oluşturabilir. Bunun için kullanıcının **gerçek** e-posta adresi gerekir: hesap yalnızca o gelen kutusuna gelen kodla oluşturulur.
 
 **1. Kaydı başlatın** — henüz hesap oluşturulmaz, adrese 6 haneli bir kod gönderilir:
 
@@ -74,7 +94,16 @@ curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
 }
 ```
 
-**3. API anahtarı oluşturun** — access token ile:
+**3. Bakiye yükleyin** — yatırma adresini almak için access token yeterlidir. Dönen `deposit_address` adresine TRX veya USDT gönderin:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "Authorization: Bearer <access_token>"
+```
+
+Aynı başlık bakiye (`GET /v1/account/balance`), satın alımlar ve siparişler için de çalışır; yani ilk sipariş anahtarı beklemez. Access token 1 saat geçerlidir; yenisi için `POST /v1/auth/login` ile `{"email": "...", "password": "..."}` göndererek giriş yapın.
+
+**4. API anahtarı oluşturun** — hesabın yüklemeleri toplam 100 TRX'e ulaştığında:
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/auth/api-keys \
@@ -83,18 +112,19 @@ curl -X POST https://api.tronrental.com/v1/auth/api-keys \
   -d '{"name": "my-agent"}'
 ```
 
-Yanıttaki `key` alanı API anahtarıdır — yalnızca bir kez gösterilir.
+Yanıttaki `key` alanı API anahtarıdır — yalnızca bir kez gösterilir. 100 TRX'in altında yanıt `403 API_KEY_DEPOSIT_REQUIRED` olur; eksik tutar `missing_trx` alanındadır (yukarıdaki «İlk anahtardan önce yükleme» bölümüne bakın).
 
 | Durum | Kod | Anlamı |
 |--------|------|---------|
 | `400` | `WEAK_PASSWORD` | Parola kurallara uymuyor (kod harcanmaz) |
 | `401` | `INVALID_CREDENTIALS` | Kod yanlış veya süresi dolmuş |
 | `403` | `EMAIL_DOMAIN_BLOCKED` | Bu e-posta sağlayıcısı kabul edilmiyor |
+| `403` | `API_KEY_DEPOSIT_REQUIRED` | Hesabın yüklemeleri toplam 100 TRX'in altında — `missing_trx` kadar daha yükleyin, sonra anahtarı oluşturun |
 | `409` | `EMAIL_EXISTS` | Bu e-posta adresiyle zaten bir hesap var — bunun yerine giriş yapın |
 | `429` | `RATE_LIMIT_EXCEEDED` | Çok fazla istek veya e-posta ya da üst üste 5 yanlış kod — yeni bir kod isteyin |
 
 <Note>
-  [MCP sunucusu](/tr/resources/mcp-server) bu adımları `register` ve `verify_email_code` araçlarıyla yürütür.
+  [MCP sunucusu](/tr/resources/mcp-server) bu adımları `register`, `verify_email_code`, `get_deposit_address` ve `create_api_key` araçlarıyla yürütür.
 </Note>
 
 ### IP Beyaz Listesi (istege bagli)

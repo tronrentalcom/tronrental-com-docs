@@ -3,11 +3,22 @@ title: 快速开始
 description: "5 分钟内购买 TRON 能量"
 ---
 
-## 1. 获取 API 密钥
+## 1. 充值余额
 
-注册并在 [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) 创建 API 密钥。
+在 [tronrental.com](https://tronrental.com/auth/register) 注册，然后打开[控制面板 → 充值](https://tronrental.com/dashboard/deposit)。向您的充值地址发送 TRX 或 USDT，充值将自动到账。
 
-## 2. 查看价格
+## 2. 获取 API 密钥
+
+在 [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) 创建 API 密钥。累计充值至少达到 **100 TRX** 后才会发放密钥（USDT 充值按到账时折算的 TRX 金额计入）。在此之前，创建密钥会返回 [`403 API_KEY_DEPOSIT_REQUIRED`](/zh/authentication)，并附带尚差的金额。
+
+有了密钥后，也可以通过 API 获取后续充值所用的地址：
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+## 3. 查看价格
 
 ```bash
 curl https://api.tronrental.com/v1/prices
@@ -29,17 +40,6 @@ curl https://api.tronrental.com/v1/prices
 ```
 
 能量租赁**仅 1 小时**（`"1h"`）。带宽支持 `"1h"`、`"1d"`，或 `"5m"` 至 `"59m"` 之间的任意整数分钟——参见[购买带宽](/zh/api-reference/bandwidth/buy-bandwidth)。`energy_trx` 仅为租赁价，结算时需加上 `energy_fixed_fee_trx`（0.2 TRX）。
-
-## 3. 充值 TRX
-
-获取您的充值地址：
-
-```bash
-curl https://api.tronrental.com/v1/account/deposit \
-  -H "X-API-Key: your_api_key"
-```
-
-向返回的 `deposit_address` 发送 TRX 或 USDT，充值将自动到账。
 
 ## 4. 购买能量
 

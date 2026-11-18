@@ -3,11 +3,22 @@ title: Quickstart
 description: "Buy TRON energy in under 5 minutes"
 ---
 
-## 1. Get your API key
+## 1. Top up your balance
 
-Sign up and create an API key at [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api).
+Sign up at [tronrental.com](https://tronrental.com/auth/register) and open [Dashboard → Deposit](https://tronrental.com/dashboard/deposit). Send TRX or USDT to your deposit address — deposits are credited automatically.
 
-## 2. Check prices
+## 2. Get your API key
+
+Create an API key at [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api). A key is issued once your top-ups total at least **100 TRX** (a USDT top-up counts at the TRX amount it was credited as). Before that, creating a key returns [`403 API_KEY_DEPOSIT_REQUIRED`](/authentication#top-up-before-the-first-key) with the amount still missing.
+
+With a key, the deposit address for later top-ups is also available over the API:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+## 3. Check prices
 
 ```bash
 curl https://api.tronrental.com/v1/prices
@@ -29,17 +40,6 @@ curl https://api.tronrental.com/v1/prices
 ```
 
 Energy rental is **1 hour only** (`"1h"`). Bandwidth supports `"1h"`, `"1d"` or any whole number of minutes from `"5m"` to `"59m"` — see [Buy Bandwidth](/api-reference/bandwidth/buy-bandwidth). `energy_trx` is rental only — add `energy_fixed_fee_trx` (0.2 TRX) at checkout.
-
-## 3. Deposit TRX
-
-Check your deposit address:
-
-```bash
-curl https://api.tronrental.com/v1/account/deposit \
-  -H "X-API-Key: your_api_key"
-```
-
-Send TRX or USDT to the returned `deposit_address`. Deposits are credited automatically.
 
 ## 4. Buy energy
 

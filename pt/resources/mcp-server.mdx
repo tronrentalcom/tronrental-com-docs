@@ -45,7 +45,7 @@ Adicione à sua configuração MCP:
 }
 ```
 
-A variável de ambiente `TRONRENTAL_API_KEY` é opcional. Se não for fornecida, o agente pode registrar uma nova conta e criar uma chave API através das ferramentas MCP. O agente pede seu e-mail: o TronRental envia para lá um código de 6 dígitos, e a conta só é criada depois que você passa esse código ao agente.
+A variável de ambiente `TRONRENTAL_API_KEY` é opcional. Se não for fornecida, o agente pode registrar uma nova conta através das ferramentas MCP e trabalhar com o token de login dela; a chave API é emitida quando as recargas da conta somam 100 TRX. O agente pede seu e-mail: o TronRental envia para lá um código de 6 dígitos, e a conta só é criada depois que você passa esse código ao agente.
 
 ## Ferramentas Disponíveis
 
@@ -59,12 +59,12 @@ O servidor MCP fornece 12 ferramentas:
 | `verify_email_code` | Nenhuma | Confirmar o código e criar a conta |
 | `resend_email_code` | Nenhuma | Enviar um novo código (expirado ou não recebido) |
 | `login` | Nenhuma | Fazer login em uma conta existente |
-| `create_api_key` | Token | Criar uma chave API |
-| `get_deposit_address` | Chave API | Obter endereço de depósito de TRX |
-| `get_balance` | Chave API | Verificar saldo da conta |
-| `buy_energy` | Chave API | Comprar energia para um endereço TRON |
-| `get_order` | Chave API | Verificar status do pedido |
-| `regenerate_deposit_address` | Chave API | Gerar um novo endereço de depósito |
+| `create_api_key` | Token | Criar uma chave API (após recargas de 100 TRX no total) |
+| `get_deposit_address` | Chave API ou token | Obter endereço de depósito de TRX |
+| `get_balance` | Chave API ou token | Verificar saldo da conta |
+| `buy_energy` | Chave API ou token | Comprar energia para um endereço TRON |
+| `get_order` | Chave API ou token | Verificar status do pedido |
+| `regenerate_deposit_address` | Chave API ou token | Gerar um novo endereço de depósito |
 
 ## Fluxo Típico
 
@@ -75,14 +75,14 @@ O servidor MCP fornece 12 ferramentas:
 3. `register` — o e-mail real do usuário e uma senha; um código de 6 dígitos é enviado para lá
 4. O usuário lê o código no e-mail e o passa ao agente
 5. `verify_email_code` — cria a conta e faz o login
-6. `create_api_key` — gerar chave API
-7. `get_deposit_address` — obter endereço de depósito, usuário envia TRX
-8. `get_balance` — verificar se o depósito chegou
-9. `buy_energy` — comprar energia
-10. `get_order` — confirmar delegação
+6. `get_deposit_address` — obter endereço de depósito, usuário envia TRX ou USDT
+7. `get_balance` — verificar se o depósito chegou
+8. `buy_energy` — comprar energia
+9. `get_order` — confirmar delegação
+10. `create_api_key` — quando as recargas somarem 100 TRX: a chave mantém o acesso depois da sessão (defina-a como `TRONRENTAL_API_KEY`)
 
 <Note>
-  O agente nunca inventa um endereço de e-mail: sem um código de uma caixa de entrada real, nenhuma conta é criada. O código é válido por 10 minutos; `resend_email_code` envia um novo (até 3 e-mails por hora). As mesmas etapas via HTTP simples estão descritas em [Autenticação](/pt/authentication).
+  O agente nunca inventa um endereço de e-mail: sem um código de uma caixa de entrada real, nenhuma conta é criada. O código é válido por 10 minutos; `resend_email_code` envia um novo (até 3 e-mails por hora). Enquanto não houver chave, as ferramentas usam o token de login; ele vale 1 hora, depois o agente chama `login` de novo. Abaixo de 100 TRX, `create_api_key` informa quanto falta recarregar. As mesmas etapas via HTTP simples estão descritas em [Autenticação](/pt/authentication).
 </Note>
 
 ### Usuário existente (chave API configurada)

@@ -3,11 +3,22 @@ title: Hızlı başlangıç
 description: "5 dakikadan kısa sürede TRON enerjisi satın alın"
 ---
 
-## 1. API anahtarınızı alın
+## 1. Bakiyenizi yükleyin
 
-Kaydolun ve [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) adresinde bir API anahtarı oluşturun.
+[tronrental.com](https://tronrental.com/auth/register) adresinden kaydolun ve [Kontrol Paneli → Yatırım](https://tronrental.com/dashboard/deposit) sayfasını açın. Yatırma adresinize TRX veya USDT gönderin — yatırımlar otomatik olarak hesaba geçer.
 
-## 2. Fiyatları kontrol edin
+## 2. API anahtarınızı alın
+
+[tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) adresinde bir API anahtarı oluşturun. Anahtar, yüklemelerinizin toplamı en az **100 TRX** olduğunda verilir (USDT yüklemesi, hesaba geçtiği TRX tutarıyla sayılır). O zamana kadar anahtar oluşturma isteği, eksik tutarla birlikte [`403 API_KEY_DEPOSIT_REQUIRED`](/tr/authentication) döner.
+
+Anahtarla, sonraki yüklemeler için yatırma adresi API üzerinden de alınabilir:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+## 3. Fiyatları kontrol edin
 
 ```bash
 curl https://api.tronrental.com/v1/prices
@@ -29,17 +40,6 @@ curl https://api.tronrental.com/v1/prices
 ```
 
 Enerji kiralaması **yalnızca 1 saat** (`"1h"`). Bandwidth için `"1h"`, `"1d"` veya `"5m"` ile `"59m"` arasında herhangi bir tam dakika sayısı kullanılabilir — bkz. [Bandwidth satın al](/tr/api-reference/bandwidth/buy-bandwidth). `energy_trx` yalnızca kiralama fiyatıdır; ödeme sırasında `energy_fixed_fee_trx` (0.2 TRX) eklenir.
-
-## 3. TRX yatırın
-
-Yatırma adresinizi alın:
-
-```bash
-curl https://api.tronrental.com/v1/account/deposit \
-  -H "X-API-Key: your_api_key"
-```
-
-Dönen `deposit_address` adresine TRX veya USDT gönderin. Yatırımlar otomatik olarak hesaba geçer.
 
 ## 4. Enerji satın alın
 

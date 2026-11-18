@@ -55,7 +55,7 @@ cadena: en la forma estándar es un objeto y, en un error de validación, un arr
 | `400` | Solicitud incorrecta — parámetros inválidos |
 | `401` | No autorizado — clave API faltante o inválida |
 | `402` | Pago requerido — saldo de la cuenta insuficiente |
-| `403` | Prohibido — la clave carece del alcance requerido, IP fuera de la lista permitida o verificación requerida |
+| `403` | Prohibido — la clave carece del alcance requerido, IP fuera de la lista permitida, verificación requerida o la cuenta no ha recargado lo suficiente para una nueva clave API |
 | `404` | No encontrado |
 | `409` | Conflicto — solicitud duplicada o conflicto de recursos |
 | `422` | Error de validación — verifica el cuerpo de la solicitud |
@@ -73,6 +73,7 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `ACCOUNT_BLOCKED` | `403` | Acceso a la API bloqueado para esta cuenta |
 | `FORBIDDEN` | `403` | La clave carece del alcance que exige este endpoint, o la IP de la solicitud no está en la lista permitida de la clave |
 | `NODE_API_KEY_ONLY` | `403` | Se envió una clave de Node API a esta API — solo funciona en `node.tronrental.com` |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | Una nueva clave API requiere recargas de 100 TRX en total. Se devuelve al crear una clave y al activar una clave desactivada por este motivo. `error.required_trx` es el umbral, `error.missing_trx` lo que falta recargar (TRX, como cadenas) — ver [Autenticación](/es/authentication) |
 | `INSUFFICIENT_BALANCE` | `402` | Saldo de la cuenta insuficiente para esta operación |
 | `PRICE_CHANGED` | `409` | El pedido cuesta más que el `max_price_trx` que enviaste. No se cobró nada — obtén una nueva cotización y reintenta |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | Esta Idempotency-Key ya se usó con otro cuerpo de solicitud |

@@ -6,7 +6,7 @@ description: "您账户级的速率限制，以及账户可持有的 API 密钥�
 
 ## 获取 API 密钥限制
 
-返回适用于您请求的速率限制以及账户的 API 密钥配额，包括 Node API 套餐的端点。速率限制档位详见[速率限制](/zh/resources/rate-limits)。
+返回适用于您请求的速率限制、账户的 API 密钥配额（包括 Node API 套餐的端点），以及新 API 密钥所需的充值。速率限制档位详见[速率限制](/zh/resources/rate-limits)。
 
 Node API 端点也是 API 密钥：Node API 套餐会把其端点额度加到账户的密钥上限中，带有 `node_api` 的密钥同时计入两者。
 Node API 密钥不能调用此端点——REST API 会以 `403 NODE_API_KEY_ONLY` 拒绝它。
@@ -46,7 +46,7 @@ Node API 密钥不能调用此端点——REST API 会以 `403 NODE_API_KEY_ONLY
 </ResponseField>
 
 <ResponseField name="can_create" type="boolean">
-  当 `key_count` 低于 `key_limit` 时为 `true`
+  当 `key_count` 低于 `key_limit` 时为 `true`。它不反映新密钥所需的充值——请同时查看 `deposit_missing_trx`
 </ResponseField>
 
 <ResponseField name="node_endpoint_limit" type="number">
@@ -55,6 +55,15 @@ Node API 密钥不能调用此端点——REST API 会以 `403 NODE_API_KEY_ONLY
 
 <ResponseField name="node_endpoint_count" type="number">
   带有 `node_api` 的密钥——即账户的 Node API 端点，包括已停用的
+</ResponseField>
+
+<ResponseField name="deposit_required_trx" type="string">
+  账户可创建 API 密钥所需的累计充值金额（TRX）。所有已到账的充值都计入；USDT 充值按到账时折算的 TRX 金额计入
+</ResponseField>
+
+<ResponseField name="deposit_missing_trx" type="string">
+  创建新的 API 密钥还需充值的金额；达到门槛或账户不受此限制时为 `"0"`。未达到时，创建密钥会返回
+  `403 API_KEY_DEPOSIT_REQUIRED`。Node API 端点不受此限制
 </ResponseField>
 
 ### 示例
@@ -76,6 +85,8 @@ curl https://api.tronrental.com/v1/auth/api-keys/limits \
   "custom_key_limit": null,
   "can_create": true,
   "node_endpoint_limit": 3,
-  "node_endpoint_count": 1
+  "node_endpoint_count": 1,
+  "deposit_required_trx": "100",
+  "deposit_missing_trx": "0"
 }
 ```

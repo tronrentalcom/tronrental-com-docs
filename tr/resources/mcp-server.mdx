@@ -45,7 +45,7 @@ MCP yapılandırmanıza ekleyin:
 }
 ```
 
-`TRONRENTAL_API_KEY` ortam değişkeni isteğe bağlıdır. Sağlanmazsa, ajan MCP araçları aracılığıyla yeni bir hesap kaydedebilir ve API anahtarı oluşturabilir. Ajan e-posta adresinizi sorar: TronRental bu adrese 6 haneli bir kod gönderir ve hesap ancak bu kodu ajana verdikten sonra oluşturulur.
+`TRONRENTAL_API_KEY` ortam değişkeni isteğe bağlıdır. Sağlanmazsa, ajan MCP araçları aracılığıyla yeni bir hesap kaydedebilir ve bu hesabın oturum token'ı ile çalışabilir; API anahtarı, hesabın yüklemeleri toplam 100 TRX'e ulaştığında verilir. Ajan e-posta adresinizi sorar: TronRental bu adrese 6 haneli bir kod gönderir ve hesap ancak bu kodu ajana verdikten sonra oluşturulur.
 
 ## Mevcut Araçlar
 
@@ -59,12 +59,12 @@ MCP sunucusu 12 araç sunar:
 | `verify_email_code` | Yok | Kodu onaylama ve hesabı oluşturma |
 | `resend_email_code` | Yok | Yeni kod gönderme (süresi dolduysa veya ulaşmadıysa) |
 | `login` | Yok | Mevcut hesaba giriş |
-| `create_api_key` | Token | API anahtarı oluşturma |
-| `get_deposit_address` | API anahtarı | TRX yatırma adresi alma |
-| `get_balance` | API anahtarı | Hesap bakiyesi sorgulama |
-| `buy_energy` | API anahtarı | Bir TRON adresi için enerji satın alma |
-| `get_order` | API anahtarı | Sipariş durumu sorgulama |
-| `regenerate_deposit_address` | API anahtarı | Yeni yatırma adresi oluşturma |
+| `create_api_key` | Token | API anahtarı oluşturma (toplam 100 TRX yüklemeden sonra) |
+| `get_deposit_address` | API anahtarı veya token | TRX yatırma adresi alma |
+| `get_balance` | API anahtarı veya token | Hesap bakiyesi sorgulama |
+| `buy_energy` | API anahtarı veya token | Bir TRON adresi için enerji satın alma |
+| `get_order` | API anahtarı veya token | Sipariş durumu sorgulama |
+| `regenerate_deposit_address` | API anahtarı veya token | Yeni yatırma adresi oluşturma |
 
 ## Tipik Akış
 
@@ -75,14 +75,14 @@ MCP sunucusu 12 araç sunar:
 3. `register` — kullanıcının gerçek e-posta adresi ve bir parola; bu adrese 6 haneli bir kod gönderilir
 4. Kullanıcı kodu e-postadan okur ve ajana verir
 5. `verify_email_code` — hesabı oluşturur ve oturum açar
-6. `create_api_key` — API anahtarı oluştur
-7. `get_deposit_address` — yatırma adresi al, kullanıcı TRX gönderir
-8. `get_balance` — yatırımın ulaştığını doğrula
-9. `buy_energy` — enerji satın al
-10. `get_order` — delegasyonu onayla
+6. `get_deposit_address` — yatırma adresi al, kullanıcı TRX veya USDT gönderir
+7. `get_balance` — yatırımın ulaştığını doğrula
+8. `buy_energy` — enerji satın al
+9. `get_order` — delegasyonu onayla
+10. `create_api_key` — yüklemeler toplam 100 TRX'e ulaşınca: anahtar oturumdan sonra da erişimi korur (`TRONRENTAL_API_KEY` olarak ayarlayın)
 
 <Note>
-  Ajan asla e-posta adresi uydurmaz: gerçek bir gelen kutusundan gelen kod olmadan hesap oluşturulmaz. Kod 10 dakika geçerlidir; `resend_email_code` yenisini gönderir (saatte en fazla 3 e-posta). Aynı adımların düz HTTP ile yapılışı [Kimlik Doğrulama](/tr/authentication) sayfasında anlatılır.
+  Ajan asla e-posta adresi uydurmaz: gerçek bir gelen kutusundan gelen kod olmadan hesap oluşturulmaz. Kod 10 dakika geçerlidir; `resend_email_code` yenisini gönderir (saatte en fazla 3 e-posta). Anahtar olana kadar araçlar oturum token'ını kullanır; token 1 saat geçerlidir, sonra ajan `login` aracını yeniden çağırır. 100 TRX'in altında `create_api_key` ne kadar daha yükleme gerektiğini bildirir. Aynı adımların düz HTTP ile yapılışı [Kimlik Doğrulama](/tr/authentication) sayfasında anlatılır.
 </Note>
 
 ### Mevcut kullanıcı (API anahtarı ayarlanmış)

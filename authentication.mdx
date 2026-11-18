@@ -15,15 +15,35 @@ curl https://api.tronrental.com/v1/account/balance \
 ### Getting an API key
 
 1. Sign up at [tronrental.com](https://tronrental.com/auth/register)
-2. Go to [Dashboard → API Keys](https://tronrental.com/dashboard/api)
-3. Click **Create API Key**
-4. Copy and securely store your key — it's shown only once
+2. Top up your balance in [Dashboard → Deposit](https://tronrental.com/dashboard/deposit): an API key is issued once your top-ups total at least **100 TRX**
+3. Go to [Dashboard → API Keys](https://tronrental.com/dashboard/api)
+4. Click **Create API Key**
+5. Copy and securely store your key — it's shown only once
 
 A new email account is created only after you confirm the address: TronRental mails a 6-digit code, and the account exists once that code is entered.
 
+### Top-up before the first key
+
+The 100 TRX is the total of all top-ups ever credited to the account; a USDT top-up counts at the TRX amount it was credited as. It is history, not the balance: spending the balance does not take a key away. Until the total reaches 100 TRX, `POST /v1/auth/api-keys` answers `403`:
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "API_KEY_DEPOSIT_REQUIRED",
+      "message": "API keys are available after a top-up of 100 TRX in total: top up 60 TRX more.",
+      "required_trx": "100",
+      "missing_trx": "60"
+    }
+  }
+}
+```
+
+`required_trx` is the bar and `missing_trx` what is left to top up, both in TRX as strings. [Get API Key Limits](/api-reference/account/api-key-limits) shows the same two numbers as `deposit_required_trx` and `deposit_missing_trx` before you try. The same check applies when you switch on a key that was switched off because its account had never topped up. [Node API keys](#node-api-keys) are not subject to it: a Node API plan gates them.
+
 ### Signing up via the API (AI agents)
 
-An agent or script can open an account and issue its first key without the website. It needs the user's **real** email: the account is created only with the code from that inbox.
+An agent or script can open an account, top it up and, once the top-ups reach 100 TRX, issue a key without the website. It needs the user's **real** email: the account is created only with the code from that inbox.
 
 **1. Start the sign-up** — no account is created yet, a 6-digit code is mailed to the address:
 
@@ -74,7 +94,16 @@ curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
 }
 ```
 
-**3. Create an API key** with the access token:
+**3. Top up** — the access token is enough to get the deposit address. Send TRX or USDT to the `deposit_address` it returns:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "Authorization: Bearer <access_token>"
+```
+
+The same header works for the balance (`GET /v1/account/balance`), purchases and orders, so a first order does not wait for a key. The access token is valid for 1 hour; for a new one, sign in with `POST /v1/auth/login` and `{"email": "...", "password": "..."}`.
+
+**4. Create an API key** once the account's top-ups total 100 TRX:
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/auth/api-keys \
@@ -83,18 +112,19 @@ curl -X POST https://api.tronrental.com/v1/auth/api-keys \
   -d '{"name": "my-agent"}'
 ```
 
-The `key` field of the response is the API key — it is shown only once.
+The `key` field of the response is the API key — it is shown only once. Below 100 TRX the answer is `403 API_KEY_DEPOSIT_REQUIRED` with the amount still missing in `missing_trx` — see [Top-up before the first key](#top-up-before-the-first-key).
 
 | Status | Code | Meaning |
 |--------|------|---------|
 | `400` | `WEAK_PASSWORD` | The password does not meet the rules (the code is not spent) |
 | `401` | `INVALID_CREDENTIALS` | Wrong or expired code |
 | `403` | `EMAIL_DOMAIN_BLOCKED` | This email provider is not accepted |
+| `403` | `API_KEY_DEPOSIT_REQUIRED` | The account's top-ups total less than 100 TRX — top up `missing_trx` more, then create the key |
 | `409` | `EMAIL_EXISTS` | The email already has an account — sign in instead |
 | `429` | `RATE_LIMIT_EXCEEDED` | Too many requests or emails, or 5 wrong codes in a row — request a new code |
 
 <Note>
-  The [MCP server](/resources/mcp-server) runs these steps with the `register` and `verify_email_code` tools.
+  The [MCP server](/resources/mcp-server) runs these steps with the `register`, `verify_email_code`, `get_deposit_address` and `create_api_key` tools.
 </Note>
 
 ### IP Whitelist (optional)
