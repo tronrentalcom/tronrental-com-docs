@@ -1,0 +1,104 @@
+---
+title: 恢复套餐
+api: POST /v1/transfer-packages/resume
+description: "恢复某个地址上您已暂停的转账套餐"
+---
+
+## 恢复套餐
+
+恢复**您账户在该地址上的所有已暂停套餐**。该地址的转账重新获得能量并计入套餐，带有带宽保障的套餐也会重新获得带宽保障。
+
+### 恢复时扣除什么
+
+套餐每活跃 24 小时支付一次转账。已经支付的这 24 小时在套餐暂停期间继续计时——暂停不会让这个计时停下。
+
+| 恢复的时机 | 扣除内容 |
+|-----------------|-----------------|
+| 已支付的 24 小时尚未用完 | 不扣除。下一次每日转账在 `next_subscription_at` 中已设定的时间扣除 |
+| 已支付的 24 小时在暂停期间用完 | 立即扣除一次转账。下一个 24 小时从恢复的那一刻起算 |
+| 套餐只剩一次转账 | 不扣除——最后一次转账仍归您使用 |
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  要恢复其套餐的 TRON 地址
+</ParamField>
+
+### 响应
+
+<ResponseField name="address" type="string">
+  请求中的地址。
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  始终为 `false`。
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  该地址上您重新活跃的套餐——与[套餐列表](/zh/api-reference/transfer-packages/list)中的对象相同。`paused_at` 为 `null`。
+</ResponseField>
+
+在没有任何套餐处于暂停状态时再次调用不会改变任何内容，也不会扣除任何费用：您会收到该地址上的活跃套餐。
+
+<Note>
+  能量可能在响应后几秒才到达该地址。发送第一笔转账前请稍等片刻。
+</Note>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/resume \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+本例中，已支付的 24 小时在暂停期间用完，因此恢复时扣除了一次转账：`subscription_used` 从 `3` 变为 `4`，`remaining` 从 `310` 变为 `309`。
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": false,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 4,
+      "remaining": 309,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-21T09:12:40Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### 错误
+
+以[标准形式](/zh/errors)返回，错误码位于 `detail.error.code`。出现其中任何一个错误后，套餐保持暂停，且不扣除任何费用。
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | 您的账户在该地址上没有已暂停或活跃的套餐 |
+| `PACKAGE_NOT_SETTLED` | `400` | 该地址上有套餐仍在激活中——请稍后重试 |
+| `SMART_MODE_ACTIVE` | `400` | 该地址上的智能模式处于活跃状态——请先将其关闭 |
+| `ADDRESS_BUSY` | `409` | 该地址上有另一项操作正在进行——请一分钟后重试 |
+| `PROVIDER_UNAVAILABLE` | `503` | 未能开始向该地址提供能量——请一分钟后重试 |

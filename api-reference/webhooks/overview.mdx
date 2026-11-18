@@ -9,7 +9,7 @@ Your account has **one webhook URL**, and every event goes to it. Set it in [Das
 
 ### Events
 
-Ten events exist today.
+Thirteen events exist today.
 
 | Event | Sent when |
 |-------|-----------|
@@ -23,6 +23,9 @@ Ten events exist today.
 | `package.completed` | A Transfer Package stopped serving transfers |
 | `package.activated` | A Transfer Package became active |
 | `package.expired` | An unpaid Transfer Package invoice expired |
+| `package.paused` | A Transfer Package was paused |
+| `package.resumed` | A paused Transfer Package is active again |
+| `package.moved` | A Transfer Package was moved to a new address |
 
 <Note>
   Since November 3, 2026, `order.updated` covers **every order of the account**; before that it was sent only for orders created with an API key. Tell the channels apart by its `source` field. [Bandwidth rentals](/api-reference/bandwidth-rentals/create-rental) send no events.
@@ -357,7 +360,7 @@ An invoice belongs to your account when you created it while signed in on the we
 
 ### Transfer Package events
 
-The four `package.*` events go to the account that **owns the package**. A package bought by invoice without signing in or an API key has no owner and produces no events. Cancelled invoices, refused purchases and purchases held for manual review produce no events either; a held package sends `package.activated` once it is activated.
+The seven `package.*` events go to the account that **owns the package**. A package bought by invoice without signing in or an API key has no owner and produces no events. Cancelled invoices, refused purchases and purchases held for manual review produce no events either; a held package sends `package.activated` once it is activated.
 
 Every `package.*` event carries these fields in `data`:
 
@@ -370,7 +373,7 @@ Every `package.*` event carries these fields in `data`:
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Package status after the event: `active` or `completed` for `package.transfer`, `completed` for `package.completed`, `active` for `package.activated`, `expired` for `package.expired`.
+  Package status after the event: `active` or `completed` for `package.transfer`, `completed` for `package.completed`, `active` for `package.activated`, `expired` for `package.expired`, `paused` for `package.paused`, `active` for `package.resumed`, `paused` or `active` for `package.moved`.
 </ResponseField>
 
 <ResponseField name="quota_total" type="number">
@@ -389,7 +392,7 @@ Every `package.*` event carries these fields in `data`:
   `remaining` can also go down without an event. A multi-transfer package takes one transfer a day as its daily subscription — the first one at activation, which is why a 500-transfer package starts at `remaining: 499` — and that charge is not announced. Two transfers from the same address in the same block can report the same `remaining`. Treat `remaining` as a hint and [List Packages](/api-reference/transfer-packages/list) as the source of truth.
 </Note>
 
-To recognise a retry, use `(package_id, tx_hash)` for `package.transfer` and `(event, package_id)` for the others: a retry carries the same body, the same `timestamp` and the same signature.
+To recognise a retry, use `(package_id, tx_hash)` for `package.transfer`, `(event, package_id, timestamp)` for `package.paused`, `package.resumed` and `package.moved` — a package can be paused, resumed and moved many times — and `(event, package_id)` for the others: a retry carries the same body, the same `timestamp` and the same signature.
 
 #### `package.transfer`
 
@@ -492,6 +495,69 @@ An invoice for a package was not paid within its 30-minute window. Nothing was c
 }
 ```
 
+#### `package.paused`
+
+The package was paused with [Pause Packages](/api-reference/transfer-packages/pause): from now on it charges no daily transfer and transfers from the address are neither served nor counted. Sent once for each package the call paused; a repeated call that paused nothing sends nothing. No extra fields.
+
+```json Response
+{
+  "event": "package.paused",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310
+  },
+  "timestamp": "2026-11-17T14:30:15.986341+00:00"
+}
+```
+
+#### `package.resumed`
+
+The package is active again after [Resume Packages](/api-reference/transfer-packages/resume). Sent once for each package the call resumed. No extra fields. `remaining` is one lower than before the pause when the resume charged the daily transfer.
+
+```json Response
+{
+  "event": "package.resumed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 309
+  },
+  "timestamp": "2026-11-20T09:12:40.986341+00:00"
+}
+```
+
+A `package.paused` and the `package.resumed` after it can arrive in either order — compare the envelope `timestamp`, or read the current state from [List Packages](/api-reference/transfer-packages/list).
+
+#### `package.moved`
+
+The package was moved to a new address with [Move Packages](/api-reference/transfer-packages/move). Sent once for each package the call moved. `address` is the new address; one extra field:
+
+<ResponseField name="previous_address" type="string">
+  The address the package was moved from.
+</ResponseField>
+
+```json Response
+{
+  "event": "package.moved",
+  "data": {
+    "package_id": 318,
+    "address": "TYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310,
+    "previous_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "timestamp": "2026-11-17T16:05:20.986341+00:00"
+}
+```
+
+A move of a working package sends `package.paused` with the old address, then `package.moved`, then `package.resumed` with the new address; a move of a paused package sends only `package.moved`. `status` is read when the event is sent: during a move of a working package it is usually `paused`, and it can already be `active`. `package.resumed` tells you the package works on the new address.
+
 ### Delivery
 
 - Up to **3 attempts**, with pauses of **1 second** and then **4 seconds** between them. There is no pause after a success and none after the last attempt.
@@ -551,4 +617,3 @@ function verifyWebhook(rawBody, signatureHeader, secret) {
 <Warning>
   Verify the signature before acting on the payload, and compare in constant time (`hmac.compare_digest` / `crypto.timingSafeEqual`). Comparing with `==` leaks timing.
 </Warning>
-

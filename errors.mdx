@@ -54,7 +54,7 @@ it is an object in the standard shape and an array in a validation error.
 | `400` | Bad request — invalid parameters |
 | `401` | Unauthorized — missing or invalid API key |
 | `402` | Payment required — account balance too low |
-| `403` | Forbidden — key lacks the required scope, IP not whitelisted, or verification required |
+| `403` | Forbidden — key lacks the required scope, IP not whitelisted, verification required, or the account has not topped up enough for a new API key |
 | `404` | Not found |
 | `409` | Conflict — duplicate request or resource conflict |
 | `422` | Validation error — check request body |
@@ -72,6 +72,7 @@ Returned in the standard shape, under `detail.error.code`:
 | `ACCOUNT_BLOCKED` | `403` | API access blocked for this account |
 | `FORBIDDEN` | `403` | The key lacks the scope this endpoint requires, or the request IP is not on the key's whitelist |
 | `NODE_API_KEY_ONLY` | `403` | A Node API key was sent to this API — it works only at `node.tronrental.com` |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | A new API key needs top-ups of 100 TRX in total. Returned when creating a key, and when switching on a key that was switched off for this reason. `error.required_trx` is the bar, `error.missing_trx` what is left to top up (TRX, as strings) — see [Authentication](/authentication#top-up-before-the-first-key) |
 | `INSUFFICIENT_BALANCE` | `402` | Account balance too low for this operation |
 | `PRICE_CHANGED` | `409` | The order costs more than the `max_price_trx` you sent. Nothing was charged — get a new quote and retry |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | This Idempotency-Key was already used with a different request body |
@@ -128,6 +129,26 @@ Returned in the standard shape by the [Auto Bandwidth](/api-reference/auto-bandw
 | `AUTO_BW_CONTRACT_LIMIT` | `409` | The token list already has 20 contracts |
 | `AUTO_BW_CONTRACT_IN_USE` | `409` | A subscription is set up for this contract |
 | `AUTO_BW_DISABLED` | `503` | Auto Bandwidth is temporarily switched off; returned when creating or resuming a subscription and when adding a contract. Nothing was changed — try again later |
+
+## Transfer Package codes
+
+Returned in the standard shape by the [Transfer Packages](/api-reference/transfer-packages/overview) endpoints:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `ADDRESS_PAUSED` | `400` | Buying a package: your packages on this address are paused — resume them first |
+| `PACKAGE_NOT_FOUND` | `404` | Pause, resume or move: the account has no package in the required state on the address |
+| `PACKAGE_NOT_SETTLED` | `400` | Pause, resume or move: a package on the address is still being activated — try again later |
+| `ADDRESS_SHARED` | `400` | Pause or move: another account has an active package on the address |
+| `SMART_MODE_ACTIVE` | `400` | Pause, resume or move: Smart Mode is active on the address (for a move — the old or the new one) — turn it off first |
+| `ADDRESS_BUSY` | `409` | Another operation on the address is in progress — try again in a minute |
+| `PAUSE_BUSY` | `429` | Too many pauses are in progress at once — try again in a minute. Not a rate limit |
+| `PROVIDER_UNAVAILABLE` | `503` | Pause, resume or move: energy delivery to the address could not be switched. Nothing was changed — try again in a minute |
+| `SAME_ADDRESS` | `400` | Move: the new address is the address of the packages |
+| `ADDRESS_NOT_ALLOWED` | `400` | Move: packages cannot be moved to this address |
+| `ADDRESS_TAKEN` | `409` | Move: the new address already has transfer packages. If the message says the packages stay paused on the old address, the move stopped after the pause — resume them there or move them again |
+| `MOVE_AFTER_PAUSE` | `409` | Move: some packages can be moved only 15 minutes after they are paused — pause them, wait 15 minutes, then move |
+| `MOVED_PAUSED` | status of the cause | Move: the packages are on the new address but stay paused there — resume them with the new address |
 
 ## Withdrawal verification codes
 

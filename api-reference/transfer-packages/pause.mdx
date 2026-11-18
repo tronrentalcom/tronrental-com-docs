@@ -1,0 +1,107 @@
+---
+title: Pause Packages
+api: POST /v1/transfer-packages/pause
+description: "Pause your transfer packages on an address"
+---
+
+## Pause Packages
+
+Pauses **every active package of your account on the address** at once. A single package cannot be paused separately.
+
+While the packages are paused:
+
+- the daily transfer is not charged;
+- transfers from the address get no energy and are not counted;
+- BW Guarantee is withdrawn from the address;
+- the remaining transfers are kept, with no time limit.
+
+Packages stay paused until you call [Resume Packages](/api-reference/transfer-packages/resume) — they do not resume on their own.
+
+<Warning>
+  **The call answers in about 15 seconds** — set your client timeout to 30 seconds or more. The pause is in force from the moment you get the response. A transfer sent before the response is still counted, so wait for the response before you treat the address as paused.
+</Warning>
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  TRON address whose packages to pause
+</ParamField>
+
+### Response
+
+<ResponseField name="address" type="string">
+  The address from the request.
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Always `true`.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Your paused packages on the address — the same objects as in [List Packages](/api-reference/transfer-packages/list), now with `status: "paused"` and `paused_at`.
+</ResponseField>
+
+Calling it again for an address that is already paused changes nothing and charges nothing: you get the same paused packages back.
+
+### Example
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/pause \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": true,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "paused",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": "2026-11-17T14:30:15Z",
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Errors
+
+Returned in the [standard shape](/errors), under `detail.error.code`. After any of them nothing has changed: the packages keep working as before.
+
+| Code | Status | When |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | Your account has no active package on the address |
+| `PACKAGE_NOT_SETTLED` | `400` | A package on the address is still being activated — try again later |
+| `ADDRESS_SHARED` | `400` | Another account has an active package on the address |
+| `SMART_MODE_ACTIVE` | `400` | Smart Mode is active on the address — turn it off first |
+| `ADDRESS_BUSY` | `409` | Another operation on the address is in progress — try again in a minute |
+| `PAUSE_BUSY` | `429` | Too many pauses are in progress at once — try again in a minute |
+| `PROVIDER_UNAVAILABLE` | `503` | Energy delivery to the address could not be stopped — try again in a minute |
+
+<Note>
+  While your packages on an address are paused, you cannot buy a new package for that address: the purchase is refused with `ADDRESS_PAUSED`. Resume first.
+</Note>

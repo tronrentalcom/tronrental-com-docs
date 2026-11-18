@@ -3,11 +3,22 @@ title: Быстрый старт
 description: "Купите энергию TRON менее чем за 5 минут"
 ---
 
-## 1. Получите API-ключ
+## 1. Пополните баланс
 
-Зарегистрируйтесь и создайте API-ключ на [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api).
+Зарегистрируйтесь на [tronrental.com](https://tronrental.com/auth/register) и откройте [Личный кабинет → Пополнение](https://tronrental.com/dashboard/deposit). Отправьте TRX или USDT на ваш адрес для пополнения — депозиты зачисляются автоматически.
 
-## 2. Проверьте цены
+## 2. Получите API-ключ
+
+Создайте API-ключ на [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api). Ключ выдаётся, когда ваши пополнения в сумме достигают **100 TRX** (пополнение в USDT считается по сумме в TRX, которая была зачислена). До этого создание ключа возвращает [`403 API_KEY_DEPOSIT_REQUIRED`](/ru/authentication) с недостающей суммой.
+
+С ключом адрес для следующих пополнений можно получить и через API:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+## 3. Проверьте цены
 
 ```bash
 curl https://api.tronrental.com/v1/prices
@@ -29,17 +40,6 @@ curl https://api.tronrental.com/v1/prices
 ```
 
 Аренда энергии — **только 1 час** (`"1h"`). Bandwidth — `"1h"`, `"1d"` или любое целое число минут от `"5m"` до `"59m"` — см. [Купить bandwidth](/ru/api-reference/bandwidth/buy-bandwidth). `energy_trx` — только rental; при оплате добавляется `energy_fixed_fee_trx` (0.2 TRX).
-
-## 3. Пополните баланс TRX
-
-Узнайте ваш адрес для пополнения:
-
-```bash
-curl https://api.tronrental.com/v1/account/deposit \
-  -H "X-API-Key: your_api_key"
-```
-
-Отправьте TRX или USDT на полученный `deposit_address`. Депозиты зачисляются автоматически.
 
 ## 4. Купите энергию
 

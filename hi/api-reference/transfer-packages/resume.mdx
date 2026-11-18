@@ -1,0 +1,104 @@
+---
+title: पैकेज फिर से शुरू करें
+api: POST /v1/transfer-packages/resume
+description: "किसी एड्रेस पर अपने रोके गए ट्रांसफर पैकेज फिर से शुरू करें"
+---
+
+## पैकेज फिर से शुरू करें
+
+**एड्रेस पर आपके अकाउंट के सभी रोके गए पैकेज** फिर से शुरू करता है। एड्रेस से होने वाले ट्रांसफर को फिर से एनर्जी मिलती है और वे फिर से गिने जाते हैं, और जिन पैकेज में BW Guarantee है, उनके लिए वह वापस आ जाती है।
+
+### फिर से शुरू करने पर क्या काटा जाता है
+
+पैकेज सक्रिय रहने के हर 24 घंटे के लिए एक ट्रांसफर चुकाता है। जिन 24 घंटों का भुगतान हो चुका है, वे पैकेज रुके रहने के दौरान भी चलते रहते हैं — रोकने से यह घड़ी नहीं रुकती।
+
+| आप कब फिर से शुरू करते हैं | क्या काटा जाता है |
+|-----------------|-----------------|
+| भुगतान किए गए 24 घंटे अभी पूरे नहीं हुए | कुछ नहीं। अगला दैनिक ट्रांसफर `next_subscription_at` में पहले से तय समय पर काटा जाता है |
+| भुगतान किए गए 24 घंटे रोक के दौरान पूरे हो गए | एक ट्रांसफर, तुरंत। अगले 24 घंटे फिर से शुरू करने के क्षण से गिने जाते हैं |
+| पैकेज में एक ट्रांसफर बचा है | कुछ नहीं — आख़िरी ट्रांसफर आपका ही रहता है |
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  वह TRON एड्रेस जिसके पैकेज फिर से शुरू करने हैं
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="address" type="string">
+  अनुरोध में दिया गया एड्रेस।
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  हमेशा `false`।
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  एड्रेस पर आपके वे पैकेज जो फिर से सक्रिय हैं — वही ऑब्जेक्ट जो [पैकेज सूची](/hi/api-reference/transfer-packages/list) में हैं। `paused_at` का मान `null` है।
+</ResponseField>
+
+जब कुछ भी रुका हुआ न हो, तब इसे दोबारा कॉल करने पर कुछ नहीं बदलता और कुछ नहीं काटा जाता: आपको एड्रेस पर अपने सक्रिय पैकेज वापस मिलते हैं।
+
+<Note>
+  एनर्जी रिस्पॉन्स के कुछ सेकंड बाद एड्रेस तक पहुँच सकती है। पहला ट्रांसफर भेजने से पहले थोड़ा रुकें।
+</Note>
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/resume \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+यहाँ भुगतान किए गए 24 घंटे रोक के दौरान पूरे हो गए थे, इसलिए फिर से शुरू करने पर एक ट्रांसफर काटा गया: `subscription_used` `3` से `4` हुआ, `remaining` `310` से `309`।
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": false,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 4,
+      "remaining": 309,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-21T09:12:40Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### त्रुटियाँ
+
+[मानक रूप](/hi/errors) में, `detail.error.code` के अंतर्गत लौटाई जाती हैं। इनमें से किसी के भी बाद पैकेज रुके रहते हैं और कुछ नहीं काटा जाता।
+
+| कोड | स्थिति | कब |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | एड्रेस पर आपके अकाउंट का कोई रुका हुआ या सक्रिय पैकेज नहीं है |
+| `PACKAGE_NOT_SETTLED` | `400` | एड्रेस पर कोई पैकेज अभी सक्रिय हो रहा है — बाद में पुनः प्रयास करें |
+| `SMART_MODE_ACTIVE` | `400` | एड्रेस पर Smart Mode सक्रिय है — पहले उसे बंद करें |
+| `ADDRESS_BUSY` | `409` | एड्रेस पर कोई दूसरा ऑपरेशन चल रहा है — एक मिनट बाद पुनः प्रयास करें |
+| `PROVIDER_UNAVAILABLE` | `503` | एड्रेस पर एनर्जी की डिलीवरी शुरू नहीं की जा सकी — एक मिनट बाद पुनः प्रयास करें |

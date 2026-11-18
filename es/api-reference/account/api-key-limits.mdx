@@ -7,7 +7,7 @@ description: "El límite de tasa de tu cuenta y cuántas claves API puede tener 
 ## Obtener límites de claves API
 
 Devuelve el límite de tasa que se aplica a tus solicitudes y el cupo de claves API de la cuenta,
-incluidos los endpoints de un plan de Node API. Los niveles del límite de tasa se describen en
+incluidos los endpoints de un plan de Node API, y la recarga que espera una nueva clave API. Los niveles del límite de tasa se describen en
 [Límites de tasa](/es/resources/rate-limits).
 
 Un endpoint de Node API también es una clave API: un plan de Node API suma su asignación de endpoints
@@ -55,7 +55,8 @@ Node API no puede llamar a este endpoint — la API REST la rechaza con `403 NOD
 </ResponseField>
 
 <ResponseField name="can_create" type="boolean">
-  `true` mientras `key_count` sea menor que `key_limit`
+  `true` mientras `key_count` sea menor que `key_limit`. No refleja la recarga que espera una nueva clave:
+  revisa también `deposit_missing_trx`
 </ResponseField>
 
 <ResponseField name="node_endpoint_limit" type="number">
@@ -65,6 +66,17 @@ Node API no puede llamar a este endpoint — la API REST la rechaza con `403 NOD
 
 <ResponseField name="node_endpoint_count" type="number">
   Claves que llevan `node_api` — los endpoints de Node API de la cuenta, incluidos los desactivados
+</ResponseField>
+
+<ResponseField name="deposit_required_trx" type="string">
+  Recargas, en TRX en total, tras las cuales la cuenta puede crear una clave API. Cuentan todas las
+  recargas acreditadas; una recarga en USDT cuenta por el importe en TRX con que se acreditó
+</ResponseField>
+
+<ResponseField name="deposit_missing_trx" type="string">
+  Cuánto falta recargar para poder crear una nueva clave API; `"0"` cuando se alcanzó el umbral o la
+  cuenta no está sujeta a él. Por debajo, crear una clave responde `403 API_KEY_DEPOSIT_REQUIRED`. Un
+  endpoint de Node API no lo espera
 </ResponseField>
 
 ### Ejemplo
@@ -86,6 +98,8 @@ curl https://api.tronrental.com/v1/auth/api-keys/limits \
   "custom_key_limit": null,
   "can_create": true,
   "node_endpoint_limit": 3,
-  "node_endpoint_count": 1
+  "node_endpoint_count": 1,
+  "deposit_required_trx": "100",
+  "deposit_missing_trx": "0"
 }
 ```

@@ -45,7 +45,7 @@ claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-c
 }
 ```
 
-`TRONRENTAL_API_KEY` 环境变量是可选的。如果未提供，代理可以通过 MCP 工具注册新账户并创建 API 密钥。代理会询问您的邮箱：TronRental 会向该邮箱发送 6 位验证码，只有在您把验证码提供给代理后，账户才会创建。
+`TRONRENTAL_API_KEY` 环境变量是可选的。如果未提供，代理可以通过 MCP 工具注册新账户，并使用该账户的登录令牌工作；账户累计充值达到 100 TRX 后才会发放 API 密钥。代理会询问您的邮箱：TronRental 会向该邮箱发送 6 位验证码，只有在您把验证码提供给代理后，账户才会创建。
 
 ## 可用工具
 
@@ -59,12 +59,12 @@ MCP 服务器提供 12 个工具：
 | `verify_email_code` | 无需 | 确认验证码并创建账户 |
 | `resend_email_code` | 无需 | 重新发送验证码（已过期或未收到） |
 | `login` | 无需 | 登录现有账户 |
-| `create_api_key` | 令牌 | 创建 API 密钥 |
-| `get_deposit_address` | API 密钥 | 获取 TRX 充值地址 |
-| `get_balance` | API 密钥 | 查询账户余额 |
-| `buy_energy` | API 密钥 | 为 TRON 地址购买能量 |
-| `get_order` | API 密钥 | 查询订单状态 |
-| `regenerate_deposit_address` | API 密钥 | 生成新的充值地址 |
+| `create_api_key` | 令牌 | 创建 API 密钥（累计充值 100 TRX 后） |
+| `get_deposit_address` | API 密钥或令牌 | 获取 TRX 充值地址 |
+| `get_balance` | API 密钥或令牌 | 查询账户余额 |
+| `buy_energy` | API 密钥或令牌 | 为 TRON 地址购买能量 |
+| `get_order` | API 密钥或令牌 | 查询订单状态 |
+| `regenerate_deposit_address` | API 密钥或令牌 | 生成新的充值地址 |
 
 ## 典型流程
 
@@ -75,14 +75,14 @@ MCP 服务器提供 12 个工具：
 3. `register` — 用户的真实邮箱和密码；系统向该邮箱发送 6 位验证码
 4. 用户在邮件中查看验证码并提供给代理
 5. `verify_email_code` — 创建账户并登录
-6. `create_api_key` — 生成 API 密钥
-7. `get_deposit_address` — 获取充值地址，用户发送 TRX
-8. `get_balance` — 确认充值到账
-9. `buy_energy` — 购买能量
-10. `get_order` — 确认委托
+6. `get_deposit_address` — 获取充值地址，用户发送 TRX 或 USDT
+7. `get_balance` — 确认充值到账
+8. `buy_energy` — 购买能量
+9. `get_order` — 确认委托
+10. `create_api_key` — 累计充值达到 100 TRX 后：密钥可在会话结束后保留访问权限（将其设置为 `TRONRENTAL_API_KEY`）
 
 <Note>
-  代理绝不会编造邮箱地址：没有来自真实邮箱的验证码，就不会创建账户。验证码有效期为 10 分钟；`resend_email_code` 会发送新的验证码（每小时最多 3 封邮件）。通过普通 HTTP 完成相同步骤的说明见[身份验证](/zh/authentication)。
+  代理绝不会编造邮箱地址：没有来自真实邮箱的验证码，就不会创建账户。验证码有效期为 10 分钟；`resend_email_code` 会发送新的验证码（每小时最多 3 封邮件）。在获得密钥之前，工具使用登录令牌；令牌有效期为 1 小时，之后代理会再次调用 `login`。累计充值不足 100 TRX 时，`create_api_key` 会告知还需充值多少。 通过普通 HTTP 完成相同步骤的说明见[身份验证](/zh/authentication)。
 </Note>
 
 ### 现有用户（已设置 API 密钥）

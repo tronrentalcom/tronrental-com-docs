@@ -6,8 +6,8 @@ description: "Hesap düzeyindeki hız sınırınız ve hesabın sahip olabilece�
 
 ## API Anahtarı Limitlerini Al
 
-İsteklerinize uygulanan hız sınırını ve hesabın API anahtarı kotasını, bir Node API planının uç
-noktaları dahil olmak üzere döndürür. Hız sınırı kademeleri [Hız Sınırları](/tr/resources/rate-limits)
+İsteklerinize uygulanan hız sınırını, hesabın API anahtarı kotasını (bir Node API planının uç
+noktaları dahil) ve yeni bir API anahtarının beklediği yüklemeyi döndürür. Hız sınırı kademeleri [Hız Sınırları](/tr/resources/rate-limits)
 sayfasında açıklanmıştır.
 
 Bir Node API uç noktası da bir API anahtarıdır: Node API planı, kendi uç nokta hakkını hesabın anahtar
@@ -54,7 +54,8 @@ noktayı çağıramaz — REST API ona `403 NODE_API_KEY_ONLY` ile yanıt verir.
 </ResponseField>
 
 <ResponseField name="can_create" type="boolean">
-  `key_count`, `key_limit` değerinin altında olduğu sürece `true`
+  `key_count`, `key_limit` değerinin altında olduğu sürece `true`. Yeni anahtarın beklediği yüklemeyi
+  yansıtmaz — `deposit_missing_trx` alanına da bakın
 </ResponseField>
 
 <ResponseField name="node_endpoint_limit" type="number">
@@ -64,6 +65,17 @@ noktayı çağıramaz — REST API ona `403 NODE_API_KEY_ONLY` ile yanıt verir.
 
 <ResponseField name="node_endpoint_count" type="number">
   `node_api` taşıyan anahtarlar — hesabın Node API uç noktaları, kapatılmış olanlar dahil
+</ResponseField>
+
+<ResponseField name="deposit_required_trx" type="string">
+  Hesabın API anahtarı oluşturabilmesi için gereken toplam yükleme, TRX cinsinden. Hesaba geçmiş tüm
+  yüklemeler sayılır; USDT yüklemesi hesaba geçtiği TRX tutarıyla sayılır
+</ResponseField>
+
+<ResponseField name="deposit_missing_trx" type="string">
+  Yeni bir API anahtarı oluşturmak için daha ne kadar yükleme gerektiği; eşik aşıldığında veya hesap
+  bu kurala tabi değilse `"0"`. Eşiğin altında anahtar oluşturma `403 API_KEY_DEPOSIT_REQUIRED` döner.
+  Node API uç noktası bunu beklemez
 </ResponseField>
 
 ### Örnek
@@ -85,6 +97,8 @@ curl https://api.tronrental.com/v1/auth/api-keys/limits \
   "custom_key_limit": null,
   "can_create": true,
   "node_endpoint_limit": 3,
-  "node_endpoint_count": 1
+  "node_endpoint_count": 1,
+  "deposit_required_trx": "100",
+  "deposit_missing_trx": "0"
 }
 ```

@@ -55,7 +55,7 @@ formato padrão ele é um objeto e, num erro de validação, um array.
 | `400` | Requisição inválida — parâmetros incorretos |
 | `401` | Não autorizado — chave de API ausente ou inválida |
 | `402` | Pagamento necessário — saldo da conta insuficiente |
-| `403` | Proibido — a chave não tem o escopo exigido, IP fora da lista permitida ou verificação necessária |
+| `403` | Proibido — a chave não tem o escopo exigido, IP fora da lista permitida, verificação necessária ou a conta não recarregou o suficiente para uma nova chave de API |
 | `404` | Não encontrado |
 | `409` | Conflito — requisição duplicada ou conflito de recurso |
 | `422` | Erro de validação — verifique o corpo da requisição |
@@ -73,6 +73,7 @@ Retornados no formato padrão, em `detail.error.code`:
 | `ACCOUNT_BLOCKED` | `403` | Acesso à API bloqueado para esta conta |
 | `FORBIDDEN` | `403` | A chave não tem o escopo exigido por este endpoint, ou o IP da requisição não está na lista permitida da chave |
 | `NODE_API_KEY_ONLY` | `403` | Uma chave do Node API foi enviada a esta API — ela funciona apenas em `node.tronrental.com` |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | Uma nova chave de API exige recargas de 100 TRX no total. Retornado ao criar uma chave e ao reativar uma chave desativada por esse motivo. `error.required_trx` é o limite, `error.missing_trx` o que falta recarregar (TRX, como strings) — veja [Autenticação](/pt/authentication) |
 | `INSUFFICIENT_BALANCE` | `402` | Saldo da conta insuficiente para esta operação |
 | `PRICE_CHANGED` | `409` | O pedido custa mais que o `max_price_trx` que você enviou. Nada foi cobrado — obtenha uma nova cotação e tente novamente |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | Esta Idempotency-Key já foi usada com outro corpo de requisição |
@@ -129,6 +130,26 @@ Retornados no formato padrão pelos endpoints de [Bandwidth automático](/pt/api
 | `AUTO_BW_CONTRACT_LIMIT` | `409` | A lista de tokens já tem 20 contratos |
 | `AUTO_BW_CONTRACT_IN_USE` | `409` | Há uma assinatura configurada para este contrato |
 | `AUTO_BW_DISABLED` | `503` | O Bandwidth automático está temporariamente desligado; retornado ao criar ou retomar uma assinatura e ao adicionar um contrato. Nada foi alterado — tente novamente mais tarde |
+
+## Códigos dos Pacotes de Transferência
+
+Retornados no formato padrão pelos endpoints de [Pacotes de Transferência](/pt/api-reference/transfer-packages/overview):
+
+| Código | Status | Descrição |
+|--------|--------|-------------|
+| `ADDRESS_PAUSED` | `400` | Compra de um pacote: seus pacotes neste endereço estão pausados — retome-os primeiro |
+| `PACKAGE_NOT_FOUND` | `404` | Pausa, retomada ou mudança: a conta não tem nenhum pacote no estado exigido no endereço |
+| `PACKAGE_NOT_SETTLED` | `400` | Pausa, retomada ou mudança: um pacote no endereço ainda está sendo ativado — tente novamente mais tarde |
+| `ADDRESS_SHARED` | `400` | Pausa ou mudança: outra conta tem um pacote ativo no endereço |
+| `SMART_MODE_ACTIVE` | `400` | Pausa, retomada ou mudança: o Smart Mode está ativo no endereço (na mudança — o antigo ou o novo) — desative-o primeiro |
+| `ADDRESS_BUSY` | `409` | Outra operação no endereço está em andamento — tente novamente em um minuto |
+| `PAUSE_BUSY` | `429` | Há pausas demais em andamento ao mesmo tempo — tente novamente em um minuto. Não é um limite de taxa |
+| `PROVIDER_UNAVAILABLE` | `503` | Pausa, retomada ou mudança: não foi possível alternar a entrega de energia ao endereço. Nada foi alterado — tente novamente em um minuto |
+| `SAME_ADDRESS` | `400` | Mudança: o novo endereço é o endereço dos pacotes |
+| `ADDRESS_NOT_ALLOWED` | `400` | Mudança: os pacotes não podem ser movidos para este endereço |
+| `ADDRESS_TAKEN` | `409` | Mudança: o novo endereço já tem pacotes de transferência. Se a mensagem diz que os pacotes continuam pausados no endereço antigo, a mudança parou depois da pausa — retome-os lá ou mova-os de novo |
+| `MOVE_AFTER_PAUSE` | `409` | Mudança: alguns pacotes só podem ser movidos 15 minutos depois de pausados — pause-os, espere 15 minutos e então mova |
+| `MOVED_PAUSED` | status da causa | Mudança: os pacotes estão no novo endereço, mas continuam pausados lá — retome-os com o novo endereço |
 
 ## Códigos de verificação de saque
 

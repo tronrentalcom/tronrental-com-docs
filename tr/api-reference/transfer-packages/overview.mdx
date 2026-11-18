@@ -12,7 +12,27 @@ Transfer Paketleri, on odemeli USDT transfer paketleridir. N adet transferlik bi
 1. Belirli bir TRON adresi icin **bir paket satin alin** (ornegin, 500 transfer)
 2. Her giden USDT transferi **otomatik olarak enerji alir**
 3. Her transferde paket sayaci azalir
-4. Paket tukendiginde izleme durur
+4. Aktif bir paket ayrica gunluk ucret olarak **her 24 saatte bir transfer** oder — ilki aktivasyonda, bu yuzden 500 transferlik bir paket 499 kalan transferle baslar. Tek transferde (`single_transfer: true`) gunluk ucret yoktur
+5. Paket tukendiginde izleme durur
+
+### Duraklatma
+
+Adres bir sure transfer gondermeyecekse, gunluk ucretin durmasi icin paketlerini [duraklatin](/tr/api-reference/transfer-packages/pause). Duraklatma, hesabinizin adresteki tum aktif paketlerini ayni anda kapsar.
+
+- Duraklatilmisken gunluk transfer dusulmez, adresten yapilan transferler enerji almaz ve sayilmaz, BW Garantisi geri cekilir. Kalan transferler sure siniri olmadan korunur.
+- Duraklatma istegi yaklasik 15 saniyede yanit verir ve yanittan itibaren gecerlidir; yanittan once gonderilen bir transfer yine sayilir.
+- Adrese yeniden ihtiyaciniz oldugunda [devam ettirin](/tr/api-reference/transfer-packages/resume). Odenmis 24 saat duraklatma sirasinda dolduysa hemen bir transfer dusulur ve sonraki 24 saat devam ettirme anindan itibaren sayilir; aksi halde hicbir sey dusulmez. Bir transferi kalan paketten devam ettirmede hicbir zaman dusum yapilmaz.
+- Duraklatmayi veya devam ettirmeyi tekrarlamak hicbir seyi degistirmez ve hicbir sey dusmez.
+- Bir adresteki paketleriniz duraklatilmisken o adres icin yeni paket satin alamazsiniz — once devam ettirin.
+
+### Yeni adrese tasima
+
+Transferleri gonderen cuzdan degisirse, paketlerini yeni adrese [tasiyin](/tr/api-reference/transfer-packages/move). Tasima, hesabinizin adresteki tum aktif ve duraklatilmis paketlerini kalan tum transferleriyle birlikte ayni anda kapsar.
+
+- Calisan paketler yeni adreste calismaya devam eder; duraklatilmis paketler orada da duraklatilmis kalir.
+- Tasima ucretsizdir ve sinir yoktur. Agda henuz etkinlestirilmemis yeni bir adres, satin almada oldugu gibi hesabinizin masrafiyla etkinlestirilir.
+- Yeni adreste hic transfer paketi ve aktif Akilli Mod olmamalidir.
+- Istek yaklasik 15 saniyede veya daha uzun surede yanit verir; yanittan sonra eski adresten yapilan transferler artik karsilanmaz.
 
 ### Fiyatlandirma
 
@@ -31,6 +51,7 @@ Transfer Paketleri, on odemeli USDT transfer paketleridir. N adet transferlik bi
 | Faturalandirma | On odemeli (tek seferlik) | Gunluk abonelik + transfer basina |
 | Sure | Transferler tukenene kadar | Surekli |
 | En uygun | Tahmin edilebilir hacim | Surekli kullanim |
+| Duraklatma | Evet — bir adresteki tum paketleriniz | Evet — abonelik bazinda |
 
 <Warning>
   Bir adres ayni anda hem aktif Transfer Paketine hem de Akilli Mod'a sahip olamaz.

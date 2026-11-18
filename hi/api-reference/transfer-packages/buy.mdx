@@ -53,6 +53,12 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/buy \
 }
 ```
 
+### त्रुटियाँ
+
+| कोड | स्थिति | कब |
+|------|--------|------|
+| `ADDRESS_PAUSED` | `400` | इस एड्रेस पर आपके पैकेज [रुके हुए](/hi/api-reference/transfer-packages/pause) हैं — पहले उन्हें फिर से शुरू करें। इनवॉइस से खरीद (`buy-invoice`) भी यही त्रुटि लौटाती है |
+
 <Info>
   आप `POST /api/v1/transfer-packages/buy-invoice` के माध्यम से इनवॉइस द्वारा भी भुगतान कर सकते हैं —
   यह TRX/USDT के लिए एक पेमेंट एड्रेस जनरेट करता है।

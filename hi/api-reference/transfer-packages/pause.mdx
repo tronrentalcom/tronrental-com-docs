@@ -1,0 +1,107 @@
+---
+title: पैकेज रोकें
+api: POST /v1/transfer-packages/pause
+description: "किसी एड्रेस पर अपने ट्रांसफर पैकेज रोकें"
+---
+
+## पैकेज रोकें
+
+**एड्रेस पर आपके अकाउंट के सभी सक्रिय पैकेज** एक साथ रोकता है। किसी एक पैकेज को अलग से नहीं रोका जा सकता।
+
+जब तक पैकेज रुके हुए हैं:
+
+- दैनिक ट्रांसफर नहीं काटा जाता;
+- एड्रेस से होने वाले ट्रांसफर को एनर्जी नहीं मिलती और वे गिने नहीं जाते;
+- एड्रेस से BW Guarantee हटा ली जाती है;
+- बचे हुए ट्रांसफर सुरक्षित रहते हैं, बिना किसी समय सीमा के।
+
+पैकेज तब तक रुके रहते हैं जब तक आप [पैकेज फिर से शुरू करें](/hi/api-reference/transfer-packages/resume) को कॉल नहीं करते — वे अपने आप फिर से शुरू नहीं होते।
+
+<Warning>
+  **कॉल का जवाब लगभग 15 सेकंड में आता है** — अपने क्लाइंट का टाइमआउट 30 सेकंड या उससे अधिक रखें। रोक उसी क्षण से लागू होती है जब आपको रिस्पॉन्स मिलता है। रिस्पॉन्स से पहले भेजा गया ट्रांसफर अब भी गिना जाता है, इसलिए एड्रेस को रुका हुआ मानने से पहले रिस्पॉन्स की प्रतीक्षा करें।
+</Warning>
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  वह TRON एड्रेस जिसके पैकेज रोकने हैं
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="address" type="string">
+  अनुरोध में दिया गया एड्रेस।
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  हमेशा `true`।
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  एड्रेस पर आपके रोके गए पैकेज — वही ऑब्जेक्ट जो [पैकेज सूची](/hi/api-reference/transfer-packages/list) में हैं, अब `status: "paused"` और `paused_at` के साथ।
+</ResponseField>
+
+पहले से रुके हुए एड्रेस के लिए इसे दोबारा कॉल करने पर कुछ नहीं बदलता और कुछ नहीं काटा जाता: आपको वही रुके हुए पैकेज वापस मिलते हैं।
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/pause \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": true,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "paused",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": "2026-11-17T14:30:15Z",
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### त्रुटियाँ
+
+[मानक रूप](/hi/errors) में, `detail.error.code` के अंतर्गत लौटाई जाती हैं। इनमें से किसी के भी बाद कुछ नहीं बदला होता: पैकेज पहले की तरह काम करते रहते हैं।
+
+| कोड | स्थिति | कब |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | एड्रेस पर आपके अकाउंट का कोई सक्रिय पैकेज नहीं है |
+| `PACKAGE_NOT_SETTLED` | `400` | एड्रेस पर कोई पैकेज अभी सक्रिय हो रहा है — बाद में पुनः प्रयास करें |
+| `ADDRESS_SHARED` | `400` | एड्रेस पर किसी दूसरे अकाउंट का सक्रिय पैकेज है |
+| `SMART_MODE_ACTIVE` | `400` | एड्रेस पर Smart Mode सक्रिय है — पहले उसे बंद करें |
+| `ADDRESS_BUSY` | `409` | एड्रेस पर कोई दूसरा ऑपरेशन चल रहा है — एक मिनट बाद पुनः प्रयास करें |
+| `PAUSE_BUSY` | `429` | एक साथ बहुत सारे पैकेज रोके जा रहे हैं — एक मिनट बाद पुनः प्रयास करें |
+| `PROVIDER_UNAVAILABLE` | `503` | एड्रेस पर एनर्जी की डिलीवरी रोकी नहीं जा सकी — एक मिनट बाद पुनः प्रयास करें |
+
+<Note>
+  जब तक किसी एड्रेस पर आपके पैकेज रुके हुए हैं, आप उस एड्रेस के लिए नया पैकेज नहीं खरीद सकते: खरीद `ADDRESS_PAUSED` के साथ अस्वीकार कर दी जाती है। पहले पैकेज फिर से शुरू करें।
+</Note>

@@ -9,7 +9,7 @@ description: "अपने खाते की घटनाओं की सू�
 
 ### घटनाएँ
 
-आज दस घटनाएँ मौजूद हैं।
+आज तेरह घटनाएँ मौजूद हैं।
 
 | घटना | कब भेजी जाती है |
 |-------|-----------|
@@ -23,6 +23,9 @@ description: "अपने खाते की घटनाओं की सू�
 | `package.completed` | Transfer Package ने ट्रांसफ़र की सेवा बंद कर दी |
 | `package.activated` | Transfer Package सक्रिय हुआ |
 | `package.expired` | बिना भुगतान वाले Transfer Package इनवॉइस की अवधि समाप्त हुई |
+| `package.paused` | Transfer Package रोका गया |
+| `package.resumed` | रोका गया Transfer Package फिर से सक्रिय हुआ |
+| `package.moved` | Transfer Package नए एड्रेस पर ले जाया गया |
 
 <Note>
   3 नवंबर 2026 से `order.updated` **खाते के हर ऑर्डर** के लिए भेजा जाता है; पहले यह केवल API कुंजी से बनाए गए ऑर्डर के लिए भेजा जाता था। चैनल `source` फ़ील्ड से पहचानें। [बैंडविड्थ रेंटल](/hi/api-reference/bandwidth-rentals/create-rental) घटनाएँ नहीं भेजते।
@@ -357,7 +360,7 @@ description: "अपने खाते की घटनाओं की सू�
 
 ### Transfer Package घटनाएँ
 
-चारों `package.*` घटनाएँ उस खाते को जाती हैं जो **पैकेज का मालिक** है। साइन इन किए बिना या API कुंजी के बिना इनवॉइस से खरीदे गए पैकेज का कोई मालिक नहीं होता, और उससे कोई घटना नहीं बनती। रद्द किए गए इनवॉइस, अस्वीकृत खरीद और मैन्युअल समीक्षा में रुकी खरीद से भी कोई घटना नहीं बनती; समीक्षा वाला पैकेज सक्रिय होने पर `package.activated` भेजता है।
+सातों `package.*` घटनाएँ उस खाते को जाती हैं जो **पैकेज का मालिक** है। साइन इन किए बिना या API कुंजी के बिना इनवॉइस से खरीदे गए पैकेज का कोई मालिक नहीं होता, और उससे कोई घटना नहीं बनती। रद्द किए गए इनवॉइस, अस्वीकृत खरीद और मैन्युअल समीक्षा में रुकी खरीद से भी कोई घटना नहीं बनती; समीक्षा वाला पैकेज सक्रिय होने पर `package.activated` भेजता है।
 
 हर `package.*` घटना के `data` में ये फ़ील्ड होते हैं:
 
@@ -370,7 +373,7 @@ description: "अपने खाते की घटनाओं की सू�
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  घटना के बाद पैकेज की स्थिति: `package.transfer` के लिए `active` या `completed`, `package.completed` के लिए `completed`, `package.activated` के लिए `active`, `package.expired` के लिए `expired`।
+  घटना के बाद पैकेज की स्थिति: `package.transfer` के लिए `active` या `completed`, `package.completed` के लिए `completed`, `package.activated` के लिए `active`, `package.expired` के लिए `expired`, `package.paused` के लिए `paused`, `package.resumed` के लिए `active`, `package.moved` के लिए `paused` या `active`।
 </ResponseField>
 
 <ResponseField name="quota_total" type="number">
@@ -389,7 +392,7 @@ description: "अपने खाते की घटनाओं की सू�
   `remaining` बिना किसी घटना के भी घट सकता है। कई ट्रांसफ़र वाला पैकेज दैनिक सदस्यता के रूप में दिन में एक ट्रांसफ़र लेता है — पहला सक्रिय होते समय, इसीलिए 500 ट्रांसफ़र वाला पैकेज `remaining: 499` से शुरू होता है — और इस कटौती की अलग सूचना नहीं आती। एक ही पते से एक ही ब्लॉक में हुए दो ट्रांसफ़र एक जैसा `remaining` बता सकते हैं। `remaining` को संकेत मानें और [पैकेज सूची](/hi/api-reference/transfer-packages/list) को सच्चाई का स्रोत।
 </Note>
 
-दोबारा भेजी गई घटना पहचानने के लिए `package.transfer` में `(package_id, tx_hash)` और बाकी में `(event, package_id)` का उपयोग करें: दोबारा भेजी गई घटना में वही बॉडी, वही `timestamp` और वही हस्ताक्षर होते हैं।
+दोबारा भेजी गई घटना पहचानने के लिए `package.transfer` में `(package_id, tx_hash)`, `package.paused`, `package.resumed` और `package.moved` में `(event, package_id, timestamp)` — पैकेज कई बार रोका, फिर से शुरू किया और दूसरे एड्रेस पर ले जाया जा सकता है — और बाकी में `(event, package_id)` का उपयोग करें: दोबारा भेजी गई घटना में वही बॉडी, वही `timestamp` और वही हस्ताक्षर होते हैं।
 
 #### `package.transfer`
 
@@ -492,6 +495,69 @@ description: "अपने खाते की घटनाओं की सू�
 }
 ```
 
+#### `package.paused`
+
+पैकेज [पैकेज रोकें](/hi/api-reference/transfer-packages/pause) से रोका गया: अब से यह दैनिक ट्रांसफ़र नहीं काटता और पते से हुए ट्रांसफ़र की न सेवा होती है, न गिनती। कॉल ने जितने पैकेज रोके, हर एक के लिए एक बार भेजी जाती है; जिस दोहराई गई कॉल ने कुछ नहीं रोका, वह कुछ नहीं भेजती। कोई अतिरिक्त फ़ील्ड नहीं।
+
+```json Response
+{
+  "event": "package.paused",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310
+  },
+  "timestamp": "2026-11-17T14:30:15.986341+00:00"
+}
+```
+
+#### `package.resumed`
+
+[पैकेज फिर से शुरू करें](/hi/api-reference/transfer-packages/resume) के बाद पैकेज फिर से सक्रिय है। कॉल ने जितने पैकेज फिर से शुरू किए, हर एक के लिए एक बार भेजी जाती है। कोई अतिरिक्त फ़ील्ड नहीं। यदि फिर से शुरू करने पर दैनिक ट्रांसफ़र काटा गया, तो `remaining` रोक से पहले की तुलना में एक कम होता है।
+
+```json Response
+{
+  "event": "package.resumed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 309
+  },
+  "timestamp": "2026-11-20T09:12:40.986341+00:00"
+}
+```
+
+`package.paused` और उसके बाद वाली `package.resumed` किसी भी क्रम में आ सकती हैं — लिफ़ाफ़े के `timestamp` की तुलना करें, या मौजूदा स्थिति [पैकेज सूची](/hi/api-reference/transfer-packages/list) से पढ़ें।
+
+#### `package.moved`
+
+[पैकेज दूसरे एड्रेस पर ले जाएँ](/hi/api-reference/transfer-packages/move) के बाद पैकेज नए एड्रेस पर ले जाया गया। कॉल ने जितने पैकेज ले जाए, हर एक के लिए एक बार भेजी जाती है। `address` नया एड्रेस है; एक अतिरिक्त फ़ील्ड:
+
+<ResponseField name="previous_address" type="string">
+  वह एड्रेस जहाँ से पैकेज ले जाया गया।
+</ResponseField>
+
+```json Response
+{
+  "event": "package.moved",
+  "data": {
+    "package_id": 318,
+    "address": "TYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310,
+    "previous_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "timestamp": "2026-11-17T16:05:20.986341+00:00"
+}
+```
+
+चल रहे पैकेज को ले जाने पर पुराने एड्रेस के साथ `package.paused`, फिर `package.moved`, फिर नए एड्रेस के साथ `package.resumed` भेजी जाती है; रोके गए पैकेज को ले जाने पर केवल `package.moved` भेजी जाती है। `status` घटना भेजते समय पढ़ा जाता है: चल रहे पैकेज को ले जाने के दौरान वह आमतौर पर `paused` होता है, और पहले से `active` भी हो सकता है। `package.resumed` बताती है कि पैकेज नए एड्रेस पर काम कर रहा है।
+
 ### डिलीवरी
 
 - अधिकतम **3 प्रयास**, बीच में **1 सेकंड** और फिर **4 सेकंड** का ठहराव। सफलता के बाद और अंतिम प्रयास के बाद कोई ठहराव नहीं।
@@ -545,4 +611,3 @@ function verifyWebhook(rawBody, signatureHeader, secret) {
 <Warning>
   सामग्री पर कार्रवाई करने से पहले हस्ताक्षर जाँचें, और स्थिर समय में तुलना करें (`hmac.compare_digest` / `crypto.timingSafeEqual`)। `==` से तुलना समय के ज़रिए जानकारी लीक करती है।
 </Warning>
-

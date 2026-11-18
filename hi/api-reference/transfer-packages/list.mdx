@@ -10,7 +10,7 @@ description: "अपने ट्रांसफर पैकेज की स�
 
 ### रिस्पॉन्स
 
-पैकेज ऑब्जेक्ट्स का ऐरे। मुख्य फ़ील्ड: `id`, `address`, `package_size`, `quota_total` (पैकेज में ट्रांसफ़र), `quota_used` (सेवा दिए गए ट्रांसफ़र), `subscription_used` (दैनिक सब्सक्रिप्शन शुल्क द्वारा लिए गए ट्रांसफ़र, प्रति दिन एक), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `created_at`।
+पैकेज ऑब्जेक्ट्स का ऐरे। मुख्य फ़ील्ड: `id`, `address`, `package_size`, `quota_total` (पैकेज में ट्रांसफ़र), `quota_used` (सेवा दिए गए ट्रांसफ़र), `subscription_used` (दैनिक सब्सक्रिप्शन शुल्क द्वारा लिए गए ट्रांसफ़र, प्रति दिन एक), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (पैकेज कब रोका गया; जब तक `status` `paused` न हो, `null`), `created_at`।
 
 ### पैकेज स्टेटस
 
@@ -19,6 +19,7 @@ description: "अपने ट्रांसफर पैकेज की स�
 | `pending_payment` | इनवॉइस भुगतान की प्रतीक्षा |
 | `provisioning` | बैलेंस से भुगतान हो गया, सक्रियण जारी है |
 | `active` | एड्रेस मॉनिटर हो रहा है, ट्रांसफर उपलब्ध |
+| `paused` | आपके द्वारा [रोका गया](/hi/api-reference/transfer-packages/pause): कोई दैनिक शुल्क नहीं, ट्रांसफर की न सेवा होती है न गिनती, बचे हुए ट्रांसफर सुरक्षित रहते हैं |
 | `completed` | सभी ट्रांसफर उपयोग हो चुके |
 | `cancelled` | उपयोगकर्ता द्वारा रद्द |
 | `expired` | इनवॉइस समय पर भुगतान नहीं हुआ |
@@ -44,6 +45,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "remaining": 312,
     "bw_guarantee": true,
     "status": "active",
+    "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"
   }
 ]

@@ -1,0 +1,104 @@
+---
+title: Resume Packages
+api: POST /v1/transfer-packages/resume
+description: "Resume your paused transfer packages on an address"
+---
+
+## Resume Packages
+
+Resumes **every paused package of your account on the address**. Transfers from the address get energy and are counted again, and BW Guarantee comes back for the packages that have it.
+
+### What a resume charges
+
+A package pays one transfer for every 24 hours it is active. The 24 hours already paid for keep running while the package is paused — a pause does not stop that clock.
+
+| When you resume | What is charged |
+|-----------------|-----------------|
+| The paid 24 hours have not run out yet | Nothing. The next daily transfer is charged at the time already set in `next_subscription_at` |
+| The paid 24 hours ran out during the pause | One transfer, at once. The next 24 hours count from the moment of the resume |
+| The package has one transfer left | Nothing — the last transfer stays yours |
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  TRON address whose packages to resume
+</ParamField>
+
+### Response
+
+<ResponseField name="address" type="string">
+  The address from the request.
+</ResponseField>
+
+<ResponseField name="paused" type="boolean">
+  Always `false`.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Your packages on the address that are active again — the same objects as in [List Packages](/api-reference/transfer-packages/list). `paused_at` is `null`.
+</ResponseField>
+
+Calling it again when nothing is paused changes nothing and charges nothing: you get your active packages on the address back.
+
+<Note>
+  Energy can reach the address a few seconds after the response. Allow a short pause before you send the first transfer.
+</Note>
+
+### Example
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/resume \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+Here the paid 24 hours ran out during the pause, so the resume charged one transfer: `subscription_used` went from `3` to `4`, `remaining` from `310` to `309`.
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "paused": false,
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 4,
+      "remaining": 309,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-21T09:12:40Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Errors
+
+Returned in the [standard shape](/errors), under `detail.error.code`. After any of them the packages stay paused and nothing is charged.
+
+| Code | Status | When |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | Your account has no paused or active package on the address |
+| `PACKAGE_NOT_SETTLED` | `400` | A package on the address is still being activated — try again later |
+| `SMART_MODE_ACTIVE` | `400` | Smart Mode is active on the address — turn it off first |
+| `ADDRESS_BUSY` | `409` | Another operation on the address is in progress — try again in a minute |
+| `PROVIDER_UNAVAILABLE` | `503` | Energy delivery to the address could not be started — try again in a minute |

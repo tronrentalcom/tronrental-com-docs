@@ -9,7 +9,7 @@ description: "Получайте уведомления о событиях ак
 
 ### События
 
-Сегодня существует десять событий.
+Сегодня существует тринадцать событий.
 
 | Событие | Когда отправляется |
 |-------|-----------|
@@ -23,6 +23,9 @@ description: "Получайте уведомления о событиях ак
 | `package.completed` | Transfer Package перестал обслуживать переводы |
 | `package.activated` | Transfer Package стал активным |
 | `package.expired` | Истёк неоплаченный инвойс Transfer Package |
+| `package.paused` | Transfer Package приостановлен |
+| `package.resumed` | Приостановленный Transfer Package снова активен |
+| `package.moved` | Transfer Package перенесён на новый адрес |
 
 <Note>
   С 3 ноября 2026 года `order.updated` приходит **по каждому заказу аккаунта**; раньше — только по заказам, созданным с API-ключом. Канал заказа различайте по полю `source`. [Аренды bandwidth](/ru/api-reference/bandwidth-rentals/create-rental) событий не отправляют.
@@ -357,7 +360,7 @@ description: "Получайте уведомления о событиях ак
 
 ### События Transfer Package
 
-Четыре события `package.*` уходят аккаунту, которому **принадлежит пакет**. У пакета, купленного по инвойсу без входа в аккаунт и без API-ключа, владельца нет, и событий по нему не будет. Не будет их и по отменённым инвойсам, отклонённым покупкам и покупкам на ручной проверке; пакет с проверки пришлёт `package.activated`, когда будет активирован.
+Семь событий `package.*` уходят аккаунту, которому **принадлежит пакет**. У пакета, купленного по инвойсу без входа в аккаунт и без API-ключа, владельца нет, и событий по нему не будет. Не будет их и по отменённым инвойсам, отклонённым покупкам и покупкам на ручной проверке; пакет с проверки пришлёт `package.activated`, когда будет активирован.
 
 Каждое событие `package.*` несёт в `data` эти поля:
 
@@ -370,7 +373,7 @@ description: "Получайте уведомления о событиях ак
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Статус пакета после события: `active` или `completed` у `package.transfer`, `completed` у `package.completed`, `active` у `package.activated`, `expired` у `package.expired`.
+  Статус пакета после события: `active` или `completed` у `package.transfer`, `completed` у `package.completed`, `active` у `package.activated`, `expired` у `package.expired`, `paused` у `package.paused`, `active` у `package.resumed`, `paused` или `active` у `package.moved`.
 </ResponseField>
 
 <ResponseField name="quota_total" type="number">
@@ -389,7 +392,7 @@ description: "Получайте уведомления о событиях ак
   `remaining` может уменьшиться и без события. Пакет на несколько переводов списывает один перевод в сутки как суточную подписку — первый при активации, поэтому пакет на 500 переводов начинается с `remaining: 499`, — и об этом списании событие не приходит. Два перевода с одного адреса в одном блоке могут прислать одинаковый `remaining`. Считайте `remaining` подсказкой, а источником правды — [Список пакетов](/ru/api-reference/transfer-packages/list).
 </Note>
 
-Чтобы распознать повтор, используйте `(package_id, tx_hash)` для `package.transfer` и `(event, package_id)` для остальных: повтор приходит с тем же телом, тем же `timestamp` и той же подписью.
+Чтобы распознать повтор, используйте `(package_id, tx_hash)` для `package.transfer`, `(event, package_id, timestamp)` для `package.paused`, `package.resumed` и `package.moved` — пакет можно приостанавливать, возобновлять и переносить много раз — и `(event, package_id)` для остальных: повтор приходит с тем же телом, тем же `timestamp` и той же подписью.
 
 #### `package.transfer`
 
@@ -492,6 +495,69 @@ description: "Получайте уведомления о событиях ак
 }
 ```
 
+#### `package.paused`
+
+Пакет приостановлен через [Приостановить пакеты](/ru/api-reference/transfer-packages/pause): с этого момента суточный перевод с него не списывается, а переводы с адреса не обслуживаются и не учитываются. Отправляется по одному разу на каждый пакет, приостановленный вызовом; повторный вызов, который ничего не приостановил, ничего не отправляет. Дополнительных полей нет.
+
+```json Response
+{
+  "event": "package.paused",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310
+  },
+  "timestamp": "2026-11-17T14:30:15.986341+00:00"
+}
+```
+
+#### `package.resumed`
+
+Пакет снова активен после [Возобновить пакеты](/ru/api-reference/transfer-packages/resume). Отправляется по одному разу на каждый пакет, возобновлённый вызовом. Дополнительных полей нет. `remaining` на единицу меньше, чем до паузы, если при возобновлении списан суточный перевод.
+
+```json Response
+{
+  "event": "package.resumed",
+  "data": {
+    "package_id": 318,
+    "address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "active",
+    "quota_total": 500,
+    "remaining": 309
+  },
+  "timestamp": "2026-11-20T09:12:40.986341+00:00"
+}
+```
+
+`package.paused` и следующее за ним `package.resumed` могут прийти в любом порядке — сравнивайте `timestamp` конверта или читайте текущее состояние из [Списка пакетов](/ru/api-reference/transfer-packages/list).
+
+#### `package.moved`
+
+Пакет перенесён на новый адрес через [Перенести пакеты](/ru/api-reference/transfer-packages/move). Отправляется по одному разу на каждый пакет, перенесённый вызовом. `address` — новый адрес; одно дополнительное поле:
+
+<ResponseField name="previous_address" type="string">
+  Адрес, с которого пакет перенесён.
+</ResponseField>
+
+```json Response
+{
+  "event": "package.moved",
+  "data": {
+    "package_id": 318,
+    "address": "TYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310,
+    "previous_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "timestamp": "2026-11-17T16:05:20.986341+00:00"
+}
+```
+
+Перенос работающего пакета отправляет `package.paused` со старым адресом, затем `package.moved`, затем `package.resumed` с новым адресом; перенос приостановленного пакета отправляет только `package.moved`. `status` читается в момент отправки события: при переносе работающего пакета он обычно `paused`, но может быть уже `active`. О том, что пакет работает на новом адресе, сообщает `package.resumed`.
+
 ### Доставка
 
 - До **3 попыток**, с паузами **1 секунда** и затем **4 секунды** между ними. После успеха и после последней попытки пауз нет.
@@ -545,4 +611,3 @@ function verifyWebhook(rawBody, signatureHeader, secret) {
 <Warning>
   Проверяйте подпись до того, как действовать по содержимому, и сравнивайте за постоянное время (`hmac.compare_digest` / `crypto.timingSafeEqual`). Сравнение через `==` утекает по таймингу.
 </Warning>
-

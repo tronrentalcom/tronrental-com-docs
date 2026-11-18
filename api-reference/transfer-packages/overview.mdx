@@ -12,7 +12,27 @@ Transfer Packages are prepaid bundles of USDT transfers. Buy a package of N tran
 1. **Buy a package** for a specific TRON address (e.g., 500 transfers)
 2. Each outgoing USDT transfer **automatically gets energy**
 3. Package counter decrements with each transfer
-4. When the package is exhausted, monitoring stops
+4. An active package also pays **one transfer every 24 hours** as a daily fee — the first one at activation, so a 500-transfer package starts with 499 left. A single transfer (`single_transfer: true`) has no daily fee
+5. When the package is exhausted, monitoring stops
+
+### Pause
+
+If the address will not send transfers for a while, [pause](/api-reference/transfer-packages/pause) its packages so the daily fee stops. A pause covers every active package of your account on the address at once.
+
+- While paused, the daily transfer is not charged, transfers from the address get no energy and are not counted, and BW Guarantee is withdrawn. The remaining transfers are kept with no time limit.
+- The pause request answers in about 15 seconds and is in force from the response; a transfer sent before the response is still counted.
+- [Resume](/api-reference/transfer-packages/resume) when you need the address again. If the paid 24 hours ran out during the pause, one transfer is charged at once and the next 24 hours count from the resume; otherwise nothing is charged. A package with one transfer left is never charged on resume.
+- Repeating a pause or a resume changes nothing and charges nothing.
+- While your packages on an address are paused, you cannot buy a new package for that address — resume first.
+
+### Move to a new address
+
+If the wallet that sends the transfers changes, [move](/api-reference/transfer-packages/move) its packages to the new address. A move covers every active and paused package of your account on the address at once, with all their remaining transfers.
+
+- Working packages keep working on the new address; paused packages stay paused there.
+- The move is free and has no limit. A new address that is not activated on the network yet is activated at your account's cost, as on a purchase.
+- The new address must have no transfer packages and no active Smart Mode.
+- The request answers in about 15 seconds or more; transfers from the old address are no longer served after the response.
 
 ### Pricing
 
@@ -31,6 +51,7 @@ Transfer Packages are prepaid bundles of USDT transfers. Buy a package of N tran
 | Billing | Prepaid (one-time) | Daily subscription + per-transfer |
 | Duration | Until transfers used | Ongoing |
 | Best for | Predictable volume | Continuous usage |
+| Pause | Yes — all your packages on an address | Yes — per subscription |
 
 <Warning>
   An address cannot have both an active Transfer Package and Smart Mode at the same time.
