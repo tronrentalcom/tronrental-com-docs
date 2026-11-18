@@ -9,7 +9,7 @@ description: "实时接收账户事件通知"
 
 ### 事件
 
-目前共有十二个事件。
+目前共有十三个事件。
 
 | 事件 | 触发时机 |
 |-------|-----------|
@@ -25,6 +25,7 @@ description: "实时接收账户事件通知"
 | `package.expired` | 未支付的 Transfer Package 账单过期时 |
 | `package.paused` | Transfer Package 被暂停时 |
 | `package.resumed` | 已暂停的 Transfer Package 重新激活时 |
+| `package.moved` | Transfer Package 被迁移到新地址时 |
 
 <Note>
   自 2026 年 11 月 3 日起，`order.updated` 覆盖**账户的每一个订单**；此前只发送给用 API 密钥创建的订单。请用 `source` 字段区分渠道。[带宽租赁](/zh/api-reference/bandwidth-rentals/create-rental)不发送事件。
@@ -359,7 +360,7 @@ description: "实时接收账户事件通知"
 
 ### Transfer Package 事件
 
-六个 `package.*` 事件发送给**拥有该套餐**的账户。未登录、也未使用 API 密钥而通过账单购买的套餐没有所有者，不会产生事件。已取消的账单、被拒绝的购买以及处于人工审核中的购买也不会产生事件；审核中的套餐在激活时发送 `package.activated`。
+七个 `package.*` 事件发送给**拥有该套餐**的账户。未登录、也未使用 API 密钥而通过账单购买的套餐没有所有者，不会产生事件。已取消的账单、被拒绝的购买以及处于人工审核中的购买也不会产生事件；审核中的套餐在激活时发送 `package.activated`。
 
 每个 `package.*` 事件的 `data` 中都包含以下字段：
 
@@ -372,7 +373,7 @@ description: "实时接收账户事件通知"
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  事件发生后的套餐状态：`package.transfer` 为 `active` 或 `completed`，`package.completed` 为 `completed`，`package.activated` 为 `active`，`package.expired` 为 `expired`，`package.paused` 为 `paused`，`package.resumed` 为 `active`。
+  事件发生后的套餐状态：`package.transfer` 为 `active` 或 `completed`，`package.completed` 为 `completed`，`package.activated` 为 `active`，`package.expired` 为 `expired`，`package.paused` 为 `paused`，`package.resumed` 为 `active`，`package.moved` 为 `paused` 或 `active`。
 </ResponseField>
 
 <ResponseField name="quota_total" type="number">
@@ -391,7 +392,7 @@ description: "实时接收账户事件通知"
   `remaining` 也可能在没有事件的情况下减少。多次转账套餐每天扣除一次转账作为每日订阅——第一次在激活时扣除，因此 500 次转账的套餐从 `remaining: 499` 开始——这笔扣除不会单独通知。同一地址在同一区块中的两笔转账可能报告相同的 `remaining`。请把 `remaining` 当作参考，把[套餐列表](/zh/api-reference/transfer-packages/list)当作准确来源。
 </Note>
 
-识别重发时，`package.transfer` 请使用 `(package_id, tx_hash)`，`package.paused` 和 `package.resumed` 使用 `(event, package_id, timestamp)`——一个套餐可以多次暂停和恢复——其他事件使用 `(event, package_id)`：重发的请求体、`timestamp` 和签名都相同。
+识别重发时，`package.transfer` 请使用 `(package_id, tx_hash)`，`package.paused`、`package.resumed` 和 `package.moved` 使用 `(event, package_id, timestamp)`——一个套餐可以多次暂停、恢复和迁移——其他事件使用 `(event, package_id)`：重发的请求体、`timestamp` 和签名都相同。
 
 #### `package.transfer`
 
@@ -531,6 +532,31 @@ description: "实时接收账户事件通知"
 ```
 
 `package.paused` 与其后的 `package.resumed` 可能以任意顺序到达——请比较信封中的 `timestamp`，或从[套餐列表](/zh/api-reference/transfer-packages/list)读取当前状态。
+
+#### `package.moved`
+
+套餐已通过[迁移套餐](/zh/api-reference/transfer-packages/move)迁移到新地址。该调用迁移的每个套餐各发送一次。`address` 为新地址；多一个字段：
+
+<ResponseField name="previous_address" type="string">
+  套餐迁出的地址。
+</ResponseField>
+
+```json Response
+{
+  "event": "package.moved",
+  "data": {
+    "package_id": 318,
+    "address": "TYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310,
+    "previous_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "timestamp": "2026-11-17T16:05:20.986341+00:00"
+}
+```
+
+迁移正在工作的套餐时，会依次发送带旧地址的 `package.paused`、`package.moved`、带新地址的 `package.resumed`；迁移已暂停的套餐只发送 `package.moved`。`status` 在发送事件时读取：迁移正在工作的套餐时通常为 `paused`，也可能已经是 `active`。`package.resumed` 表示套餐已在新地址上工作。
 
 ### 投递
 

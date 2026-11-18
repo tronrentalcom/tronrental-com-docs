@@ -9,7 +9,7 @@ Hesabınızın **tek bir webhook URL'si** vardır ve tüm olaylar oraya gider. [
 
 ### Olaylar
 
-Bugün on iki olay mevcut.
+Bugün on üç olay mevcut.
 
 | Olay | Ne zaman gönderilir |
 |-------|-----------|
@@ -25,6 +25,7 @@ Bugün on iki olay mevcut.
 | `package.expired` | Ödenmemiş bir Transfer Package faturasının süresi dolduğunda |
 | `package.paused` | Bir Transfer Package duraklatıldığında |
 | `package.resumed` | Duraklatılmış bir Transfer Package yeniden aktif olduğunda |
+| `package.moved` | Bir Transfer Package yeni bir adrese taşındığında |
 
 <Note>
   3 Kasım 2026'dan beri `order.updated` **hesabın her siparişi** için gönderilir; önceden yalnızca API anahtarıyla oluşturulan siparişler için gönderiliyordu. Kanalları `source` alanından ayırt edin. [Bant genişliği kiralamaları](/tr/api-reference/bandwidth-rentals/create-rental) olay göndermez.
@@ -359,7 +360,7 @@ Bir fatura, web sitesinde oturum açmışken oluşturduysanız hesabınıza aitt
 
 ### Transfer Package olayları
 
-Altı `package.*` olayı **paketin sahibi olan** hesaba gönderilir. Oturum açmadan veya API anahtarı olmadan faturayla satın alınan bir paketin sahibi yoktur ve olay üretmez. İptal edilen faturalar, reddedilen satın almalar ve manuel incelemedeki satın almalar da olay üretmez; incelemedeki bir paket etkinleştirildiğinde `package.activated` gönderir.
+Yedi `package.*` olayı **paketin sahibi olan** hesaba gönderilir. Oturum açmadan veya API anahtarı olmadan faturayla satın alınan bir paketin sahibi yoktur ve olay üretmez. İptal edilen faturalar, reddedilen satın almalar ve manuel incelemedeki satın almalar da olay üretmez; incelemedeki bir paket etkinleştirildiğinde `package.activated` gönderir.
 
 Her `package.*` olayı `data` içinde şu alanları taşır:
 
@@ -372,7 +373,7 @@ Her `package.*` olayı `data` içinde şu alanları taşır:
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Olaydan sonraki paket durumu: `package.transfer` için `active` veya `completed`, `package.completed` için `completed`, `package.activated` için `active`, `package.expired` için `expired`, `package.paused` için `paused`, `package.resumed` için `active`.
+  Olaydan sonraki paket durumu: `package.transfer` için `active` veya `completed`, `package.completed` için `completed`, `package.activated` için `active`, `package.expired` için `expired`, `package.paused` için `paused`, `package.resumed` için `active`, `package.moved` için `paused` veya `active`.
 </ResponseField>
 
 <ResponseField name="quota_total" type="number">
@@ -391,7 +392,7 @@ Her `package.*` olayı `data` içinde şu alanları taşır:
   `remaining` olay olmadan da azalabilir. Çok transferli bir paket, günlük abonelik olarak günde bir transfer düşer — ilki etkinleştirmede, bu yüzden 500 transferlik bir paket `remaining: 499` ile başlar — ve bu kesinti bildirilmez. Aynı adresten aynı blokta yapılan iki transfer aynı `remaining` değerini bildirebilir. `remaining` değerini bir ipucu, [Paketleri Listele](/tr/api-reference/transfer-packages/list) yanıtını ise doğruluk kaynağı olarak kabul edin.
 </Note>
 
-Bir yeniden denemeyi tanımak için `package.transfer` olayında `(package_id, tx_hash)`, `package.paused` ve `package.resumed` olaylarında `(event, package_id, timestamp)` — bir paket birçok kez duraklatılıp devam ettirilebilir — diğerlerinde ise `(event, package_id)` kullanın: yeniden deneme aynı gövdeyi, aynı `timestamp` değerini ve aynı imzayı taşır.
+Bir yeniden denemeyi tanımak için `package.transfer` olayında `(package_id, tx_hash)`, `package.paused`, `package.resumed` ve `package.moved` olaylarında `(event, package_id, timestamp)` — bir paket birçok kez duraklatılıp devam ettirilebilir ve taşınabilir — diğerlerinde ise `(event, package_id)` kullanın: yeniden deneme aynı gövdeyi, aynı `timestamp` değerini ve aynı imzayı taşır.
 
 #### `package.transfer`
 
@@ -531,6 +532,31 @@ Paket [Paketleri Devam Ettir](/tr/api-reference/transfer-packages/resume) sonras
 ```
 
 Bir `package.paused` ile ondan sonraki `package.resumed` her iki sırada da gelebilir — zarftaki `timestamp` değerlerini karşılaştırın veya güncel durumu [Paketleri Listele](/tr/api-reference/transfer-packages/list) ile okuyun.
+
+#### `package.moved`
+
+Paket [Paketleri Taşı](/tr/api-reference/transfer-packages/move) ile yeni bir adrese taşındı. Çağrının taşıdığı her paket için bir kez gönderilir. `address` yeni adrestir; bir ek alan vardır:
+
+<ResponseField name="previous_address" type="string">
+  Paketin taşındığı önceki adres.
+</ResponseField>
+
+```json Response
+{
+  "event": "package.moved",
+  "data": {
+    "package_id": 318,
+    "address": "TYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+    "status": "paused",
+    "quota_total": 500,
+    "remaining": 310,
+    "previous_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "timestamp": "2026-11-17T16:05:20.986341+00:00"
+}
+```
+
+Çalışan bir paketin taşınması, eski adresle `package.paused`, ardından `package.moved`, sonra yeni adresle `package.resumed` gönderir; duraklatılmış bir paketin taşınması yalnızca `package.moved` gönderir. `status` olay gönderilirken okunur: çalışan bir paketin taşınması sırasında genellikle `paused` olur ve zaten `active` da olabilir. `package.resumed`, paketin yeni adreste çalıştığını bildirir.
 
 ### Teslimat
 

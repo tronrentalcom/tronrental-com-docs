@@ -25,6 +25,15 @@ Si la dirección no va a enviar transferencias durante un tiempo, [pausa](/es/ap
 - Repetir una pausa o una reanudación no cambia nada ni cobra nada.
 - Mientras tus paquetes en una dirección están en pausa, no puedes comprar un paquete nuevo para esa dirección: reanúdalos primero.
 
+### Mover a una nueva dirección
+
+Si cambia la billetera que envía las transferencias, [mueve](/es/api-reference/transfer-packages/move) sus paquetes a la nueva dirección. Un movimiento abarca de una vez todos los paquetes activos y pausados de tu cuenta en la dirección, con todas sus transferencias restantes.
+
+- Los paquetes que estaban funcionando siguen funcionando en la nueva dirección; los pausados siguen pausados allí.
+- El movimiento es gratuito y sin límite. Una nueva dirección que aún no está activada en la red se activa a cargo de tu cuenta, como en una compra.
+- La nueva dirección no debe tener paquetes de transferencias ni Smart Mode activo.
+- La solicitud responde en unos 15 segundos o más; las transferencias desde la dirección anterior dejan de atenderse tras la respuesta.
+
 ### Precios
 
 | Tamano del paquete | Precio por transferencia |

@@ -1,0 +1,143 @@
+---
+title: Mover Pacotes
+api: POST /v1/transfer-packages/move
+description: "Mova seus pacotes de transferência para um novo endereço TRON"
+---
+
+## Mover Pacotes
+
+Move **todos os pacotes ativos e pausados da sua conta no endereço** para um novo endereço, com todas as transferências restantes. Um único pacote não pode ser movido separadamente. Use quando a carteira que envia as transferências mudar.
+
+- Os pacotes que estavam funcionando continuam funcionando no novo endereço. Os pacotes pausados continuam pausados lá — [retome-os](/pt/api-reference/transfer-packages/resume) com o novo endereço quando precisar.
+- As 24 horas pagas continuam correndo durante a mudança, como numa [pausa](/pt/api-reference/transfer-packages/pause). Se elas tiverem acabado quando os pacotes começarem no novo endereço, uma transferência é cobrada na hora; caso contrário, nada é cobrado.
+- A mudança em si é gratuita, e não há limite de quantas vezes você pode mover.
+- Se o novo endereço ainda não estiver ativado na rede TRON, ele é ativado por conta da sua conta, como numa [compra](/pt/api-reference/transfer-packages/buy).
+- As transferências do endereço antigo deixam de ser atendidas e contadas depois da resposta.
+
+O novo endereço deve ter **nenhum pacote de transferência** de nenhuma conta e **nenhum Smart Mode ativo**.
+
+<Warning>
+  **A chamada responde em cerca de 15 segundos ou mais** — defina o tempo limite do seu cliente em 60 segundos. A entrega ao endereço antigo é interrompida primeiro, e as transferências já enviadas dele são contadas. Uma transferência do endereço antigo depois da resposta não recebe energia. Espere a resposta antes de trocar a carteira.
+</Warning>
+
+### Corpo da requisição
+
+<ParamField body="address" type="string" required>
+  Endereço TRON em que os pacotes estão agora
+</ParamField>
+
+<ParamField body="new_address" type="string" required>
+  Endereço TRON para o qual mover os pacotes. Deve ser diferente de `address` e não pode ser um contrato inteligente
+</ParamField>
+
+### Resposta
+
+<ResponseField name="address" type="string">
+  O novo endereço — onde os pacotes estão agora.
+</ResponseField>
+
+<ResponseField name="previous_address" type="string">
+  O endereço de onde os pacotes foram movidos.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Os pacotes movidos — os mesmos objetos de [Listar Pacotes](/pt/api-reference/transfer-packages/list), com `address` definido como o novo endereço. `status` é `active` para os pacotes que estavam funcionando (`paused_at` é `null`) e `paused` para os que estavam pausados.
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/move \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "new_address": "TYourNewAddress..."
+  }'
+```
+
+Aqui o pacote estava funcionando e as 24 horas pagas não tinham acabado, então nada foi cobrado: `subscription_used` e `remaining` são os mesmos de antes da mudança.
+
+```json Response
+{
+  "address": "TYourNewAddress...",
+  "previous_address": "TYourAddress...",
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourNewAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Webhooks
+
+Mover pacotes em funcionamento os pausa no endereço antigo, os move e os retoma no novo, então cada pacote envia três [eventos](/pt/api-reference/webhooks/overview#eventos-de-transfer-package) nesta ordem:
+
+1. `package.paused` com o `address` antigo;
+2. `package.moved` com o novo `address` e o antigo em `previous_address`;
+3. `package.resumed` com o novo `address`.
+
+Mover pacotes pausados envia apenas `package.moved`. Os eventos são enviados nesta ordem, mas entregues de forma independente, então podem chegar em outra — compare o `timestamp` do envelope ou leia o estado atual em [Listar Pacotes](/pt/api-reference/transfer-packages/list).
+
+### Erros
+
+Retornados no [formato padrão](/pt/errors), em `detail.error.code`.
+
+Estes vêm antes de qualquer alteração ou cobrança — os pacotes continuam funcionando no endereço antigo:
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| `SAME_ADDRESS` | `400` | `new_address` é o endereço dos pacotes |
+| `ADDRESS_NOT_ALLOWED` | `400` | Os pacotes não podem ser movidos para este endereço |
+| `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | `new_address` é um contrato inteligente, não uma carteira |
+| `PACKAGE_NOT_FOUND` | `404` | Sua conta não tem nenhum pacote ativo ou pausado em `address` |
+| `PACKAGE_NOT_SETTLED` | `400` | Um pacote em `address` ainda está sendo ativado — tente novamente mais tarde |
+| `ADDRESS_SHARED` | `400` | Outra conta tem um pacote ativo em `address` |
+| `SMART_MODE_ACTIVE` | `400` | O Smart Mode está ativo em `address` ou em `new_address` — desative-o primeiro |
+| `ADDRESS_TAKEN` | `409` | `new_address` já tem pacotes de transferência |
+| `MOVE_AFTER_PAUSE` | `409` | Alguns pacotes só podem ser movidos 15 minutos depois de pausados — [pause-os](/pt/api-reference/transfer-packages/pause), espere 15 minutos e então mova |
+| `INSUFFICIENT_BALANCE` | `402` | `new_address` precisa de ativação e seu saldo não a cobre |
+
+Estes vêm da interrupção da entrega no endereço antigo. Nada foi movido, e os pacotes continuam funcionando no endereço antigo. Se o novo endereço foi ativado antes do erro, essa ativação continua cobrada — o endereço permanece ativado para uma mudança posterior:
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| `ADDRESS_BUSY` | `409` | Outra operação no endereço está em andamento — tente novamente em um minuto |
+| `PAUSE_BUSY` | `429` | Há pausas demais em andamento ao mesmo tempo — tente novamente em um minuto |
+| `PROVIDER_UNAVAILABLE` | `503` | Não foi possível interromper a entrega de energia ao endereço antigo — tente novamente em um minuto |
+
+Estes vêm depois que a entrega ao endereço antigo foi interrompida. A mensagem diz onde os pacotes estão agora:
+
+| Código | Status | Onde os pacotes estão |
+|--------|--------|--------|
+| `ADDRESS_TAKEN` | `409` | Pausados no endereço **antigo**: outro pacote apareceu em `new_address` durante a mudança. A mensagem termina com "stay paused on the old address; resume them there". Retome-os lá ou mova-os para outro endereço |
+| `MOVED_PAUSED` | status da causa | Pausados no endereço **novo**: a mudança deu certo, mas a entrega lá não pôde ser iniciada. [Retome](/pt/api-reference/transfer-packages/resume) com `new_address` |
+
+`ADDRESS_BUSY` e `MOVE_AFTER_PAUSE` também podem vir nesta etapa, quando outra operação no endereço se intrometeu. Os pacotes ficam então pausados no endereço antigo; repita a mudança para transferi-los — eles chegam pausados.
+
+<Tip>
+  Depois de qualquer erro, [Listar Pacotes](/pt/api-reference/transfer-packages/list) mostra onde está cada pacote e em que status.
+</Tip>

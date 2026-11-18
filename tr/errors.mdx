@@ -136,13 +136,18 @@ koda bakarak tespit etmeyin.
 | Kod | Durum | Açıklama |
 |------|--------|-------------|
 | `ADDRESS_PAUSED` | `400` | Paket satın alma: bu adresteki paketleriniz duraklatılmış — önce devam ettirin |
-| `PACKAGE_NOT_FOUND` | `404` | Duraklatma veya devam ettirme: hesabın adreste gereken durumda paketi yok |
-| `PACKAGE_NOT_SETTLED` | `400` | Duraklatma veya devam ettirme: adresteki bir paketin etkinleştirilmesi hâlâ sürüyor — daha sonra yeniden deneyin |
-| `ADDRESS_SHARED` | `400` | Duraklatma: adreste başka bir hesabın aktif paketi var |
-| `SMART_MODE_ACTIVE` | `400` | Duraklatma veya devam ettirme: adreste Akıllı Mod aktif — önce onu kapatın |
+| `PACKAGE_NOT_FOUND` | `404` | Duraklatma, devam ettirme veya taşıma: hesabın adreste gereken durumda paketi yok |
+| `PACKAGE_NOT_SETTLED` | `400` | Duraklatma, devam ettirme veya taşıma: adresteki bir paketin etkinleştirilmesi hâlâ sürüyor — daha sonra yeniden deneyin |
+| `ADDRESS_SHARED` | `400` | Duraklatma veya taşıma: adreste başka bir hesabın aktif paketi var |
+| `SMART_MODE_ACTIVE` | `400` | Duraklatma, devam ettirme veya taşıma: adreste Akıllı Mod aktif (taşımada — eski veya yeni adreste) — önce onu kapatın |
 | `ADDRESS_BUSY` | `409` | Adreste başka bir işlem sürüyor — bir dakika sonra yeniden deneyin |
 | `PAUSE_BUSY` | `429` | Aynı anda çok fazla duraklatma sürüyor — bir dakika sonra yeniden deneyin. Hız sınırı değildir |
-| `PROVIDER_UNAVAILABLE` | `503` | Duraklatma veya devam ettirme: adrese enerji teslimatı değiştirilemedi. Hiçbir şey değiştirilmedi — bir dakika sonra yeniden deneyin |
+| `PROVIDER_UNAVAILABLE` | `503` | Duraklatma, devam ettirme veya taşıma: adrese enerji teslimatı değiştirilemedi. Hiçbir şey değiştirilmedi — bir dakika sonra yeniden deneyin |
+| `SAME_ADDRESS` | `400` | Taşıma: yeni adres, paketlerin bulunduğu adrestir |
+| `ADDRESS_NOT_ALLOWED` | `400` | Taşıma: paketler bu adrese taşınamaz |
+| `ADDRESS_TAKEN` | `409` | Taşıma: yeni adreste zaten transfer paketleri var. Mesajda paketlerin eski adreste duraklatılmış kaldığı yazıyorsa, taşıma duraklatmadan sonra durdu — onları orada devam ettirin veya yeniden taşıyın |
+| `MOVE_AFTER_PAUSE` | `409` | Taşıma: bazı paketler yalnızca duraklatıldıktan 15 dakika sonra taşınabilir — duraklatın, 15 dakika bekleyin, sonra taşıyın |
+| `MOVED_PAUSED` | nedenin durumu | Taşıma: paketler yeni adreste ama orada duraklatılmış kaldı — yeni adresle devam ettirin |
 
 ## Para çekme doğrulama kodları
 

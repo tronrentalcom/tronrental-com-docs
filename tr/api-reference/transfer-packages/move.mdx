@@ -1,0 +1,143 @@
+---
+title: Paketleri Taşı
+api: POST /v1/transfer-packages/move
+description: "Transfer paketlerinizi yeni bir TRON adresine taşıyın"
+---
+
+## Paketleri Taşı
+
+**Hesabınızın adresteki tüm aktif ve duraklatılmış paketlerini**, kalan tüm transferleriyle birlikte yeni bir adrese taşır. Tek bir paket ayrı olarak taşınamaz. Transferleri gönderen cüzdan değiştiğinde kullanın.
+
+- Çalışan paketler yeni adreste çalışmaya devam eder. Duraklatılmış paketler orada da duraklatılmış kalır — gerektiğinde yeni adresle [devam ettirin](/tr/api-reference/transfer-packages/resume).
+- Ödenmiş 24 saat, [duraklatmada](/tr/api-reference/transfer-packages/pause) olduğu gibi taşıma sırasında da işlemeye devam eder. Paketler yeni adreste başladığında bu süre dolmuşsa bir transfer hemen düşülür; aksi halde hiçbir şey düşülmez.
+- Taşımanın kendisi ücretsizdir ve ne sıklıkta taşıyacağınıza dair bir sınır yoktur.
+- Yeni adres TRON ağında henüz etkinleştirilmemişse, [satın almada](/tr/api-reference/transfer-packages/buy) olduğu gibi hesabınızın masrafıyla etkinleştirilir.
+- Eski adresten yapılan transferler yanıttan sonra artık karşılanmaz ve sayılmaz.
+
+Yeni adreste herhangi bir hesaba ait **hiç transfer paketi** ve **aktif Akıllı Mod** olmamalıdır.
+
+<Warning>
+  **Çağrı yaklaşık 15 saniye veya daha uzun sürede yanıt verir** — istemcinizin zaman aşımını 60 saniye olarak ayarlayın. Önce eski adrese teslimat durdurulur ve ondan önceden gönderilmiş transferler sayılır. Yanıttan sonra eski adresten yapılan bir transfer enerji almaz. Cüzdanı değiştirmeden önce yanıtı bekleyin.
+</Warning>
+
+### İstek gövdesi
+
+<ParamField body="address" type="string" required>
+  Paketlerin şu anda bulunduğu TRON adresi
+</ParamField>
+
+<ParamField body="new_address" type="string" required>
+  Paketlerin taşınacağı TRON adresi. `address` değerinden farklı olmalı ve akıllı kontrat olmamalıdır
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="address" type="string">
+  Yeni adres — paketlerin şu anda bulunduğu yer.
+</ResponseField>
+
+<ResponseField name="previous_address" type="string">
+  Paketlerin taşındığı önceki adres.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  Taşınan paketler — [Paketleri Listele](/tr/api-reference/transfer-packages/list) yanıtındakiyle aynı nesneler; `address` yeni adrese ayarlıdır. Çalışan paketler için `status` değeri `active` (`paused_at` değeri `null`), duraklatılmış paketler için `paused` olur.
+</ResponseField>
+
+### Örnek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/move \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "new_address": "TYourNewAddress..."
+  }'
+```
+
+Burada paket çalışıyordu ve ödenmiş 24 saat dolmamıştı, bu yüzden hiçbir şey düşülmedi: `subscription_used` ve `remaining` taşımadan önceki değerlerle aynıdır.
+
+```json Response
+{
+  "address": "TYourNewAddress...",
+  "previous_address": "TYourAddress...",
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourNewAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Webhook'lar
+
+Çalışan paketlerin taşınması onları eski adreste duraklatır, taşır ve yenisinde devam ettirir; bu yüzden her paket şu sırayla üç [olay](/tr/api-reference/webhooks/overview) gönderir:
+
+1. eski `address` ile `package.paused`;
+2. yeni `address` ve `previous_address` içinde eski adresle `package.moved`;
+3. yeni `address` ile `package.resumed`.
+
+Duraklatılmış paketlerin taşınması yalnızca `package.moved` gönderir. Olaylar bu sırayla gönderilir ama birbirinden bağımsız teslim edilir, bu yüzden farklı bir sırada gelebilirler — zarftaki `timestamp` değerlerini karşılaştırın veya güncel durumu [Paketleri Listele](/tr/api-reference/transfer-packages/list) ile okuyun.
+
+### Hatalar
+
+[Standart biçimde](/tr/errors), `detail.error.code` altında döner.
+
+Bunlar herhangi bir şey değiştirilmeden veya düşülmeden önce gelir — paketler eski adreste çalışmaya devam eder:
+
+| Kod | Durum | Ne zaman |
+|------|--------|------|
+| `SAME_ADDRESS` | `400` | `new_address`, paketlerin bulunduğu adrestir |
+| `ADDRESS_NOT_ALLOWED` | `400` | Paketler bu adrese taşınamaz |
+| `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | `new_address` bir cüzdan değil, akıllı kontrattır |
+| `PACKAGE_NOT_FOUND` | `404` | Hesabınızın `address` üzerinde aktif veya duraklatılmış paketi yok |
+| `PACKAGE_NOT_SETTLED` | `400` | `address` üzerindeki bir paketin etkinleştirilmesi hâlâ sürüyor — daha sonra yeniden deneyin |
+| `ADDRESS_SHARED` | `400` | `address` üzerinde başka bir hesabın aktif paketi var |
+| `SMART_MODE_ACTIVE` | `400` | `address` veya `new_address` üzerinde Akıllı Mod aktif — önce onu kapatın |
+| `ADDRESS_TAKEN` | `409` | `new_address` üzerinde zaten transfer paketleri var |
+| `MOVE_AFTER_PAUSE` | `409` | Bazı paketler yalnızca duraklatıldıktan 15 dakika sonra taşınabilir — onları [duraklatın](/tr/api-reference/transfer-packages/pause), 15 dakika bekleyin, sonra taşıyın |
+| `INSUFFICIENT_BALANCE` | `402` | `new_address` etkinleştirme gerektiriyor ve bakiyeniz bunu karşılamıyor |
+
+Bunlar eski adreste teslimatın durdurulmasından gelir. Hiçbir şey taşınmadı ve paketler eski adreste çalışmaya devam ediyor. Hata öncesinde yeni adres etkinleştirildiyse bu etkinleştirme ücretlendirilmiş kalır — adres, sonraki bir taşıma için etkinleştirilmiş olarak kalır:
+
+| Kod | Durum | Ne zaman |
+|------|--------|------|
+| `ADDRESS_BUSY` | `409` | Adreste başka bir işlem sürüyor — bir dakika sonra yeniden deneyin |
+| `PAUSE_BUSY` | `429` | Aynı anda çok fazla duraklatma sürüyor — bir dakika sonra yeniden deneyin |
+| `PROVIDER_UNAVAILABLE` | `503` | Eski adrese enerji teslimatı durdurulamadı — bir dakika sonra yeniden deneyin |
+
+Bunlar eski adrese teslimat durdurulduktan sonra gelir. Mesaj paketlerin şu anda nerede olduğunu söyler:
+
+| Kod | Durum | Paketlerin bulunduğu yer |
+|------|--------|------|
+| `ADDRESS_TAKEN` | `409` | **Eski** adreste duraklatılmış: taşıma sırasında `new_address` üzerinde başka bir paket belirdi. Mesaj "stay paused on the old address; resume them there" ile biter. Onları orada devam ettirin veya başka bir adrese taşıyın |
+| `MOVED_PAUSED` | nedenin durumu | **Yeni** adreste duraklatılmış: taşıma başarılı oldu, ancak orada teslimat başlatılamadı. `new_address` ile [devam ettirin](/tr/api-reference/transfer-packages/resume) |
+
+`ADDRESS_BUSY` ve `MOVE_AFTER_PAUSE` bu adımda da gelebilir; bu, adresteki başka bir işlemin araya girdiği anlamına gelir. Paketler o zaman eski adreste duraklatılmıştır; taşımayı tekrarlayın, paketleri taşır — duraklatılmış olarak varırlar.
+
+<Tip>
+  Herhangi bir hatadan sonra [Paketleri Listele](/tr/api-reference/transfer-packages/list), her paketin nerede ve hangi durumda olduğunu gösterir.
+</Tip>

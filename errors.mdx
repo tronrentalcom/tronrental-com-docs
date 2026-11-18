@@ -136,13 +136,18 @@ Returned in the standard shape by the [Transfer Packages](/api-reference/transfe
 | Code | Status | Description |
 |------|--------|-------------|
 | `ADDRESS_PAUSED` | `400` | Buying a package: your packages on this address are paused — resume them first |
-| `PACKAGE_NOT_FOUND` | `404` | Pause or resume: the account has no package in the required state on the address |
-| `PACKAGE_NOT_SETTLED` | `400` | Pause or resume: a package on the address is still being activated — try again later |
-| `ADDRESS_SHARED` | `400` | Pause: another account has an active package on the address |
-| `SMART_MODE_ACTIVE` | `400` | Pause or resume: Smart Mode is active on the address — turn it off first |
+| `PACKAGE_NOT_FOUND` | `404` | Pause, resume or move: the account has no package in the required state on the address |
+| `PACKAGE_NOT_SETTLED` | `400` | Pause, resume or move: a package on the address is still being activated — try again later |
+| `ADDRESS_SHARED` | `400` | Pause or move: another account has an active package on the address |
+| `SMART_MODE_ACTIVE` | `400` | Pause, resume or move: Smart Mode is active on the address (for a move — the old or the new one) — turn it off first |
 | `ADDRESS_BUSY` | `409` | Another operation on the address is in progress — try again in a minute |
 | `PAUSE_BUSY` | `429` | Too many pauses are in progress at once — try again in a minute. Not a rate limit |
-| `PROVIDER_UNAVAILABLE` | `503` | Pause or resume: energy delivery to the address could not be switched. Nothing was changed — try again in a minute |
+| `PROVIDER_UNAVAILABLE` | `503` | Pause, resume or move: energy delivery to the address could not be switched. Nothing was changed — try again in a minute |
+| `SAME_ADDRESS` | `400` | Move: the new address is the address of the packages |
+| `ADDRESS_NOT_ALLOWED` | `400` | Move: packages cannot be moved to this address |
+| `ADDRESS_TAKEN` | `409` | Move: the new address already has transfer packages. If the message says the packages stay paused on the old address, the move stopped after the pause — resume them there or move them again |
+| `MOVE_AFTER_PAUSE` | `409` | Move: some packages can be moved only 15 minutes after they are paused — pause them, wait 15 minutes, then move |
+| `MOVED_PAUSED` | status of the cause | Move: the packages are on the new address but stay paused there — resume them with the new address |
 
 ## Withdrawal verification codes
 
