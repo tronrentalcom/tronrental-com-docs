@@ -137,13 +137,18 @@ Se devuelven en la forma estándar desde los endpoints de [Paquetes de Transfere
 | Código | Estado | Descripción |
 |--------|--------|-------------|
 | `ADDRESS_PAUSED` | `400` | Compra de un paquete: tus paquetes en esta dirección están en pausa — reanúdalos primero |
-| `PACKAGE_NOT_FOUND` | `404` | Pausa o reanudación: la cuenta no tiene ningún paquete en el estado requerido en la dirección |
-| `PACKAGE_NOT_SETTLED` | `400` | Pausa o reanudación: un paquete de la dirección todavía se está activando — reintenta más tarde |
-| `ADDRESS_SHARED` | `400` | Pausa: otra cuenta tiene un paquete activo en la dirección |
-| `SMART_MODE_ACTIVE` | `400` | Pausa o reanudación: Smart Mode está activo en la dirección — desactívalo primero |
+| `PACKAGE_NOT_FOUND` | `404` | Pausa, reanudación o movimiento: la cuenta no tiene ningún paquete en el estado requerido en la dirección |
+| `PACKAGE_NOT_SETTLED` | `400` | Pausa, reanudación o movimiento: un paquete de la dirección todavía se está activando — reintenta más tarde |
+| `ADDRESS_SHARED` | `400` | Pausa o movimiento: otra cuenta tiene un paquete activo en la dirección |
+| `SMART_MODE_ACTIVE` | `400` | Pausa, reanudación o movimiento: Smart Mode está activo en la dirección (en un movimiento, la anterior o la nueva) — desactívalo primero |
 | `ADDRESS_BUSY` | `409` | Hay otra operación en curso sobre la dirección — reintenta en un minuto |
 | `PAUSE_BUSY` | `429` | Hay demasiadas pausas en curso a la vez — reintenta en un minuto. No es un límite de tasa |
-| `PROVIDER_UNAVAILABLE` | `503` | Pausa o reanudación: no se pudo cambiar la entrega de energía a la dirección. No se cambió nada — reintenta en un minuto |
+| `PROVIDER_UNAVAILABLE` | `503` | Pausa, reanudación o movimiento: no se pudo cambiar la entrega de energía a la dirección. No se cambió nada — reintenta en un minuto |
+| `SAME_ADDRESS` | `400` | Movimiento: la nueva dirección es la dirección de los paquetes |
+| `ADDRESS_NOT_ALLOWED` | `400` | Movimiento: no se pueden mover paquetes a esta dirección |
+| `ADDRESS_TAKEN` | `409` | Movimiento: la nueva dirección ya tiene paquetes de transferencias. Si el mensaje dice que los paquetes siguen pausados en la dirección anterior, el movimiento se detuvo tras la pausa: reanúdalos allí o vuelve a moverlos |
+| `MOVE_AFTER_PAUSE` | `409` | Movimiento: algunos paquetes solo se pueden mover 15 minutos después de pausarlos — páusalos, espera 15 minutos y luego muévelos |
+| `MOVED_PAUSED` | estado de la causa | Movimiento: los paquetes están en la nueva dirección pero siguen pausados allí — reanúdalos con la nueva dirección |
 
 ## Códigos de verificación de retiro
 

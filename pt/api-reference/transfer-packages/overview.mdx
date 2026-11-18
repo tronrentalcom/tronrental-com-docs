@@ -25,6 +25,15 @@ Se o endereço vai ficar um tempo sem enviar transferências, [pause](/pt/api-re
 - Repetir uma pausa ou uma retomada não altera nada e não cobra nada.
 - Enquanto seus pacotes em um endereço estão pausados, você não pode comprar um novo pacote para esse endereço — retome primeiro.
 
+### Mover para um novo endereço
+
+Se a carteira que envia as transferências mudar, [mova](/pt/api-reference/transfer-packages/move) os pacotes dela para o novo endereço. A mudança vale de uma vez para todos os pacotes ativos e pausados da sua conta no endereço, com todas as transferências restantes.
+
+- Os pacotes em funcionamento continuam funcionando no novo endereço; os pausados continuam pausados lá.
+- A mudança é gratuita e sem limite. Um novo endereço que ainda não está ativado na rede é ativado por conta da sua conta, como numa compra.
+- O novo endereço não pode ter pacotes de transferência nem Smart Mode ativo.
+- A requisição responde em cerca de 15 segundos ou mais; as transferências do endereço antigo deixam de ser atendidas depois da resposta.
+
 ### Preços
 
 | Tamanho do pacote | Preço por transferência |

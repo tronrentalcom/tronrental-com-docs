@@ -25,6 +25,15 @@ Adres bir sure transfer gondermeyecekse, gunluk ucretin durmasi icin paketlerini
 - Duraklatmayi veya devam ettirmeyi tekrarlamak hicbir seyi degistirmez ve hicbir sey dusmez.
 - Bir adresteki paketleriniz duraklatilmisken o adres icin yeni paket satin alamazsiniz — once devam ettirin.
 
+### Yeni adrese tasima
+
+Transferleri gonderen cuzdan degisirse, paketlerini yeni adrese [tasiyin](/tr/api-reference/transfer-packages/move). Tasima, hesabinizin adresteki tum aktif ve duraklatilmis paketlerini kalan tum transferleriyle birlikte ayni anda kapsar.
+
+- Calisan paketler yeni adreste calismaya devam eder; duraklatilmis paketler orada da duraklatilmis kalir.
+- Tasima ucretsizdir ve sinir yoktur. Agda henuz etkinlestirilmemis yeni bir adres, satin almada oldugu gibi hesabinizin masrafiyla etkinlestirilir.
+- Yeni adreste hic transfer paketi ve aktif Akilli Mod olmamalidir.
+- Istek yaklasik 15 saniyede veya daha uzun surede yanit verir; yanittan sonra eski adresten yapilan transferler artik karsilanmaz.
+
 ### Fiyatlandirma
 
 | Paket boyutu | Transfer basina fiyat |

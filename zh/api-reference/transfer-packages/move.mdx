@@ -1,0 +1,143 @@
+---
+title: 迁移套餐
+api: POST /v1/transfer-packages/move
+description: "把您的转账套餐迁移到新的 TRON 地址"
+---
+
+## 迁移套餐
+
+把**您账户在该地址上的所有活跃和已暂停套餐**连同其全部剩余转账次数一并迁移到新地址。不能单独迁移其中某一个套餐。当发送转账的钱包更换时使用。
+
+- 正在工作的套餐在新地址上继续工作。已暂停的套餐在新地址上保持暂停——需要时用新地址[恢复](/zh/api-reference/transfer-packages/resume)它们。
+- 已支付的 24 小时在迁移期间继续计时，与[暂停](/zh/api-reference/transfer-packages/pause)时相同。如果套餐在新地址上启动时这 24 小时已用完，会立即扣除一次转账；否则不扣除任何费用。
+- 迁移本身免费，迁移次数没有限制。
+- 如果新地址尚未在 TRON 网络上激活，将由您的账户出资激活，与[购买](/zh/api-reference/transfer-packages/buy)时相同。
+- 响应之后，来自旧地址的转账不再获得服务，也不再计入套餐。
+
+新地址上必须**没有任何账户的转账套餐**，也**没有处于活跃状态的智能模式**。
+
+<Warning>
+  **该调用约 15 秒或更久后返回**——请把客户端超时设为 60 秒。系统会先停止向旧地址供应，并统计已从该地址发出的转账。响应之后从旧地址发出的转账将得不到能量。请等到响应后再切换钱包。
+</Warning>
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  套餐当前所在的 TRON 地址
+</ParamField>
+
+<ParamField body="new_address" type="string" required>
+  要把套餐迁移到的 TRON 地址。必须与 `address` 不同，且不能是智能合约
+</ParamField>
+
+### 响应
+
+<ResponseField name="address" type="string">
+  新地址——套餐现在所在的地址。
+</ResponseField>
+
+<ResponseField name="previous_address" type="string">
+  套餐迁出的地址。
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  已迁移的套餐——与[套餐列表](/zh/api-reference/transfer-packages/list)中的对象相同，`address` 为新地址。原本在工作的套餐 `status` 为 `active`（`paused_at` 为 `null`），原本已暂停的套餐为 `paused`。
+</ResponseField>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/move \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "new_address": "TYourNewAddress..."
+  }'
+```
+
+此例中套餐原本在工作，已支付的 24 小时尚未用完，因此未扣费：`subscription_used` 和 `remaining` 与迁移前相同。
+
+```json Response
+{
+  "address": "TYourNewAddress...",
+  "previous_address": "TYourAddress...",
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourNewAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Webhooks
+
+迁移正在工作的套餐时，会先在旧地址上暂停、再迁移、然后在新地址上恢复，因此每个套餐按以下顺序发送三个[事件](/zh/api-reference/webhooks/overview)：
+
+1. `package.paused`，带旧的 `address`；
+2. `package.moved`，带新的 `address`，旧地址在 `previous_address` 中；
+3. `package.resumed`，带新的 `address`。
+
+迁移已暂停的套餐只发送 `package.moved`。这些事件按此顺序发送，但各自独立投递，因此到达顺序可能不同——请比较信封中的 `timestamp`，或从[套餐列表](/zh/api-reference/transfer-packages/list)读取当前状态。
+
+### 错误
+
+以[标准形式](/zh/errors)返回，错误码位于 `detail.error.code`。
+
+以下错误发生在任何更改或扣费之前——套餐在旧地址上照常工作：
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `SAME_ADDRESS` | `400` | `new_address` 就是套餐所在的地址 |
+| `ADDRESS_NOT_ALLOWED` | `400` | 套餐不能迁移到此地址 |
+| `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | `new_address` 是智能合约，而不是钱包 |
+| `PACKAGE_NOT_FOUND` | `404` | 您的账户在 `address` 上没有活跃或已暂停的套餐 |
+| `PACKAGE_NOT_SETTLED` | `400` | `address` 上有套餐仍在激活中——请稍后重试 |
+| `ADDRESS_SHARED` | `400` | 另一个账户在 `address` 上有活跃套餐 |
+| `SMART_MODE_ACTIVE` | `400` | `address` 或 `new_address` 上的智能模式处于活跃状态——请先将其关闭 |
+| `ADDRESS_TAKEN` | `409` | `new_address` 上已有转账套餐 |
+| `MOVE_AFTER_PAUSE` | `409` | 部分套餐只能在暂停 15 分钟后迁移——请先[暂停](/zh/api-reference/transfer-packages/pause)，等待 15 分钟，再迁移 |
+| `INSUFFICIENT_BALANCE` | `402` | `new_address` 需要激活，而您的余额不足以支付 |
+
+以下错误来自停止旧地址供应的步骤。没有任何内容被迁移，套餐在旧地址上照常工作。如果在出错之前新地址已被激活，该激活费用仍然保留——该地址保持已激活状态，可用于之后的迁移：
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `ADDRESS_BUSY` | `409` | 该地址上有另一项操作正在进行——请一分钟后重试 |
+| `PAUSE_BUSY` | `429` | 同时进行的暂停操作过多——请一分钟后重试 |
+| `PROVIDER_UNAVAILABLE` | `503` | 未能停止向旧地址提供能量——请一分钟后重试 |
+
+以下错误发生在向旧地址的供应已停止之后。消息会说明套餐现在的位置：
+
+| 代码 | 状态 | 套餐所在位置 |
+|------|--------|------|
+| `ADDRESS_TAKEN` | `409` | 在**旧**地址上处于暂停：迁移过程中 `new_address` 上出现了另一个套餐。消息以 "stay paused on the old address" 结尾。请在旧地址上恢复它们，或把它们迁移到其他地址 |
+| `MOVED_PAUSED` | 取决于原因的状态 | 在**新**地址上处于暂停：迁移已成功，但无法在新地址上启动供应。请用 `new_address` [恢复](/zh/api-reference/transfer-packages/resume) |
+
+当该地址上的另一项操作插入其间时，`ADDRESS_BUSY` 和 `MOVE_AFTER_PAUSE` 也可能在这一步出现。此时套餐在旧地址上处于暂停；请重复迁移以带走它们——它们到达新地址时为暂停状态。
+
+<Tip>
+  出现任何错误后，[套餐列表](/zh/api-reference/transfer-packages/list)会显示每个套餐在哪里、处于什么状态。
+</Tip>
