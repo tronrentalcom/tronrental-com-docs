@@ -2,6 +2,90 @@
 
 What's new in TronRental. The same log, with tag filters and an RSS feed, is published at https://docs.tronrental.com/changelog.
 
+## 2026-11-18 · API keys after top-ups of 100 TRX
+
+Tags: API
+
+Breaking change: a new API key is issued once your account's top-ups total at least 100 TRX. Below that, `POST /auth/api-keys` answers `403 API_KEY_DEPOSIT_REQUIRED` with the amount still missing in `missing_trx`. The total counts every top-up ever credited, so spending the balance does not take a key away. [Authentication](https://docs.tronrental.com/authentication)
+
+## 2026-11-18 · Pause Transfer Packages
+
+Tags: Transfer Packages, API
+
+Pause all your packages on an address while it sends no transfers: the daily charge stops, and the remaining transfers are kept with no time limit. Resume them when you need the address again; your webhook receives `package.paused` and `package.resumed`. [Pause Packages](https://docs.tronrental.com/api-reference/transfer-packages/pause)
+
+## 2026-11-18 · Move Transfer Packages to a new address
+
+Tags: Transfer Packages, API
+
+When the wallet that sends your transfers changes, move all your packages from the old address to the new one with all their remaining transfers. The move is free with no limit on how often, and your webhook receives `package.moved`. [Move Packages](https://docs.tronrental.com/api-reference/transfer-packages/move)
+
+## 2026-11-17 · Lower prices for Node API plans
+
+Tags: Node API
+
+Node API plans and quota overage now cost less. The current prices are always listed on the plans page and in the plan catalog of the API. [Plans and Billing](https://docs.tronrental.com/node-api/plans)
+
+## 2026-11-16 · Withdrawals and top-ups in the AI assistant chat
+
+Tags: Withdrawals, Payments
+
+Ask the AI assistant to withdraw TRX or USDT and it fills in a withdrawal card: check the address and amount and confirm with your 2FA code or passkey right in the card; the code never reaches the AI. Ask how to top up, and the card shows your deposit address with its QR code. [AI Assistant](https://tronrental.com/en/ai-assistant)
+
+## 2026-11-16 · Webhook events for withdrawals
+
+Tags: Withdrawals, API
+
+Your webhook now receives `withdrawal.completed` when a withdrawal from your balance is sent and `withdrawal.failed` when it is declined and its sum returned to your balance, whether you requested it through the API, on the website or in the Telegram bot. [Webhooks Overview](https://docs.tronrental.com/api-reference/webhooks/overview)
+
+## 2026-11-16 · No limit on Auto-Refill rules and Auto-Bandwidth subscriptions
+
+Tags: Auto-Refill, Auto-Bandwidth
+
+An account can now hold any number of Auto-Refill rules and Auto-Bandwidth subscriptions, active or paused; the previous cap of 20 is gone. [Auto Refill Overview](https://docs.tronrental.com/api-reference/auto-refill/overview)
+
+## 2026-11-13 · AI assistant
+
+Tags: Energy, Bandwidth
+
+Ask the TronRental AI assistant about current energy and bandwidth prices, check an address and see what you save on USDT transfers. It prepares a card to order energy or bandwidth or to connect Auto-Bandwidth, Auto-Refill, Smart Mode or the Energy Broadcaster, and nothing is bought or connected until you press the button in the card. Without an account you can ask questions, check addresses and get an invoice to pay. [AI Assistant](https://tronrental.com/en/ai-assistant)
+
+## 2026-11-13 · Auto-Bandwidth API
+
+Tags: Auto-Bandwidth, API
+
+Manage Auto-Bandwidth through the API: create, change, pause and delete subscriptions, get a quote before you subscribe, and add the contracts of your own TRC-20 tokens. [Auto Bandwidth Overview](https://docs.tronrental.com/api-reference/auto-bandwidth/overview)
+
+## 2026-11-13 · Why an order failed and what was refunded
+
+Tags: Energy, Bandwidth, API
+
+A failed order now says why: `fail_reason` in your orders and in the `order.updated` webhook tells what went wrong and whether a retry makes sense, and `refunded_trx` shows the amount returned to your balance. [Get Order](https://docs.tronrental.com/api-reference/orders/get-order)
+
+## 2026-11-11 · Reclaim a bandwidth order early
+
+Tags: Bandwidth, API
+
+Take back the bandwidth of an order as soon as the address has made the transfer it was rented for, instead of waiting for the end of the term, with `POST /orders/{order_id}/reclaim`. The unused time is not refunded, and repeated calls are safe. [Reclaim Order](https://docs.tronrental.com/api-reference/orders/reclaim-order)
+
+## 2026-11-09 · Price cap for energy purchases
+
+Tags: Energy, API
+
+`POST /energy/buy` accepts an optional `max_price_trx`: pass the `total_trx` from the quote, and an order that would cost more is refused with `409 PRICE_CHANGED` before anything is charged. The energy quote is rounded to the SUN exactly as the order is charged, and an `Idempotency-Key` header makes retries of a purchase safe. [Buy Energy](https://docs.tronrental.com/api-reference/energy/buy-energy)
+
+## 2026-11-03 · Webhooks for every order, activations and invoices
+
+Tags: API
+
+`order.updated` now arrives for every energy and bandwidth order of your account, whether it was placed through the API, on the website, in the Telegram bot or by Auto-Refill; the `source` field tells them apart. New events `activation.updated` and `invoice.updated` report settled address activations and invoice status changes. [Webhooks Overview](https://docs.tronrental.com/api-reference/webhooks/overview)
+
+## 2026-11-03 · Smart Mode: switch off after the next transfer
+
+Tags: Smart Mode, API
+
+Smart Mode can serve only the next USDT transfer from an address and then pause itself; resume it whenever you need it again. In the API, pass `stop_after_transfer: true` to Activate. [Activate](https://docs.tronrental.com/api-reference/smart-mode/activate)
+
 ## 2026-10-30 · Energy Broadcaster for TRC-20 tokens, swaps and contract calls
 
 Tags: Broadcaster
@@ -138,7 +222,9 @@ Stake TRX straight from your TronRental balance, from 1 TRX and without a wallet
 
 Tags: API
 
-Set a webhook URL in the dashboard and receive order status updates for orders placed through the API. [Webhooks](https://docs.tronrental.com/api-reference/webhooks/overview)
+Set a webhook URL in the dashboard and receive order status updates for orders placed through the API.
+
+Since 2026-11-03: for every order of the account wherever it was placed, plus activation and invoice events. [Webhooks](https://docs.tronrental.com/api-reference/webhooks/overview)
 
 ## 2026-02-27 · Transfer Packages
 

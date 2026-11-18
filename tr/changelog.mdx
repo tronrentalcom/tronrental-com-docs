@@ -6,6 +6,62 @@ rss: true
 
 TronRental web sitesindeki, kontrol panelinizdeki ve API'deki yeni özellikler ve değişiklikler. Etikete göre filtreleyebilir veya RSS akışına abone olabilirsiniz.
 
+<Update label="2026-11-18" description="100 TRX yüklemeden sonra API anahtarları" tags={["API"]}>
+Uyumluluğu bozan değişiklik: yeni bir API anahtarı, hesabınıza yapılan yüklemelerin toplamı en az 100 TRX olduğunda verilir. Bunun altında `POST /auth/api-keys`, eksik tutarı `missing_trx` içinde vererek `403 API_KEY_DEPOSIT_REQUIRED` yanıtı döner. Toplam, şimdiye kadar yatırılan tüm yüklemeleri sayar; bu yüzden bakiyeyi harcamak anahtarı geri almaz. [Kimlik Dogrulama](/tr/authentication)
+</Update>
+
+<Update label="2026-11-18" description="Transfer Paketlerini duraklatma" tags={["Transfer Packages", "API"]}>
+Bir adres transfer göndermediği sürece o adresteki tüm paketlerinizi duraklatın: günlük ücret durur, kalan transferler süre sınırı olmadan saklanır. Adrese yeniden ihtiyacınız olduğunda devam ettirin; webhook'unuz `package.paused` ve `package.resumed` alır. [Paketleri Duraklat](/tr/api-reference/transfer-packages/pause)
+</Update>
+
+<Update label="2026-11-18" description="Transfer Paketlerini yeni bir adrese taşıma" tags={["Transfer Packages", "API"]}>
+Transferlerinizi gönderen cüzdan değiştiğinde, tüm paketlerinizi kalan transferleriyle birlikte eski adresten yenisine taşıyın. Taşıma ücretsizdir ve sıklık sınırı yoktur; webhook'unuz `package.moved` alır. [Paketleri Taşı](/tr/api-reference/transfer-packages/move)
+</Update>
+
+<Update label="2026-11-17" description="Node API planlarında daha düşük fiyatlar" tags={["Node API"]}>
+Node API planları ve kota aşımı artık daha ucuz. Güncel fiyatlar her zaman planlar sayfasında ve API'nin plan kataloğunda yer alır. [Planlar ve Faturalandırma](/tr/node-api/plans)
+</Update>
+
+<Update label="2026-11-16" description="AI asistan sohbetinde çekim ve yükleme" tags={["Withdrawals", "Payments"]}>
+AI asistandan TRX veya USDT çekmesini isteyin, çekim kartını doldursun: adresi ve tutarı kontrol edip doğrudan kartta 2FA kodunuz veya passkey ile onaylayın; kod yapay zekâya hiç ulaşmaz. Nasıl yükleme yapacağınızı sorun, kart yatırma adresinizi QR koduyla gösterir. [AI Asistan](https://tronrental.com/tr/ai-assistant)
+</Update>
+
+<Update label="2026-11-16" description="Çekimler için webhook olayları" tags={["Withdrawals", "API"]}>
+Webhook'unuz artık bakiyenizden bir çekim gönderildiğinde `withdrawal.completed`, çekim reddedilip tutarı bakiyenize iade edildiğinde `withdrawal.failed` alır; çekimi API'den, web sitesinden veya Telegram botundan istemeniz fark etmez. [Webhook'lara genel bakış](/tr/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-11-16" description="Otomatik Dolum kuralları ve Auto-Bandwidth abonelikleri için sınır yok" tags={["Auto-Refill", "Auto-Bandwidth"]}>
+Bir hesapta artık etkin veya duraklatılmış, istediğiniz kadar Otomatik Dolum kuralı ve Auto-Bandwidth aboneliği olabilir; önceki 20 sınırı kaldırıldı. [Otomatik Dolum Genel Bakış](/tr/api-reference/auto-refill/overview)
+</Update>
+
+<Update label="2026-11-13" description="AI asistan" tags={["Energy", "Bandwidth"]}>
+TronRental AI asistana güncel enerji ve bant genişliği fiyatlarını sorun, bir adresi kontrol edin ve USDT transferlerinde ne kadar tasarruf edeceğinizi görün. Asistan enerji veya bant genişliği siparişi ya da Auto-Bandwidth, Otomatik Dolum, Smart Mode veya Energy Broadcaster bağlamak için bir kart hazırlar; karttaki düğmeye basana kadar hiçbir şey satın alınmaz veya bağlanmaz. Hesap olmadan da soru sorabilir, adresleri kontrol edebilir ve ödenecek bir fatura alabilirsiniz. [AI Asistan](https://tronrental.com/tr/ai-assistant)
+</Update>
+
+<Update label="2026-11-13" description="Auto-Bandwidth API'si" tags={["Auto-Bandwidth", "API"]}>
+Auto-Bandwidth'i API üzerinden yönetin: abonelik oluşturun, değiştirin, duraklatın ve silin, abone olmadan önce fiyat teklifi alın ve kendi TRC-20 token'larınızın kontratlarını ekleyin. [Otomatik Bandwidth Genel Bakış](/tr/api-reference/auto-bandwidth/overview)
+</Update>
+
+<Update label="2026-11-13" description="Sipariş neden başarısız oldu ve ne iade edildi" tags={["Energy", "Bandwidth", "API"]}>
+Başarısız bir sipariş artık nedenini söylüyor: siparişlerinizdeki ve `order.updated` webhook'undaki `fail_reason` neyin ters gittiğini ve yeniden denemenin anlamlı olup olmadığını belirtir, `refunded_trx` ise bakiyenize iade edilen tutarı gösterir. [Sipariş Durumu](/tr/api-reference/orders/get-order)
+</Update>
+
+<Update label="2026-11-11" description="Bant genişliği siparişini erken geri alma" tags={["Bandwidth", "API"]}>
+Adres, kiralandığı transferi yapar yapmaz siparişin bant genişliğini süre sonunu beklemeden `POST /orders/{order_id}/reclaim` ile geri alın. Kullanılmayan süre iade edilmez; tekrarlanan çağrılar güvenlidir. [Siparişi geri al](/tr/api-reference/orders/reclaim-order)
+</Update>
+
+<Update label="2026-11-09" description="Enerji alımlarında fiyat tavanı" tags={["Energy", "API"]}>
+`POST /energy/buy` isteğe bağlı bir `max_price_trx` kabul eder: fiyat teklifindeki `total_trx` değerini gönderin; daha pahalıya gelecek bir sipariş hiçbir ücret alınmadan `409 PRICE_CHANGED` ile reddedilir. Enerji fiyat teklifi, sipariş nasıl tahsil ediliyorsa SUN'a tam olarak öyle yuvarlanır ve `Idempotency-Key` başlığı bir satın almanın tekrarlanmasını güvenli hâle getirir. [Enerji Satin Al](/tr/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-11-03" description="Her sipariş, etkinleştirme ve fatura için webhook'lar" tags={["API"]}>
+`order.updated` artık hesabınızın her enerji ve bant genişliği siparişi için gelir; sipariş API'den, web sitesinden, Telegram botundan veya Otomatik Dolum ile verilmiş olabilir, `source` alanı bunları ayırt eder. Yeni `activation.updated` ve `invoice.updated` olayları, tamamlanan adres etkinleştirmelerini ve fatura durum değişikliklerini bildirir. [Webhook'lara genel bakış](/tr/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-11-03" description="Smart Mode: sonraki transferden sonra kapanma" tags={["Smart Mode", "API"]}>
+Smart Mode bir adresten yalnızca sonraki USDT transferine hizmet verip ardından kendini duraklatabilir; yeniden ihtiyacınız olduğunda devam ettirin. API'de Etkinleştir çağrısına `stop_after_transfer: true` gönderin. [Etkinlestir](/tr/api-reference/smart-mode/activate)
+</Update>
+
 <Update label="2026-10-30" description="TRC-20 token'ları, swap'lar ve kontrat çağrıları için Energy Broadcaster" tags={["Broadcaster"]}>
 Energy Broadcaster artık yalnızca USDT'ye hizmet vermiyor: diğer TRC-20 token'larının transferleri, SunSwap üzerindeki swap'lar ve diğer akıllı kontratlara yapılan çağrılar enerji ve bant genişliği alır, TRX transferleri ise bant genişliği alır. Her çağrının maliyeti simülasyonundan hesaplanır; daha az yaygın token'lar, swap'lar ve kontrat çağrıları hesabınızın limitleri dahilinde karşılanır ve broadcaster ayarlarından kapatılabilir. İsteğe bağlı revert koruması başarısız olacak bir çağrıyı gönderilmeden durdurabilir. [Energy Broadcaster](https://tronrental.com/tr/energy-broadcaster)
 </Update>
@@ -95,7 +151,9 @@ TRX'i doğrudan TronRental bakiyenizden, 1 TRX'ten başlayarak ve cüzdan olmada
 </Update>
 
 <Update label="2026-03-14" description="Webhook'lar" tags={["API"]}>
-Kontrol panelinde bir webhook URL'si ayarlayın ve API üzerinden verilen siparişlerin durum güncellemelerini alın. [Webhook'lara genel bakış](/tr/api-reference/webhooks/overview)
+Kontrol panelinde bir webhook URL'si ayarlayın ve API üzerinden verilen siparişlerin durum güncellemelerini alın.
+
+2026-11-03 tarihinden itibaren: nerede verilmiş olursa olsun hesabın her siparişi için, ayrıca etkinleştirme ve fatura olayları. [Webhook'lara genel bakış](/tr/api-reference/webhooks/overview)
 </Update>
 
 <Update label="2026-02-27" description="Transfer Paketleri" tags={["Transfer Packages", "Bandwidth"]}>

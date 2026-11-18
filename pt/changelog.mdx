@@ -6,6 +6,62 @@ rss: true
 
 Novos recursos e mudanças no site da TronRental, no seu painel e na API. Filtre por tag ou assine o feed RSS.
 
+<Update label="2026-11-18" description="Chaves de API após recargas de 100 TRX" tags={["API"]}>
+Mudança incompatível: uma nova chave de API é emitida quando as recargas da sua conta somam pelo menos 100 TRX. Abaixo disso, `POST /auth/api-keys` responde `403 API_KEY_DEPOSIT_REQUIRED` com o valor que falta em `missing_trx`. O total conta todas as recargas já creditadas, então gastar o saldo não tira a chave. [Autenticação](/pt/authentication)
+</Update>
+
+<Update label="2026-11-18" description="Pausar Pacotes de Transferência" tags={["Transfer Packages", "API"]}>
+Pause todos os seus pacotes de um endereço enquanto ele não envia transferências: a cobrança diária para, e as transferências restantes são mantidas sem limite de tempo. Retome-os quando precisar do endereço de novo; seu webhook recebe `package.paused` e `package.resumed`. [Pausar Pacotes](/pt/api-reference/transfer-packages/pause)
+</Update>
+
+<Update label="2026-11-18" description="Mover Pacotes de Transferência para um novo endereço" tags={["Transfer Packages", "API"]}>
+Quando a carteira que envia suas transferências muda, mova todos os seus pacotes do endereço antigo para o novo com todas as transferências restantes. A mudança é gratuita e sem limite de frequência, e seu webhook recebe `package.moved`. [Mover Pacotes](/pt/api-reference/transfer-packages/move)
+</Update>
+
+<Update label="2026-11-17" description="Preços menores nos planos do Node API" tags={["Node API"]}>
+Os planos do Node API e o excedente de cota agora custam menos. Os preços atuais estão sempre na página de planos e no catálogo de planos da API. [Planos e cobrança](/pt/node-api/plans)
+</Update>
+
+<Update label="2026-11-16" description="Saques e recargas no chat do assistente de IA" tags={["Withdrawals", "Payments"]}>
+Peça ao assistente de IA para sacar TRX ou USDT e ele preenche um cartão de saque: confira o endereço e o valor e confirme com seu código 2FA ou passkey no próprio cartão; o código nunca chega à IA. Pergunte como recarregar e o cartão mostra seu endereço de depósito com o QR code. [Assistente de IA](https://tronrental.com/pt/ai-assistant)
+</Update>
+
+<Update label="2026-11-16" description="Eventos de webhook para saques" tags={["Withdrawals", "API"]}>
+Seu webhook agora recebe `withdrawal.completed` quando um saque do seu saldo é enviado e `withdrawal.failed` quando ele é recusado e o valor volta ao seu saldo, quer você o tenha pedido pela API, no site ou no bot do Telegram. [Webhooks — visão geral](/pt/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-11-16" description="Sem limite de regras de Recarga automática e assinaturas de Auto-Bandwidth" tags={["Auto-Refill", "Auto-Bandwidth"]}>
+Uma conta agora pode ter qualquer número de regras de Recarga automática e assinaturas de Auto-Bandwidth, ativas ou pausadas; o limite anterior de 20 acabou. [Visão Geral da Recarga automática](/pt/api-reference/auto-refill/overview)
+</Update>
+
+<Update label="2026-11-13" description="Assistente de IA" tags={["Energy", "Bandwidth"]}>
+Pergunte ao assistente de IA da TronRental sobre os preços atuais de energia e largura de banda, verifique um endereço e veja quanto você economiza em transferências de USDT. Ele prepara um cartão para pedir energia ou largura de banda ou para ativar Auto-Bandwidth, Recarga automática, Smart Mode ou o Energy Broadcaster, e nada é comprado nem ativado até você apertar o botão no cartão. Sem conta você pode fazer perguntas, verificar endereços e receber uma fatura para pagar. [Assistente de IA](https://tronrental.com/pt/ai-assistant)
+</Update>
+
+<Update label="2026-11-13" description="API do Auto-Bandwidth" tags={["Auto-Bandwidth", "API"]}>
+Gerencie o Auto-Bandwidth pela API: crie, altere, pause e exclua assinaturas, obtenha uma cotação antes de assinar e adicione os contratos dos seus próprios tokens TRC-20. [Visão Geral do Bandwidth automático](/pt/api-reference/auto-bandwidth/overview)
+</Update>
+
+<Update label="2026-11-13" description="Por que um pedido falhou e o que foi reembolsado" tags={["Energy", "Bandwidth", "API"]}>
+Um pedido com falha agora diz o motivo: `fail_reason` nos seus pedidos e no webhook `order.updated` informa o que deu errado e se vale a pena tentar de novo, e `refunded_trx` mostra o valor devolvido ao seu saldo. [Obter pedido](/pt/api-reference/orders/get-order)
+</Update>
+
+<Update label="2026-11-11" description="Recuperar antes um pedido de largura de banda" tags={["Bandwidth", "API"]}>
+Recupere a largura de banda de um pedido assim que o endereço fizer a transferência para a qual ela foi alugada, sem esperar o fim do prazo, com `POST /orders/{order_id}/reclaim`. O tempo não usado não é reembolsado, e chamadas repetidas são seguras. [Recuperar pedido](/pt/api-reference/orders/reclaim-order)
+</Update>
+
+<Update label="2026-11-09" description="Preço máximo nas compras de energia" tags={["Energy", "API"]}>
+`POST /energy/buy` aceita um `max_price_trx` opcional: passe o `total_trx` da cotação, e um pedido que custaria mais é recusado com `409 PRICE_CHANGED` antes de qualquer cobrança. A cotação de energia é arredondada ao SUN exatamente como o pedido é cobrado, e o cabeçalho `Idempotency-Key` torna seguras as novas tentativas de uma compra. [Comprar Energia](/pt/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-11-03" description="Webhooks para todos os pedidos, ativações e faturas" tags={["API"]}>
+`order.updated` agora chega para cada pedido de energia e largura de banda da sua conta, feito pela API, no site, no bot do Telegram ou pela Recarga automática; o campo `source` os diferencia. Os novos eventos `activation.updated` e `invoice.updated` informam ativações de endereço concluídas e mudanças de status das faturas. [Webhooks — visão geral](/pt/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-11-03" description="Smart Mode: desligar após a próxima transferência" tags={["Smart Mode", "API"]}>
+O Smart Mode pode atender só a próxima transferência de USDT de um endereço e depois se pausar sozinho; retome-o quando precisar de novo. Na API, passe `stop_after_transfer: true` para Ativar. [Ativar](/pt/api-reference/smart-mode/activate)
+</Update>
+
 <Update label="2026-10-30" description="Energy Broadcaster para tokens TRC-20, swaps e chamadas de contrato" tags={["Broadcaster"]}>
 O Energy Broadcaster agora atende mais do que USDT: transferências de outros tokens TRC-20, swaps na SunSwap e chamadas a outros contratos inteligentes recebem energia e largura de banda, e transferências de TRX recebem largura de banda. O custo de cada chamada é calculado a partir da sua simulação; tokens, swaps e chamadas de contrato menos comuns são atendidos dentro dos limites da sua conta e podem ser desativados nas configurações do broadcaster. A proteção contra revert opcional pode impedir o envio de uma chamada que falharia. [Energy Broadcaster](https://tronrental.com/pt/energy-broadcaster)
 </Update>
@@ -95,7 +151,9 @@ Faça staking de TRX direto do seu saldo TronRental, a partir de 1 TRX e sem car
 </Update>
 
 <Update label="2026-03-14" description="Webhooks" tags={["API"]}>
-Defina uma URL de webhook no painel e receba atualizações de status dos pedidos feitos pela API. [Webhooks — visão geral](/pt/api-reference/webhooks/overview)
+Defina uma URL de webhook no painel e receba atualizações de status dos pedidos feitos pela API.
+
+Desde 2026-11-03: para cada pedido da conta, onde quer que tenha sido feito, além de eventos de ativações e faturas. [Webhooks — visão geral](/pt/api-reference/webhooks/overview)
 </Update>
 
 <Update label="2026-02-27" description="Pacotes de Transferência" tags={["Transfer Packages", "Bandwidth"]}>

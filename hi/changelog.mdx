@@ -6,6 +6,62 @@ rss: true
 
 TronRental वेबसाइट, आपके डैशबोर्ड और API में नई सुविधाएँ और बदलाव। टैग से फ़िल्टर करें या RSS फ़ीड की सदस्यता लें।
 
+<Update label="2026-11-18" description="100 TRX टॉप-अप के बाद API कुंजियाँ" tags={["API"]}>
+ब्रेकिंग बदलाव: नई API कुंजी तब जारी होती है जब आपके अकाउंट के टॉप-अप कुल मिलाकर कम से कम 100 TRX हो जाते हैं। उससे कम पर `POST /auth/api-keys` जवाब देता है `403 API_KEY_DEPOSIT_REQUIRED`, और `missing_trx` में बाकी रकम होती है। कुल में अब तक जमा हुए सभी टॉप-अप गिने जाते हैं, इसलिए बैलेंस खर्च करने से कुंजी नहीं छिनती। [प्रमाणीकरण](/hi/authentication)
+</Update>
+
+<Update label="2026-11-18" description="Transfer Packages को रोकें" tags={["Transfer Packages", "API"]}>
+जब कोई एड्रेस ट्रांसफर नहीं भेज रहा हो, तब उस पर अपने सभी पैकेज रोक दें: दैनिक शुल्क बंद हो जाता है, और बचे हुए ट्रांसफर बिना समय-सीमा के सुरक्षित रहते हैं। एड्रेस की फिर ज़रूरत हो तो उन्हें फिर शुरू करें; आपके वेबहुक को `package.paused` और `package.resumed` मिलते हैं। [पैकेज रोकें](/hi/api-reference/transfer-packages/pause)
+</Update>
+
+<Update label="2026-11-18" description="Transfer Packages को नए एड्रेस पर ले जाएँ" tags={["Transfer Packages", "API"]}>
+जब आपके ट्रांसफर भेजने वाला वॉलेट बदल जाए, तो अपने सभी पैकेज उनके बचे हुए ट्रांसफर के साथ पुराने एड्रेस से नए पर ले जाएँ। यह मुफ़्त है और कितनी भी बार किया जा सकता है, और आपके वेबहुक को `package.moved` मिलता है। [पैकेज दूसरे एड्रेस पर ले जाएँ](/hi/api-reference/transfer-packages/move)
+</Update>
+
+<Update label="2026-11-17" description="Node API प्लान की कीमतें कम" tags={["Node API"]}>
+Node API प्लान और कोटा से ज़्यादा इस्तेमाल अब सस्ते हैं। मौजूदा कीमतें हमेशा प्लान पेज पर और API के प्लान कैटलॉग में दी रहती हैं। [प्लान और बिलिंग](/hi/node-api/plans)
+</Update>
+
+<Update label="2026-11-16" description="AI असिस्टेंट चैट में निकासी और टॉप-अप" tags={["Withdrawals", "Payments"]}>
+AI असिस्टेंट से TRX या USDT निकालने को कहें, वह निकासी कार्ड भर देगा: एड्रेस और रकम जाँचें और कार्ड में ही अपने 2FA कोड या passkey से पुष्टि करें; कोड AI तक कभी नहीं पहुँचता। टॉप-अप कैसे करें पूछें, तो कार्ड आपका डिपॉज़िट एड्रेस उसके QR कोड के साथ दिखाता है। [AI असिस्टेंट](https://tronrental.com/hi/ai-assistant)
+</Update>
+
+<Update label="2026-11-16" description="निकासी के लिए वेबहुक इवेंट" tags={["Withdrawals", "API"]}>
+अब आपके वेबहुक को `withdrawal.completed` मिलता है जब बैलेंस से निकासी भेजी जाती है, और `withdrawal.failed` जब निकासी अस्वीकार होकर रकम बैलेंस में लौट आती है — चाहे निकासी API से, वेबसाइट पर या Telegram बॉट में माँगी गई हो। [वेबहुक — परिचय](/hi/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-11-16" description="ऑटो रिफिल नियमों और Auto-Bandwidth सब्सक्रिप्शन पर कोई सीमा नहीं" tags={["Auto-Refill", "Auto-Bandwidth"]}>
+अब एक अकाउंट में कितने भी ऑटो रिफिल नियम और Auto-Bandwidth सब्सक्रिप्शन हो सकते हैं, सक्रिय या रुके हुए; पहले की 20 की सीमा हटा दी गई है। [ऑटो रिफिल अवलोकन](/hi/api-reference/auto-refill/overview)
+</Update>
+
+<Update label="2026-11-13" description="AI असिस्टेंट" tags={["Energy", "Bandwidth"]}>
+TronRental AI असिस्टेंट से एनर्जी और बैंडविड्थ की मौजूदा कीमतें पूछें, किसी एड्रेस की जाँच करें और देखें कि USDT ट्रांसफर पर कितनी बचत होगी। यह एनर्जी या बैंडविड्थ ऑर्डर करने या Auto-Bandwidth, ऑटो रिफिल, Smart Mode या Energy Broadcaster जोड़ने के लिए कार्ड तैयार करता है, और जब तक आप कार्ड का बटन नहीं दबाते, कुछ भी खरीदा या जोड़ा नहीं जाता। बिना अकाउंट के भी आप सवाल पूछ सकते हैं, एड्रेस जाँच सकते हैं और भुगतान के लिए इनवॉइस पा सकते हैं। [AI असिस्टेंट](https://tronrental.com/hi/ai-assistant)
+</Update>
+
+<Update label="2026-11-13" description="Auto-Bandwidth API" tags={["Auto-Bandwidth", "API"]}>
+API से Auto-Bandwidth संभालें: सब्सक्रिप्शन बनाएँ, बदलें, रोकें और हटाएँ, सब्सक्राइब करने से पहले अनुमान पाएँ, और अपने TRC-20 टोकन के कॉन्ट्रैक्ट जोड़ें। [ऑटो बैंडविड्थ अवलोकन](/hi/api-reference/auto-bandwidth/overview)
+</Update>
+
+<Update label="2026-11-13" description="ऑर्डर क्यों विफल हुआ और कितना लौटाया गया" tags={["Energy", "Bandwidth", "API"]}>
+विफल ऑर्डर अब कारण बताता है: आपके ऑर्डर में और `order.updated` वेबहुक में `fail_reason` बताता है कि क्या गलत हुआ और दोबारा कोशिश करना ठीक है या नहीं, और `refunded_trx` बैलेंस में लौटाई गई रकम दिखाता है। [ऑर्डर प्राप्त करें](/hi/api-reference/orders/get-order)
+</Update>
+
+<Update label="2026-11-11" description="बैंडविड्थ ऑर्डर को जल्दी वापस लें" tags={["Bandwidth", "API"]}>
+जिस ट्रांसफर के लिए बैंडविड्थ किराए पर ली गई थी, वह एड्रेस से हो जाते ही अवधि खत्म होने का इंतज़ार किए बिना `POST /orders/{order_id}/reclaim` से ऑर्डर की बैंडविड्थ वापस लें। बचा हुआ समय रिफ़ंड नहीं होता, और दोबारा कॉल करना सुरक्षित है। [ऑर्डर वापस लें](/hi/api-reference/orders/reclaim-order)
+</Update>
+
+<Update label="2026-11-09" description="एनर्जी खरीद पर कीमत की ऊपरी सीमा" tags={["Energy", "API"]}>
+`POST /energy/buy` एक वैकल्पिक `max_price_trx` स्वीकार करता है: अनुमान से `total_trx` भेजें, और जो ऑर्डर इससे महँगा पड़ेगा वह कुछ भी चार्ज होने से पहले `409 PRICE_CHANGED` के साथ अस्वीकार हो जाता है। एनर्जी का अनुमान SUN तक ठीक उसी तरह राउंड होता है जैसे ऑर्डर का शुल्क काटा जाता है, और `Idempotency-Key` हेडर खरीद को दोबारा भेजना सुरक्षित बनाता है। [एनर्जी खरीदें](/hi/api-reference/energy/buy-energy)
+</Update>
+
+<Update label="2026-11-03" description="हर ऑर्डर, एक्टिवेशन और इनवॉइस के लिए वेबहुक" tags={["API"]}>
+अब `order.updated` आपके अकाउंट के हर एनर्जी और बैंडविड्थ ऑर्डर के लिए आता है, चाहे वह API से, वेबसाइट पर, Telegram बॉट में या ऑटो रिफिल से दिया गया हो; `source` फ़ील्ड इन्हें अलग बताती है। नए इवेंट `activation.updated` और `invoice.updated` पूरे हुए एड्रेस एक्टिवेशन और इनवॉइस की स्थिति में बदलाव की सूचना देते हैं। [वेबहुक — परिचय](/hi/api-reference/webhooks/overview)
+</Update>
+
+<Update label="2026-11-03" description="Smart Mode: अगले ट्रांसफर के बाद बंद" tags={["Smart Mode", "API"]}>
+Smart Mode किसी एड्रेस से सिर्फ़ अगला USDT ट्रांसफर पूरा करके अपने आप रुक सकता है; ज़रूरत होने पर उसे फिर शुरू करें। API में सक्रिय करें कॉल में `stop_after_transfer: true` भेजें। [सक्रिय करें](/hi/api-reference/smart-mode/activate)
+</Update>
+
 <Update label="2026-10-30" description="TRC-20 टोकन, स्वैप और कॉन्ट्रैक्ट कॉल के लिए Energy Broadcaster" tags={["Broadcaster"]}>
 Energy Broadcaster अब केवल USDT तक सीमित नहीं है: अन्य TRC-20 टोकन के ट्रांसफर, SunSwap पर स्वैप और अन्य स्मार्ट कॉन्ट्रैक्ट की कॉल को एनर्जी और बैंडविड्थ मिलती है, और TRX ट्रांसफर को बैंडविड्थ मिलती है। हर कॉल की लागत उसके सिमुलेशन से निकाली जाती है; कम प्रचलित टोकन, स्वैप और कॉन्ट्रैक्ट कॉल आपके अकाउंट की सीमाओं के भीतर पूरी की जाती हैं और ब्रॉडकास्टर की सेटिंग में बंद की जा सकती हैं। वैकल्पिक रिवर्ट सुरक्षा विफल होने वाले कॉल को भेजने से पहले रोक सकती है। [Energy Broadcaster](https://tronrental.com/hi/energy-broadcaster)
 </Update>
@@ -95,7 +151,9 @@ Buy TRON Bandwidth पेज रजिस्ट्रेशन के बिन�
 </Update>
 
 <Update label="2026-03-14" description="वेबहुक" tags={["API"]}>
-डैशबोर्ड में वेबहुक URL सेट करें और API से दिए गए ऑर्डर की स्थिति के अपडेट पाएँ। [वेबहुक — परिचय](/hi/api-reference/webhooks/overview)
+डैशबोर्ड में वेबहुक URL सेट करें और API से दिए गए ऑर्डर की स्थिति के अपडेट पाएँ।
+
+2026-11-03 से: अकाउंट के हर ऑर्डर के लिए, चाहे वह कहीं भी दिया गया हो, साथ ही एक्टिवेशन और इनवॉइस के इवेंट। [वेबहुक — परिचय](/hi/api-reference/webhooks/overview)
 </Update>
 
 <Update label="2026-02-27" description="Transfer Packages" tags={["Transfer Packages", "Bandwidth"]}>
