@@ -153,7 +153,8 @@
                   "api-reference/transfer-packages/buy",
                   "api-reference/transfer-packages/list",
                   "api-reference/transfer-packages/pause",
-                  "api-reference/transfer-packages/resume"
+                  "api-reference/transfer-packages/resume",
+                  "api-reference/transfer-packages/move"
                 ]
               },
               {
@@ -328,7 +329,8 @@
                   "ru/api-reference/transfer-packages/buy",
                   "ru/api-reference/transfer-packages/list",
                   "ru/api-reference/transfer-packages/pause",
-                  "ru/api-reference/transfer-packages/resume"
+                  "ru/api-reference/transfer-packages/resume",
+                  "ru/api-reference/transfer-packages/move"
                 ]
               },
               {
@@ -502,7 +504,8 @@
                   "zh/api-reference/transfer-packages/buy",
                   "zh/api-reference/transfer-packages/list",
                   "zh/api-reference/transfer-packages/pause",
-                  "zh/api-reference/transfer-packages/resume"
+                  "zh/api-reference/transfer-packages/resume",
+                  "zh/api-reference/transfer-packages/move"
                 ]
               },
               {
@@ -676,7 +679,8 @@
                   "es/api-reference/transfer-packages/buy",
                   "es/api-reference/transfer-packages/list",
                   "es/api-reference/transfer-packages/pause",
-                  "es/api-reference/transfer-packages/resume"
+                  "es/api-reference/transfer-packages/resume",
+                  "es/api-reference/transfer-packages/move"
                 ]
               },
               {
@@ -850,7 +854,8 @@
                   "tr/api-reference/transfer-packages/buy",
                   "tr/api-reference/transfer-packages/list",
                   "tr/api-reference/transfer-packages/pause",
-                  "tr/api-reference/transfer-packages/resume"
+                  "tr/api-reference/transfer-packages/resume",
+                  "tr/api-reference/transfer-packages/move"
                 ]
               },
               {
@@ -1024,7 +1029,8 @@
                   "pt/api-reference/transfer-packages/buy",
                   "pt/api-reference/transfer-packages/list",
                   "pt/api-reference/transfer-packages/pause",
-                  "pt/api-reference/transfer-packages/resume"
+                  "pt/api-reference/transfer-packages/resume",
+                  "pt/api-reference/transfer-packages/move"
                 ]
               },
               {
@@ -1198,7 +1204,8 @@
                   "hi/api-reference/transfer-packages/buy",
                   "hi/api-reference/transfer-packages/list",
                   "hi/api-reference/transfer-packages/pause",
-                  "hi/api-reference/transfer-packages/resume"
+                  "hi/api-reference/transfer-packages/resume",
+                  "hi/api-reference/transfer-packages/move"
                 ]
               },
               {

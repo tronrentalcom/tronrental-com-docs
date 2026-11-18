@@ -25,6 +25,15 @@ If the address will not send transfers for a while, [pause](/api-reference/trans
 - Repeating a pause or a resume changes nothing and charges nothing.
 - While your packages on an address are paused, you cannot buy a new package for that address — resume first.
 
+### Move to a new address
+
+If the wallet that sends the transfers changes, [move](/api-reference/transfer-packages/move) its packages to the new address. A move covers every active and paused package of your account on the address at once, with all their remaining transfers.
+
+- Working packages keep working on the new address; paused packages stay paused there.
+- The move is free and has no limit. A new address that is not activated on the network yet is activated at your account's cost, as on a purchase.
+- The new address must have no transfer packages and no active Smart Mode.
+- The request answers in about 15 seconds or more; transfers from the old address are no longer served after the response.
+
 ### Pricing
 
 | Package size | Price per transfer |

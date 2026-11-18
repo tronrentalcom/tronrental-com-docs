@@ -1,0 +1,143 @@
+---
+title: Move Packages
+api: POST /v1/transfer-packages/move
+description: "Move your transfer packages to a new TRON address"
+---
+
+## Move Packages
+
+Moves **every active and paused package of your account on the address** to a new address, with all their remaining transfers. A single package cannot be moved separately. Use it when the wallet that sends the transfers changes.
+
+- Packages that were working keep working on the new address. Paused packages stay paused there — [resume](/api-reference/transfer-packages/resume) them with the new address when you need them.
+- The paid 24 hours keep running across the move, as across a [pause](/api-reference/transfer-packages/pause). If they ran out by the time the packages start on the new address, one transfer is charged at once; otherwise nothing is.
+- The move itself is free, and there is no limit on how often you move.
+- If the new address is not activated on the TRON network yet, it is activated at your account's cost, as on a [purchase](/api-reference/transfer-packages/buy).
+- Transfers from the old address are no longer served or counted after the response.
+
+The new address must have **no transfer packages** of any account and **no active Smart Mode**.
+
+<Warning>
+  **The call answers in about 15 seconds or more** — set your client timeout to 60 seconds. Delivery to the old address is stopped first, and transfers already sent from it are counted. A transfer from the old address after the response gets no energy. Wait for the response before you switch the wallet.
+</Warning>
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  TRON address the packages are on now
+</ParamField>
+
+<ParamField body="new_address" type="string" required>
+  TRON address to move the packages to. Must differ from `address` and must not be a smart contract
+</ParamField>
+
+### Response
+
+<ResponseField name="address" type="string">
+  The new address — where the packages are now.
+</ResponseField>
+
+<ResponseField name="previous_address" type="string">
+  The address the packages were moved from.
+</ResponseField>
+
+<ResponseField name="packages" type="array">
+  The moved packages — the same objects as in [List Packages](/api-reference/transfer-packages/list), with `address` set to the new address. `status` is `active` for packages that were working (`paused_at` is `null`) and `paused` for packages that were paused.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/move \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "new_address": "TYourNewAddress..."
+  }'
+```
+
+Here the package was working and the paid 24 hours had not run out, so nothing was charged: `subscription_used` and `remaining` are the same as before the move.
+
+```json Response
+{
+  "address": "TYourNewAddress...",
+  "previous_address": "TYourAddress...",
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourNewAddress...",
+      "package_size": 500,
+      "price_per_transfer": "2.7",
+      "total_price_trx": "1350.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": false,
+      "status": "active",
+      "next_subscription_at": "2026-11-18T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+### Webhooks
+
+A move of working packages pauses them on the old address, moves them, and resumes them on the new one, so each package sends three [events](/api-reference/webhooks/overview#transfer-package-events) in this order:
+
+1. `package.paused` with the old `address`;
+2. `package.moved` with the new `address` and the old one in `previous_address`;
+3. `package.resumed` with the new `address`.
+
+A move of paused packages sends only `package.moved`. The events are sent in this order but delivered independently, so they can arrive in a different one — compare the envelope `timestamp`, or read the current state from [List Packages](/api-reference/transfer-packages/list).
+
+### Errors
+
+Returned in the [standard shape](/errors), under `detail.error.code`.
+
+These come before anything is changed or charged — the packages keep working on the old address:
+
+| Code | Status | When |
+|------|--------|------|
+| `SAME_ADDRESS` | `400` | `new_address` is the address of the packages |
+| `ADDRESS_NOT_ALLOWED` | `400` | Packages cannot be moved to this address |
+| `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | `new_address` is a smart contract, not a wallet |
+| `PACKAGE_NOT_FOUND` | `404` | Your account has no active or paused package on `address` |
+| `PACKAGE_NOT_SETTLED` | `400` | A package on `address` is still being activated — try again later |
+| `ADDRESS_SHARED` | `400` | Another account has an active package on `address` |
+| `SMART_MODE_ACTIVE` | `400` | Smart Mode is active on `address` or on `new_address` — turn it off first |
+| `ADDRESS_TAKEN` | `409` | `new_address` already has transfer packages |
+| `MOVE_AFTER_PAUSE` | `409` | Some packages can be moved only 15 minutes after they are paused — [pause](/api-reference/transfer-packages/pause) them, wait 15 minutes, then move |
+| `INSUFFICIENT_BALANCE` | `402` | `new_address` needs activation and your balance does not cover it |
+
+These come from stopping delivery on the old address. Nothing was moved, and the packages keep working on the old address. If the new address was activated before the error, that activation stays charged — the address remains activated for a later move:
+
+| Code | Status | When |
+|------|--------|------|
+| `ADDRESS_BUSY` | `409` | Another operation on the address is in progress — try again in a minute |
+| `PAUSE_BUSY` | `429` | Too many pauses are in progress at once — try again in a minute |
+| `PROVIDER_UNAVAILABLE` | `503` | Energy delivery to the old address could not be stopped — try again in a minute |
+
+These come after delivery to the old address was stopped. The message says where the packages are now:
+
+| Code | Status | Where the packages are |
+|------|--------|------|
+| `ADDRESS_TAKEN` | `409` | Paused on the **old** address: another package appeared on `new_address` during the move. The message ends with "stay paused on the old address". Resume them there, or move them to another address |
+| `MOVED_PAUSED` | status of the cause | Paused on the **new** address: the move succeeded, but delivery there could not be started. [Resume](/api-reference/transfer-packages/resume) with `new_address` |
+
+`ADDRESS_BUSY` and `MOVE_AFTER_PAUSE` can also come at this step, when another operation on the address got in between. The packages are then paused on the old address; repeat the move to carry them over — they arrive paused.
+
+<Tip>
+  After any error, [List Packages](/api-reference/transfer-packages/list) shows where each package is and in what status.
+</Tip>
