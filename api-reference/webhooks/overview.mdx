@@ -9,20 +9,24 @@ Your account has **one webhook URL**, and every event goes to it. Set it in [Das
 
 ### Events
 
-Six events exist today.
+Ten events exist today.
 
 | Event | Sent when |
 |-------|-----------|
-| `order.updated` | An energy or bandwidth order changes state — **only for orders created through the API** |
+| `order.updated` | An energy or bandwidth order of your account changes state — however it was placed: API, website, Telegram bot or auto-refill |
+| `activation.updated` | An address activation paid from your balance is settled |
+| `withdrawal.completed` | A withdrawal from your balance was sent |
+| `withdrawal.failed` | A withdrawal was declined and its sum returned to your balance |
+| `invoice.updated` | An invoice that belongs to your account changes status |
 | `subscription.transfer` | Smart Mode paid for a transfer on a watched address |
 | `package.transfer` | A Transfer Package paid for a transfer from its address |
 | `package.completed` | A Transfer Package stopped serving transfers |
 | `package.activated` | A Transfer Package became active |
 | `package.expired` | An unpaid Transfer Package invoice expired |
 
-<Warning>
-  `order.updated` is sent only for orders that were created with an API key. Orders placed on the website or through the Telegram bot produce no webhook, even though the same account receives Smart Mode events normally.
-</Warning>
+<Note>
+  Since November 3, 2026, `order.updated` covers **every order of the account**; before that it was sent only for orders created with an API key. Tell the channels apart by its `source` field. [Bandwidth rentals](/api-reference/bandwidth-rentals/create-rental) send no events.
+</Note>
 
 ### Envelope
 
@@ -58,6 +62,10 @@ Headers:
   `processing`, `filled`, `partial`, `failed`, `reclaimed` or `reclaim_failed`. **This field is the source of truth** — see the warning below.
 </ResponseField>
 
+<ResponseField name="source" type="string">
+  Where the order was placed: `api`, `web` (the website), `bot` (the Telegram bot), `autorefill` (an [Auto Refill](/api-reference/auto-refill/overview) rule), `faucet` (free bandwidth) or `broadcast` (Energy Broadcast).
+</ResponseField>
+
 <ResponseField name="target_address" type="string">
   The address the resource was delegated to.
 </ResponseField>
@@ -90,6 +98,14 @@ Headers:
   When the resource is scheduled to be reclaimed, ISO-8601, or `null` for orders that are not reclaimed on a timer.
 </ResponseField>
 
+<ResponseField name="fail_reason" type="string | null">
+  Why a `failed` order failed, as a code from the **Failure reasons** table on [Get Order](/api-reference/orders/get-order); `null` for any other status. Treat a code you do not know as `internal_error`: new codes may be added.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  What went back to your balance, in TRX, as a decimal string: the full `price_trx` for `failed`, the price of the undelivered part for `partial`; `null` when nothing was refunded.
+</ResponseField>
+
 ```json Response
 {
   "event": "order.updated",
@@ -97,6 +113,7 @@ Headers:
     "id": 247033,
     "type": "energy",
     "status": "filled",
+    "source": "web",
     "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "volume": 65000,
     "expected_volume": 65000,
@@ -104,7 +121,9 @@ Headers:
     "price_trx": "2.75",
     "delegate_txid": "a1b2c3d4e5f6...",
     "undelegate_txid": null,
-    "reclaim_at": "2026-09-15T07:44:56+00:00"
+    "reclaim_at": "2026-09-15T07:44:56+00:00",
+    "fail_reason": null,
+    "refunded_trx": null
   },
   "timestamp": "2026-09-14T14:51:16.986341+00:00"
 }
@@ -115,6 +134,165 @@ Headers:
 </Warning>
 
 A large order is split into chunks internally, but that is our business: you receive **one webhook per order**, never one per chunk.
+
+The same `status` can arrive more than once for one order. Treat `(id, status)` as the key and ignore a repeat.
+
+### `activation.updated`
+
+Sent when an activation paid from your balance is settled: one made with [Activate Address](/api-reference/energy/activate-address), on the website, or automatically when an order or a Transfer Package needs an inactive address activated.
+
+<ResponseField name="id" type="number">
+  Activation record ID — the `id` that Activate Address returns.
+</ResponseField>
+
+<ResponseField name="target_address" type="string">
+  The address that was activated.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` — we broadcast the activation; `already_activated` — the address was already active and nothing was charged; `failed` — the activation did not happen and the charge was refunded; `pending` — the transaction was sent but its outcome is not known yet, so the charge is held until we check it.
+</ResponseField>
+
+<ResponseField name="txid" type="string | null">
+  The activation transaction, or `null` when there is none.
+</ResponseField>
+
+<ResponseField name="cost_trx" type="string">
+  What the activation cost you in the end, as a decimal string: `0` after a refund and for an address that was already active.
+</ResponseField>
+
+```json Response
+{
+  "event": "activation.updated",
+  "data": {
+    "id": 12345,
+    "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "status": "completed",
+    "txid": "a1b2c3d4e5f6...",
+    "cost_trx": "1.2"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Note>
+  `pending` is rare, and its final outcome does not send a second event today. If an activation stays `pending`, contact support.
+</Note>
+
+### `withdrawal.completed` and `withdrawal.failed`
+
+Sent when a withdrawal from your balance reaches its outcome, however it was requested: [Create Withdrawal](/api-reference/account/withdrawals), the website or the Telegram bot. `withdrawal.completed` — the transaction was sent to the TRON network; `withdrawal.failed` — the withdrawal was declined and `total_trx` returned to your balance.
+
+<ResponseField name="id" type="number">
+  Withdrawal ID — the `id` that Create Withdrawal returns.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `completed` or `failed` — the same value as the event name.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  `TRX` or `USDT`.
+</ResponseField>
+
+<ResponseField name="to_address" type="string">
+  The recipient address.
+</ResponseField>
+
+<ResponseField name="amount_trx" type="string">
+  The amount sent, in TRX, as a decimal string. For a USDT withdrawal — its TRX equivalent that was charged.
+</ResponseField>
+
+<ResponseField name="fee_trx" type="string">
+  The fee, in TRX.
+</ResponseField>
+
+<ResponseField name="total_trx" type="string">
+  What was charged from your balance: `amount_trx` + `fee_trx`.
+</ResponseField>
+
+<ResponseField name="amount_usdt" type="string | null">
+  The USDT amount sent, for a USDT withdrawal; otherwise `null`.
+</ResponseField>
+
+<ResponseField name="tx_hash" type="string | null">
+  The transaction for `withdrawal.completed`; `null` for `withdrawal.failed`.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  What was returned to your balance for `withdrawal.failed` (`total_trx`); `null` for `withdrawal.completed`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  When the withdrawal was requested, ISO-8601 UTC.
+</ResponseField>
+
+```json Response
+{
+  "event": "withdrawal.completed",
+  "data": {
+    "id": 4821,
+    "status": "completed",
+    "currency": "TRX",
+    "to_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "amount_trx": "250",
+    "fee_trx": "1",
+    "total_trx": "251",
+    "amount_usdt": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "refunded_trx": null,
+    "created_at": "2026-11-13T09:12:44.118203+00:00"
+  },
+  "timestamp": "2026-11-13T09:13:05.402911+00:00"
+}
+```
+
+<Note>
+  Sometimes a withdrawal waits in `pending` while we check it. That sends no event — its outcome does. To see the current state, read the withdrawal with [List Withdrawals](/api-reference/account/withdrawals).
+</Note>
+
+### `invoice.updated`
+
+Sent to the account that owns the invoice when its status changes. `data` is the object [Get Invoice](/api-reference/invoices/get-invoice) returns, with two differences: `error_message` is always `null`, and `status` is the status this event announces.
+
+| `status` | Meaning |
+|----------|---------|
+| `paid` | Payment received, delivery in progress |
+| `underpaid` | Less than the price arrived; `topup_until` says until when the rest can be sent |
+| `delegated` | The resource was delegated |
+| `failed` | Delivery failed |
+| `expired` | No payment arrived before the invoice expired |
+| `reclaimed` | The rental ended and the resource was taken back |
+| `reclaim_failed` | Taking the resource back failed |
+
+```json Response
+{
+  "event": "invoice.updated",
+  "data": {
+    "invoice_id": "7c1f0c2a-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+    "payment_address": "TPaymentAddress...",
+    "target_address": "TRecipientAddress...",
+    "energy_amount": 65000,
+    "duration": "1h",
+    "price_trx": "2.75",
+    "price_usdt": "0.64",
+    "status": "delegated",
+    "error_message": null,
+    "tx_hash": "a1b2c3d4e5f6...",
+    "paid_at": "2026-11-03T14:50:40+00:00",
+    "completed_at": "2026-11-03T14:51:16+00:00",
+    "expires_at": "2026-11-03T15:20:00+00:00",
+    "created_at": "2026-11-03T14:50:00+00:00"
+  },
+  "timestamp": "2026-11-03T14:51:16.986341+00:00"
+}
+```
+
+<Warning>
+  **A status can repeat, and events can arrive out of order** — a `delegated` can come before the `paid` that preceded it. When the exact state matters, confirm it with [Get Invoice](/api-reference/invoices/get-invoice).
+</Warning>
+
+An invoice belongs to your account when you created it while signed in on the website. An invoice created without signing in has no owner and sends no events — and today that includes an invoice created with an API key.
 
 ### `subscription.transfer`
 
@@ -320,7 +498,9 @@ An invoice for a package was not paid within its 30-minute window. Nothing was c
 - **10 seconds** timeout per attempt.
 - We expect any **`2xx`**. Anything else counts as a failed attempt.
 - **Redirects are not followed.** A `301`/`302` is a failed attempt, not a hop.
-- Missed events are **not** backfilled. When all three attempts fail, that event is gone; reconcile with [Get Order](/api-reference/orders/get-order) or [List Packages](/api-reference/transfer-packages/list) rather than waiting for a replay.
+- Missed events are **not** backfilled. When all three attempts fail, that event is gone; reconcile with [Get Order](/api-reference/orders/get-order), [Get Invoice](/api-reference/invoices/get-invoice) or [List Packages](/api-reference/transfer-packages/list) rather than waiting for a replay.
+- **Events are not ordered.** Each one is delivered on its own, so a later event can arrive first. A retry carries the same body, the same `timestamp` and the same signature.
+- Every order of the account sends events, auto-refill included, so a busy account gets many of them. Answer `2xx` at once and do the heavy work after the response.
 
 Your URL must resolve to a **public** address. Loopback, private and link-local ranges are rejected, and so is a host that does not resolve — in both cases nothing is sent and no log row is written.
 

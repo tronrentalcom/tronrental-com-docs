@@ -6,7 +6,7 @@ What's new in TronRental. The same log, with tag filters and an RSS feed, is pub
 
 Tags: Broadcaster
 
-The Energy Broadcaster now serves more than USDT: transfers of other TRC-20 tokens, swaps on SunSwap and calls to other smart contracts get energy and bandwidth, and TRX transfers get bandwidth. The cost of each call is calculated from its simulation; less common tokens, swaps and contract calls are served within your account's limits and can be switched off in the broadcaster settings. [Energy Broadcaster](https://tronrental.com/en/energy-broadcaster)
+The Energy Broadcaster now serves more than USDT: transfers of other TRC-20 tokens, swaps on SunSwap and calls to other smart contracts get energy and bandwidth, and TRX transfers get bandwidth. The cost of each call is calculated from its simulation; less common tokens, swaps and contract calls are served within your account's limits and can be switched off in the broadcaster settings. Optional revert protection can stop a call that would fail before it is sent. [Energy Broadcaster](https://tronrental.com/en/energy-broadcaster)
 
 ## 2026-10-29 · Sign-up confirmed with an email code
 

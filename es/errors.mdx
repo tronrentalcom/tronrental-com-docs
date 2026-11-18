@@ -77,12 +77,15 @@ Se devuelven en la forma estándar, en `detail.error.code`:
 | `PRICE_CHANGED` | `409` | El pedido cuesta más que el `max_price_trx` que enviaste. No se cobró nada — obtén una nueva cotización y reintenta |
 | `IDEMPOTENCY_KEY_REUSED` | `422` | Esta Idempotency-Key ya se usó con otro cuerpo de solicitud |
 | `IDEMPOTENCY_KEY_TOO_LONG` | `422` | La Idempotency-Key tiene más de 64 caracteres |
+| `IDEMPOTENT_REQUEST_IN_PROGRESS` | `409` | Una solicitud con esta Idempotency-Key aún se está procesando. Espera unos segundos y reintenta con la misma clave — no cambies a una nueva |
+| `IDEMPOTENCY_UNAVAILABLE` | `503` | No se pudo comprobar la Idempotency-Key, así que no se compró nada. Reintenta con la misma clave |
 | `INVALID_ADDRESS` | `400` | Dirección TRON no válida |
 | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `400` | El destino es un contrato inteligente — TRON prohíbe delegarle recursos |
 | `INVALID_VOLUME` | `400` | La cantidad solicitada está fuera del rango permitido |
 | `POOL_EXHAUSTED` | `503` | Los pedidos de energía de menos de 32,000 no están disponibles temporalmente para esta dirección. No se cobró nada — reintenta más tarde o pide 32,000 o más |
 | `INVALID_DURATION` | `400` | La duración no es uno de los valores aceptados |
 | `ORDER_NOT_FOUND` | `404` | El ID de orden no existe |
+| `ORDER_NOT_RECLAIMABLE` | `409` | La orden aún no es una orden de ancho de banda entregada (`filled`) o falló; solo una orden así se puede recuperar |
 | `RATE_LIMIT_EXCEEDED` | `429` | Demasiadas solicitudes — ver [Límites de tasa](/es/resources/rate-limits) |
 
 <Note>
@@ -104,10 +107,28 @@ Se devuelven en la forma estándar desde los endpoints de [Recarga automática](
 | Código | Estado | Descripción |
 |--------|--------|-------------|
 | `AUTOREFILL_ADDRESS_TAKEN` | `409` | La cuenta ya tiene una regla para esta dirección y este recurso — edita esa regla en su lugar |
-| `AUTOREFILL_LIMIT_REACHED` | `409` | La cuenta ya tiene 20 reglas para este recurso; el límite también figura en `error.limit` |
 | `AUTOREFILL_IN_PROGRESS` | `409` | Se está comprando una recarga para la regla en este momento — reintenta la edición o la eliminación en un minuto |
 | `AUTOREFILL_DISABLED` | `503` | La Recarga automática de este recurso está desactivada temporalmente; solo se devuelve al crear una regla. No se creó ninguna regla — reintenta más tarde |
 | `NOT_FOUND` | `404` | No existe esa regla en la cuenta |
+
+## Códigos de Bandwidth automático
+
+Se devuelven en la forma estándar desde los endpoints de [Bandwidth automático](/es/api-reference/auto-bandwidth/overview):
+
+| Código | Estado | Descripción |
+|------|--------|-------------|
+| `AUTO_BW_INVALID_THRESHOLD` | `400` | `threshold` está fuera del rango permitido para el `volume` de la suscripción |
+| `AUTO_BW_INVALID_CONTRACT` | `400` | El `contract` no corresponde al `token`, o no está en tu lista de tokens |
+| `AUTO_BW_NOT_A_CONTRACT` | `400` | No hay ningún contrato inteligente en la dirección |
+| `AUTO_BW_NOT_A_TOKEN` | `400` | El contrato no es un token TRC-20 |
+| `AUTO_BW_TRANSFER_REVERTS` | `400` | Una transferencia del token falla en la simulación |
+| `AUTO_BW_ADDRESS_TAKEN` | `409` | La cuenta ya tiene una suscripción para esta dirección |
+| `AUTO_BW_ADDRESS_COVERED` | `409` | El ancho de banda de la dirección ya lo mantiene Smart Mode o un paquete de transferencias |
+| `AUTO_BW_DISABLED_BY_SUPPORT` | `409` | La suscripción fue desactivada por soporte — contáctanos para reanudarla |
+| `AUTO_BW_CONTRACT_LISTED` | `409` | El contrato es USDT o USDD — elígelo con `token`; el token figura en `error.token` |
+| `AUTO_BW_CONTRACT_LIMIT` | `409` | La lista de tokens ya tiene 20 contratos |
+| `AUTO_BW_CONTRACT_IN_USE` | `409` | Hay una suscripción configurada para este contrato |
+| `AUTO_BW_DISABLED` | `503` | Bandwidth automático está desactivado temporalmente; se devuelve al crear o reanudar una suscripción y al añadir un contrato. No se cambió nada — reintenta más tarde |
 
 ## Códigos de verificación de retiro
 

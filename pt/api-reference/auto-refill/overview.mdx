@@ -62,7 +62,7 @@ Não há teto de gasto diário: uma regra compra sempre que o nível está abaix
 
 Toda recarga aparece no seu histórico de pedidos ([Listar pedidos](/pt/api-reference/orders/list-orders)) com `source: "autorefill"`. Para listar apenas os pedidos de recarga, chame `GET /orders?source=autorefill`; para exportá-los como arquivo, use o [relatório](/api-reference/account/reports) `autorefill`.
 
-As regras criadas com uma chave de API enviam [webhooks `order.updated`](/pt/api-reference/webhooks/overview) para os seus pedidos de recarga, assim como os pedidos que você faz pela API. As regras criadas sem chave de API não enviam.
+Todo pedido de recarga envia um [webhook `order.updated`](/pt/api-reference/webhooks/overview) com `source: "autorefill"`, seja a regra criada no site ou com uma chave de API.
 
 ### Status da regra
 
@@ -89,7 +89,7 @@ Se a sua conta do Telegram estiver vinculada, você recebe uma mensagem na prime
 ### Limites
 
 - **Uma regra por endereço e recurso** em cada conta. Criar uma segunda regra de energia (ou uma segunda regra de largura de banda) para o mesmo endereço retorna `409 AUTOREFILL_ADDRESS_TAKEN` — edite a regra existente.
-- **20 regras de energia e 20 regras de largura de banda** por conta. Regras excluídas não contam. Acima do limite: `409 AUTOREFILL_LIMIT_REACHED`.
+- **Sem limite de regras** por conta, nem de energia nem de largura de banda, nem ativas nem pausadas.
 - **Sem endereços de contrato**, como o contrato do token USDT: a TRON não permite delegar recursos a eles.
 - **A criação de regras** é limitada a 10 requisições por minuto por conta, para cada recurso. Veja [Limites de Taxa](/pt/resources/rate-limits).
 

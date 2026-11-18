@@ -1,12 +1,12 @@
 ---
 title: Configurar webhook
-api: POST /api/v1/webhooks/configure
+api: POST /v1/webhooks/configure
 description: "Definir a URL do seu webhook"
 ---
 
 ## Configurar webhook
 
-Define a URL de webhook da conta. Há uma URL por conta, e ambos os eventos vão para ela.
+Define a URL de webhook da conta. Há uma URL por conta, e todos os [eventos](/pt/api-reference/webhooks/overview) vão para ela.
 
 <Warning>
 **Uma chave de API não pode chamar este endpoint.** Mudar a URL do webhook — ou ler o segredo de assinatura — exige uma sessão aberta por você mesmo no site. Com uma chave de API a requisição é recusada:
@@ -28,7 +28,7 @@ Caso contrário, uma chave roubada bastaria para apontar os seus eventos para o 
 ### Corpo da requisição
 
 <ParamField body="url" type="string" required>
-  URL do webhook. Neste endpoint **somente HTTPS**, e ela não pode apontar para `localhost`, `127.0.0.1`, `0.0.0.0` ou `::1`. Além disso, a entrega é recusada no momento do envio para qualquer host que resolva para um endereço privado, loopback ou link-local.
+  URL do webhook. Neste endpoint **somente HTTPS**, e ela não pode apontar para `localhost`, `127.0.0.1`, `0.0.0.0` ou `::1`. Além disso, a entrega é recusada no momento do envio para qualquer host que resolva para um endereço privado, loopback ou link-local. Um host que não resolve em 3 segundos é recusado da mesma forma.
 </ParamField>
 
 ### Resposta
@@ -47,6 +47,23 @@ Caso contrário, uma chave roubada bastaria para apontar os seus eventos para o 
   "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
+
+### Limite de requisições
+
+A URL do webhook pode ser alterada até **10 vezes por minuto** por conta. O limite é compartilhado com a porta do painel descrita abaixo (`PATCH /api/v1/account/webhook`). Acima dele, a requisição é recusada com `429` e a URL permanece como estava:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "message": "Too many requests. Please try again later."
+    }
+  }
+}
+```
+
+A janela é de um minuto e não há cabeçalho `Retry-After`. Uma requisição recusada por vir de uma chave de API não conta para o limite.
 
 ### A porta do painel
 

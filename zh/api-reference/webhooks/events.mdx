@@ -1,12 +1,12 @@
 ---
 title: Webhook 日志
-api: GET /api/v1/webhooks/logs
+api: GET /v1/webhooks/logs
 description: "查看最近的 Webhook 投递记录"
 ---
 
 ## Webhook 日志
 
-最近的投递尝试，最新的排在最前——我们发送了什么，您的服务器回应了什么。
+最近的投递尝试，最新的排在最前——我们发送了什么，您的服务器回应了什么。 记录保留 30 天。
 
 ### 查询参数
 
@@ -64,6 +64,7 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "id": 247033,
         "type": "energy",
         "status": "filled",
+        "source": "api",
         "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "volume": 65000,
         "expected_volume": 65000,
@@ -71,7 +72,9 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "price_trx": "2.75",
         "delegate_txid": "a1b2c3d4e5f6...",
         "undelegate_txid": null,
-        "reclaim_at": "2026-09-15T07:44:56+00:00"
+        "reclaim_at": "2026-09-15T07:44:56+00:00",
+        "fail_reason": null,
+        "refunded_trx": null
       },
       "timestamp": "2026-09-14T14:51:16.986341+00:00"
     },
@@ -83,9 +86,8 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```
 
 <Note>
-  在用这份日志排查之前，有两点需要知道：
+  日志列出发送到您账户的每一次投递——所有[事件](/zh/api-reference/webhooks/overview)，包括 `subscription.transfer` 和 `package.*`。
 
-  - 日志列出的是归属于您**API 密钥**的投递，因此 `subscription.transfer` 和 `package.*` 的投递目前不会出现在这里，即使它们确实已经发送。
-  - 无法解析的 URL，或解析到私有地址的 URL，**完全不会产生记录**——空日志无法区分「没有事件」和「地址被拒绝」。如果您预期有流量却什么也看不到，请到 [Dashboard → API](https://tronrental.com/dashboard/api) 检查 URL。
+  在用它排查之前，有一点需要知道：无法解析的 URL，或解析到私有地址的 URL，**完全不会产生记录**——空日志无法区分「没有事件」和「地址被拒绝」。如果您预期有流量却什么也看不到，请到 [Dashboard → API](https://tronrental.com/dashboard/api) 检查 URL。
 </Note>
 

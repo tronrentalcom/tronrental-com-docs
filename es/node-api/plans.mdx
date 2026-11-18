@@ -8,10 +8,10 @@ description: "Planes de Node API, límites, excedente, prueba, renovación y có
 | Plan | Precio | Periodo | Cuota | Lecturas | Solicitudes de bloques | Envío de transacciones | Endpoints | Por encima de la cuota |
 |---|---|---|---|---|---|---|---|---|
 | Prueba | gratis | 7 días | 5M WU | 20 WU/s | 1/s | 2/s | 1 | rechazo con `429` |
-| Start | 19.90 USDT | 30 días | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.80 USDT por 1M WU |
-| Growth | 49 USDT | 30 días | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.70 USDT por 1M WU |
-| Pro | 149 USDT | 30 días | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.60 USDT por 1M WU |
-| Slot de nodo | 1.50 USDT por 1 WU/s | 30 días | sin cuota | 50–300 WU/s | 5/s | 30/s | 10 | — |
+| Start | 18.90 USDT | 30 días | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.75 USDT por 1M WU |
+| Growth | 47.90 USDT | 30 días | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.65 USDT por 1M WU |
+| Pro | 139.90 USDT | 30 días | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.55 USDT por 1M WU |
+| Slot de nodo | 1.40 USDT por 1 WU/s | 30 días | sin cuota | 50–300 WU/s | 5/s | 30/s | 10 | — |
 
 - **Lecturas** — toda llamada que no sea un bloque ni un envío de transacción, limitada en WU por
   segundo.
@@ -31,8 +31,8 @@ panel.
 ### Slot de nodo
 
 Un slot de nodo no tiene cuota: compras una velocidad de lectura fija de 50 a 300 WU/s y haces tantas
-solicitudes como permita esa velocidad, durante todo el periodo. El precio es 1.50 USDT por 1 WU/s —
-por ejemplo, 100 WU/s cuestan 150 USDT por 30 días. Las solicitudes de bloques, los envíos de
+solicitudes como permita esa velocidad, durante todo el periodo. El precio es 1.40 USDT por 1 WU/s —
+por ejemplo, 100 WU/s cuestan 140 USDT por 30 días. Las solicitudes de bloques, los envíos de
 transacciones y los endpoints son como en Pro.
 
 ### Prueba
@@ -61,7 +61,7 @@ tipo de cambio y el importe en TRX, aparece en **Cargos** en
 contratar un plan.
 
 **Descuento para compradores de energía.** Si la cuenta compró energía por 3000 TRX o más en los
-últimos 30 días, cualquier plan cuesta 19.90 USDT menos (nunca por debajo de cero). Lo comprobamos en
+últimos 30 días, cualquier plan cuesta 18.90 USDT menos (nunca por debajo de cero). Lo comprobamos en
 cada compra y en cada renovación.
 
 ## Cuota y excedente

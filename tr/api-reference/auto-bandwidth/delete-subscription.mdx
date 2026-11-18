@@ -1,0 +1,79 @@
+---
+title: Aboneliği Sil
+api: DELETE /v1/bandwidth/auto/{sub_id}
+description: "Bir Otomatik Bandwidth aboneliğini silin"
+---
+
+## Aboneliği Sil
+
+Bir aboneliği siler. Adresi izlemeyi bırakır ve ona devrettiğimiz bant genişliğini birkaç saniye içinde geri alırız; adres yeni bir abonelik için boşalır. Silmeden önce bizim bant genişliğimizi kullanan bir transferin ücreti yine de alınır. `buy_bandwidth` kapsamını gerektirir.
+
+Ayarları kaybetmeden bir süre durmak için bunun yerine `enabled: false` ile [aboneliği duraklatın](/tr/api-reference/auto-bandwidth/update-subscription).
+
+### Yol parametreleri
+
+<ParamField path="sub_id" type="number" required>
+  Abonelik kimliği — Abonelik Oluştur veya Abonelikleri Listele yanıtındaki `id`
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="id" type="number">
+  Silinen aboneliğin kimliği
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `deleted`
+</ResponseField>
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "status": "deleted"
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
+| `404` | `NOT_FOUND` | Hesabınızda bu kimliğe sahip abonelik yok (veya zaten silindi) |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-Bandwidth subscription not found"
+    }
+  }
+}
+```

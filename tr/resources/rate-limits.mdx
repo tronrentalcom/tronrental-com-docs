@@ -44,6 +44,10 @@ boyunca yarıya iner; böyle üç dakika daha olursa hesap otuz dakika tamamen e
 | `POST /api/v1/account/withdrawal` | `Idempotency-Key` ile oluşturulan çekimden sonra 5 sn, onsuz oluşturulandan sonra 60 sn | hesap |
 | `POST /api/v1/energy/auto-refill` | 10 istek/dakika | hesap |
 | `POST /api/v1/bandwidth/auto-refill` | 10 istek/dakika | hesap |
+| `POST /api/v1/bandwidth/auto` | 20 istek/dakika | hesap |
+| `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 istek/dakika | hesap |
+| `POST /api/v1/bandwidth/auto/contracts` | 10 yeni sözleşme/saat | hesap |
+| `POST /api/v1/webhooks/configure` | 10 istek/dakika, `PATCH /api/v1/account/webhook` ile ortak | hesap |
 
 Dikkat: `POST /api/v1/invoices` hesaba göre değil, **IP adresine** göre sayılır. Birden fazla
 istemciniz aynı çıkış IP'sinden istek gönderiyorsa, dakikada 10'luk tek bir bütçeyi paylaşırlar.
@@ -54,7 +58,8 @@ Satın alma uç noktaları — `POST /api/v1/energy/buy`, `POST /api/v1/energy/a
 hesap için bu asla belirleyici sınır olmaz, ancak aynı çıkış IP'sinin ardındaki istemciler onu birbiriyle
 paylaşır.
 
-Webhook yönetim uç noktaları (`/api/v1/webhooks/...`) hesap düzeyindeki sınırın kapsamında değildir.
+Webhook yönetim uç noktaları (`/api/v1/webhooks/...`) hesap düzeyindeki sınırın kapsamında değildir;
+`POST /api/v1/webhooks/configure` uç noktasının kendi sınırı yukarıdaki tabloda yer alır.
 Belgelenmiş diğer tüm uç noktaların kendi sınırı yoktur — onlara yalnızca hesap düzeyindeki sınır
 uygulanır.
 

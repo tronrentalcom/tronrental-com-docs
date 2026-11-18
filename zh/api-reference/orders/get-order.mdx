@@ -1,6 +1,6 @@
 ---
 title: 查询订单
-api: GET /api/v1/orders/{order_id}
+api: GET /v1/orders/{order_id}
 description: "通过 ID 查询能量或带宽订单的状态"
 ---
 
@@ -18,6 +18,10 @@ description: "通过 ID 查询能量或带宽订单的状态"
 
 返回完整的订单对象，包括 `status`、`type`、`volume`、`price_trx`、`delegate_txid` 和时间戳。
 
+<ResponseField name="fixed_fee_trx" type="string">
+  本订单的固定手续费，**每笔订单收取一次**，与数量无关。**已包含在** `price_trx` 中。若您的账户设有专属手续费、折扣或豁免，此处会体现您的实际手续费。
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   此订单支付的地址激活 ID；若未支付任何激活则为 `null`。
 </ResponseField>
@@ -30,14 +34,58 @@ description: "通过 ID 查询能量或带宽订单的状态"
 **是 `null`，不是 `"0"`。** 当订单未支付激活时（接收方账户已存在，或由他人的交易创建），两个字段均为 `null`。请注意与 Buy Energy 响应中 `activation_cost_trx` 的区别：那里此种情况为字符串 `"0"`。在此接口用 `"0"` 比较将永远不会匹配。
 </Note>
 
+<ResponseField name="fail_reason" type="string | null">
+  `failed` 订单失败的原因，取值为 [Get Order](/zh/api-reference/orders/get-order) 页面 **失败原因** 表中的代码；其他状态下为 `null`。遇到不认识的代码按 `internal_error` 处理：今后可能新增代码。
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  退回到余额的金额（TRX，十进制字符串）：`failed` 为全部 `price_trx`，`partial` 为未交付部分的价格；没有退款时为 `null`。
+</ResponseField>
+
 ### 订单状态
 
-| 状态 | 说明 |
-|--------|-------------|
-| `pending` | 订单已接收，正在委托中 |
-| `filled` | 能量或带宽委托成功 |
-| `failed` | 委托失败 |
-| `reclaimed` | 租用期结束后带宽已回收（仅带宽订单） |
+| 状态 | 最终 | 说明 |
+|--------|-------|-------------|
+| `created` | 否 | 订单已记录，尚未开始交付 |
+| `processing` | 否 | 大额能量订单（超过 1,000,000）正在分批交付 |
+| `submitted_unknown` | 否 | 委托已广播，等待区块确认——带宽订单和少于 32,000 的能量订单 |
+| `filled` | 是 | 能量或带宽已委托 |
+| `partial` | 是 | 大额能量订单仅部分交付；未交付部分的价格已退回您的余额 |
+| `failed` | 是 | 交付失败；全部费用已退回您的余额 |
+| `reclaiming` | 否 | 已交付；资源正在收回——租用结束时或调用[提前回收](/zh/api-reference/orders/reclaim-order)后 |
+| `reclaimed` | 是 | 已交付；租用期结束或您调用了[提前回收](/zh/api-reference/orders/reclaim-order)，资源已收回 |
+| `reclaim_failed` | 是 | 已交付；租用结束后，我们这边未能完成资源的收回。您无需做任何事 |
+
+处理中的订单通常会在几秒内变为最终状态，最长几分钟。请每 5–10 秒轮询此接口，或订阅 `order.updated` [Webhook](/zh/api-reference/webhooks/overview)，由我们将最终状态推送给您。如果订单处理中超过 15 分钟，请带上其 ID 联系支持。
+
+最终状态不会再变化，只有一个例外：`filled` 订单在租用结束时，之后可能变为 `reclaimed` 或 `reclaim_failed`。`failed` 或 `partial` 订单不会再继续交付，也不会再次扣费。如果其购买响应中带有 `provider_outcome: "unknown"`，已退款的能量仍可能在几分钟内到达该地址，且您无需为其付费——见[购买能量](/zh/api-reference/energy/buy-energy)。
+
+### 失败原因
+
+`failed` 订单总会把全部价格退回到余额，金额见 `refunded_trx`。`fail_reason` 说明出了什么问题，以及是否值得重试：
+
+| `fail_reason` | 发生了什么 | 怎么办 |
+|---|---|---|
+| `insufficient_supply` | 当时可用资源不足 | 稍后重试 |
+| `delivery_timeout` | 未能按时确认交付，因此已退款。对于能量，资源仍可能在几分钟内到达地址 —— 不会因此向你收费 | 重试前先检查地址 |
+| `order_rejected` | 该地址的订单被拒绝 —— 例如地址已有自己质押的资源 | 同样的订单可能再次失败；稍后重试或换一个地址可能有用 |
+| `transaction_failed` | 网络拒绝了代理交易 | 重试 |
+| `address_not_activated` | 收款地址尚未在链上存在 | 用 [Activate Address](/zh/api-reference/energy/activate-address) 激活后重试 |
+| `internal_error` | 我们这边的其他任何故障 | 重试；如果反复出现，请带上订单 ID 联系客服 |
+
+```json
+{
+  "id": 12346,
+  "status": "failed",
+  "price_trx": "2.15",
+  "fail_reason": "insufficient_supply",
+  "refunded_trx": "2.15"
+}
+```
+
+<Note>
+此列表今后可能新增代码。遇到不认识的代码按 `internal_error` 处理。
+</Note>
 
 ### 示例
 
@@ -54,6 +102,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,
@@ -61,6 +110,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "source": "api",
   "activation_id": 8891,
   "activation_cost_trx": "1.20",
+  "fail_reason": null,
+  "refunded_trx": null,
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```

@@ -1,0 +1,89 @@
+---
+title: Token Sözleşmesi Ekle
+api: POST /v1/bandwidth/auto/contracts
+description: "Otomatik Bandwidth için kendi TRC-20 tokeninizi ekleyin"
+---
+
+## Token Sözleşmesi Ekle
+
+Bir TRC-20 sözleşmesini token listenize ekler; böylece bir abonelik onu `token: "CUSTOM"` veya `"OWN"` ile kullanabilir. Ağa adresin transferleri geçen bir TRC-20 tokeni olup olmadığını sorar; sembolünü, adını, ondalık basamaklarını ve bir transferin ne kadar bant genişliği aldığını okuruz. `buy_bandwidth` kapsamını gerektirir.
+
+Listenizde zaten bulunan bir sözleşmeyi eklemek, onu yeni bir kontrol yapmadan ve istek sınırına sayılmadan yeniden döndürür.
+
+### İstek gövdesi
+
+<ParamField body="address" type="string" required>
+  TRC-20 sözleşmesinin adresi (T... formatı, 34 karakter). USDT ve USDD reddedilir — bunları `token` ile seçin.
+</ParamField>
+
+### Yanıt
+
+Sözleşme; [Token Sözleşmelerini Listele](/tr/api-reference/auto-bandwidth/list-contracts) ile aynı alanlara sahiptir. `bandwidth` değerini, küçük bir payla birlikte abonelik `volume` değeri için bir kılavuz olarak kullanın.
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"address": "TYourTokenContract1234567890abcdef"}'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+    json={"address": "TYourTokenContract1234567890abcdef"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ address: "TYourTokenContract1234567890abcdef" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "symbol": "MTK",
+  "name": "My Token",
+  "decimals": 6,
+  "bandwidth": 345
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` geçerli bir TRON adresi değil |
+| `400` | `AUTO_BW_NOT_A_CONTRACT` | Bu adreste akıllı sözleşme yok |
+| `400` | `AUTO_BW_NOT_A_TOKEN` | Sözleşme bir TRC-20 tokeni değil |
+| `400` | `AUTO_BW_TRANSFER_REVERTS` | Bu tokenın bir transferi simülasyonda başarısız oluyor — örneğin token duraklatılmış |
+| `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | Bu USDT veya USDD — `token` ile seçin; token `error.token` içinde |
+| `409` | `AUTO_BW_CONTRACT_LIMIT` | Listenizde zaten 20 sözleşme var — önce birini kaldırın |
+| `429` | `RATE_LIMIT_EXCEEDED` | Çok fazla yeni sözleşme — bkz. [Hız Sınırları](/tr/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | Otomatik Bandwidth geçici olarak kapalı — daha sonra yeniden deneyin |
+| `503` | `TEMPORARILY_UNAVAILABLE` | Ağ şu anda okunamadı; hiçbir şey kaydedilmedi — `Retry-After` saniye sonra yeniden deneyin |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_CONTRACT_LISTED",
+      "message": "This is USDT; pick it in the token list",
+      "token": "USDT"
+    }
+  }
+}
+```

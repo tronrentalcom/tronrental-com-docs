@@ -7,6 +7,11 @@
     "dark": "/logo/dark.svg"
   },
   "favicon": "/favicon.svg",
+  "api": {
+    "mdx": {
+      "server": "https://api.tronrental.com"
+    }
+  },
   "colors": {
     "primary": "#0ea5e9",
     "light": "#38bdf8",
@@ -54,7 +59,8 @@
               {
                 "group": "TRON Energy",
                 "pages": [
-                  "resources/tron-energy"
+                  "resources/tron-energy",
+                  "resources/energy-broadcaster"
                 ]
               }
             ]
@@ -99,10 +105,25 @@
                 ]
               },
               {
+                "group": "Auto Bandwidth",
+                "pages": [
+                  "api-reference/auto-bandwidth/overview",
+                  "api-reference/auto-bandwidth/quote",
+                  "api-reference/auto-bandwidth/create-subscription",
+                  "api-reference/auto-bandwidth/list-subscriptions",
+                  "api-reference/auto-bandwidth/update-subscription",
+                  "api-reference/auto-bandwidth/delete-subscription",
+                  "api-reference/auto-bandwidth/list-contracts",
+                  "api-reference/auto-bandwidth/add-contract",
+                  "api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Orders",
                 "pages": [
                   "api-reference/orders/get-order",
-                  "api-reference/orders/list-orders"
+                  "api-reference/orders/list-orders",
+                  "api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -216,7 +237,8 @@
               {
                 "group": "Энергия TRON",
                 "pages": [
-                  "ru/resources/tron-energy"
+                  "ru/resources/tron-energy",
+                  "ru/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -261,10 +283,25 @@
                 ]
               },
               {
+                "group": "Авто-bandwidth",
+                "pages": [
+                  "ru/api-reference/auto-bandwidth/overview",
+                  "ru/api-reference/auto-bandwidth/quote",
+                  "ru/api-reference/auto-bandwidth/create-subscription",
+                  "ru/api-reference/auto-bandwidth/list-subscriptions",
+                  "ru/api-reference/auto-bandwidth/update-subscription",
+                  "ru/api-reference/auto-bandwidth/delete-subscription",
+                  "ru/api-reference/auto-bandwidth/list-contracts",
+                  "ru/api-reference/auto-bandwidth/add-contract",
+                  "ru/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Заказы",
                 "pages": [
                   "ru/api-reference/orders/get-order",
-                  "ru/api-reference/orders/list-orders"
+                  "ru/api-reference/orders/list-orders",
+                  "ru/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -377,7 +414,8 @@
               {
                 "group": "TRON 能量",
                 "pages": [
-                  "zh/resources/tron-energy"
+                  "zh/resources/tron-energy",
+                  "zh/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -422,10 +460,25 @@
                 ]
               },
               {
+                "group": "自动带宽",
+                "pages": [
+                  "zh/api-reference/auto-bandwidth/overview",
+                  "zh/api-reference/auto-bandwidth/quote",
+                  "zh/api-reference/auto-bandwidth/create-subscription",
+                  "zh/api-reference/auto-bandwidth/list-subscriptions",
+                  "zh/api-reference/auto-bandwidth/update-subscription",
+                  "zh/api-reference/auto-bandwidth/delete-subscription",
+                  "zh/api-reference/auto-bandwidth/list-contracts",
+                  "zh/api-reference/auto-bandwidth/add-contract",
+                  "zh/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "订单",
                 "pages": [
                   "zh/api-reference/orders/get-order",
-                  "zh/api-reference/orders/list-orders"
+                  "zh/api-reference/orders/list-orders",
+                  "zh/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -538,7 +591,8 @@
               {
                 "group": "Energía TRON",
                 "pages": [
-                  "es/resources/tron-energy"
+                  "es/resources/tron-energy",
+                  "es/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -583,10 +637,25 @@
                 ]
               },
               {
+                "group": "Bandwidth automático",
+                "pages": [
+                  "es/api-reference/auto-bandwidth/overview",
+                  "es/api-reference/auto-bandwidth/quote",
+                  "es/api-reference/auto-bandwidth/create-subscription",
+                  "es/api-reference/auto-bandwidth/list-subscriptions",
+                  "es/api-reference/auto-bandwidth/update-subscription",
+                  "es/api-reference/auto-bandwidth/delete-subscription",
+                  "es/api-reference/auto-bandwidth/list-contracts",
+                  "es/api-reference/auto-bandwidth/add-contract",
+                  "es/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Órdenes",
                 "pages": [
                   "es/api-reference/orders/get-order",
-                  "es/api-reference/orders/list-orders"
+                  "es/api-reference/orders/list-orders",
+                  "es/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -699,7 +768,8 @@
               {
                 "group": "TRON Enerji",
                 "pages": [
-                  "tr/resources/tron-energy"
+                  "tr/resources/tron-energy",
+                  "tr/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -744,10 +814,25 @@
                 ]
               },
               {
+                "group": "Otomatik Bandwidth",
+                "pages": [
+                  "tr/api-reference/auto-bandwidth/overview",
+                  "tr/api-reference/auto-bandwidth/quote",
+                  "tr/api-reference/auto-bandwidth/create-subscription",
+                  "tr/api-reference/auto-bandwidth/list-subscriptions",
+                  "tr/api-reference/auto-bandwidth/update-subscription",
+                  "tr/api-reference/auto-bandwidth/delete-subscription",
+                  "tr/api-reference/auto-bandwidth/list-contracts",
+                  "tr/api-reference/auto-bandwidth/add-contract",
+                  "tr/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Siparişler",
                 "pages": [
                   "tr/api-reference/orders/get-order",
-                  "tr/api-reference/orders/list-orders"
+                  "tr/api-reference/orders/list-orders",
+                  "tr/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -860,7 +945,8 @@
               {
                 "group": "Energia TRON",
                 "pages": [
-                  "pt/resources/tron-energy"
+                  "pt/resources/tron-energy",
+                  "pt/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -905,10 +991,25 @@
                 ]
               },
               {
+                "group": "Bandwidth automático",
+                "pages": [
+                  "pt/api-reference/auto-bandwidth/overview",
+                  "pt/api-reference/auto-bandwidth/quote",
+                  "pt/api-reference/auto-bandwidth/create-subscription",
+                  "pt/api-reference/auto-bandwidth/list-subscriptions",
+                  "pt/api-reference/auto-bandwidth/update-subscription",
+                  "pt/api-reference/auto-bandwidth/delete-subscription",
+                  "pt/api-reference/auto-bandwidth/list-contracts",
+                  "pt/api-reference/auto-bandwidth/add-contract",
+                  "pt/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "Pedidos",
                 "pages": [
                   "pt/api-reference/orders/get-order",
-                  "pt/api-reference/orders/list-orders"
+                  "pt/api-reference/orders/list-orders",
+                  "pt/api-reference/orders/reclaim-order"
                 ]
               },
               {
@@ -1021,7 +1122,8 @@
               {
                 "group": "TRON एनर्जी",
                 "pages": [
-                  "hi/resources/tron-energy"
+                  "hi/resources/tron-energy",
+                  "hi/resources/energy-broadcaster"
                 ]
               }
             ]
@@ -1066,10 +1168,25 @@
                 ]
               },
               {
+                "group": "ऑटो बैंडविड्थ",
+                "pages": [
+                  "hi/api-reference/auto-bandwidth/overview",
+                  "hi/api-reference/auto-bandwidth/quote",
+                  "hi/api-reference/auto-bandwidth/create-subscription",
+                  "hi/api-reference/auto-bandwidth/list-subscriptions",
+                  "hi/api-reference/auto-bandwidth/update-subscription",
+                  "hi/api-reference/auto-bandwidth/delete-subscription",
+                  "hi/api-reference/auto-bandwidth/list-contracts",
+                  "hi/api-reference/auto-bandwidth/add-contract",
+                  "hi/api-reference/auto-bandwidth/delete-contract"
+                ]
+              },
+              {
                 "group": "ऑर्डर",
                 "pages": [
                   "hi/api-reference/orders/get-order",
-                  "hi/api-reference/orders/list-orders"
+                  "hi/api-reference/orders/list-orders",
+                  "hi/api-reference/orders/reclaim-order"
                 ]
               },
               {

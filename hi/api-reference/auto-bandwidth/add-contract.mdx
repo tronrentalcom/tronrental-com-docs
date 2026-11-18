@@ -1,0 +1,89 @@
+---
+title: टोकन कॉन्ट्रैक्ट जोड़ें
+api: POST /v1/bandwidth/auto/contracts
+description: "ऑटो बैंडविड्थ के लिए अपना TRC-20 टोकन जोड़ें"
+---
+
+## टोकन कॉन्ट्रैक्ट जोड़ें
+
+आपकी टोकन सूची में एक TRC-20 कॉन्ट्रैक्ट जोड़ता है, ताकि कोई सब्सक्रिप्शन उसे `token: "CUSTOM"` या `"OWN"` के साथ उपयोग कर सके। हम नेटवर्क से पूछते हैं कि क्या यह एड्रेस ऐसा TRC-20 टोकन है जिसके ट्रांसफर सफल होते हैं, और उसका सिंबल, नाम, दशमलव स्थान और एक ट्रांसफर में लगने वाली बैंडविड्थ पढ़ते हैं। `buy_bandwidth` स्कोप आवश्यक है।
+
+आपकी सूची में पहले से मौजूद कॉन्ट्रैक्ट को जोड़ने पर वह फिर लौटा दिया जाता है, नई जाँच के बिना और अनुरोध सीमा में गिने बिना।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  TRC-20 कॉन्ट्रैक्ट का एड्रेस (T... प्रारूप, 34 अक्षर)। USDT और USDD अस्वीकार किए जाते हैं — उन्हें `token` से चुनें।
+</ParamField>
+
+### रिस्पॉन्स
+
+कॉन्ट्रैक्ट, वही फ़ील्ड जो [टोकन कॉन्ट्रैक्ट की सूची](/hi/api-reference/auto-bandwidth/list-contracts) में हैं। सब्सक्रिप्शन के `volume` के लिए `bandwidth` को थोड़े अतिरिक्त अंतर के साथ संकेत के रूप में उपयोग करें।
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"address": "TYourTokenContract1234567890abcdef"}'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+    json={"address": "TYourTokenContract1234567890abcdef"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ address: "TYourTokenContract1234567890abcdef" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "symbol": "MTK",
+  "name": "My Token",
+  "decimals": 6,
+  "bandwidth": 345
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` मान्य TRON एड्रेस नहीं है |
+| `400` | `AUTO_BW_NOT_A_CONTRACT` | इस एड्रेस पर कोई स्मार्ट कॉन्ट्रैक्ट नहीं है |
+| `400` | `AUTO_BW_NOT_A_TOKEN` | कॉन्ट्रैक्ट TRC-20 टोकन नहीं है |
+| `400` | `AUTO_BW_TRANSFER_REVERTS` | इस टोकन का ट्रांसफर सिमुलेशन में विफल होता है — उदाहरण के लिए, टोकन रुका हुआ है |
+| `403` | `FORBIDDEN` | API कुंजी के पास `buy_bandwidth` स्कोप नहीं है |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | यह USDT या USDD है — इसे `token` से चुनें; टोकन `error.token` में है |
+| `409` | `AUTO_BW_CONTRACT_LIMIT` | आपकी सूची में पहले से 20 कॉन्ट्रैक्ट हैं — पहले कोई एक हटाएं |
+| `429` | `RATE_LIMIT_EXCEEDED` | बहुत अधिक नए कॉन्ट्रैक्ट — देखें [रेट लिमिट](/hi/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | ऑटो बैंडविड्थ अस्थायी रूप से बंद है — कुछ देर बाद पुनः प्रयास करें |
+| `503` | `TEMPORARILY_UNAVAILABLE` | नेटवर्क अभी पढ़ा नहीं जा सका; कुछ सहेजा नहीं गया — `Retry-After` सेकंड के बाद पुनः प्रयास करें |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_CONTRACT_LISTED",
+      "message": "This is USDT; pick it in the token list",
+      "token": "USDT"
+    }
+  }
+}
+```

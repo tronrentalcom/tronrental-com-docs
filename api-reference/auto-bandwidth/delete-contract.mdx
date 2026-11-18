@@ -1,0 +1,68 @@
+---
+title: Remove Token Contract
+api: DELETE /v1/bandwidth/auto/contracts/{address}
+description: "Remove a TRC-20 contract from your Auto Bandwidth token list"
+---
+
+## Remove Token Contract
+
+Removes a contract from your token list. A contract that one of your subscriptions still uses cannot be removed: change that subscription's `token` or `contract`, or delete it, first. Requires the `buy_bandwidth` scope.
+
+### Path parameters
+
+<ParamField path="address" type="string" required>
+  Address of the contract to remove
+</ParamField>
+
+### Response
+
+<ResponseField name="address" type="string">
+  The removed contract's address
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean">
+  Always `true`
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/contracts/TYourTokenContract1234567890abcdef",
+  { method: "DELETE", headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "deleted": true
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` is not a valid TRON address |
+| `403` | `FORBIDDEN` | The API key lacks the `buy_bandwidth` scope |
+| `404` | `NOT_FOUND` | This contract is not in your list |
+| `409` | `AUTO_BW_CONTRACT_IN_USE` | A subscription is set up for this contract |

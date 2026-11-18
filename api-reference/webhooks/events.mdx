@@ -1,12 +1,12 @@
 ---
 title: Webhook Logs
-api: GET /api/v1/webhooks/logs
+api: GET /v1/webhooks/logs
 description: "View recent webhook delivery logs"
 ---
 
 ## Webhook Logs
 
-Recent delivery attempts, newest first — what we sent and what your server answered.
+Recent delivery attempts, newest first — what we sent and what your server answered. Entries are kept for 30 days.
 
 ### Query parameters
 
@@ -64,6 +64,7 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "id": 247033,
         "type": "energy",
         "status": "filled",
+        "source": "api",
         "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "volume": 65000,
         "expected_volume": 65000,
@@ -71,7 +72,9 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "price_trx": "2.75",
         "delegate_txid": "a1b2c3d4e5f6...",
         "undelegate_txid": null,
-        "reclaim_at": "2026-09-15T07:44:56+00:00"
+        "reclaim_at": "2026-09-15T07:44:56+00:00",
+        "fail_reason": null,
+        "refunded_trx": null
       },
       "timestamp": "2026-09-14T14:51:16.986341+00:00"
     },
@@ -83,9 +86,8 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```
 
 <Note>
-  Two gaps worth knowing before you use this log to debug:
+  The log lists every delivery to your account — all [events](/api-reference/webhooks/overview#events), `subscription.transfer` and `package.*` included.
 
-  - It lists deliveries attributed to your **API keys**, so today `subscription.transfer` and `package.*` deliveries do not appear here even when they were sent.
-  - A URL we could not resolve, or one that resolves to a private address, writes **no row at all** — an empty log does not distinguish "no events happened" from "the address was refused". Check the URL in [Dashboard → API](https://tronrental.com/dashboard/api) if you expected traffic and see nothing.
+  One gap is worth knowing before you use it to debug: a URL we could not resolve, or one that resolves to a private address, writes **no row at all** — an empty log does not distinguish "no events happened" from "the address was refused". Check the URL in [Dashboard → API](https://tronrental.com/dashboard/api) if you expected traffic and see nothing.
 </Note>
 

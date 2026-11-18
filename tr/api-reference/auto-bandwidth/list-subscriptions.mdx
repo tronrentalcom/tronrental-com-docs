@@ -1,0 +1,167 @@
+---
+title: Abonelikleri Listele
+api: GET /v1/bandwidth/auto
+description: "Hesabınızdaki tüm Otomatik Bandwidth abonelikleri"
+---
+
+## Abonelikleri Listele
+
+Hesabınızdaki her Otomatik Bandwidth aboneliğini, bakiyenizle ve şu anda yeni abonelik oluşturulup oluşturulamayacağıyla birlikte döndürür. Silinmiş abonelikler dahil değildir. `view` kapsamını gerektirir.
+
+### Yanıt
+
+<ResponseField name="subscriptions" type="array">
+  Abonelikleriniz.
+
+  <Expandable title="abonelik nesnesi">
+    <ResponseField name="id" type="number">
+      Abonelik kimliği — düzenleme ve silme yollarında kullanın
+    </ResponseField>
+    <ResponseField name="address" type="string">
+      Aboneliğin bant genişliği tuttuğu adres
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      Aboneliğe verdiğiniz ad
+    </ResponseField>
+    <ResponseField name="token" type="string">
+      `USDT`, `TRX`, `USDD`, `CUSTOM` veya `OWN` — bkz. [Token](/tr/api-reference/auto-bandwidth/overview#seçenekler)
+    </ResponseField>
+    <ResponseField name="contract" type="object | null">
+      Bir `CUSTOM` veya `OWN` aboneliğinin token sözleşmesi: `address`, `symbol` ve `name` (`symbol` ve `name` ağın bildirdiği şekliyle, bilinmiyorsa `null`). Yoksa `null`.
+    </ResponseField>
+    <ResponseField name="volume" type="number">
+      Adreste tutulan bant genişliği
+    </ResponseField>
+    <ResponseField name="auto_pause" type="boolean">
+      Otomatik duraklatmanın açık olup olmadığı
+    </ResponseField>
+    <ResponseField name="threshold" type="number">
+      Otomatik duraklatma ve ücretsiz bant genişliği bildirimi için ücretsiz bant genişliği seviyesi
+    </ResponseField>
+    <ResponseField name="stop_after_transfer" type="boolean">
+      Aboneliğin tokenına ait bir sonraki transferin onu duraklatıp duraklatmayacağı
+    </ResponseField>
+    <ResponseField name="notify_free_bw" type="boolean">
+      Adresin ücretsiz bant genişliği `threshold` değerine ulaştığında size bildirim gönderip göndermediğimiz
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `free_bw`, `paused` veya `stopped_balance` — bkz. [Durum](/tr/api-reference/auto-bandwidth/overview#durum)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      `insufficient_balance`, `transfer` veya `admin`; yoksa `null`
+    </ResponseField>
+    <ResponseField name="address_change_to" type="string | null">
+      Taşıma sürerken yeni adres; aksi halde `null`
+    </ResponseField>
+    <ResponseField name="free_bw" type="number | null">
+      Son kontrolde adresteki ücretsiz bant genişliği. İlk kontrolden önce `null`.
+    </ResponseField>
+    <ResponseField name="delegated_bw" type="number">
+      Adrese şu anda devrettiğimiz bant genişliği; yoksa `0`
+    </ResponseField>
+    <ResponseField name="transfers" type="number">
+      Şimdiye kadar karşılanan transferler — tükenen ve yenilenen devretmeler
+    </ResponseField>
+    <ResponseField name="delivery_state" type="string">
+      `ok`, `waiting_stake` veya `failed` — bkz. [Durum](/tr/api-reference/auto-bandwidth/overview#durum)
+    </ResponseField>
+    <ResponseField name="paid_until" type="string | null">
+      Ödenmiş 24 saatin sonu (ISO 8601, UTC). Henüz hiçbir gün ödenmediyse `null`.
+    </ResponseField>
+    <ResponseField name="total_charged_trx" type="string">
+      Bu abonelik için toplamda tahsil edilen TRX
+    </ResponseField>
+    <ResponseField name="daily_trx" type="string | null">
+      Güncel 24 saatlik ücret. Fiyat geçici olarak alınamıyorsa `null`.
+    </ResponseField>
+    <ResponseField name="transfer_trx" type="string | null">
+      Güncel transfer başına ücret: `transfer_bw_trx` + `transfer_fee_trx`. Fiyat geçici olarak alınamıyorsa `null`.
+    </ResponseField>
+    <ResponseField name="transfer_bw_trx" type="string | null">
+      Transfer ücretinin bant genişliği kısmı
+    </ResponseField>
+    <ResponseField name="transfer_fee_trx" type="string | null">
+      Transfer ücretinin sabit ücret kısmı
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Aboneliğin oluşturulduğu zaman (ISO 8601, UTC)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  Hesap bakiyeniz
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  Otomatik Bandwidth geçici olarak kapalıyken `false`: bu durumda abonelik oluşturma veya bir aboneliği açma `503 AUTO_BW_DISABLED` döndürür
+</ResponseField>
+
+Bir aboneliğin içindeki fiyatlar o aboneliğe aittir: oluşturulduğu API anahtarına göre veya bir web sitesi alımı olarak fiyatlandırılır.
+
+### Örnek
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "subscriptions": [
+    {
+      "id": 42,
+      "address": "TYourSenderAddress12345678901234ab",
+      "label": "Payouts",
+      "token": "USDT",
+      "contract": null,
+      "volume": 350,
+      "auto_pause": false,
+      "threshold": 600,
+      "stop_after_transfer": false,
+      "notify_free_bw": false,
+      "status": "active",
+      "stopped_reason": null,
+      "address_change_to": null,
+      "free_bw": 330,
+      "delegated_bw": 350,
+      "transfers": 12,
+      "delivery_state": "ok",
+      "paid_until": "2026-11-14T08:15:04Z",
+      "total_charged_trx": "5.100000",
+      "daily_trx": "0.340000",
+      "transfer_trx": "0.340000",
+      "transfer_bw_trx": "0.140000",
+      "transfer_fee_trx": "0.200000",
+      "created_at": "2026-11-10T08:15:00Z"
+    }
+  ],
+  "balance_trx": "48.250000",
+  "enabled": true
+}
+```
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API anahtarında `view` kapsamı yok |

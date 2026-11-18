@@ -1,6 +1,6 @@
 ---
 title: Listar pedidos
-api: GET /api/v1/orders
+api: GET /v1/orders
 description: "Liste seus pedidos com paginação e filtros"
 ---
 
@@ -19,7 +19,7 @@ Retorna uma lista paginada dos seus pedidos, os mais recentes primeiro.
 </ParamField>
 
 <ParamField query="status" type="string">
-  Filtrar por status (ex.: `filled`, `pending`, `failed`)
+  Filtrar por status (ex.: `filled`, `partial`, `failed`). Todos os valores: [Status do pedido](/pt/api-reference/orders/get-order)
 </ParamField>
 
 <ParamField query="type" type="string">
@@ -74,6 +74,8 @@ curl "https://api.tronrental.com/v1/orders?type=energy&status=filled&page=1" \
       "source": "api",
       "activation_id": null,
       "activation_cost_trx": null,
+      "fail_reason": null,
+      "refunded_trx": null,
       "created_at": "2026-06-10T04:30:00Z"
     }
   ],

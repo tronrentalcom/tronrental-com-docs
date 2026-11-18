@@ -8,10 +8,10 @@ description: "Node API planları, limitler, aşım, deneme, yenileme ve ödemeni
 | Plan | Fiyat | Dönem | Kota | Okuma | Blok istekleri | İşlem gönderimi | Uç noktalar | Kota üstü |
 |---|---|---|---|---|---|---|---|---|
 | Deneme | ücretsiz | 7 gün | 5M WU | 20 WU/s | 1/s | 2/s | 1 | `429` ile ret |
-| Start | 19.90 USDT | 30 gün | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 1M WU başına 0.80 USDT |
-| Growth | 49 USDT | 30 gün | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 1M WU başına 0.70 USDT |
-| Pro | 149 USDT | 30 gün | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 1M WU başına 0.60 USDT |
-| Düğüm slotu | 1 WU/s başına 1.50 USDT | 30 gün | kota yok | 50–300 WU/s | 5/s | 30/s | 10 | — |
+| Start | 18.90 USDT | 30 gün | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 1M WU başına 0.75 USDT |
+| Growth | 47.90 USDT | 30 gün | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 1M WU başına 0.65 USDT |
+| Pro | 139.90 USDT | 30 gün | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 1M WU başına 0.55 USDT |
+| Düğüm slotu | 1 WU/s başına 1.40 USDT | 30 gün | kota yok | 50–300 WU/s | 5/s | 30/s | 10 | — |
 
 - **Okuma** — ne blok ne de işlem gönderimi olan her çağrı; saniyedeki WU ile sınırlıdır.
 - **Blok istekleri** — tam bloklar, blok makbuzları ve blok aralıkları; saniyedeki çağrı sayısıyla
@@ -29,8 +29,8 @@ alınabilir. Bu tablodan farklı olurlarsa katalog ve kontrol paneli esas alın�
 ### Düğüm slotu
 
 Düğüm slotunun kotası yoktur: 50 ile 300 WU/s arasında sabit bir okuma hızı satın alırsınız ve dönem
-boyunca bu hızın izin verdiği kadar istek yaparsınız. Fiyat 1 WU/s başına 1.50 USDT'dir — örneğin
-100 WU/s, 30 gün için 150 USDT tutar. Blok istekleri, işlem gönderimi ve uç noktalar Pro'daki gibidir.
+boyunca bu hızın izin verdiği kadar istek yaparsınız. Fiyat 1 WU/s başına 1.40 USDT'dir — örneğin
+100 WU/s, 30 gün için 140 USDT tutar. Blok istekleri, işlem gönderimi ve uç noktalar Pro'daki gibidir.
 
 ### Deneme
 
@@ -56,7 +56,7 @@ birlikte [Kontrol Paneli → Node API](https://tronrental.com/dashboard/node-api
 **Tahsilatlar** bölümünde listelenir. Yalnızca hesap sahibi plan satın alabilir.
 
 **Enerji alıcılarına indirim.** Hesap son 30 günde 3000 TRX veya daha fazla değerinde enerji satın
-aldıysa her plan 19.90 USDT daha ucuzdur (asla sıfırın altına inmez). Bunu her satın almada ve her
+aldıysa her plan 18.90 USDT daha ucuzdur (asla sıfırın altına inmez). Bunu her satın almada ve her
 yenilemede kontrol ederiz.
 
 ## Kota ve aşım

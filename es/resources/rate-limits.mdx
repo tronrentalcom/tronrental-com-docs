@@ -45,6 +45,10 @@ la bloquean por completo durante treinta, con `Retry-After: 1800`. Las cuentas d
 | `POST /api/v1/account/withdrawal` | 5 s tras un retiro creado con `Idempotency-Key`, 60 s tras uno sin él | cuenta |
 | `POST /api/v1/energy/auto-refill` | 10 solicitudes/minuto | cuenta |
 | `POST /api/v1/bandwidth/auto-refill` | 10 solicitudes/minuto | cuenta |
+| `POST /api/v1/bandwidth/auto` | 20 solicitudes/minuto | cuenta |
+| `PATCH /api/v1/bandwidth/auto/{sub_id}` | 20 solicitudes/minuto | cuenta |
+| `POST /api/v1/bandwidth/auto/contracts` | 10 contratos nuevos/hora | cuenta |
+| `POST /api/v1/webhooks/configure` | 10 solicitudes/minuto, compartido con `PATCH /api/v1/account/webhook` | cuenta |
 
 Ten en cuenta que `POST /api/v1/invoices` se cuenta por **dirección IP**, no por cuenta: si varios de
 tus clientes envían solicitudes desde la misma IP de salida, comparten un único presupuesto de 10 por
@@ -57,7 +61,7 @@ solo). Para una única cuenta nunca es el límite determinante, pero los cliente
 salida lo comparten entre sí.
 
 Los endpoints de gestión de webhooks (`/api/v1/webhooks/...`) no están cubiertos por el límite a nivel
-de cuenta. El resto de los endpoints documentados no tiene límite propio: solo se les aplica el límite
+de cuenta; `POST /api/v1/webhooks/configure` tiene un límite propio, que figura en la tabla de arriba. El resto de los endpoints documentados no tiene límite propio: solo se les aplica el límite
 a nivel de cuenta.
 
 ### Cómo es una respuesta 429

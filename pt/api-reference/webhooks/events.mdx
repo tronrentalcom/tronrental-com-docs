@@ -1,12 +1,12 @@
 ---
 title: Registro de webhooks
-api: GET /api/v1/webhooks/logs
+api: GET /v1/webhooks/logs
 description: "Ver as entregas de webhook recentes"
 ---
 
 ## Registro de webhooks
 
-Tentativas de entrega recentes, as mais novas primeiro — o que enviamos e o que o seu servidor respondeu.
+Tentativas de entrega recentes, as mais novas primeiro — o que enviamos e o que o seu servidor respondeu. Os registros são mantidos por 30 dias.
 
 ### Parâmetros de consulta
 
@@ -64,6 +64,7 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "id": 247033,
         "type": "energy",
         "status": "filled",
+        "source": "api",
         "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "volume": 65000,
         "expected_volume": 65000,
@@ -71,7 +72,9 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "price_trx": "2.75",
         "delegate_txid": "a1b2c3d4e5f6...",
         "undelegate_txid": null,
-        "reclaim_at": "2026-09-15T07:44:56+00:00"
+        "reclaim_at": "2026-09-15T07:44:56+00:00",
+        "fail_reason": null,
+        "refunded_trx": null
       },
       "timestamp": "2026-09-14T14:51:16.986341+00:00"
     },
@@ -83,9 +86,8 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```
 
 <Note>
-  Duas lacunas que vale conhecer antes de depurar com este registro:
+  O registro lista todas as entregas à sua conta — todos os [eventos](/pt/api-reference/webhooks/overview), incluindo `subscription.transfer` e `package.*`.
 
-  - Ele lista entregas atribuídas às suas **chaves de API**, então hoje as entregas de `subscription.transfer` e `package.*` não aparecem aqui, mesmo tendo sido enviadas.
-  - Uma URL que não conseguimos resolver, ou que resolve para um endereço privado, **não gera linha alguma** — um registro vazio não distingue «não houve eventos» de «o endereço foi recusado». Se você esperava tráfego e não vê nada, confira a URL em [Dashboard → API](https://tronrental.com/dashboard/api).
+  Uma lacuna que vale conhecer antes de depurar com ele: uma URL que não conseguimos resolver, ou que resolve para um endereço privado, **não gera linha alguma** — um registro vazio não distingue «não houve eventos» de «o endereço foi recusado». Se você esperava tráfego e não vê nada, confira a URL em [Dashboard → API](https://tronrental.com/dashboard/api).
 </Note>
 

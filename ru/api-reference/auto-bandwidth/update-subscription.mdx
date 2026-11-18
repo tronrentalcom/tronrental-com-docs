@@ -1,0 +1,144 @@
+---
+title: Изменить подписку
+api: PATCH /v1/bandwidth/auto/{sub_id}
+description: "Изменить, приостановить, возобновить подписку Авто-bandwidth или перенести её на другой адрес"
+---
+
+## Изменить подписку
+
+Меняет настройки подписки, ставит её на паузу или возобновляет, либо переносит на другой адрес. Передавайте только те поля, которые хотите изменить; остальные остаются как есть. Изменения применяются сразу: после каждой правки мы заново проверяем подписку. Нужен скоуп `buy_bandwidth`.
+
+### Параметры пути
+
+<ParamField path="sub_id" type="number" required>
+  ID подписки — `id` из создания подписки или списка подписок
+</ParamField>
+
+### Тело запроса
+
+<ParamField body="enabled" type="boolean">
+  `false` ставит подписку на паузу: мы забираем bandwidth обратно и ничего не списываем, пока вы её не возобновите. `true` возобновляет приостановленную или остановленную подписку; баланса должно хватать на 24 часа и один перевод, как при создании. Подписку, выключенную поддержкой (`stopped_reason: "admin"`), так возобновить нельзя.
+</ParamField>
+
+<ParamField body="volume" type="number">
+  Новый объём bandwidth. От 1 до 5 000. Увеличение внутри оплаченных суток списывает разницу за остаток суток.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Перенести подписку на другой адрес. Мы забираем bandwidth со старого адреса, затем делегируем на новый; пока перенос не завершён, `address_change_to` его показывает. Новый адрес проходит те же проверки, что и при создании. Если передать текущий адрес, незавершённый перенос отменяется.
+</ParamField>
+
+<ParamField body="token" type="string">
+  `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` или `"OWN"`. Переключение на `USDT`, `TRX` или `USDD` убирает `contract`.
+</ParamField>
+
+<ParamField body="contract" type="string | null">
+  Контракт из [вашего списка токенов](/ru/api-reference/auto-bandwidth/list-contracts) для `CUSTOM` или `OWN`. `null` убирает его (с `CUSTOM` это невозможно).
+</ParamField>
+
+<ParamField body="label" type="string | null">
+  Новое название, до 50 символов. `null` или пустая строка убирает его.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean">
+  Включить или выключить авто-паузу.
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  Новый уровень бесплатного bandwidth с тем же диапазоном, что и при создании.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean">
+  Включить или выключить уведомление о бесплатном bandwidth.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean">
+  `true` ставит подписку на паузу после следующего перевода её токена, считая с этого момента. `false` отменяет это.
+</ParamField>
+
+### Ответ
+
+Обновлённая подписка — с теми же полями, что в [Списке подписок](/ru/api-reference/auto-bandwidth/list-subscriptions).
+
+### Пример
+
+Приостановка подписки:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+    json={"enabled": False},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: false }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "paused",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": 330,
+  "delegated_bw": 350,
+  "transfers": 12,
+  "delivery_state": "ok",
+  "paid_until": "2026-11-14T08:15:04Z",
+  "total_charged_trx": "5.100000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-10T08:15:00Z"
+}
+```
+
+`delegated_bw` падает до `0`, как только bandwidth забран обратно, — в течение нескольких секунд.
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | Новый `address` — некорректный адрес TRON, либо к нему не удалось подключиться |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | Новый `address` — смарт-контракт |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` вне допустимого диапазона для этого `volume` |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `CUSTOM` без контракта, контракт с другим токеном либо контракт, которого нет в вашем списке токенов |
+| `402` | `INSUFFICIENT_BALANCE` | Возобновление, а баланса не хватает на 24 часа и один перевод |
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_bandwidth` |
+| `404` | `NOT_FOUND` | В вашем аккаунте нет подписки с таким ID (или она удалена) |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Новый адрес уже используется другой вашей подпиской |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | Bandwidth на новом адресе уже держится через Smart Mode или пакет переводов |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` — контракт USDT или USDD: вместо этого используйте `token` |
+| `409` | `AUTO_BW_DISABLED_BY_SUPPORT` | Подписка выключена поддержкой — свяжитесь с нами, чтобы возобновить её |
+| `422` | — | Поле имеет неверный тип или вне диапазона |
+| `429` | `RATE_LIMIT_EXCEEDED` | Слишком много запросов на изменение — см. [Лимиты запросов](/ru/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | `enabled: true`, пока Авто-bandwidth временно выключен; ничего не изменено — повторите позже |

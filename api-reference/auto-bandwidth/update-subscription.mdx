@@ -1,0 +1,144 @@
+---
+title: Update Subscription
+api: PATCH /v1/bandwidth/auto/{sub_id}
+description: "Change, pause, resume or move an Auto Bandwidth subscription"
+---
+
+## Update Subscription
+
+Changes the settings of a subscription, pauses or resumes it, or moves it to another address. Send only the fields you want to change; the others stay as they are. Changes apply right away: we check the subscription again after every edit. Requires the `buy_bandwidth` scope.
+
+### Path parameters
+
+<ParamField path="sub_id" type="number" required>
+  Subscription ID — the `id` from Create or List Subscriptions
+</ParamField>
+
+### Request body
+
+<ParamField body="enabled" type="boolean">
+  `false` pauses the subscription: we take the bandwidth back and charge nothing until you resume it. `true` resumes a paused or stopped subscription; your balance must cover 24 hours and one transfer, as when creating. A subscription switched off by support (`stopped_reason: "admin"`) cannot be resumed this way.
+</ParamField>
+
+<ParamField body="volume" type="number">
+  New bandwidth amount. From 1 to 5,000. Raising it within a paid day charges the difference for the rest of the day.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Move the subscription to another address. We take the bandwidth back from the old address, then delegate to the new one; `address_change_to` shows the move until it is done. The new address goes through the same checks as on create. Sending the current address cancels a move that has not finished.
+</ParamField>
+
+<ParamField body="token" type="string">
+  `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` or `"OWN"`. Switching to `USDT`, `TRX` or `USDD` removes the `contract`.
+</ParamField>
+
+<ParamField body="contract" type="string | null">
+  A contract from [your token list](/api-reference/auto-bandwidth/list-contracts), for `CUSTOM` or `OWN`. `null` removes it (not possible with `CUSTOM`).
+</ParamField>
+
+<ParamField body="label" type="string | null">
+  New label, up to 50 characters. `null` or an empty string removes it.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean">
+  Turn auto-pause on or off.
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  New free bandwidth level, with the same range as on create.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean">
+  Turn the free bandwidth notification on or off.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean">
+  `true` pauses the subscription after the next transfer of its token, counted from now. `false` cancels that.
+</ParamField>
+
+### Response
+
+The updated subscription, with the same fields as in [List Subscriptions](/api-reference/auto-bandwidth/list-subscriptions).
+
+### Example
+
+Pause a subscription:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+    json={"enabled": False},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: false }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "paused",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": 330,
+  "delegated_bw": 350,
+  "transfers": 12,
+  "delivery_state": "ok",
+  "paid_until": "2026-11-14T08:15:04Z",
+  "total_charged_trx": "5.100000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-10T08:15:00Z"
+}
+```
+
+`delegated_bw` drops to `0` once the bandwidth has been taken back, within a few seconds.
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | The new `address` is not a valid TRON address, or cannot be connected |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | The new `address` is a smart contract |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold` is outside the allowed range for the `volume` |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | `CUSTOM` without a contract, a contract with another token, or a contract that is not in your token list |
+| `402` | `INSUFFICIENT_BALANCE` | Resuming, and the balance does not cover 24 hours and one transfer |
+| `403` | `FORBIDDEN` | The API key lacks the `buy_bandwidth` scope |
+| `404` | `NOT_FOUND` | No subscription with this ID on your account (or it was deleted) |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Another of your subscriptions already uses the new address |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | Bandwidth on the new address is already kept by Smart Mode or a transfer package |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` is the USDT or USDD contract — use `token` instead |
+| `409` | `AUTO_BW_DISABLED_BY_SUPPORT` | The subscription was switched off by support — contact us to resume it |
+| `422` | — | A field has the wrong type or is out of range |
+| `429` | `RATE_LIMIT_EXCEEDED` | Too many edit requests — see [Rate Limits](/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | `enabled: true` while Auto Bandwidth is temporarily switched off; nothing was changed — try again later |

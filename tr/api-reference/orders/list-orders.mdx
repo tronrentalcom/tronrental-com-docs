@@ -1,6 +1,6 @@
 ---
 title: Siparişleri Listele
-api: GET /api/v1/orders
+api: GET /v1/orders
 description: "Siparişlerinizi sayfalama ve filtrelerle listeleyin"
 ---
 
@@ -19,7 +19,7 @@ Siparişlerinizin sayfalanmış listesini, en yeniden başlayarak döndürür.
 </ParamField>
 
 <ParamField query="status" type="string">
-  Duruma göre filtrele (örn. `filled`, `pending`, `failed`)
+  Duruma göre filtrele (örn. `filled`, `partial`, `failed`). Tüm değerler: [Sipariş durumları](/tr/api-reference/orders/get-order)
 </ParamField>
 
 <ParamField query="type" type="string">
@@ -74,6 +74,8 @@ curl "https://api.tronrental.com/v1/orders?type=energy&status=filled&page=1" \
       "source": "api",
       "activation_id": null,
       "activation_cost_trx": null,
+      "fail_reason": null,
+      "refunded_trx": null,
       "created_at": "2026-06-10T04:30:00Z"
     }
   ],

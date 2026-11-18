@@ -1,0 +1,89 @@
+---
+title: 添加代币合约
+api: POST /v1/bandwidth/auto/contracts
+description: "为自动带宽添加您自己的 TRC-20 代币"
+---
+
+## 添加代币合约
+
+将一个 TRC-20 合约添加到您的代币列表，使订阅可以通过 `token: "CUSTOM"` 或 `"OWN"` 使用它。我们会向网络查询该地址是否为转账可正常执行的 TRC-20 代币，并读取其符号、名称、小数位数以及一笔转账所需的带宽。需要 `buy_bandwidth` 权限。
+
+添加已在您列表中的合约会再次返回该合约，不会重新检查，也不计入请求限制。
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  TRC-20 合约的地址（T... 格式，34 个字符）。USDT 和 USDD 会被拒绝——请通过 `token` 选择它们。
+</ParamField>
+
+### 响应
+
+该合约，字段与[列出代币合约](/zh/api-reference/auto-bandwidth/list-contracts)中的相同。请以 `bandwidth` 作为订阅 `volume` 的参考，并留出少量余量。
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"address": "TYourTokenContract1234567890abcdef"}'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+    json={"address": "TYourTokenContract1234567890abcdef"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  method: "POST",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ address: "TYourTokenContract1234567890abcdef" }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "address": "TYourTokenContract1234567890abcdef",
+  "symbol": "MTK",
+  "name": "My Token",
+  "decimals": 6,
+  "bandwidth": 345
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | `address` 不是有效的 TRON 地址 |
+| `400` | `AUTO_BW_NOT_A_CONTRACT` | 该地址上没有智能合约 |
+| `400` | `AUTO_BW_NOT_A_TOKEN` | 该合约不是 TRC-20 代币 |
+| `400` | `AUTO_BW_TRANSFER_REVERTS` | 该代币的转账在模拟中失败——例如代币已暂停 |
+| `403` | `FORBIDDEN` | API 密钥缺少 `buy_bandwidth` 权限 |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | 这是 USDT 或 USDD——请通过 `token` 选择；代币在 `error.token` 中给出 |
+| `409` | `AUTO_BW_CONTRACT_LIMIT` | 您的列表中已有 20 个合约——请先移除一个 |
+| `429` | `RATE_LIMIT_EXCEEDED` | 新增合约过多——参见[速率限制](/zh/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | 自动带宽暂时关闭——请稍后重试 |
+| `503` | `TEMPORARILY_UNAVAILABLE` | 暂时无法读取网络；未保存任何内容——请在 `Retry-After` 秒数后重试 |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "AUTO_BW_CONTRACT_LISTED",
+      "message": "This is USDT; pick it in the token list",
+      "token": "USDT"
+    }
+  }
+}
+```

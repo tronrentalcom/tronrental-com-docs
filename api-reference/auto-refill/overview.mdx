@@ -62,7 +62,7 @@ There is no daily spending cap: a rule buys whenever the level is below its thre
 
 Every refill appears in your order history ([List Orders](/api-reference/orders/list-orders)) with `source: "autorefill"`. To list only refill orders, call `GET /orders?source=autorefill`; to export them as a file, use the `autorefill` [report](/api-reference/account/reports).
 
-Rules created with an API key send [`order.updated` webhooks](/api-reference/webhooks/overview) for their refill orders, the same as orders you place through the API. Rules created without an API key do not.
+Every refill order sends an [`order.updated` webhook](/api-reference/webhooks/overview) with `source: "autorefill"`, whether the rule was created on the website or with an API key.
 
 ### Rule status
 
@@ -89,7 +89,7 @@ If your Telegram account is linked, you get a message on the first refill of a r
 ### Limits
 
 - **One rule per address and resource** on an account. Creating a second energy rule (or a second bandwidth rule) for the same address returns `409 AUTOREFILL_ADDRESS_TAKEN` — edit the existing rule instead.
-- **20 energy rules and 20 bandwidth rules** per account. Deleted rules do not count. Over the limit: `409 AUTOREFILL_LIMIT_REACHED`.
+- **No limit on the number of rules** per account, for energy or bandwidth, active or paused.
 - **No contract addresses**, such as the USDT token contract: TRON does not allow delegating resources to them.
 - **Creating rules** is limited to 10 requests per minute per account, for each resource. See [Rate Limits](/resources/rate-limits).
 

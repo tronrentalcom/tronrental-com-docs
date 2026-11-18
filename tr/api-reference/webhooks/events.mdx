@@ -1,12 +1,12 @@
 ---
 title: Webhook günlüğü
-api: GET /api/v1/webhooks/logs
+api: GET /v1/webhooks/logs
 description: "Son webhook teslimat kayıtlarını görün"
 ---
 
 ## Webhook günlüğü
 
-Son teslimat denemeleri, en yenisi üstte — ne gönderdiğimiz ve sunucunuzun ne yanıtladığı.
+Son teslimat denemeleri, en yenisi üstte — ne gönderdiğimiz ve sunucunuzun ne yanıtladığı. Kayıtlar 30 gün saklanır.
 
 ### Sorgu parametreleri
 
@@ -64,6 +64,7 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "id": 247033,
         "type": "energy",
         "status": "filled",
+        "source": "api",
         "target_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "volume": 65000,
         "expected_volume": 65000,
@@ -71,7 +72,9 @@ curl https://api.tronrental.com/v1/webhooks/logs \
         "price_trx": "2.75",
         "delegate_txid": "a1b2c3d4e5f6...",
         "undelegate_txid": null,
-        "reclaim_at": "2026-09-15T07:44:56+00:00"
+        "reclaim_at": "2026-09-15T07:44:56+00:00",
+        "fail_reason": null,
+        "refunded_trx": null
       },
       "timestamp": "2026-09-14T14:51:16.986341+00:00"
     },
@@ -83,9 +86,8 @@ curl https://api.tronrental.com/v1/webhooks/logs \
 ```
 
 <Note>
-  Bu günlükle hata ayıklamadan önce bilinmesi gereken iki eksik:
+  Günlük, hesabınıza yapılan her teslimatı listeler — `subscription.transfer` ve `package.*` dahil tüm [olaylar](/tr/api-reference/webhooks/overview).
 
-  - Günlük, **API anahtarlarınıza** atfedilen teslimatları listeler; bu nedenle `subscription.transfer` ve `package.*` teslimatları gönderilmiş olsalar bile bugün burada görünmez.
-  - Çözümleyemediğimiz bir URL ya da özel bir adrese çözümlenen bir URL **hiç satır oluşturmaz** — boş bir günlük, «olay olmadı» ile «adres reddedildi» durumlarını ayırt etmez. Trafik beklediğiniz hâlde hiçbir şey görmüyorsanız URL'yi [Dashboard → API](https://tronrental.com/dashboard/api) sayfasında kontrol edin.
+  Bu günlükle hata ayıklamadan önce bilinmesi gereken bir eksik var: çözümleyemediğimiz bir URL ya da özel bir adrese çözümlenen bir URL **hiç satır oluşturmaz** — boş bir günlük, «olay olmadı» ile «adres reddedildi» durumlarını ayırt etmez. Trafik beklediğiniz hâlde hiçbir şey görmüyorsanız URL'yi [Dashboard → API](https://tronrental.com/dashboard/api) sayfasında kontrol edin.
 </Note>
 

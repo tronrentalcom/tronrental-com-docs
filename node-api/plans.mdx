@@ -8,10 +8,10 @@ description: "Node API plans, limits, overage, trial, renewal and how payment wo
 | Plan | Price | Period | Quota | Reads | Block calls | Broadcasts | Endpoints | Over quota |
 |---|---|---|---|---|---|---|---|---|
 | Trial | free | 7 days | 5M WU | 20 WU/s | 1/s | 2/s | 1 | refused with `429` |
-| Start | 19.90 USDT | 30 days | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.80 USDT per 1M WU |
-| Growth | 49 USDT | 30 days | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.70 USDT per 1M WU |
-| Pro | 149 USDT | 30 days | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.60 USDT per 1M WU |
-| Node slot | 1.50 USDT per 1 WU/s | 30 days | no quota | 50–300 WU/s | 5/s | 30/s | 10 | — |
+| Start | 18.90 USDT | 30 days | 30M WU | 30 WU/s | 1/s | 5/s | 3 | 0.75 USDT per 1M WU |
+| Growth | 47.90 USDT | 30 days | 85M WU | 60 WU/s | 2/s | 10/s | 5 | 0.65 USDT per 1M WU |
+| Pro | 139.90 USDT | 30 days | 270M WU | 150 WU/s | 5/s | 30/s | 10 | 0.55 USDT per 1M WU |
+| Node slot | 1.40 USDT per 1 WU/s | 30 days | no quota | 50–300 WU/s | 5/s | 30/s | 10 | — |
 
 - **Reads** — every call that is neither a block nor a broadcast, limited in WU per second.
 - **Block calls** — whole blocks, block receipts and block ranges, limited in calls per second.
@@ -28,8 +28,8 @@ this page. If they ever differ from this table, the catalog and the dashboard ar
 ### Node slot
 
 A node slot has no quota: you buy a fixed read rate from 50 to 300 WU/s and make as many requests as
-that rate allows, all period long. The price is 1.50 USDT per 1 WU/s — for example, 100 WU/s costs
-150 USDT for 30 days. Block calls, broadcasts and endpoints are as on Pro.
+that rate allows, all period long. The price is 1.40 USDT per 1 WU/s — for example, 100 WU/s costs
+140 USDT for 30 days. Block calls, broadcasts and endpoints are as on Pro.
 
 ### Trial
 
@@ -55,7 +55,7 @@ under **Charges** in [Dashboard → Node API](https://tronrental.com/dashboard/n
 owner can buy a plan.
 
 **Discount for energy buyers.** If the account bought energy for 3,000 TRX or more in the last 30
-days, any plan costs 19.90 USDT less (never below zero). We check this at every purchase and every
+days, any plan costs 18.90 USDT less (never below zero). We check this at every purchase and every
 renewal.
 
 ## Quota and overage

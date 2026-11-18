@@ -1,0 +1,79 @@
+---
+title: Eliminar suscripción
+api: DELETE /v1/bandwidth/auto/{sub_id}
+description: "Elimina una suscripción de Bandwidth automático"
+---
+
+## Eliminar suscripción
+
+Elimina una suscripción. Dejamos de vigilar la dirección y recuperamos el ancho de banda que le habíamos delegado, en unos pocos segundos; la dirección queda libre para una nueva suscripción. Una transferencia que usó nuestro ancho de banda antes de la eliminación se cobra igualmente. Requiere el alcance `buy_bandwidth`.
+
+Para parar un tiempo sin perder los ajustes, [pausa la suscripción](/es/api-reference/auto-bandwidth/update-subscription) con `enabled: false` en su lugar.
+
+### Parámetros de ruta
+
+<ParamField path="sub_id" type="number" required>
+  ID de la suscripción — el `id` de Crear o Listar suscripciones
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="id" type="number">
+  El ID de la suscripción eliminada
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `deleted`
+</ResponseField>
+
+### Ejemplo
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "status": "deleted"
+}
+```
+
+### Errores
+
+| Estado | Código | Cuándo |
+|--------|--------|--------|
+| `403` | `FORBIDDEN` | La clave API carece del alcance `buy_bandwidth` |
+| `404` | `NOT_FOUND` | No hay ninguna suscripción con este ID en tu cuenta (o ya fue eliminada) |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-Bandwidth subscription not found"
+    }
+  }
+}
+```

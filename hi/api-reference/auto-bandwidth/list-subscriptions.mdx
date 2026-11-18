@@ -1,0 +1,167 @@
+---
+title: सब्सक्रिप्शन की सूची
+api: GET /v1/bandwidth/auto
+description: "आपके खाते के सभी ऑटो बैंडविड्थ सब्सक्रिप्शन"
+---
+
+## सब्सक्रिप्शन की सूची
+
+आपके खाते के हर ऑटो बैंडविड्थ सब्सक्रिप्शन को, आपके बैलेंस और इस बात के साथ लौटाता है कि अभी नए सब्सक्रिप्शन बनाए जा सकते हैं या नहीं। हटाए गए सब्सक्रिप्शन शामिल नहीं हैं। `view` स्कोप आवश्यक है।
+
+### रिस्पॉन्स
+
+<ResponseField name="subscriptions" type="array">
+  आपके सब्सक्रिप्शन।
+
+  <Expandable title="सब्सक्रिप्शन ऑब्जेक्ट">
+    <ResponseField name="id" type="number">
+      सब्सक्रिप्शन ID — इसे बदलने और हटाने के पथों में उपयोग करें
+    </ResponseField>
+    <ResponseField name="address" type="string">
+      वह एड्रेस जिस पर सब्सक्रिप्शन बैंडविड्थ बनाए रखता है
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      सब्सक्रिप्शन के लिए आपका नाम
+    </ResponseField>
+    <ResponseField name="token" type="string">
+      `USDT`, `TRX`, `USDD`, `CUSTOM` या `OWN` — देखें [टोकन](/hi/api-reference/auto-bandwidth/overview#विकल्प)
+    </ResponseField>
+    <ResponseField name="contract" type="object | null">
+      `CUSTOM` या `OWN` सब्सक्रिप्शन का टोकन कॉन्ट्रैक्ट: `address`, `symbol` और `name` (`symbol` और `name` वैसे ही जैसे नेटवर्क ने बताए, अज्ञात होने पर `null`)। कोई न होने पर `null`।
+    </ResponseField>
+    <ResponseField name="volume" type="number">
+      एड्रेस पर रखी गई बैंडविड्थ
+    </ResponseField>
+    <ResponseField name="auto_pause" type="boolean">
+      ऑटो-पॉज़ चालू है या नहीं
+    </ResponseField>
+    <ResponseField name="threshold" type="number">
+      ऑटो-पॉज़ और मुफ़्त बैंडविड्थ सूचना के लिए मुफ़्त बैंडविड्थ का स्तर
+    </ResponseField>
+    <ResponseField name="stop_after_transfer" type="boolean">
+      क्या सब्सक्रिप्शन के टोकन का अगला ट्रांसफर उसे रोक देगा
+    </ResponseField>
+    <ResponseField name="notify_free_bw" type="boolean">
+      क्या एड्रेस की मुफ़्त बैंडविड्थ `threshold` तक लौटने पर हम आपको सूचित करते हैं
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `free_bw`, `paused` या `stopped_balance` — देखें [स्थिति](/hi/api-reference/auto-bandwidth/overview#स्थिति)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      `insufficient_balance`, `transfer` या `admin`; कोई न होने पर `null`
+    </ResponseField>
+    <ResponseField name="address_change_to" type="string | null">
+      स्थानांतरण चलने के दौरान नया एड्रेस; अन्यथा `null`
+    </ResponseField>
+    <ResponseField name="free_bw" type="number | null">
+      आखिरी जाँच पर एड्रेस की मुफ़्त बैंडविड्थ। पहली जाँच से पहले `null`।
+    </ResponseField>
+    <ResponseField name="delegated_bw" type="number">
+      वह बैंडविड्थ जो हमने अभी एड्रेस को डेलिगेट कर रखी है; कुछ न होने पर `0`
+    </ResponseField>
+    <ResponseField name="transfers" type="number">
+      अब तक कवर किए गए ट्रांसफर — वे डेलिगेशन जो खर्च हुईं और रिन्यू की गईं
+    </ResponseField>
+    <ResponseField name="delivery_state" type="string">
+      `ok`, `waiting_stake` या `failed` — देखें [स्थिति](/hi/api-reference/auto-bandwidth/overview#स्थिति)
+    </ResponseField>
+    <ResponseField name="paid_until" type="string | null">
+      भुगतान किए गए 24 घंटों का अंत (ISO 8601, UTC)। यदि अभी तक कोई दिन चुकाया नहीं गया तो `null`।
+    </ResponseField>
+    <ResponseField name="total_charged_trx" type="string">
+      इस सब्सक्रिप्शन के लिए कुल लिया गया TRX
+    </ResponseField>
+    <ResponseField name="daily_trx" type="string | null">
+      प्रति 24 घंटे का मौजूदा शुल्क। कीमत अस्थायी रूप से उपलब्ध न होने पर `null`।
+    </ResponseField>
+    <ResponseField name="transfer_trx" type="string | null">
+      प्रति ट्रांसफर का मौजूदा शुल्क: `transfer_bw_trx` + `transfer_fee_trx`। कीमत अस्थायी रूप से उपलब्ध न होने पर `null`।
+    </ResponseField>
+    <ResponseField name="transfer_bw_trx" type="string | null">
+      ट्रांसफर शुल्क का बैंडविड्थ वाला हिस्सा
+    </ResponseField>
+    <ResponseField name="transfer_fee_trx" type="string | null">
+      ट्रांसफर शुल्क का फिक्स्ड शुल्क वाला हिस्सा
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      सब्सक्रिप्शन कब बनाया गया (ISO 8601, UTC)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  आपके खाते का बैलेंस
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  जब ऑटो बैंडविड्थ अस्थायी रूप से बंद हो तब `false`: तब सब्सक्रिप्शन बनाना या उसे चालू करना `503 AUTO_BW_DISABLED` लौटाता है
+</ResponseField>
+
+सब्सक्रिप्शन में कीमतें उसी सब्सक्रिप्शन की हैं: उसे बनाने वाली API कुंजी के हिसाब से, या वेबसाइट की खरीद के रूप में तय।
+
+### उदाहरण
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "subscriptions": [
+    {
+      "id": 42,
+      "address": "TYourSenderAddress12345678901234ab",
+      "label": "Payouts",
+      "token": "USDT",
+      "contract": null,
+      "volume": 350,
+      "auto_pause": false,
+      "threshold": 600,
+      "stop_after_transfer": false,
+      "notify_free_bw": false,
+      "status": "active",
+      "stopped_reason": null,
+      "address_change_to": null,
+      "free_bw": 330,
+      "delegated_bw": 350,
+      "transfers": 12,
+      "delivery_state": "ok",
+      "paid_until": "2026-11-14T08:15:04Z",
+      "total_charged_trx": "5.100000",
+      "daily_trx": "0.340000",
+      "transfer_trx": "0.340000",
+      "transfer_bw_trx": "0.140000",
+      "transfer_fee_trx": "0.200000",
+      "created_at": "2026-11-10T08:15:00Z"
+    }
+  ],
+  "balance_trx": "48.250000",
+  "enabled": true
+}
+```
+
+### त्रुटियाँ
+
+| स्थिति | कोड | कब |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API कुंजी के पास `view` स्कोप नहीं है |

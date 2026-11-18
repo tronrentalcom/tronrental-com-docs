@@ -1,12 +1,14 @@
 ---
 title: Alternar suscripcion
-api: POST /api/v1/smart-mode/{sub_id}/toggle
+api: POST /v1/smart-mode/{sub_id}/toggle
 description: "Pausar o reanudar una suscripcion de Smart Mode"
 ---
 
 ## Alternar suscripcion
 
 Pausa una suscripcion activa o reanuda una pausada. Mientras esta pausada, no se cobran tarifas y las transferencias no se monitorean.
+
+Una suscripcion con `stop_after_transfer` queda en pausa tras su proxima transferencia de USDT (`paused_reason: "transfer"`). Reanudela aqui: la opcion sigue activa.
 
 ### Parametros de ruta
 

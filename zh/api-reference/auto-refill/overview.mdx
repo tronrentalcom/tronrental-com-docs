@@ -62,7 +62,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 
 每次补充都会出现在您的订单历史中（[订单列表](/zh/api-reference/orders/list-orders)），并带有 `source: "autorefill"`。如只需列出补充订单，请调用 `GET /orders?source=autorefill`；如需将其导出为文件，请使用 `autorefill` [报表](/api-reference/account/reports)。
 
-通过 API 密钥创建的规则会为其补充订单发送 [`order.updated` Webhook](/zh/api-reference/webhooks/overview)，与您通过 API 下的订单相同。未使用 API 密钥创建的规则不会发送。
+每个补充订单都会发送带 `source: "autorefill"` 的 [`order.updated` Webhook](/zh/api-reference/webhooks/overview)，无论规则是在网站上还是用 API 密钥创建的。
 
 ### 规则状态
 
@@ -89,7 +89,7 @@ description: "让地址上的能量或带宽保持在您选定的水平之上"
 ### 限制
 
 - 一个账户中**每个地址每种资源只能有一条规则**。为同一地址创建第二条能量规则（或第二条带宽规则）会返回 `409 AUTOREFILL_ADDRESS_TAKEN`——请改为编辑现有规则。
-- 每个账户最多 **20 条能量规则和 20 条带宽规则**。已删除的规则不计入。超出上限时返回 `409 AUTOREFILL_LIMIT_REACHED`。
+- 每个账户的**规则数量不受限制**，能量和带宽规则均如此，无论是活动中还是已暂停的规则。
 - **不支持合约地址**，例如 USDT 代币合约：TRON 不允许向其委托资源。
 - **创建规则**的请求每个账户每分钟限 10 次，两种资源分别计算。参见[速率限制](/zh/resources/rate-limits)。
 

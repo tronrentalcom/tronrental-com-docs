@@ -62,7 +62,7 @@ No hay un tope de gasto diario: una regla compra siempre que el nivel esté por 
 
 Cada recarga aparece en tu historial de órdenes ([Listar órdenes](/es/api-reference/orders/list-orders)) con `source: "autorefill"`. Para listar solo las órdenes de recarga, llama a `GET /orders?source=autorefill`; para exportarlas como archivo, usa el [informe](/api-reference/account/reports) `autorefill`.
 
-Las reglas creadas con una clave API envían [webhooks `order.updated`](/es/api-reference/webhooks/overview) por sus órdenes de recarga, igual que las órdenes que creas a través de la API. Las reglas creadas sin clave API no los envían.
+Cada orden de recarga envía un [webhook `order.updated`](/es/api-reference/webhooks/overview) con `source: "autorefill"`, tanto si la regla se creó en el sitio web como con una clave API.
 
 ### Estado de la regla
 
@@ -89,7 +89,7 @@ Si tu cuenta de Telegram está vinculada, recibes un mensaje en la primera recar
 ### Límites
 
 - **Una regla por dirección y recurso** en cada cuenta. Crear una segunda regla de energía (o una segunda regla de ancho de banda) para la misma dirección devuelve `409 AUTOREFILL_ADDRESS_TAKEN` — edita la regla existente en su lugar.
-- **20 reglas de energía y 20 reglas de ancho de banda** por cuenta. Las reglas eliminadas no cuentan. Por encima del límite: `409 AUTOREFILL_LIMIT_REACHED`.
+- **Sin límite de reglas** por cuenta, ni de energía ni de ancho de banda, ni activas ni en pausa.
 - **Sin direcciones de contrato**, como el contrato del token USDT: TRON no permite delegarles recursos.
 - **La creación de reglas** está limitada a 10 solicitudes por minuto por cuenta, para cada recurso. Ver [Límites de tasa](/es/resources/rate-limits).
 

@@ -1,0 +1,89 @@
+---
+title: Расчёт цены Авто-bandwidth
+api: GET /v1/bandwidth/auto/quote
+description: "Цена 24 часов и одного перевода для объёма подписки"
+---
+
+## Расчёт цены Авто-bandwidth
+
+Возвращает, сколько подписка с таким `volume` стоит для вашего аккаунта: комиссию за 24 часа и комиссию за перевод, причём комиссия за перевод разбита на bandwidth и фиксированную комиссию. Ничего не создаётся и не списывается. Нужен скоуп `view`. Когда списывается каждая комиссия, см. в разделе [Стоимость](/ru/api-reference/auto-bandwidth/overview#стоимость).
+
+Без `subscription_id` цена зависит от способа вызова: с API-ключом — это цена подписки, созданной с этим ключом; с сайта — созданной на сайте. С `subscription_id` — цена для этой подписки, по тому ключу, с которым она создана; так можно узнать, сколько стоил бы новый `volume`. Активация адреса, которого ещё нет в сети, в цену не входит.
+
+### Параметры запроса
+
+<ParamField query="volume" type="number" required>
+  Bandwidth, который нужно держать на адресе. От 1 до 5 000.
+</ParamField>
+
+<ParamField query="subscription_id" type="number">
+  ID одной из ваших подписок. Необязательно.
+</ParamField>
+
+### Ответ
+
+<ResponseField name="volume" type="number">
+  Объём, о котором вы спрашивали
+</ResponseField>
+
+<ResponseField name="daily_trx" type="string">
+  Комиссия за подписку за 24 часа
+</ResponseField>
+
+<ResponseField name="transfer_trx" type="string">
+  Комиссия за перевод, израсходовавший делегированный bandwidth: `transfer_bw_trx` + `transfer_fee_trx`
+</ResponseField>
+
+<ResponseField name="transfer_bw_trx" type="string">
+  Часть комиссии за перевод, приходящаяся на bandwidth
+</ResponseField>
+
+<ResponseField name="transfer_fee_trx" type="string">
+  Часть комиссии за перевод, приходящаяся на фиксированную комиссию. `"0.000000"`, если у вашего аккаунта нет фиксированной комиссии на bandwidth.
+</ResponseField>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350" \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/quote",
+    headers={"X-API-Key": "your_api_key"},
+    params={"volume": 350},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.tronrental.com/v1/bandwidth/auto/quote?volume=350",
+  { headers: { "X-API-Key": "your_api_key" } },
+);
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "volume": 350,
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000"
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `view` |
+| `404` | `NOT_FOUND` | `subscription_id` — не одна из ваших подписок |
+| `422` | — | `volume` отсутствует или вне диапазона 1 – 5 000 |

@@ -1,0 +1,85 @@
+---
+title: Listar contratos de token
+api: GET /v1/bandwidth/auto/contracts
+description: "Os seus contratos de token TRC-20 para o Bandwidth automático"
+---
+
+## Listar contratos de token
+
+Retorna os contratos TRC-20 que você adicionou para o Bandwidth automático. Uma assinatura com `token: "CUSTOM"` ou `"OWN"` pode usar qualquer um deles em `contract`. Exige o escopo `view`.
+
+USDT e USDD são nativos e nunca aparecem aqui: escolha-os com `token`.
+
+### Resposta
+
+<ResponseField name="contracts" type="array">
+  Os seus contratos.
+
+  <Expandable title="objeto do contrato">
+    <ResponseField name="address" type="string">
+      Endereço do contrato
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Símbolo do token, como o contrato o informa (até 16 caracteres)
+    </ResponseField>
+    <ResponseField name="name" type="string | null">
+      Nome do token, como o contrato o informa (até 40 caracteres); `null` se não tiver
+    </ResponseField>
+    <ResponseField name="decimals" type="number">
+      Casas decimais do token
+    </ResponseField>
+    <ResponseField name="bandwidth" type="number">
+      Largura de banda que uma transferência deste token consome — uma referência para o `volume` da assinatura
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Warning>
+`symbol` e `name` vêm do próprio contrato, e qualquer pessoa pode publicar um token que se chama "Tether USD". Identifique sempre um token pelo seu `address`.
+</Warning>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "contracts": [
+    {
+      "address": "TYourTokenContract1234567890abcdef",
+      "symbol": "MTK",
+      "name": "My Token",
+      "decimals": 6,
+      "bandwidth": 345
+    }
+  ]
+}
+```
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `view` |

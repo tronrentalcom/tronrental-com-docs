@@ -1,6 +1,6 @@
 ---
 title: Create Bandwidth Rule
-api: POST /api/v1/bandwidth/auto-refill
+api: POST /v1/bandwidth/auto-refill
 description: "Top up bandwidth on an address whenever it falls below a threshold"
 ---
 
@@ -130,7 +130,6 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` is a smart contract |
 | `403` | `FORBIDDEN` | The API key lacks the `buy_bandwidth` scope |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | Your account already has a bandwidth rule for this address — edit it instead |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | Your account already has 20 bandwidth rules; the limit is also in `error.limit` |
 | `422` | — | A field is missing or out of range, or `duration` is not `"1h"` or `"1d"` |
 | `429` | `RATE_LIMIT_EXCEEDED` | More than 10 create requests in a minute |
 | `503` | `AUTOREFILL_DISABLED` | Auto Refill for bandwidth is temporarily switched off; no rule was created — try again later |

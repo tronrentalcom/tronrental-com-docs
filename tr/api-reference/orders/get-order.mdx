@@ -1,6 +1,6 @@
 ---
 title: Sipariş Durumu
-api: GET /api/v1/orders/{order_id}
+api: GET /v1/orders/{order_id}
 description: "Bir enerji veya bant genişliği siparişinin durumunu ID ile sorgulayın"
 ---
 
@@ -18,6 +18,10 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
 
 `status`, `type`, `volume`, `price_trx`, `delegate_txid` ve zaman damgaları dahil tüm sipariş nesnesini döndürür.
 
+<ResponseField name="fixed_fee_trx" type="string">
+  Bu siparişin sabit ücreti; miktardan bağımsız olarak **sipariş başına bir kez** alınır. `price_trx` içinde **zaten yer alır**. Hesabınızda özel ücret, indirim veya muafiyet varsa burada kendi ücretiniz görünür.
+</ResponseField>
+
 <ResponseField name="activation_id" type="number | null">
   Bu siparisin odedigi adres aktivasyonunun ID'si; hicbirini odemediyse `null`.
 </ResponseField>
@@ -30,14 +34,65 @@ Bir enerji veya bant genişliği siparişinin güncel durumunu ve tüm ayrıntı
 **`"0"` degil, `null`.** Siparis herhangi bir aktivasyon odemediginde (alici hesap zaten vardi ya da baskasinin islemi olusturdu) her iki alan da `null` olur. Buy Energy yanitindaki `activation_cost_trx` ile farkina dikkat edin: orada bu durumda `"0"` metnidir. Burada `"0"` ile karsilastirmak hicbir zaman eslesmez.
 </Note>
 
+<ResponseField name="fail_reason" type="string | null">
+  `failed` bir siparişin neden başarısız olduğu, [Get Order](/tr/api-reference/orders/get-order) sayfasındaki **Başarısızlık nedenleri** tablosundan bir kod olarak; diğer durumlarda `null`. Bilmediğiniz bir kodu `internal_error` olarak değerlendirin: yeni kodlar eklenebilir.
+</ResponseField>
+
+<ResponseField name="refunded_trx" type="string | null">
+  Bakiyenize geri dönen tutar, TRX cinsinden ondalık dize olarak: `failed` için `price_trx`'in tamamı, `partial` için teslim edilmeyen kısmın fiyatı; iade yoksa `null`.
+</ResponseField>
+
 ### Sipariş durumları
 
-| Durum | Açıklama |
-|--------|-------------|
-| `pending` | Sipariş alındı, delegasyon devam ediyor |
-| `filled` | Enerji veya bant genişliği başarıyla delege edildi |
-| `failed` | Delegasyon başarısız oldu |
-| `reclaimed` | Kiralama süresi sonunda bant genişliği geri alındı (yalnızca bant genişliği siparişleri) |
+| Durum | Nihai | Açıklama |
+|--------|-------|-------------|
+| `created` | hayır | Sipariş kaydedildi, teslimat henüz başlamadı |
+| `processing` | hayır | Büyük bir enerji siparişi (1.000.000'un üzerinde) parçalar hâlinde teslim ediliyor |
+| `submitted_unknown` | hayır | Delegasyon yayınlandı, bir blokta onay bekleniyor — bant genişliği siparişleri ve 32.000'in altındaki enerji siparişleri |
+| `filled` | evet | Enerji veya bant genişliği delege edildi |
+| `partial` | evet | Büyük bir enerji siparişi kısmen teslim edildi; teslim edilmeyen kısmın fiyatı bakiyenize geri döndü |
+| `failed` | evet | Teslimat başarısız oldu; fiyatın tamamı bakiyenize geri döndü |
+| `reclaiming` | hayır | Teslim edildi; kaynak geri alınıyor — kiralama bitince veya [Siparişi geri al](/tr/api-reference/orders/reclaim-order) çağrısından sonra |
+| `reclaimed` | evet | Teslim edildi; kiralama süresi doldu veya [Siparişi geri al](/tr/api-reference/orders/reclaim-order) çağrıldı ve kaynak geri alındı |
+| `reclaim_failed` | evet | Teslim edildi; kiralama sonunda kaynağı geri alma bizim tarafımızda gerçekleşmedi. Sizin yapmanız gereken bir şey yok |
+
+İşlemdeki bir sipariş normalde saniyeler içinde, en fazla birkaç dakikada nihai duruma geçer. Bu
+endpoint'i her 5–10 saniyede bir sorgulayın veya nihai durumun size iletilmesi için `order.updated`
+[webhook](/tr/api-reference/webhooks/overview)'una abone olun. Bir sipariş 15 dakikadan uzun süre
+işlemde kalırsa, ID'siyle birlikte destekle iletişime geçin.
+
+Nihai bir durum değişmez; tek istisna: `filled` bir sipariş, kiralaması bittiğinde daha sonra
+`reclaimed` veya `reclaim_failed` durumuna geçebilir. `failed` veya `partial` bir sipariş asla daha
+fazla teslim edilmez ve yeniden ücretlendirilmez. Satın alma yanıtında `provider_outcome: "unknown"`
+varsa, iade edilen enerji birkaç dakika içinde yine de adrese ulaşabilir ve bunun için ücret
+alınmaz — bkz. [Buy Energy](/tr/api-reference/energy/buy-energy).
+
+### Başarısızlık nedenleri
+
+`failed` bir sipariş her zaman fiyatının tamamını bakiyenize iade eder; tutarı `refunded_trx` gösterir. `fail_reason` neyin ters gittiğini ve tekrar denemenin mantıklı olup olmadığını söyler:
+
+| `fail_reason` | Ne oldu | Ne yapmalı |
+|---|---|---|
+| `insufficient_supply` | O anda yeterli kaynak yoktu | Daha sonra tekrar deneyin |
+| `delivery_timeout` | Teslimat zamanında onaylanmadı, bu yüzden iade ettik. Enerjide kaynak yine de birkaç dakika içinde adrese ulaşabilir — bunun için ücret alınmaz | Tekrar denemeden önce adresi kontrol edin |
+| `order_rejected` | Sipariş bu adres için reddedildi — örneğin adresin zaten kendi stake edilmiş kaynağı olduğunda | Aynı sipariş yine başarısız olabilir; daha sonra ya da başka bir adresle denemek işe yarayabilir |
+| `transaction_failed` | Ağ, delegasyon işlemini reddetti | Tekrar deneyin |
+| `address_not_activated` | Alıcı adresi henüz zincirde yok | [Activate Address](/tr/api-reference/energy/activate-address) ile etkinleştirip tekrar deneyin |
+| `internal_error` | Bizim tarafımızdaki diğer her hata | Tekrar deneyin; tekrarlarsa sipariş ID'si ile desteğe yazın |
+
+```json
+{
+  "id": 12346,
+  "status": "failed",
+  "price_trx": "2.15",
+  "fail_reason": "insufficient_supply",
+  "refunded_trx": "2.15"
+}
+```
+
+<Note>
+Bu listeye yeni kodlar eklenebilir. Bilmediğiniz bir kodu `internal_error` olarak değerlendirin.
+</Note>
 
 ### Örnek
 
@@ -54,6 +109,7 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "volume": 65000,
   "duration": "1h",
   "price_trx": "1.79",
+  "fixed_fee_trx": "0.2",
   "status": "filled",
   "delegate_txid": "a1b2c3d4e5f6...",
   "undelegate_txid": null,
@@ -61,6 +117,8 @@ curl https://api.tronrental.com/v1/orders/12345 \
   "source": "api",
   "activation_id": 8891,
   "activation_cost_trx": "1.20",
+  "fail_reason": null,
+  "refunded_trx": null,
   "created_at": "2026-06-10T04:30:00Z"
 }
 ```

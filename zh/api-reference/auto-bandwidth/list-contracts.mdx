@@ -1,0 +1,85 @@
+---
+title: 列出代币合约
+api: GET /v1/bandwidth/auto/contracts
+description: "您用于自动带宽的 TRC-20 代币合约"
+---
+
+## 列出代币合约
+
+返回您为自动带宽添加的 TRC-20 合约。`token: "CUSTOM"` 或 `"OWN"` 的订阅可以在 `contract` 中使用其中任何一个。需要 `view` 权限。
+
+USDT 和 USDD 是内置的，不会出现在这里：请通过 `token` 选择它们。
+
+### 响应
+
+<ResponseField name="contracts" type="array">
+  您的合约。
+
+  <Expandable title="合约对象">
+    <ResponseField name="address" type="string">
+      合约地址
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      代币符号，以合约报告的为准（最多 16 个字符）
+    </ResponseField>
+    <ResponseField name="name" type="string | null">
+      代币名称，以合约报告的为准（最多 40 个字符）；没有名称时为 `null`
+    </ResponseField>
+    <ResponseField name="decimals" type="number">
+      代币小数位数
+    </ResponseField>
+    <ResponseField name="bandwidth" type="number">
+      该代币一笔转账所需的带宽——订阅 `volume` 的参考值
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Warning>
+`symbol` 和 `name` 来自合约本身，任何人都可以部署一个自称“Tether USD”的代币。请始终通过 `address` 识别代币。
+</Warning>
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "contracts": [
+    {
+      "address": "TYourTokenContract1234567890abcdef",
+      "symbol": "MTK",
+      "name": "My Token",
+      "decimals": 6,
+      "bandwidth": 345
+    }
+  ]
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API 密钥缺少 `view` 权限 |

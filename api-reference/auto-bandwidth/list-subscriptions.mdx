@@ -1,0 +1,167 @@
+---
+title: List Subscriptions
+api: GET /v1/bandwidth/auto
+description: "All Auto Bandwidth subscriptions on your account"
+---
+
+## List Subscriptions
+
+Returns every Auto Bandwidth subscription on your account, with your balance and whether new subscriptions can be created right now. Deleted subscriptions are not included. Requires the `view` scope.
+
+### Response
+
+<ResponseField name="subscriptions" type="array">
+  Your subscriptions.
+
+  <Expandable title="subscription object">
+    <ResponseField name="id" type="number">
+      Subscription ID — use it in the edit and delete paths
+    </ResponseField>
+    <ResponseField name="address" type="string">
+      The address the subscription keeps bandwidth on
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      Your name for the subscription
+    </ResponseField>
+    <ResponseField name="token" type="string">
+      `USDT`, `TRX`, `USDD`, `CUSTOM` or `OWN` — see [Token](/api-reference/auto-bandwidth/overview#options)
+    </ResponseField>
+    <ResponseField name="contract" type="object | null">
+      The token contract of a `CUSTOM` or `OWN` subscription: `address`, `symbol` and `name` (`symbol` and `name` as the network reported them, `null` if unknown). `null` when there is none.
+    </ResponseField>
+    <ResponseField name="volume" type="number">
+      Bandwidth kept on the address
+    </ResponseField>
+    <ResponseField name="auto_pause" type="boolean">
+      Whether auto-pause is on
+    </ResponseField>
+    <ResponseField name="threshold" type="number">
+      Free bandwidth level for auto-pause and for the free bandwidth notification
+    </ResponseField>
+    <ResponseField name="stop_after_transfer" type="boolean">
+      Whether the next transfer of the subscription's token pauses it
+    </ResponseField>
+    <ResponseField name="notify_free_bw" type="boolean">
+      Whether we notify you when the address's free bandwidth recovers to `threshold`
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`, `free_bw`, `paused` or `stopped_balance` — see [Status](/api-reference/auto-bandwidth/overview#status)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      `insufficient_balance`, `transfer` or `admin`; `null` when there is none
+    </ResponseField>
+    <ResponseField name="address_change_to" type="string | null">
+      The new address while a move is in progress; `null` otherwise
+    </ResponseField>
+    <ResponseField name="free_bw" type="number | null">
+      Free bandwidth on the address at the last check. `null` before the first check.
+    </ResponseField>
+    <ResponseField name="delegated_bw" type="number">
+      Bandwidth we have delegated to the address right now; `0` when none
+    </ResponseField>
+    <ResponseField name="transfers" type="number">
+      Transfers covered so far — delegations that were used up and renewed
+    </ResponseField>
+    <ResponseField name="delivery_state" type="string">
+      `ok`, `waiting_stake` or `failed` — see [Status](/api-reference/auto-bandwidth/overview#status)
+    </ResponseField>
+    <ResponseField name="paid_until" type="string | null">
+      End of the paid 24 hours (ISO 8601, UTC). `null` if no day has been paid yet.
+    </ResponseField>
+    <ResponseField name="total_charged_trx" type="string">
+      TRX charged for this subscription, in total
+    </ResponseField>
+    <ResponseField name="daily_trx" type="string | null">
+      Current fee per 24 hours. `null` if the price is temporarily unavailable.
+    </ResponseField>
+    <ResponseField name="transfer_trx" type="string | null">
+      Current fee per transfer: `transfer_bw_trx` + `transfer_fee_trx`. `null` if the price is temporarily unavailable.
+    </ResponseField>
+    <ResponseField name="transfer_bw_trx" type="string | null">
+      The bandwidth part of the transfer fee
+    </ResponseField>
+    <ResponseField name="transfer_fee_trx" type="string | null">
+      The fixed fee part of the transfer fee
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      When the subscription was created (ISO 8601, UTC)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  Your account balance
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  `false` while Auto Bandwidth is temporarily switched off: creating a subscription or switching one on then returns `503 AUTO_BW_DISABLED`
+</ResponseField>
+
+Prices in a subscription are for that subscription: priced by the API key it was created with, or as a website purchase.
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "subscriptions": [
+    {
+      "id": 42,
+      "address": "TYourSenderAddress12345678901234ab",
+      "label": "Payouts",
+      "token": "USDT",
+      "contract": null,
+      "volume": 350,
+      "auto_pause": false,
+      "threshold": 600,
+      "stop_after_transfer": false,
+      "notify_free_bw": false,
+      "status": "active",
+      "stopped_reason": null,
+      "address_change_to": null,
+      "free_bw": 330,
+      "delegated_bw": 350,
+      "transfers": 12,
+      "delivery_state": "ok",
+      "paid_until": "2026-11-14T08:15:04Z",
+      "total_charged_trx": "5.100000",
+      "daily_trx": "0.340000",
+      "transfer_trx": "0.340000",
+      "transfer_bw_trx": "0.140000",
+      "transfer_fee_trx": "0.200000",
+      "created_at": "2026-11-10T08:15:00Z"
+    }
+  ],
+  "balance_trx": "48.250000",
+  "enabled": true
+}
+```
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `403` | `FORBIDDEN` | The API key lacks the `view` scope |

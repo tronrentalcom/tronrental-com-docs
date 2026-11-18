@@ -1,0 +1,85 @@
+---
+title: Список контрактов токенов
+api: GET /v1/bandwidth/auto/contracts
+description: "Ваши контракты токенов TRC-20 для Авто-bandwidth"
+---
+
+## Список контрактов токенов
+
+Возвращает контракты TRC-20, которые вы добавили для Авто-bandwidth. Подписка с `token: "CUSTOM"` или `"OWN"` может использовать любой из них в `contract`. Нужен скоуп `view`.
+
+USDT и USDD встроены и здесь никогда не появляются: выбирайте их через `token`.
+
+### Ответ
+
+<ResponseField name="contracts" type="array">
+  Ваши контракты.
+
+  <Expandable title="объект контракта">
+    <ResponseField name="address" type="string">
+      Адрес контракта
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Символ токена — как его сообщает контракт (до 16 символов)
+    </ResponseField>
+    <ResponseField name="name" type="string | null">
+      Название токена — как его сообщает контракт (до 40 символов); `null`, если названия нет
+    </ResponseField>
+    <ResponseField name="decimals" type="number">
+      Число знаков после запятой у токена
+    </ResponseField>
+    <ResponseField name="bandwidth" type="number">
+      Сколько bandwidth занимает один перевод этого токена — ориентир для `volume` подписки
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Warning>
+`symbol` и `name` приходят из самого контракта, а выпустить токен, называющий себя «Tether USD», может любой. Всегда определяйте токен по его `address`.
+</Warning>
+
+### Пример
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto/contracts \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto/contracts",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/contracts", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "contracts": [
+    {
+      "address": "TYourTokenContract1234567890abcdef",
+      "symbol": "MTK",
+      "name": "My Token",
+      "decimals": 6,
+      "bandwidth": 345
+    }
+  ]
+}
+```
+
+### Ошибки
+
+| Статус | Код | Когда |
+|--------|------|------|
+| `403` | `FORBIDDEN` | У API-ключа нет скоупа `view` |

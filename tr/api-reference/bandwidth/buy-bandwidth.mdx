@@ -1,6 +1,6 @@
 ---
 title: Bandwidth satın al
-api: POST /api/v1/bandwidth/buy
+api: POST /v1/bandwidth/buy
 description: "TRON adresi için bandwidth satın alın"
 ---
 
@@ -46,6 +46,13 @@ Belirtilen TRON adresine bandwidth devreder. Maliyet hesap bakiyenizden düşül
   farklı bir `max_price_trx` dahil — `422 IDEMPOTENCY_KEY_REUSED` döndürür. `409 PRICE_CHANGED` veya
   `402 INSUFFICIENT_BALANCE` gibi hiçbir ücret alınmayan bir retten sonra anahtar yeniden kullanılabilir
   hâle gelir: aynı anahtarla ve yeni fiyatla tekrar deneyin.
+
+  Anahtarla yapılan ilk istek hâlâ işlenirken yapılan bir tekrar `409 IDEMPOTENT_REQUEST_IN_PROGRESS`
+  döndürür: birkaç saniye bekleyin ve aynı anahtarla tekrar deneyin. Anahtar kontrol edilemezse istek,
+  hiçbir şey satın alınmadan `503 IDEMPOTENCY_UNAVAILABLE` ile reddedilir: aynı anahtarla tekrar
+  deneyin. Anahtar 24 saat saklanır; bu sürenin ardından yeni bir satın alma başlatır.
+  Tekrar denemeler
+  [Enerji Satın Al → Zaman aşımları ve tekrar denemeler](/tr/api-reference/energy/buy-energy) bölümünde anlatıldığı gibi çalışır.
 </ParamField>
 
 ### Yanıt
@@ -55,11 +62,13 @@ Belirtilen TRON adresine bandwidth devreder. Maliyet hesap bakiyenizden düşül
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Sipariş durumu: `pending`, `filled`, `failed`
+  Sipariş durumu: `filled`, `failed` veya `submitted_unknown` — delegasyon yayınlandı ancak henüz bir
+  blokta onaylanmadı; birkaç dakika içinde `filled` olur ya da tam iadeyle `failed` olur:
+  [Get Order](/tr/api-reference/orders/get-order) ile kontrol edin.
 </ResponseField>
 
 <ResponseField name="txid" type="string | null">
-  Delegasyon yayınlandıktan sonraki on-chain işlem kimliği (`pending` iken null)
+  Delegasyon yayınlandıktan sonraki on-chain işlem kimliği
 </ResponseField>
 
 <ResponseField name="price_trx" type="string">

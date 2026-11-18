@@ -1,0 +1,144 @@
+---
+title: Aboneliği Güncelle
+api: PATCH /v1/bandwidth/auto/{sub_id}
+description: "Bir Otomatik Bandwidth aboneliğini değiştirin, duraklatın, devam ettirin veya taşıyın"
+---
+
+## Aboneliği Güncelle
+
+Bir aboneliğin ayarlarını değiştirir, duraklatır, devam ettirir veya başka bir adrese taşır. Yalnızca değiştirmek istediğiniz alanları gönderin; diğerleri olduğu gibi kalır. Değişiklikler hemen uygulanır: her düzenlemeden sonra aboneliği yeniden kontrol ederiz. `buy_bandwidth` kapsamını gerektirir.
+
+### Yol parametreleri
+
+<ParamField path="sub_id" type="number" required>
+  Abonelik kimliği — Abonelik Oluştur veya Abonelikleri Listele yanıtındaki `id`
+</ParamField>
+
+### İstek gövdesi
+
+<ParamField body="enabled" type="boolean">
+  `false` aboneliği duraklatır: siz devam ettirene kadar bant genişliğini geri alır ve ücret almayız. `true` duraklatılmış veya durdurulmuş bir aboneliği devam ettirir; oluştururken olduğu gibi bakiyeniz 24 saati ve bir transferi karşılamalıdır. Destek tarafından kapatılan bir abonelik (`stopped_reason: "admin"`) bu yolla devam ettirilemez.
+</ParamField>
+
+<ParamField body="volume" type="number">
+  Yeni bant genişliği miktarı. 1 ile 5.000 arasında. Ödenmiş bir gün içinde yükseltmek, günün geri kalanı için farkı ücretlendirir.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Aboneliği başka bir adrese taşır. Bant genişliğini eski adresten geri alır, ardından yeni adrese devrederiz; taşıma bitene kadar `address_change_to` taşımayı gösterir. Yeni adres, oluştururken olduğu gibi aynı kontrollerden geçer. Mevcut adresi göndermek, bitmemiş bir taşımayı iptal eder.
+</ParamField>
+
+<ParamField body="token" type="string">
+  `"USDT"`, `"TRX"`, `"USDD"`, `"CUSTOM"` veya `"OWN"`. `USDT`, `TRX` veya `USDD` değerine geçmek `contract` değerini kaldırır.
+</ParamField>
+
+<ParamField body="contract" type="string | null">
+  `CUSTOM` veya `OWN` için [token listenizden](/tr/api-reference/auto-bandwidth/list-contracts) bir sözleşme. `null` onu kaldırır (`CUSTOM` ile mümkün değildir).
+</ParamField>
+
+<ParamField body="label" type="string | null">
+  Yeni etiket, en fazla 50 karakter. `null` veya boş bir dize onu kaldırır.
+</ParamField>
+
+<ParamField body="auto_pause" type="boolean">
+  Otomatik duraklatmayı açar veya kapatır.
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  Yeni ücretsiz bant genişliği seviyesi; oluştururken olduğu gibi aynı aralıkta.
+</ParamField>
+
+<ParamField body="notify_free_bw" type="boolean">
+  Ücretsiz bant genişliği bildirimini açar veya kapatır.
+</ParamField>
+
+<ParamField body="stop_after_transfer" type="boolean">
+  `true`, aboneliği şu andan itibaren sayılan, tokenına ait bir sonraki transferden sonra duraklatır. `false` bunu iptal eder.
+</ParamField>
+
+### Yanıt
+
+Güncellenen abonelik; [Abonelikleri Listele](/tr/api-reference/auto-bandwidth/list-subscriptions) ile aynı alanlara sahiptir.
+
+### Örnek
+
+Bir aboneliği duraklatma:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+```python Python
+import requests
+
+resp = requests.patch(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+    json={"enabled": False},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "PATCH",
+  headers: { "X-API-Key": "your_api_key", "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: false }),
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "address": "TYourSenderAddress12345678901234ab",
+  "label": "Payouts",
+  "token": "USDT",
+  "contract": null,
+  "volume": 350,
+  "auto_pause": false,
+  "threshold": 600,
+  "stop_after_transfer": false,
+  "notify_free_bw": false,
+  "status": "paused",
+  "stopped_reason": null,
+  "address_change_to": null,
+  "free_bw": 330,
+  "delegated_bw": 350,
+  "transfers": 12,
+  "delivery_state": "ok",
+  "paid_until": "2026-11-14T08:15:04Z",
+  "total_charged_trx": "5.100000",
+  "daily_trx": "0.340000",
+  "transfer_trx": "0.340000",
+  "transfer_bw_trx": "0.140000",
+  "transfer_fee_trx": "0.200000",
+  "created_at": "2026-11-10T08:15:00Z"
+}
+```
+
+Bant genişliği geri alındığında, birkaç saniye içinde `delegated_bw` `0` değerine düşer.
+
+### Hatalar
+
+| Durum | Kod | Ne zaman |
+|--------|------|------|
+| `400` | `INVALID_ADDRESS` | Yeni `address` geçerli bir TRON adresi değil veya bağlanılamıyor |
+| `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | Yeni `address` bir akıllı sözleşme |
+| `400` | `AUTO_BW_INVALID_THRESHOLD` | `threshold`, `volume` için izin verilen aralığın dışında |
+| `400` | `AUTO_BW_INVALID_CONTRACT` | Sözleşmesiz `CUSTOM`, başka bir tokenla sözleşme veya token listenizde bulunmayan bir sözleşme |
+| `402` | `INSUFFICIENT_BALANCE` | Devam ettirilirken bakiye 24 saati ve bir transferi karşılamıyor |
+| `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
+| `404` | `NOT_FOUND` | Hesabınızda bu kimliğe sahip abonelik yok (veya silindi) |
+| `409` | `AUTO_BW_ADDRESS_TAKEN` | Diğer aboneliklerinizden biri yeni adresi zaten kullanıyor |
+| `409` | `AUTO_BW_ADDRESS_COVERED` | Yeni adresteki bant genişliği zaten Akıllı Mod veya bir transfer paketi tarafından tutuluyor |
+| `409` | `AUTO_BW_CONTRACT_LISTED` | `contract` USDT veya USDD sözleşmesi — bunun yerine `token` kullanın |
+| `409` | `AUTO_BW_DISABLED_BY_SUPPORT` | Abonelik destek tarafından kapatıldı — devam ettirmek için bizimle iletişime geçin |
+| `422` | — | Bir alanın türü yanlış veya aralık dışında |
+| `429` | `RATE_LIMIT_EXCEEDED` | Çok fazla düzenleme isteği — bkz. [Hız Sınırları](/tr/resources/rate-limits) |
+| `503` | `AUTO_BW_DISABLED` | Otomatik Bandwidth geçici olarak kapalıyken `enabled: true`; hiçbir şey değiştirilmedi — daha sonra yeniden deneyin |

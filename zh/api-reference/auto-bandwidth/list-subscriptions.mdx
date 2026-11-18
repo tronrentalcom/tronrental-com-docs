@@ -1,0 +1,167 @@
+---
+title: 列出订阅
+api: GET /v1/bandwidth/auto
+description: "您账户中的所有自动带宽订阅"
+---
+
+## 列出订阅
+
+返回您账户中的所有自动带宽订阅，以及您的余额和当前是否可以创建新订阅。不包含已删除的订阅。需要 `view` 权限。
+
+### 响应
+
+<ResponseField name="subscriptions" type="array">
+  您的订阅。
+
+  <Expandable title="订阅对象">
+    <ResponseField name="id" type="number">
+      订阅 ID——用于编辑和删除的路径
+    </ResponseField>
+    <ResponseField name="address" type="string">
+      订阅为其保持带宽的地址
+    </ResponseField>
+    <ResponseField name="label" type="string | null">
+      您为订阅起的名称
+    </ResponseField>
+    <ResponseField name="token" type="string">
+      `USDT`、`TRX`、`USDD`、`CUSTOM` 或 `OWN`——参见[代币](/zh/api-reference/auto-bandwidth/overview#选项)
+    </ResponseField>
+    <ResponseField name="contract" type="object | null">
+      `CUSTOM` 或 `OWN` 订阅的代币合约：`address`、`symbol` 和 `name`（`symbol` 和 `name` 以网络报告的为准，未知时为 `null`）。没有时为 `null`。
+    </ResponseField>
+    <ResponseField name="volume" type="number">
+      在地址上保持的带宽
+    </ResponseField>
+    <ResponseField name="auto_pause" type="boolean">
+      自动暂停是否开启
+    </ResponseField>
+    <ResponseField name="threshold" type="number">
+      用于自动暂停和免费带宽通知的免费带宽水平
+    </ResponseField>
+    <ResponseField name="stop_after_transfer" type="boolean">
+      订阅代币的下一笔转账是否会将其暂停
+    </ResponseField>
+    <ResponseField name="notify_free_bw" type="boolean">
+      当地址的免费带宽恢复到 `threshold` 时，我们是否通知您
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `active`、`free_bw`、`paused` 或 `stopped_balance`——参见[状态](/zh/api-reference/auto-bandwidth/overview#状态)
+    </ResponseField>
+    <ResponseField name="stopped_reason" type="string | null">
+      `insufficient_balance`、`transfer` 或 `admin`；没有时为 `null`
+    </ResponseField>
+    <ResponseField name="address_change_to" type="string | null">
+      迁移进行中时的新地址；否则为 `null`
+    </ResponseField>
+    <ResponseField name="free_bw" type="number | null">
+      最近一次检查时地址上的免费带宽。首次检查之前为 `null`。
+    </ResponseField>
+    <ResponseField name="delegated_bw" type="number">
+      我们当前已委托给该地址的带宽；没有时为 `0`
+    </ResponseField>
+    <ResponseField name="transfers" type="number">
+      迄今已覆盖的转账——已用完并续期的委托
+    </ResponseField>
+    <ResponseField name="delivery_state" type="string">
+      `ok`、`waiting_stake` 或 `failed`——参见[状态](/zh/api-reference/auto-bandwidth/overview#状态)
+    </ResponseField>
+    <ResponseField name="paid_until" type="string | null">
+      已付费 24 小时的结束时间（ISO 8601，UTC）。尚未支付任何一天时为 `null`。
+    </ResponseField>
+    <ResponseField name="total_charged_trx" type="string">
+      该订阅累计收取的 TRX
+    </ResponseField>
+    <ResponseField name="daily_trx" type="string | null">
+      当前每 24 小时的费用。价格暂时不可用时为 `null`。
+    </ResponseField>
+    <ResponseField name="transfer_trx" type="string | null">
+      当前每笔转账的费用：`transfer_bw_trx` + `transfer_fee_trx`。价格暂时不可用时为 `null`。
+    </ResponseField>
+    <ResponseField name="transfer_bw_trx" type="string | null">
+      转账费中的带宽部分
+    </ResponseField>
+    <ResponseField name="transfer_fee_trx" type="string | null">
+      转账费中的固定手续费部分
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      订阅的创建时间（ISO 8601，UTC）
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="balance_trx" type="string">
+  您的账户余额
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  自动带宽暂时关闭时为 `false`：此时创建订阅或开启订阅会返回 `503 AUTO_BW_DISABLED`
+</ResponseField>
+
+订阅中的价格是该订阅自己的价格：按其创建时所用的 API 密钥计价，或按网站购买计价。
+
+### 示例
+
+<CodeGroup>
+```bash cURL
+curl https://api.tronrental.com/v1/bandwidth/auto \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.get(
+    "https://api.tronrental.com/v1/bandwidth/auto",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto", {
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "subscriptions": [
+    {
+      "id": 42,
+      "address": "TYourSenderAddress12345678901234ab",
+      "label": "Payouts",
+      "token": "USDT",
+      "contract": null,
+      "volume": 350,
+      "auto_pause": false,
+      "threshold": 600,
+      "stop_after_transfer": false,
+      "notify_free_bw": false,
+      "status": "active",
+      "stopped_reason": null,
+      "address_change_to": null,
+      "free_bw": 330,
+      "delegated_bw": 350,
+      "transfers": 12,
+      "delivery_state": "ok",
+      "paid_until": "2026-11-14T08:15:04Z",
+      "total_charged_trx": "5.100000",
+      "daily_trx": "0.340000",
+      "transfer_trx": "0.340000",
+      "transfer_bw_trx": "0.140000",
+      "transfer_fee_trx": "0.200000",
+      "created_at": "2026-11-10T08:15:00Z"
+    }
+  ],
+  "balance_trx": "48.250000",
+  "enabled": true
+}
+```
+
+### 错误
+
+| 状态 | 代码 | 触发条件 |
+|--------|------|------|
+| `403` | `FORBIDDEN` | API 密钥缺少 `view` 权限 |

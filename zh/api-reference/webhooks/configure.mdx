@@ -1,12 +1,12 @@
 ---
 title: 配置 Webhook
-api: POST /api/v1/webhooks/configure
+api: POST /v1/webhooks/configure
 description: "设置您的 Webhook URL"
 ---
 
 ## 配置 Webhook
 
-设置账户的 Webhook URL。每个账户一个 URL，两种事件都发送到该地址。
+设置账户的 Webhook URL。每个账户一个 URL，所有[事件](/zh/api-reference/webhooks/overview)都发送到该地址。
 
 <Warning>
 **API 密钥无法调用此接口。** 修改 Webhook URL——以及读取签名密钥——都需要您本人在网站上开启的会话。使用 API 密钥时请求会被拒绝：
@@ -28,7 +28,7 @@ description: "设置您的 Webhook URL"
 ### 请求体
 
 <ParamField body="url" type="string" required>
-  Webhook URL。此接口**仅接受 HTTPS**，且不得指向 `localhost`、`127.0.0.1`、`0.0.0.0` 或 `::1`。此外，发送时若主机解析到私有、回环或链路本地地址，投递同样会被拒绝。
+  Webhook URL。此接口**仅接受 HTTPS**，且不得指向 `localhost`、`127.0.0.1`、`0.0.0.0` 或 `::1`。此外，发送时若主机解析到私有、回环或链路本地地址，投递同样会被拒绝。解析超过 3 秒仍无结果的主机，同样会被拒绝。
 </ParamField>
 
 ### 响应
@@ -47,6 +47,23 @@ description: "设置您的 Webhook URL"
   "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
+
+### 频率限制
+
+每个账户每分钟最多可更改 **10 次** Webhook URL。该额度与下文所述的后台入口（`PATCH /api/v1/account/webhook`）共享。超出后请求将被拒绝并返回 `429`，URL 保持不变：
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "message": "Too many requests. Please try again later."
+    }
+  }
+}
+```
+
+时间窗口为一分钟，响应中没有 `Retry-After` 头。因使用 API 密钥而被拒绝的请求不计入额度。
 
 ### 后台入口
 

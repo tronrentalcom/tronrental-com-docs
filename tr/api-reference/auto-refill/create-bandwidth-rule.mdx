@@ -1,6 +1,6 @@
 ---
 title: Bant Genişliği Kuralı Oluştur
-api: POST /api/v1/bandwidth/auto-refill
+api: POST /v1/bandwidth/auto-refill
 description: "Bir adresteki bant genişliği eşiğin altına düştüğünde onu otomatik olarak doldurun"
 ---
 
@@ -130,7 +130,6 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` bir akıllı sözleşme |
 | `403` | `FORBIDDEN` | API anahtarında `buy_bandwidth` kapsamı yok |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | Hesabınızda bu adres için zaten bir bant genişliği kuralı var — bunun yerine onu düzenleyin |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | Hesabınızda zaten 20 bant genişliği kuralı var; sınır `error.limit` içinde de yer alır |
 | `422` | — | Bir alan eksik veya aralık dışında ya da `duration` değeri `"1h"` veya `"1d"` değil |
 | `429` | `RATE_LIMIT_EXCEEDED` | Bir dakika içinde 10'dan fazla oluşturma isteği |
 | `503` | `AUTOREFILL_DISABLED` | Bant genişliği için Otomatik Dolum geçici olarak kapalı; kural oluşturulmadı — daha sonra yeniden deneyin |

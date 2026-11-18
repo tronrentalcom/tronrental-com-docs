@@ -1,12 +1,12 @@
 ---
 title: Webhook yapılandırma
-api: POST /api/v1/webhooks/configure
+api: POST /v1/webhooks/configure
 description: "Webhook URL'nizi ayarlayın"
 ---
 
 ## Webhook yapılandırma
 
-Hesabın webhook URL'sini ayarlar. Hesap başına tek URL vardır ve her iki olay da oraya gider.
+Hesabın webhook URL'sini ayarlar. Hesap başına tek URL vardır ve tüm [olaylar](/tr/api-reference/webhooks/overview) oraya gider.
 
 <Warning>
 **Bu uç noktayı bir API anahtarı çağıramaz.** Webhook URL'sini değiştirmek — ya da imzalama anahtarını okumak — web sitesinde kendinizin açtığı bir oturum gerektirir. API anahtarıyla istek reddedilir:
@@ -28,7 +28,7 @@ Aksi hâlde çalınmış bir anahtar, olaylarınızı başkasının sunucusuna y
 ### İstek gövdesi
 
 <ParamField body="url" type="string" required>
-  Webhook URL'si. Bu uç noktada **yalnızca HTTPS** ve `localhost`, `127.0.0.1`, `0.0.0.0` ya da `::1` adreslerini göstermemelidir. Ayrıca gönderim anında, özel, loopback veya link-local bir adrese çözümlenen her host için teslimat reddedilir.
+  Webhook URL'si. Bu uç noktada **yalnızca HTTPS** ve `localhost`, `127.0.0.1`, `0.0.0.0` ya da `::1` adreslerini göstermemelidir. Ayrıca gönderim anında, özel, loopback veya link-local bir adrese çözümlenen her host için teslimat reddedilir. 3 saniye içinde çözümlenmeyen bir host da aynı şekilde reddedilir.
 </ParamField>
 
 ### Yanıt
@@ -47,6 +47,23 @@ Aksi hâlde çalınmış bir anahtar, olaylarınızı başkasının sunucusuna y
   "webhook_secret": "3f2a9c...64 hex characters..."
 }
 ```
+
+### İstek sınırı
+
+Webhook URL'si hesap başına **dakikada en fazla 10 kez** değiştirilebilir. Bu bütçe aşağıda anlatılan panel kapısıyla (`PATCH /api/v1/account/webhook`) ortaktır. Aşıldığında istek `429` ile reddedilir ve URL olduğu gibi kalır:
+
+```json Response
+{
+  "detail": {
+    "error": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "message": "Too many requests. Please try again later."
+    }
+  }
+}
+```
+
+Pencere bir dakikadır ve `Retry-After` başlığı yoktur. API anahtarı olduğu için reddedilen bir istek bütçeden düşmez.
 
 ### Panel kapısı
 

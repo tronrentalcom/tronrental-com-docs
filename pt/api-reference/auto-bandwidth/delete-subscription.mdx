@@ -1,0 +1,79 @@
+---
+title: Excluir assinatura
+api: DELETE /v1/bandwidth/auto/{sub_id}
+description: "Exclua uma assinatura de Bandwidth automático"
+---
+
+## Excluir assinatura
+
+Exclui uma assinatura. Paramos de monitorar o endereço e retiramos a largura de banda que delegamos a ele, em poucos segundos; o endereço fica livre para uma nova assinatura. Uma transferência que usou a nossa largura de banda antes da exclusão ainda é cobrada. Exige o escopo `buy_bandwidth`.
+
+Para parar por um tempo sem perder as configurações, [pause a assinatura](/pt/api-reference/auto-bandwidth/update-subscription) com `enabled: false`.
+
+### Parâmetros de caminho
+
+<ParamField path="sub_id" type="number" required>
+  ID da assinatura — o `id` de Criar ou Listar assinaturas
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="number">
+  O ID da assinatura excluída
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `deleted`
+</ResponseField>
+
+### Exemplo
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.tronrental.com/v1/bandwidth/auto/42 \
+  -H "X-API-Key: your_api_key"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.tronrental.com/v1/bandwidth/auto/42",
+    headers={"X-API-Key": "your_api_key"},
+)
+print(resp.json())
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.tronrental.com/v1/bandwidth/auto/42", {
+  method: "DELETE",
+  headers: { "X-API-Key": "your_api_key" },
+});
+console.log(await resp.json());
+```
+</CodeGroup>
+
+```json Response
+{
+  "id": 42,
+  "status": "deleted"
+}
+```
+
+### Erros
+
+| Status | Código | Quando |
+|--------|------|------|
+| `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_bandwidth` |
+| `404` | `NOT_FOUND` | Não existe assinatura com este ID na sua conta (ou ela já foi excluída) |
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Auto-Bandwidth subscription not found"
+    }
+  }
+}
+```

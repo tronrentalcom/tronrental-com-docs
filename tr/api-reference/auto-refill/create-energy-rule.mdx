@@ -1,6 +1,6 @@
 ---
 title: Enerji Kuralı Oluştur
-api: POST /api/v1/energy/auto-refill
+api: POST /v1/energy/auto-refill
 description: "Bir adresteki enerji eşiğin altına düştüğünde onu otomatik olarak doldurun"
 ---
 
@@ -126,22 +126,9 @@ console.log(await resp.json());
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` bir akıllı sözleşme |
 | `403` | `FORBIDDEN` | API anahtarında `buy_energy` kapsamı yok |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | Hesabınızda bu adres için zaten bir enerji kuralı var — bunun yerine onu düzenleyin |
-| `409` | `AUTOREFILL_LIMIT_REACHED` | Hesabınızda zaten 20 enerji kuralı var; sınır `error.limit` içinde de yer alır |
 | `422` | — | Bir alan eksik veya aralık dışında ya da `duration` değeri `"1h"` değil |
 | `429` | `RATE_LIMIT_EXCEEDED` | Bir dakika içinde 10'dan fazla oluşturma isteği |
 | `503` | `AUTOREFILL_DISABLED` | Enerji için Otomatik Dolum geçici olarak kapalı; kural oluşturulmadı — daha sonra yeniden deneyin |
-
-```json
-{
-  "detail": {
-    "error": {
-      "code": "AUTOREFILL_LIMIT_REACHED",
-      "message": "You already hold the maximum of auto-refill rules: 20 for energy and 20 for bandwidth, counted separately. Delete one to add another.",
-      "limit": 20
-    }
-  }
-}
-```
 
 ```json
 {
