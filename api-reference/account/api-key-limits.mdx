@@ -7,7 +7,7 @@ description: "Your account-level rate limit and how many API keys the account ma
 ## Get API Key Limits
 
 Returns the rate limit that applies to your requests and the account's API key quota, including the
-endpoints of a Node API plan. The rate limit tiers are described in
+endpoints of a Node API plan, and the top-up a new API key waits for. The rate limit tiers are described in
 [Rate Limits](/resources/rate-limits).
 
 A Node API endpoint is an API key too: a Node API plan adds its endpoint allowance to the account's key
@@ -54,7 +54,8 @@ endpoint — the REST API answers it with `403 NODE_API_KEY_ONLY`.
 </ResponseField>
 
 <ResponseField name="can_create" type="boolean">
-  `true` while `key_count` is below `key_limit`
+  `true` while `key_count` is below `key_limit`. It does not reflect the top-up a new key waits for —
+  check `deposit_missing_trx` too
 </ResponseField>
 
 <ResponseField name="node_endpoint_limit" type="number">
@@ -64,6 +65,17 @@ endpoint — the REST API answers it with `403 NODE_API_KEY_ONLY`.
 
 <ResponseField name="node_endpoint_count" type="number">
   Keys that carry `node_api` — the account's Node API endpoints, switched-off ones included
+</ResponseField>
+
+<ResponseField name="deposit_required_trx" type="string">
+  Top-ups, in TRX in total, after which the account may create an API key. Every top-up ever credited
+  counts; a USDT top-up counts at the TRX amount it was credited as
+</ResponseField>
+
+<ResponseField name="deposit_missing_trx" type="string">
+  How much more to top up before a new API key can be created; `"0"` once the bar is met or the
+  account is not subject to it. Below it, creating a key answers `403 API_KEY_DEPOSIT_REQUIRED`. A Node
+  API endpoint does not wait for it
 </ResponseField>
 
 ### Example
@@ -85,6 +97,8 @@ curl https://api.tronrental.com/v1/auth/api-keys/limits \
   "custom_key_limit": null,
   "can_create": true,
   "node_endpoint_limit": 3,
-  "node_endpoint_count": 1
+  "node_endpoint_count": 1,
+  "deposit_required_trx": "100",
+  "deposit_missing_trx": "0"
 }
 ```

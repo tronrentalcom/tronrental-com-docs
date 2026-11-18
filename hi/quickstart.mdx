@@ -3,11 +3,22 @@ title: त्वरित प्रारंभ
 description: "5 मिनट से कम में TRON ऊर्जा खरीदें"
 ---
 
-## 1. अपनी API कुंजी प्राप्त करें
+## 1. अपना बैलेंस टॉप अप करें
 
-[tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) पर साइन अप करें और API कुंजी बनाएं।
+[tronrental.com](https://tronrental.com/auth/register) पर साइन अप करें और [डैशबोर्ड → जमा](https://tronrental.com/dashboard/deposit) खोलें। अपने जमा पते पर TRX या USDT भेजें — जमा स्वचालित रूप से क्रेडिट हो जाती है।
 
-## 2. कीमतें देखें
+## 2. अपनी API कुंजी प्राप्त करें
+
+[tronrental.com/dashboard/api](https://tronrental.com/dashboard/api) पर API कुंजी बनाएं। कुंजी तब जारी होती है जब आपके टॉप-अप कुल मिलाकर कम से कम **100 TRX** हो जाएँ (USDT टॉप-अप उतने TRX के रूप में गिना जाता है जितना क्रेडिट हुआ था)। तब तक कुंजी बनाने पर बाकी राशि के साथ [`403 API_KEY_DEPOSIT_REQUIRED`](/hi/authentication) लौटता है।
+
+कुंजी मिलने के बाद अगले टॉप-अप के लिए जमा पता API से भी मिल सकता है:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+## 3. कीमतें देखें
 
 ```bash
 curl https://api.tronrental.com/v1/prices
@@ -29,17 +40,6 @@ curl https://api.tronrental.com/v1/prices
 ```
 
 ऊर्जा किराया **केवल 1 घंटा** (`"1h"`)। Bandwidth `"1h"`, `"1d"` या `"5m"` से `"59m"` तक मिनटों की कोई भी पूर्ण संख्या — देखें [Bandwidth खरीदें](/hi/api-reference/bandwidth/buy-bandwidth)। `energy_trx` केवल rental है; चेकआउट पर `energy_fixed_fee_trx` (0.2 TRX) जुड़ता है।
-
-## 3. TRX जमा करें
-
-अपना जमा पता प्राप्त करें:
-
-```bash
-curl https://api.tronrental.com/v1/account/deposit \
-  -H "X-API-Key: your_api_key"
-```
-
-वापस मिले `deposit_address` पर TRX या USDT भेजें। जमा स्वचालित रूप से क्रेडिट हो जाती है।
 
 ## 4. ऊर्जा खरीदें
 

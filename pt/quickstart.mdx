@@ -3,11 +3,22 @@ title: Início rápido
 description: "Compre energia TRON em menos de 5 minutos"
 ---
 
-## 1. Obtenha sua chave API
+## 1. Recarregue seu saldo
 
-Cadastre-se e crie uma chave API em [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api).
+Cadastre-se em [tronrental.com](https://tronrental.com/auth/register) e abra [Painel → Depósito](https://tronrental.com/dashboard/deposit). Envie TRX ou USDT para o seu endereço de depósito — depósitos são creditados automaticamente.
 
-## 2. Consulte os preços
+## 2. Obtenha sua chave API
+
+Crie uma chave API em [tronrental.com/dashboard/api](https://tronrental.com/dashboard/api). A chave é emitida quando suas recargas somam pelo menos **100 TRX** (uma recarga em USDT conta pelo valor em TRX com que foi creditada). Antes disso, criar uma chave retorna [`403 API_KEY_DEPOSIT_REQUIRED`](/pt/authentication) com o valor que falta.
+
+Com uma chave, o endereço de depósito para as próximas recargas também está disponível pela API:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "X-API-Key: your_api_key"
+```
+
+## 3. Consulte os preços
 
 ```bash
 curl https://api.tronrental.com/v1/prices
@@ -29,17 +40,6 @@ curl https://api.tronrental.com/v1/prices
 ```
 
 Aluguel de energia — **apenas 1 hora** (`"1h"`). Bandwidth aceita `"1h"`, `"1d"` ou qualquer número inteiro de minutos de `"5m"` a `"59m"` — veja [Comprar bandwidth](/pt/api-reference/bandwidth/buy-bandwidth). `energy_trx` é só o rental; na cobrança soma-se `energy_fixed_fee_trx` (0.2 TRX).
-
-## 3. Deposite TRX
-
-Obtenha seu endereço de depósito:
-
-```bash
-curl https://api.tronrental.com/v1/account/deposit \
-  -H "X-API-Key: your_api_key"
-```
-
-Envie TRX ou USDT para o `deposit_address` retornado. Depósitos são creditados automaticamente.
 
 ## 4. Compre energia
 

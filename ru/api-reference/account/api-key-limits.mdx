@@ -7,7 +7,7 @@ description: "Лимит запросов вашего аккаунта и ск�
 ## Получить лимиты API-ключей
 
 Возвращает лимит запросов, который действует для вас, и лимит на число API-ключей аккаунта, включая
-эндпоинты тарифа Node API. Уровни лимита запросов описаны в разделе
+эндпоинты тарифа Node API, а также пополнение, которого ждёт новый API-ключ. Уровни лимита запросов описаны в разделе
 [Лимиты запросов](/ru/resources/rate-limits).
 
 Эндпоинт Node API — тоже API-ключ: тариф Node API добавляет свою норму эндпоинтов к лимиту ключей
@@ -53,7 +53,8 @@ REST API отвечает на него `403 NODE_API_KEY_ONLY`.
 </ResponseField>
 
 <ResponseField name="can_create" type="boolean">
-  `true`, пока `key_count` меньше `key_limit`
+  `true`, пока `key_count` меньше `key_limit`. Пополнение, которого ждёт новый ключ, здесь не учтено —
+  смотрите и `deposit_missing_trx`
 </ResponseField>
 
 <ResponseField name="node_endpoint_limit" type="number">
@@ -63,6 +64,17 @@ REST API отвечает на него `403 NODE_API_KEY_ONLY`.
 
 <ResponseField name="node_endpoint_count" type="number">
   Ключи с `node_api` — эндпоинты Node API аккаунта, включая выключенные
+</ResponseField>
+
+<ResponseField name="deposit_required_trx" type="string">
+  Сумма пополнений в TRX, после которой аккаунт может создать API-ключ. Считаются все когда-либо
+  зачисленные пополнения; пополнение в USDT — по сумме в TRX, которая была зачислена
+</ResponseField>
+
+<ResponseField name="deposit_missing_trx" type="string">
+  Сколько ещё пополнить, чтобы создать новый API-ключ; `"0"` — порог пройден или к аккаунту не
+  применяется. Пока не пройден, создание ключа отвечает `403 API_KEY_DEPOSIT_REQUIRED`. Эндпоинта
+  Node API порог не касается
 </ResponseField>
 
 ### Пример
@@ -84,6 +96,8 @@ curl https://api.tronrental.com/v1/auth/api-keys/limits \
   "custom_key_limit": null,
   "can_create": true,
   "node_endpoint_limit": 3,
-  "node_endpoint_count": 1
+  "node_endpoint_count": 1,
+  "deposit_required_trx": "100",
+  "deposit_missing_trx": "0"
 }
 ```

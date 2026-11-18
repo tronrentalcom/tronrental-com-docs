@@ -15,15 +15,35 @@ curl https://api.tronrental.com/v1/account/balance \
 ### 获取 API 密钥
 
 1. 在 [tronrental.com](https://tronrental.com/auth/register) 注册
-2. 前往[控制面板 → API 密钥](https://tronrental.com/dashboard/api)
-3. 点击 **创建 API 密钥**
-4. 复制并安全保存您的密钥 — 密钥仅显示一次
+2. 在[控制面板 → 充值](https://tronrental.com/dashboard/deposit)充值余额：累计充值至少达到 **100 TRX** 后才会发放 API 密钥
+3. 前往[控制面板 → API 密钥](https://tronrental.com/dashboard/api)
+4. 点击 **创建 API 密钥**
+5. 复制并安全保存您的密钥 — 密钥仅显示一次
 
 只有在确认邮箱地址后，才会创建新的邮箱账户：TronRental 会向该邮箱发送 6 位验证码，输入该验证码后账户才会创建。
 
+### 首个密钥前的充值
+
+100 TRX 是账户历来所有已到账充值的总和；USDT 充值按到账时折算的 TRX 金额计入。计算的是历史，而不是余额：花掉余额不会收回密钥。总额达到 100 TRX 之前，`POST /v1/auth/api-keys` 会返回 `403`：
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "API_KEY_DEPOSIT_REQUIRED",
+      "message": "API keys are available after a top-up of 100 TRX in total: top up 60 TRX more.",
+      "required_trx": "100",
+      "missing_trx": "60"
+    }
+  }
+}
+```
+
+`required_trx` 是门槛，`missing_trx` 是还需充值的金额，二者均为以字符串表示的 TRX。[API 密钥限制](/zh/api-reference/account/api-key-limits)会事先以 `deposit_required_trx` 和 `deposit_missing_trx` 返回同样的两个数值。启用因账户从未充值而被停用的密钥时，也会进行同样的检查。Node API 密钥不受此限制：它们由 Node API 套餐决定。
+
 ### 通过 API 注册（AI 代理）
 
-代理或脚本无需访问网站即可开设账户并创建第一个密钥。为此需要用户的**真实**邮箱：只有使用该邮箱收到的验证码才能创建账户。
+代理或脚本无需访问网站即可开设账户、充值，并在累计充值达到 100 TRX 后创建密钥。为此需要用户的**真实**邮箱：只有使用该邮箱收到的验证码才能创建账户。
 
 **1. 开始注册** — 此时尚未创建账户，系统会向该地址发送 6 位验证码：
 
@@ -74,7 +94,16 @@ curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
 }
 ```
 
-**3. 创建 API 密钥**，使用访问令牌（access token）：
+**3. 充值** — 获取充值地址只需访问令牌。向返回的 `deposit_address` 发送 TRX 或 USDT：
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "Authorization: Bearer <access_token>"
+```
+
+同样的请求头也可用于查询余额（`GET /v1/account/balance`）、购买和订单，因此第一笔订单无需等待密钥。访问令牌有效期为 1 小时；如需新令牌，请使用 `POST /v1/auth/login` 并提交 `{"email": "...", "password": "..."}` 重新登录。
+
+**4. 创建 API 密钥**，在账户累计充值达到 100 TRX 后：
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/auth/api-keys \
@@ -83,18 +112,19 @@ curl -X POST https://api.tronrental.com/v1/auth/api-keys \
   -d '{"name": "my-agent"}'
 ```
 
-响应中的 `key` 字段就是 API 密钥 — 它仅显示一次。
+响应中的 `key` 字段就是 API 密钥 — 它仅显示一次。累计充值不足 100 TRX 时返回 `403 API_KEY_DEPOSIT_REQUIRED`，尚差的金额在 `missing_trx` 中（见上文「首个密钥前的充值」）。
 
 | 状态 | 代码 | 含义 |
 |--------|------|---------|
 | `400` | `WEAK_PASSWORD` | 密码不符合规则（验证码不会被消耗） |
 | `401` | `INVALID_CREDENTIALS` | 验证码错误或已过期 |
 | `403` | `EMAIL_DOMAIN_BLOCKED` | 不接受该邮箱服务商 |
+| `403` | `API_KEY_DEPOSIT_REQUIRED` | 账户累计充值不足 100 TRX — 再充值 `missing_trx` 后创建密钥 |
 | `409` | `EMAIL_EXISTS` | 该邮箱已有账户 — 请直接登录 |
 | `429` | `RATE_LIMIT_EXCEEDED` | 请求或邮件过多，或连续 5 次输入错误的验证码 — 请重新获取验证码 |
 
 <Note>
-  [MCP 服务器](/zh/resources/mcp-server)通过 `register` 和 `verify_email_code` 工具完成这些步骤。
+  [MCP 服务器](/zh/resources/mcp-server)通过 `register`、`verify_email_code`、`get_deposit_address` 和 `create_api_key` 工具完成这些步骤。
 </Note>
 
 ### IP 白名单（可选）

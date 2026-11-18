@@ -15,15 +15,35 @@ curl https://api.tronrental.com/v1/account/balance \
 ### Obtendo uma chave de API
 
 1. Cadastre-se em [tronrental.com](https://tronrental.com/auth/register)
-2. Acesse [Painel → Chaves de API](https://tronrental.com/dashboard/api)
-3. Clique em **Criar Chave de API**
-4. Copie e armazene sua chave com segurança — ela é exibida apenas uma vez
+2. Recarregue seu saldo em [Painel → Depósito](https://tronrental.com/dashboard/deposit): a chave de API é emitida quando suas recargas somam pelo menos **100 TRX**
+3. Acesse [Painel → Chaves de API](https://tronrental.com/dashboard/api)
+4. Clique em **Criar Chave de API**
+5. Copie e armazene sua chave com segurança — ela é exibida apenas uma vez
 
 Uma nova conta por e-mail só é criada depois que o endereço é confirmado: o TronRental envia um código de 6 dígitos por e-mail, e a conta passa a existir assim que esse código é informado.
 
+### Recarga antes da primeira chave
+
+Os 100 TRX são a soma de todas as recargas já creditadas na conta; uma recarga em USDT conta pelo valor em TRX com que foi creditada. Conta o histórico, não o saldo: gastar o saldo não tira a chave. Enquanto a soma não chegar a 100 TRX, `POST /v1/auth/api-keys` responde `403`:
+
+```json
+{
+  "detail": {
+    "error": {
+      "code": "API_KEY_DEPOSIT_REQUIRED",
+      "message": "API keys are available after a top-up of 100 TRX in total: top up 60 TRX more.",
+      "required_trx": "100",
+      "missing_trx": "60"
+    }
+  }
+}
+```
+
+`required_trx` é o limite e `missing_trx` o que falta recarregar, ambos em TRX como strings. [Limites de chaves de API](/pt/api-reference/account/api-key-limits) mostra os mesmos dois números como `deposit_required_trx` e `deposit_missing_trx` antes da tentativa. A mesma verificação vale ao reativar uma chave que foi desativada porque a conta nunca havia recarregado. As chaves do Node API não estão sujeitas a ela: quem as libera é o plano do Node API.
+
 ### Cadastro pela API (agentes de IA)
 
-Um agente ou script pode abrir uma conta e emitir a primeira chave sem usar o site. Para isso, ele precisa do e-mail **real** do usuário: a conta só é criada com o código recebido nessa caixa de entrada.
+Um agente ou script pode abrir uma conta, recarregá-la e, quando as recargas chegarem a 100 TRX, emitir uma chave sem usar o site. Para isso, ele precisa do e-mail **real** do usuário: a conta só é criada com o código recebido nessa caixa de entrada.
 
 **1. Inicie o cadastro** — nenhuma conta é criada ainda; um código de 6 dígitos é enviado para o endereço:
 
@@ -74,7 +94,16 @@ curl -X POST https://api.tronrental.com/v1/auth/email-code/verify \
 }
 ```
 
-**3. Crie uma chave de API** com o access token:
+**3. Recarregue** — o access token basta para obter o endereço de depósito. Envie TRX ou USDT para o `deposit_address` retornado:
+
+```bash
+curl https://api.tronrental.com/v1/account/deposit \
+  -H "Authorization: Bearer <access_token>"
+```
+
+O mesmo cabeçalho funciona para o saldo (`GET /v1/account/balance`), compras e pedidos, então o primeiro pedido não espera pela chave. O access token vale 1 hora; para obter um novo, faça login com `POST /v1/auth/login` e `{"email": "...", "password": "..."}`.
+
+**4. Crie uma chave de API** quando as recargas da conta somarem 100 TRX:
 
 ```bash
 curl -X POST https://api.tronrental.com/v1/auth/api-keys \
@@ -83,18 +112,19 @@ curl -X POST https://api.tronrental.com/v1/auth/api-keys \
   -d '{"name": "my-agent"}'
 ```
 
-O campo `key` da resposta é a chave de API — ela é exibida apenas uma vez.
+O campo `key` da resposta é a chave de API — ela é exibida apenas uma vez. Abaixo de 100 TRX a resposta é `403 API_KEY_DEPOSIT_REQUIRED`, com o valor que falta em `missing_trx` (veja «Recarga antes da primeira chave» acima).
 
 | Status | Código | Significado |
 |--------|------|---------|
 | `400` | `WEAK_PASSWORD` | A senha não atende às regras (o código não é consumido) |
 | `401` | `INVALID_CREDENTIALS` | Código incorreto ou expirado |
 | `403` | `EMAIL_DOMAIN_BLOCKED` | Este provedor de e-mail não é aceito |
+| `403` | `API_KEY_DEPOSIT_REQUIRED` | As recargas da conta somam menos de 100 TRX — recarregue mais `missing_trx` e crie a chave |
 | `409` | `EMAIL_EXISTS` | Este e-mail já tem uma conta — faça login |
 | `429` | `RATE_LIMIT_EXCEEDED` | Requisições ou e-mails demais, ou 5 códigos incorretos seguidos — solicite um novo código |
 
 <Note>
-  O [servidor MCP](/pt/resources/mcp-server) executa essas etapas com as ferramentas `register` e `verify_email_code`.
+  O [servidor MCP](/pt/resources/mcp-server) executa essas etapas com as ferramentas `register`, `verify_email_code`, `get_deposit_address` e `create_api_key`.
 </Note>
 
 ### Lista de IPs permitidos (opcional)
