@@ -133,7 +133,7 @@ Estes vêm depois que a entrega ao endereço antigo foi interrompida. A mensagem
 
 | Código | Status | Onde os pacotes estão |
 |--------|--------|--------|
-| `ADDRESS_TAKEN` | `409` | Pausados no endereço **antigo**: outro pacote apareceu em `new_address` durante a mudança. A mensagem termina com "stay paused on the old address". Retome-os lá ou mova-os para outro endereço |
+| `ADDRESS_TAKEN` | `409` | Pausados no endereço **antigo**: outro pacote apareceu em `new_address` durante a mudança. A mensagem termina com "stay paused on the old address; resume them there". Retome-os lá ou mova-os para outro endereço |
 | `MOVED_PAUSED` | status da causa | Pausados no endereço **novo**: a mudança deu certo, mas a entrega lá não pôde ser iniciada. [Retome](/pt/api-reference/transfer-packages/resume) com `new_address` |
 
 `ADDRESS_BUSY` e `MOVE_AFTER_PAUSE` também podem vir nesta etapa, quando outra operação no endereço se intrometeu. Os pacotes ficam então pausados no endereço antigo; repita a mudança para transferi-los — eles chegam pausados.

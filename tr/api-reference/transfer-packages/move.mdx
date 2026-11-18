@@ -133,7 +133,7 @@ Bunlar eski adrese teslimat durdurulduktan sonra gelir. Mesaj paketlerin şu and
 
 | Kod | Durum | Paketlerin bulunduğu yer |
 |------|--------|------|
-| `ADDRESS_TAKEN` | `409` | **Eski** adreste duraklatılmış: taşıma sırasında `new_address` üzerinde başka bir paket belirdi. Mesaj "stay paused on the old address" ile biter. Onları orada devam ettirin veya başka bir adrese taşıyın |
+| `ADDRESS_TAKEN` | `409` | **Eski** adreste duraklatılmış: taşıma sırasında `new_address` üzerinde başka bir paket belirdi. Mesaj "stay paused on the old address; resume them there" ile biter. Onları orada devam ettirin veya başka bir adrese taşıyın |
 | `MOVED_PAUSED` | nedenin durumu | **Yeni** adreste duraklatılmış: taşıma başarılı oldu, ancak orada teslimat başlatılamadı. `new_address` ile [devam ettirin](/tr/api-reference/transfer-packages/resume) |
 
 `ADDRESS_BUSY` ve `MOVE_AFTER_PAUSE` bu adımda da gelebilir; bu, adresteki başka bir işlemin araya girdiği anlamına gelir. Paketler o zaman eski adreste duraklatılmıştır; taşımayı tekrarlayın, paketleri taşır — duraklatılmış olarak varırlar.

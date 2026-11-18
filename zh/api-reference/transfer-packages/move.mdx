@@ -133,7 +133,7 @@ curl -X POST https://api.tronrental.com/v1/transfer-packages/move \
 
 | 代码 | 状态 | 套餐所在位置 |
 |------|--------|------|
-| `ADDRESS_TAKEN` | `409` | 在**旧**地址上处于暂停：迁移过程中 `new_address` 上出现了另一个套餐。消息以 "stay paused on the old address" 结尾。请在旧地址上恢复它们，或把它们迁移到其他地址 |
+| `ADDRESS_TAKEN` | `409` | 在**旧**地址上处于暂停：迁移过程中 `new_address` 上出现了另一个套餐。消息以 "stay paused on the old address; resume them there" 结尾。请在旧地址上恢复它们，或把它们迁移到其他地址 |
 | `MOVED_PAUSED` | 取决于原因的状态 | 在**新**地址上处于暂停：迁移已成功，但无法在新地址上启动供应。请用 `new_address` [恢复](/zh/api-reference/transfer-packages/resume) |
 
 当该地址上的另一项操作插入其间时，`ADDRESS_BUSY` 和 `MOVE_AFTER_PAUSE` 也可能在这一步出现。此时套餐在旧地址上处于暂停；请重复迁移以带走它们——它们到达新地址时为暂停状态。

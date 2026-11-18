@@ -133,7 +133,7 @@ Estos llegan después de detener la entrega a la dirección anterior. El mensaje
 
 | Código | Estado | Dónde están los paquetes |
 |--------|--------|--------|
-| `ADDRESS_TAKEN` | `409` | Pausados en la dirección **anterior**: apareció otro paquete en `new_address` durante el movimiento. El mensaje termina con "stay paused on the old address". Reanúdalos allí o muévelos a otra dirección |
+| `ADDRESS_TAKEN` | `409` | Pausados en la dirección **anterior**: apareció otro paquete en `new_address` durante el movimiento. El mensaje termina con "stay paused on the old address; resume them there". Reanúdalos allí o muévelos a otra dirección |
 | `MOVED_PAUSED` | estado de la causa | Pausados en la dirección **nueva**: el movimiento tuvo éxito, pero no se pudo iniciar la entrega allí. [Reanuda](/es/api-reference/transfer-packages/resume) con `new_address` |
 
 `ADDRESS_BUSY` y `MOVE_AFTER_PAUSE` también pueden llegar en este paso, cuando otra operación sobre la dirección se interpuso. Los paquetes quedan entonces pausados en la dirección anterior; repite el movimiento para llevarlos: llegarán pausados.

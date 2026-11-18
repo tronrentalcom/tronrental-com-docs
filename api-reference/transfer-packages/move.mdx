@@ -133,7 +133,7 @@ These come after delivery to the old address was stopped. The message says where
 
 | Code | Status | Where the packages are |
 |------|--------|------|
-| `ADDRESS_TAKEN` | `409` | Paused on the **old** address: another package appeared on `new_address` during the move. The message ends with "stay paused on the old address". Resume them there, or move them to another address |
+| `ADDRESS_TAKEN` | `409` | Paused on the **old** address: another package appeared on `new_address` during the move. The message ends with "stay paused on the old address; resume them there". Resume them there, or move them to another address |
 | `MOVED_PAUSED` | status of the cause | Paused on the **new** address: the move succeeded, but delivery there could not be started. [Resume](/api-reference/transfer-packages/resume) with `new_address` |
 
 `ADDRESS_BUSY` and `MOVE_AFTER_PAUSE` can also come at this step, when another operation on the address got in between. The packages are then paused on the old address; repeat the move to carry them over — they arrive paused.
