@@ -1,0 +1,43 @@
+---
+title: "智能体 OAuth"
+description: "AI 智能体如何通过「使用 TronRental 登录」连接 TronRental：权限、每日消费上限、断开连接"
+---
+
+## 工作原理
+
+1. 把 TronRental 服务器添加到你的智能体——见 [MCP 服务器](/zh/resources/mcp-server)。
+2. 智能体打开 TronRental 登录页。登录（或注册）后会看到授权页面：应用名称、它返回的网站以及它请求的权限。
+3. 选择账户、权限和每日上限，然后批准。
+4. 智能体只获得此连接的令牌，永远看不到你的密码或 API 密钥。
+
+## 权限
+
+| 权限 | 智能体可以做什么 |
+|---|---|
+| `view` | 余额、历史、订单、地址检查 |
+| `deposit_view` | 充值地址和充值记录 |
+| `buy_energy` | 购买能量、激活地址、发票 |
+| `buy_bandwidth` | 购买带宽 |
+| `smart_mode` | Smart Mode |
+| `transfer_packages` | 转账套餐 |
+| `energy_resale` | Energy Resale |
+| `recurring` | 开启自动执行的扣款（自动充能、自动带宽、Smart Mode、Energy Resale、广播器）。默认关闭 |
+
+在账户累计充值达到 100 TRX 之前，连接只获得 `view` 和 `deposit_view`；充值后重新连接即可允许购买。
+
+**已连接的应用永远无法提现。** 提现仍只限于具有 `withdraw` 权限、开启 2FA 并设置 IP 白名单的 API 密钥。
+
+## 每日消费上限
+
+每个连接都有 24 小时消费上限——除非你在授权页面设置其他数字，否则为 100 TRX。账户所有者可以选择「无上限」。自动执行的扣款（`recurring`）不计入上限：它们在控制台中列出，也可在那里关闭。
+
+## 已连接的应用
+
+控制台的 API 页面列出所有已连接的应用：谁连接的、权限、最近 7 天的请求。「断开」会一次性撤销该连接及其所有令牌——智能体的下一次调用将被拒绝。
+
+## 面向 MCP 客户端开发者
+
+- 发现: `https://mcp.tronrental.com/mcp` → `401` + `WWW-Authenticate` → `https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp` (RFC 9728); `https://mcp.tronrental.com/.well-known/oauth-authorization-server` (RFC 8414).
+- OAuth 2.1 + PKCE（仅 `S256`），公共客户端（`token_endpoint_auth_method: none`）。客户端注册：Dynamic Client Registration（RFC 7591）；受支持平台的 Client ID Metadata Document 也可使用。
+- Redirect URI：回环地址（`http://127.0.0.1:<任意端口>`、`http://localhost:<任意端口>`）以及受支持平台的回调地址。需要其他地址请联系支持。
+- 访问令牌 1 小时，刷新令牌 30 天并轮换；重复使用旧的刷新令牌会撤销该连接。

@@ -9,7 +9,33 @@ description: "Usa TronRental a través de agentes de IA con Model Context Protoc
 
 TronRental proporciona un servidor MCP oficial que da a los agentes de IA acceso completo a la API de compra de energía — desde consultar precios hasta completar compras.
 
-## Inicio rápido
+## Servidor remoto (iniciar sesión con TronRental)
+
+La forma principal de conectarse. El agente trabaja con `https://mcp.tronrental.com/mcp`; inicias sesión con TronRental y eliges qué puede hacer y cuánto puede gastar al día. No hay que copiar ninguna clave API. Detalles: [OAuth para agentes](/es/resources/oauth-for-agents).
+
+**Claude (web / desktop):** [Añadir a Claude](https://claude.ai/new?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp#settings/customize-connectors) — o Settings → Connectors → Add custom connector con la URL de arriba. Después Connect e inicia sesión.
+
+**ChatGPT (web):** Plugins → Add → Add Custom MCP Server → pega la URL → deja Authentication en OAuth → crea → inicia sesión con TronRental. Si no aparece, activa el modo desarrollador en Ajustes.
+
+```bash Claude Code
+claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
+# then: /mcp → tronrental → Authenticate
+```
+
+```bash Codex
+codex mcp add tronrental --url https://mcp.tronrental.com/mcp
+# if the browser does not open: codex mcp login tronrental
+```
+
+```json Cursor (~/.cursor/mcp.json)
+{ "mcpServers": { "tronrental": { "url": "https://mcp.tronrental.com/mcp" } } }
+```
+
+El servidor muestra solo las herramientas que permite tu conexión. Antes de comprar, el agente consulta el precio y lo pasa como `max_price_trx`, y envía un `idempotency_key` para que un reintento nunca cobre dos veces.
+
+Guía para agentes: [tronrental.com/skill.md](https://tronrental.com/skill.md).
+
+## Paquete local (clave API)
 
 Añade a tu agente de IA:
 

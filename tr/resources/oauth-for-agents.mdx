@@ -1,0 +1,43 @@
+---
+title: "Ajanlar için OAuth"
+description: "Bir yapay zekâ ajanı TronRental'a «TronRental ile giriş» ile nasıl bağlanır: izinler, günlük harcama limiti, bağlantıyı kesme"
+---
+
+## Nasıl çalışır
+
+1. TronRental sunucusunu ajanınıza ekleyin — bkz. [MCP Sunucusu](/tr/resources/mcp-server).
+2. Ajan TronRental giriş sayfasını açar. Giriş yapın (veya kaydolun); onay ekranında uygulamanın adı, döneceği site ve istedikleri görünür.
+3. Hesabı, izinleri ve günlük limiti seçip onaylayın.
+4. Ajan yalnızca bu bağlantı için bir belirteç alır. Şifrenizi ve API anahtarınızı asla görmez.
+
+## İzinler
+
+| İzin | Ajan ne yapabilir |
+|---|---|
+| `view` | Bakiye, geçmiş, siparişler, adres kontrolleri |
+| `deposit_view` | Yatırma adresi ve yatırmalar |
+| `buy_energy` | Enerji satın alma, adres aktivasyonu, faturalar |
+| `buy_bandwidth` | Bant genişliği satın alma |
+| `smart_mode` | Smart Mode |
+| `transfer_packages` | Transfer paketleri |
+| `energy_resale` | Energy Resale |
+| `recurring` | Kendi kendine çalışan harcamaları açmak (otomatik dolum, otomatik bant genişliği, Smart Mode, Energy Resale, broadcaster). Varsayılan olarak kapalı |
+
+Hesabın yüklemeleri toplam 100 TRX'e ulaşana kadar bağlantı yalnızca `view` ve `deposit_view` alır; yükledikten sonra satın almaya izin vermek için yeniden bağlanın.
+
+**Para çekme, bağlı bir uygulamaya asla açık değildir.** `withdraw` izni, 2FA ve IP beyaz listesi olan API anahtarlarında kalır.
+
+## Günlük harcama limiti
+
+Her bağlantının 24 saatlik bir harcama limiti vardır: onay ekranında başka bir sayı belirlemezseniz 100 TRX. Hesap sahibi «limitsiz» seçebilir. Kendi kendine çalışan harcamalar (`recurring`) limitin dışındadır: panelde listelenir ve oradan kapatılır.
+
+## Bağlı uygulamalar
+
+Paneldeki API sayfası tüm bağlı uygulamaları listeler: kimin bağladığı, izinler, son 7 günün istekleri. «Bağlantıyı kes» bağlantıyı ve tüm belirteçlerini tek seferde iptal eder — ajanın sonraki çağrısı reddedilir.
+
+## MCP istemcisi geliştiricileri için
+
+- Keşif: `https://mcp.tronrental.com/mcp` → `401` + `WWW-Authenticate` → `https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp` (RFC 9728); `https://mcp.tronrental.com/.well-known/oauth-authorization-server` (RFC 8414).
+- PKCE ile OAuth 2.1 (yalnızca `S256`), açık istemciler (`token_endpoint_auth_method: none`). İstemci kaydı: Dynamic Client Registration (RFC 7591); Client ID Metadata Document desteklenen platformlardan kabul edilir.
+- Redirect URI: loopback (`http://127.0.0.1:<herhangi bir port>`, `http://localhost:<herhangi bir port>`) ve desteklenen platformların dönüş adresleri. Başka biri mi gerekiyor? Destekle iletişime geçin.
+- Erişim belirteci 1 saat, yenileme belirteci rotasyonla 30 gün; eski bir yenileme belirtecini tekrar kullanmak bağlantıyı iptal eder.

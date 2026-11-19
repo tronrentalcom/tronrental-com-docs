@@ -9,7 +9,33 @@ description: "Model Context Protocol (MCP) ile AI ajanları aracılığıyla Tro
 
 TronRental, AI ajanlarına enerji satın alma API'sine tam erişim sağlayan resmi bir MCP sunucusu sunar — fiyat kontrolünden satın alma işleminin tamamlanmasına kadar.
 
-## Hızlı Başlangıç
+## Uzak sunucu (TronRental ile giriş)
+
+Bağlanmanın ana yolu. Ajan `https://mcp.tronrental.com/mcp` ile çalışır; TronRental ile giriş yapar, ajanın neler yapabileceğini ve günde ne kadar harcayabileceğini seçersiniz. API anahtarı kopyalanmaz. Ayrıntılar: [Ajanlar için OAuth](/tr/resources/oauth-for-agents).
+
+**Claude (web / desktop):** [Claude'a ekle](https://claude.ai/new?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp#settings/customize-connectors) — veya yukarıdaki adresle Settings → Connectors → Add custom connector. Ardından Connect ve giriş.
+
+**ChatGPT (web):** Plugins → Add → Add Custom MCP Server → adresi yapıştırın → Authentication'ı OAuth'ta bırakın → oluşturun → TronRental ile giriş yapın. Öğe yoksa Ayarlar'dan geliştirici modunu açın.
+
+```bash Claude Code
+claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
+# then: /mcp → tronrental → Authenticate
+```
+
+```bash Codex
+codex mcp add tronrental --url https://mcp.tronrental.com/mcp
+# if the browser does not open: codex mcp login tronrental
+```
+
+```json Cursor (~/.cursor/mcp.json)
+{ "mcpServers": { "tronrental": { "url": "https://mcp.tronrental.com/mcp" } } }
+```
+
+Sunucu yalnızca bağlantınızın izin verdiği araçları listeler. Satın almadan önce ajan fiyatı sorar ve `max_price_trx` olarak gönderir; tekrar denemenin asla iki kez ücret almaması için `idempotency_key` de ekler.
+
+Ajanlar için kurulum rehberi: [tronrental.com/skill.md](https://tronrental.com/skill.md).
+
+## Yerel paket (API anahtarı)
 
 AI ajanınıza ekleyin:
 

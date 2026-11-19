@@ -1,0 +1,43 @@
+---
+title: "OAuth para agentes"
+description: "Como um agente de IA se conecta à TronRental com «Entrar com a TronRental»: permissões, limite diário de gastos, desconexão"
+---
+
+## Como funciona
+
+1. Adicione o servidor da TronRental ao seu agente — veja [Servidor MCP](/pt/resources/mcp-server).
+2. O agente abre a página de login da TronRental. Entre (ou cadastre-se) e veja a tela de consentimento: o nome do app, o site para onde ele volta e o que ele pede.
+3. Escolha a conta, as permissões e o limite diário, e aprove.
+4. O agente recebe um token só para esta conexão. Ele nunca vê sua senha nem uma chave de API.
+
+## Permissões
+
+| Permissão | O que o agente pode fazer |
+|---|---|
+| `view` | Saldo, histórico, pedidos, verificação de endereços |
+| `deposit_view` | Endereço de depósito e depósitos |
+| `buy_energy` | Comprar energia, ativar endereços, faturas |
+| `buy_bandwidth` | Comprar largura de banda |
+| `smart_mode` | Smart Mode |
+| `transfer_packages` | Pacotes de transferências |
+| `energy_resale` | Energy Resale |
+| `recurring` | Ativar gastos que rodam sozinhos (recarga automática, largura de banda automática, Smart Mode, Energy Resale, broadcaster). Desativado por padrão |
+
+Até que as recargas da conta somem 100 TRX, a conexão recebe apenas `view` e `deposit_view`; depois de recarregar, conecte de novo para permitir compras.
+
+**Saques nunca estão disponíveis para um app conectado.** Eles ficam com as chaves de API que têm a permissão `withdraw`, 2FA e lista de IPs permitidos.
+
+## Limite diário de gastos
+
+Cada conexão tem um limite do que gasta em 24 horas: 100 TRX, a menos que você defina outro valor na tela de consentimento. O dono da conta pode escolher «sem limite». Gastos que rodam sozinhos (`recurring`) ficam fora do limite: aparecem no painel e são desativados lá.
+
+## Apps conectados
+
+A página de API do painel lista todos os apps conectados: quem conectou, permissões, requisições dos últimos 7 dias. «Desconectar» revoga a conexão e todos os seus tokens de uma vez — a próxima chamada do agente é recusada.
+
+## Para desenvolvedores de clientes MCP
+
+- Descoberta: `https://mcp.tronrental.com/mcp` → `401` + `WWW-Authenticate` → `https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp` (RFC 9728); `https://mcp.tronrental.com/.well-known/oauth-authorization-server` (RFC 8414).
+- OAuth 2.1 com PKCE (apenas `S256`), clientes públicos (`token_endpoint_auth_method: none`). Registro de clientes: Dynamic Client Registration (RFC 7591); Client ID Metadata Documents são aceitos de plataformas compatíveis.
+- Redirect URIs: loopback (`http://127.0.0.1:<qualquer porta>`, `http://localhost:<qualquer porta>`) e os retornos de plataformas compatíveis. Precisa de outro? Fale com o suporte.
+- Token de acesso: 1 hora; refresh: 30 dias com rotação; reutilizar um refresh antigo revoga a conexão.

@@ -1,0 +1,43 @@
+---
+title: "OAuth for agents"
+description: "How an AI agent connects to TronRental with «Sign in with TronRental»: permissions, the daily spending cap, revoking"
+---
+
+## How it works
+
+1. You add the TronRental server (`https://mcp.tronrental.com/mcp`) to your agent — see [MCP Server](/resources/mcp-server).
+2. The agent opens TronRental's sign-in page. You sign in (or sign up) and see the consent screen: the app's name, the site it returns to, and what it asks for.
+3. You pick the account, the permissions and the daily spending cap, and approve.
+4. The agent gets a token for this connection only. It never sees your password or an API key.
+
+## Permissions
+
+| Permission | What the agent can do |
+|---|---|
+| `view` | Balance, history, orders, address checks |
+| `deposit_view` | Deposit address and deposits |
+| `buy_energy` | Buy energy, activate addresses, invoices |
+| `buy_bandwidth` | Buy bandwidth |
+| `smart_mode` | Smart Mode |
+| `transfer_packages` | Transfer packages |
+| `energy_resale` | Energy Resale |
+| `recurring` | Turn on spending that runs by itself (auto-refill, auto bandwidth, Smart Mode, Energy Resale, broadcaster). Off by default |
+
+Until the account's top-ups total 100 TRX, a connection gets `view` and `deposit_view` only; connect again after topping up to allow purchases.
+
+**Withdrawals are never available to a connected app.** They stay with API keys that have the `withdraw` permission, 2FA and an IP whitelist.
+
+## Daily spending cap
+
+Every connection has a cap on what it spends in 24 hours — 100 TRX unless you set another number on the consent screen. The account owner may choose «no cap». Spending that runs by itself (`recurring`) is outside the cap: it is listed in the dashboard and can be turned off there.
+
+## Connected apps
+
+The dashboard's API page lists every connected app: who connected it, its permissions, requests over the last 7 days. «Disconnect» revokes the connection and all its tokens at once — the agent's next call is refused.
+
+## For developers of MCP clients
+
+- Discovery: `https://mcp.tronrental.com/mcp` answers `401` with `WWW-Authenticate` pointing to `https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp` (RFC 9728); the authorization server metadata is at `https://mcp.tronrental.com/.well-known/oauth-authorization-server` (RFC 8414).
+- OAuth 2.1 with PKCE (`S256` only), public clients (`token_endpoint_auth_method: none`). Client registration — Dynamic Client Registration (RFC 7591); Client ID Metadata Documents are accepted from supported platforms.
+- Redirect URIs: loopback (`http://127.0.0.1:<any port>`, `http://localhost:<any port>`) and the callbacks of supported platforms. Need another one — write to support.
+- Access token — 1 hour, refresh token — 30 days with rotation; reusing an old refresh token revokes the connection.
