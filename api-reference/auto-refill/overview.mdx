@@ -97,14 +97,14 @@ If your Telegram account is linked, you get a message on the first refill of a r
 
 Changes apply from the next check. While a refill for the rule is being bought, `PATCH` and `DELETE` return `409 AUTOREFILL_IN_PROGRESS` — retry in a minute. Deleting a rule does not take back energy or bandwidth already bought; those rentals run until the end of their term.
 
-### Compared with Smart Mode and auto-renew rentals
+### Compared with Smart Mode
 
-| | Auto Refill | [Smart Mode](/api-reference/smart-mode/overview) | [Auto-renew rental](/api-reference/bandwidth-rentals/create-rental) |
-|---|---|---|---|
-| Resource | Energy or bandwidth | Energy, plus optional bandwidth | Bandwidth |
-| When it delivers | When the level drops below your threshold | On every outgoing USDT transfer | Delegated once and kept while the rental runs |
-| What you pay | Each refill, as a regular order | A daily subscription plus each USDT transfer | Once a day |
-| Covers | Any spending — USDT, TRX, contract calls | USDT transfers | A steady bandwidth need |
+| | Auto Refill | [Smart Mode](/api-reference/smart-mode/overview) |
+|---|---|---|
+| Resource | Energy or bandwidth | Energy, plus optional bandwidth |
+| When it delivers | When the level drops below your threshold | On every outgoing USDT transfer |
+| What you pay | Each refill, as a regular order | A daily subscription plus each USDT transfer |
+| Covers | Any spending — USDT, TRX, contract calls | USDT transfers |
 
 ### Endpoints
 

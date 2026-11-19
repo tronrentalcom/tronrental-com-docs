@@ -97,14 +97,14 @@ Si tu cuenta de Telegram está vinculada, recibes un mensaje en la primera recar
 
 Los cambios se aplican desde la siguiente comprobación. Mientras se compra una recarga para la regla, `PATCH` y `DELETE` devuelven `409 AUTOREFILL_IN_PROGRESS` — reintenta en un minuto. Eliminar una regla no recupera la energía ni el ancho de banda ya comprados; esos alquileres siguen hasta el final de su plazo.
 
-### Comparación con Smart Mode y los alquileres con renovación automática
+### Comparación con Smart Mode
 
-| | Recarga automática | [Smart Mode](/es/api-reference/smart-mode/overview) | [Alquiler con renovación automática](/es/api-reference/bandwidth-rentals/create-rental) |
-|---|---|---|---|
-| Recurso | Energía o ancho de banda | Energía, más ancho de banda opcional | Ancho de banda |
-| Cuándo entrega | Cuando el nivel cae por debajo de tu umbral | En cada transferencia USDT saliente | Se delega una vez y se mantiene mientras dura el alquiler |
-| Qué pagas | Cada recarga, como una orden normal | Una suscripción diaria más cada transferencia USDT | Una vez al día |
-| Cubre | Cualquier gasto — USDT, TRX, llamadas a contratos | Transferencias USDT | Una necesidad constante de ancho de banda |
+| | Recarga automática | [Smart Mode](/es/api-reference/smart-mode/overview) |
+|---|---|---|
+| Recurso | Energía o ancho de banda | Energía, más ancho de banda opcional |
+| Cuándo entrega | Cuando el nivel cae por debajo de tu umbral | En cada transferencia USDT saliente |
+| Qué pagas | Cada recarga, como una orden normal | Una suscripción diaria más cada transferencia USDT |
+| Cubre | Cualquier gasto — USDT, TRX, llamadas a contratos | Transferencias USDT |
 
 ### Endpoints
 

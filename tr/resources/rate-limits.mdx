@@ -52,9 +52,9 @@ boyunca yarıya iner; böyle üç dakika daha olursa hesap otuz dakika tamamen e
 Dikkat: `POST /api/v1/invoices` hesaba göre değil, **IP adresine** göre sayılır. Birden fazla
 istemciniz aynı çıkış IP'sinden istek gönderiyorsa, dakikada 10'luk tek bir bütçeyi paylaşırlar.
 
-Satın alma uç noktaları — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`,
-`POST /api/v1/bandwidth/buy` ve `POST /api/v1/bandwidth/rentals` — **IP adresi** başına sayılan, dakikada
-1000 isteklik daha eski bir bütçe taşır (iki bandwidth uç noktası tek bir bütçeyi paylaşır). Tek bir
+Satın alma uç noktaları — `POST /api/v1/energy/buy`, `POST /api/v1/energy/activate`
+ve `POST /api/v1/bandwidth/buy` — **IP adresi** başına sayılan, dakikada
+1000 isteklik daha eski bir bütçe taşır. Tek bir
 hesap için bu asla belirleyici sınır olmaz, ancak aynı çıkış IP'sinin ardındaki istemciler onu birbiriyle
 paylaşır.
 
