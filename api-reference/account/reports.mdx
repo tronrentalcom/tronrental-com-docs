@@ -98,8 +98,8 @@ beneath it:
 | Limit | Value |
 |-------|-------|
 | Period per file | 1 year |
-| Rows per PDF | 50 000 |
-| Rows per XLSX | no limit |
+| Rows per PDF | 50 000 per section |
+| Rows per XLSX | 250 000 per file, all sections together |
 | Requests | 5 per minute, per account |
 
 ### Errors
@@ -108,16 +108,17 @@ beneath it:
 |--------|------|------|
 | `403` | `FORBIDDEN` | `deposits` without the `deposit_view` scope |
 | `404` | `NOT_FOUND` | unknown `report` |
-| `413` | `REPORT_TOO_LARGE` | more rows than a PDF can carry — request `format=xlsx` or a shorter period |
+| `413` | `REPORT_TOO_LARGE` | PDF: more rows than a PDF can carry — request `format=xlsx` or a shorter period. XLSX: more rows than one file can carry — request a shorter period |
 | `422` | `INVALID_REPORT_PERIOD` | period longer than a year, `from` after `to`, unknown `tz`, or a `format` other than `xlsx`/`pdf` |
 | `429` | `RATE_LIMIT_EXCEEDED` | more than 5 reports a minute |
+| `503` | `REPORT_BUSY` | another report is being generated — retry in about 20 seconds |
 
 ```json
 {
   "detail": {
     "error": {
       "code": "REPORT_TOO_LARGE",
-      "message": "This period holds more than the 50 000 rows a PDF can carry — choose XLSX, which has no row limit, or narrow the period."
+      "message": "This period holds more than the 50 000 rows a PDF can carry — choose XLSX, which has a far higher row limit, or narrow the period."
     }
   }
 }
