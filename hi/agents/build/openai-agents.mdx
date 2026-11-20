@@ -1,0 +1,141 @@
+---
+title: "OpenAI Agents SDK"
+description: "OpenAI एजेंट को TronRental टूल्स दें — hosted MCP टूल के रूप में या लोकल MCP क्लाइंट के ज़रिए"
+---
+
+<Info>
+  20 नवंबर 2026 को `openai-agents` **0.25.0** (Python) और `@openai/agents` **0.22.0** (TypeScript) पर जाँचा गया।
+</Info>
+
+जुड़ने के दो तरीके हैं:
+
+| | Hosted MCP टूल | लोकल MCP क्लाइंट |
+|---|---|---|
+| TronRental को कौन कॉल करता है | OpenAI के सर्वर | आपकी प्रोसेस |
+| कुंजी कहाँ जाती है | हर अनुरोध के साथ OpenAI को | आपके सर्वर पर रहती है |
+| IP व्हाइटलिस्ट वाली कुंजी | अस्वीकार (OpenAI के IP) | काम करती है |
+
+## इंस्टॉल करें
+
+```bash
+pip install "openai-agents>=0.25"
+```
+
+## Hosted MCP टूल
+
+मॉडल OpenAI की ओर से TronRental को कॉल करता है। कुछ भी बदलने वाले किसी भी टूल से पहले स्वीकृति माँगें: सिर्फ़ पढ़ने वाले टूल अपने-आप चलते हैं, बाकी आपके कॉलबैक से होकर जाते हैं।
+
+```python hosted.py
+import asyncio
+import os
+
+from agents import Agent, HostedMCPTool, Runner
+from agents.tool import MCPToolApprovalFunctionResult, MCPToolApprovalRequest
+
+
+def approve(request: MCPToolApprovalRequest) -> MCPToolApprovalFunctionResult:
+    answer = input(f"Allow {request.data.name}({request.data.arguments})? [y/N] ")
+    return {"approve": answer.strip().lower() == "y"}
+
+
+tronrental = HostedMCPTool(
+    tool_config={
+        "type": "mcp",
+        "server_label": "tronrental",
+        "server_url": "https://mcp.tronrental.com/mcp",
+        "authorization": os.environ["TRONRENTAL_API_KEY"],
+        "require_approval": {"never": {"read_only": True}},
+    },
+    on_approval_request=approve,
+)
+
+agent = Agent(
+    name="Energy assistant",
+    instructions="Quote before buying and pass the quote's total_trx as max_price_trx.",
+    tools=[tronrental],
+)
+
+
+async def main() -> None:
+    result = await Runner.run(agent, "How much is 65,000 energy for 1 hour on TronRental?")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+`authorization` TronRental को `Authorization: Bearer <value>` के रूप में भेजा जाता है: API कुंजी, या उपयोगकर्ता का OAuth एक्सेस टोकन। मॉडल जो देखता है उसे सीमित करने के लिए `"allowed_tools": ["quote_energy", "buy_energy", "get_order"]` जोड़ें।
+
+## लोकल MCP क्लाइंट
+
+आपकी प्रोसेस TronRental से जुड़ती है और टूल्स एजेंट को देती है; कुंजी कभी आपके सर्वर से बाहर नहीं जाती।
+
+```python local.py
+import asyncio
+import os
+
+from agents import Agent, Runner
+from agents.mcp import MCPServerStreamableHttp
+
+
+async def main() -> None:
+    async with MCPServerStreamableHttp(
+        name="tronrental",
+        params={
+            "url": "https://mcp.tronrental.com/mcp",
+            "headers": {"Authorization": f"Bearer {os.environ['TRONRENTAL_API_KEY']}"},
+            "timeout": 30,
+        },
+        cache_tools_list=True,
+    ) as tronrental:
+        agent = Agent(
+            name="Energy assistant",
+            instructions="Quote before buying and pass the quote's total_trx as max_price_trx.",
+            mcp_servers=[tronrental],
+        )
+        result = await Runner.run(agent, "What is my TronRental balance?")
+        print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+## TypeScript
+
+```ts
+import { Agent, run, hostedMcpTool } from "@openai/agents";
+
+const agent = new Agent({
+  name: "Energy assistant",
+  instructions: "Quote before buying and pass the quote's total_trx as max_price_trx.",
+  tools: [
+    hostedMcpTool({
+      serverLabel: "tronrental",
+      serverUrl: "https://mcp.tronrental.com/mcp",
+      authorization: process.env.TRONRENTAL_API_KEY,
+      requireApproval: { never: { readOnly: true } },
+    }),
+  ],
+});
+
+const result = await run(agent, "How much is 65,000 energy for 1 hour on TronRental?");
+console.log(result.finalOutput);
+```
+
+अगर `requireApproval` `"never"` के अलावा कुछ है, तो रन उन टूल्स पर रुकता है जिन्हें स्वीकृति चाहिए और उन्हें `result.interruptions` में लौटाता है; उन्हें `result.state.approve(...)` से स्वीकृत करें और `result.state` के साथ फिर से चलाएँ।
+
+TypeScript में लोकल क्लाइंट के लिए `@openai/agents` से `new MCPServerStreamableHttp({ url, requestInit: { headers } })` इस्तेमाल करें और उसे `mcpServers` में दें।
+
+## SDK के बिना Responses API
+
+Hosted टूल Responses API का `mcp` टूल है:
+
+```json
+{
+  "type": "mcp",
+  "server_label": "tronrental",
+  "server_url": "https://mcp.tronrental.com/mcp",
+  "authorization": "<API key or OAuth access token>",
+  "require_approval": { "never": { "read_only": true } }
+}
+```

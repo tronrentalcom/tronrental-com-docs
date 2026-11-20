@@ -1,0 +1,49 @@
+---
+title: "İzinler"
+description: "Her iznin bir ajana neye olanak verdiği: bağlı uygulama (OAuth) ve API anahtarı için"
+---
+
+Bir bağlantı, onay ekranında işaretlediğiniz izinleri alır. Bir API anahtarı, panelde oluştururken belirlediğiniz kapsamları alır. MCP sunucusu yalnızca bu izinlerin açtığı araçları listeler (`tools/list`) ve her çağrı sunucuda yeniden kontrol edilir.
+
+| İzin | Neyi açar | Bağlı uygulama (OAuth) | API anahtarı |
+|---|---|---|---|
+| `view` | Bakiye, geçmiş, raporlar, siparişler, teklifler, adres kontrolleri, broadcaster kotası ve olayları, staking pozisyonları, Node API planı ve kullanımı | ✓ | ✓ |
+| `deposit_view` | Yatırma adresi, yatırmalar, diğer coinlerle yatırmalar | ✓ | ✓ |
+| `buy_energy` | Enerji satın alma, adres aktivasyonu, enerji otomatik dolumu, faturalar | ✓ | ✓ |
+| `buy_bandwidth` | Bant genişliği satın alma ve geri alma, bant genişliği otomatik dolumu, otomatik bant genişliği | ✓ | ✓ |
+| `smart_mode` | Smart Mode | ✓ | ✓ |
+| `transfer_packages` | Transfer paketleri | ✓ | ✓ |
+| `energy_resale` | Energy Resale | ✓ | ✓ |
+| `broadcaster` | Broadcast URL'leri oluşturma, değiştirme ve silme | ✓ | ✓ |
+| `staking` | Stake etme, stake'i geri çekme, ödülleri talep etme, ödüllerin otomatik talebi | ✓ yalnızca hesap sahibi | ✓ yalnızca hesap sahibi |
+| `node_api_plan` | Node API planı satın alma, deneme başlatma, otomatik yenileme | ✓ yalnızca hesap sahibi | ✓ yalnızca hesap sahibi |
+| `recurring` | Kendi kendine çalışan harcamaları açmak — aşağıya bakın | ✓ varsayılan olarak kapalı | gerekmez |
+| `withdraw` | Para çekme | **asla** | ✓ 2FA ve IP izin listesiyle |
+
+## Kendi kendine çalışan harcamalar (`recurring`)
+
+Bazı araçlar çağrı anında harcama yapmaz, ancak daha sonra devam eden harcamaları açar: otomatik dolum, otomatik bant genişliği, Smart Mode, Energy Resale, bir broadcast URL'si, Node API otomatik yenilemesi. Bağlı bir uygulama için bunları oluşturmak veya değiştirmek, ürünün izninin yanında `recurring` de gerektirir. Kapatmak ve silmek hiçbir zaman gerektirmez. Smart Mode'u duraklatmak gerektirir, çünkü aynı araç onu yeniden başlatır da.
+
+<Warning>
+  Kendi kendine çalışan harcamalar **günlük limitin dışındadır** ve **uygulamanın bağlantısını kestikten sonra da çalışmaya devam eder**. Onları paneldeki ilgili sayfadan kapatın.
+</Warning>
+
+## İlk yüklemeden önce
+
+Hesabın yüklemeleri toplam 100 TRX'e ulaşana kadar onay ekranı yalnızca `view` ve `deposit_view` verir ve ne kadar yükleme kaldığını gösterir. Yüklemeden sonra uygulamayı yeniden bağlayın ve daha fazla izin işaretleyin — aynı bağlantı güncellenir.
+
+## Ekip hesapları
+
+Onay ekranında uygulamanın hangi hesapta çalışacağını seçersiniz: kendi hesabınız veya API anahtarlarını yönettiğiniz bir ekip hesabı. Bir ekip üyesi yalnızca rolünün sahip olduğu izinleri verebilir, `staking` veya `node_api_plan` veremez ve günlük limiti kaldıramaz (`OAUTH_UNCAPPED_OWNER_ONLY`).
+
+## API anahtarı mı, bağlı uygulama mı
+
+| | Bağlı uygulama (OAuth) | API anahtarı |
+|---|---|---|
+| Kime uygun | Bir ajanı veya uygulamanızı kullanan kişiler | Kendi sunucularınız ve betikleriniz |
+| Günlük harcama limiti | varsayılan 100 TRX | yok |
+| Satın almalarda `max_price_trx` | zorunlu | isteğe bağlı |
+| Para çekme | asla | `withdraw`, 2FA ve IP izin listesiyle |
+| Siparişin `source` alanı | `agent` | `api` |
+
+API anahtarları, hesabın yüklemeleri toplam 100 TRX'e ulaştıktan sonra verilir — bkz. [Kimlik Doğrulama](/tr/authentication).

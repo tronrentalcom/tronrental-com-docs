@@ -1,0 +1,72 @@
+---
+title: "Visão geral dos agentes"
+sidebarTitle: "Visão geral"
+description: "Conecte agentes de IA à TronRental via MCP: o que um agente pode fazer e como você controla os gastos dele"
+---
+
+A TronRental mantém um servidor remoto do [Model Context Protocol](https://modelcontextprotocol.io) (MCP) em:
+
+```
+https://mcp.tronrental.com/mcp
+```
+
+Qualquer cliente MCP — Claude, ChatGPT, Claude Code, Codex, Cursor ou o seu próprio código — se conecta a ele, entra com a TronRental e recebe ferramentas para a sua conta. Nada para instalar, nenhuma chave de API para copiar.
+
+## O que um agente pode fazer
+
+| Área | Exemplos |
+|---|---|
+| Energia e largura de banda | Cotar e comprar energia ou largura de banda para qualquer endereço TRON, ativar um endereço novo, recuperar um pedido de largura de banda |
+| Energy Broadcaster | Criar uma URL de broadcast para uma carteira, alterar as configurações, ver a cota e os eventos |
+| Assinaturas | Smart Mode, pacotes de transferências, recarga automática de energia e de largura de banda, largura de banda automática, Energy Resale |
+| Staking | Fazer stake de TRX do saldo, retirar o stake, resgatar recompensas |
+| Node API | Ver planos e uso, comprar um plano, iniciar um teste |
+| Faturas | Criar uma fatura, enviá-la por e-mail, acompanhar o status |
+| Conta | Saldo, histórico, pedidos, endereço de depósito, relatórios |
+
+A lista completa está na [referência de ferramentas](/pt/agents/reference/tools). Um agente vê apenas as ferramentas que a conexão dele permite.
+
+## Você mantém o controle
+
+<CardGroup cols={2}>
+  <Card title="Tela de consentimento" icon="hand">
+    Na primeira conexão de um agente, você entra em tronrental.com e vê o nome do app e o site para onde ele volta. Nada é compartilhado até você aprovar.
+  </Card>
+  <Card title="Permissões" icon="key">
+    Você marca o que o agente pode fazer: ler, comprar energia, usar o Smart Mode e assim por diante. Gastos que rodam sozinhos ficam em uma caixa separada, desmarcada por padrão. Veja [permissões](/pt/agents/reference/permissions).
+  </Card>
+  <Card title="Limite diário de gastos" icon="gauge">
+    Cada conexão pode gastar no máximo **100 TRX em 24 horas**, a menos que você defina outro valor. Altere quando quiser em **Aplicativos conectados** na [página de API](https://tronrental.com/dashboard/api) do painel.
+  </Card>
+  <Card title="Desconecte quando quiser" icon="plug-circle-xmark">
+    **Desconectar** em Aplicativos conectados revoga a conexão e todos os seus tokens de uma vez. A próxima chamada do agente é recusada.
+  </Card>
+</CardGroup>
+
+- **Recarga antes das compras.** Até que as recargas da conta somem 100 TRX, uma conexão só pode ler: saldo, histórico e endereço de depósito. Conecte de novo depois de recarregar para permitir compras.
+- **O preço que você aceitou.** Toda compra leva `max_price_trx` — o agente cota primeiro e envia o total cotado. Se o preço subir acima dele, a compra é recusada, sem cobrança.
+- **Sem cobrança dupla.** Compras e outras chamadas que criam algo aceitam uma chave de idempotência, então uma nova tentativa após uma resposta perdida devolve o primeiro resultado.
+- **Sem saques.** Um app conectado nunca pode sacar fundos. Saques ficam com as chaves de API que têm a permissão `withdraw`, 2FA e lista de IPs permitidos.
+
+Os pedidos feitos por um agente são marcados com `source: "agent"` no [pedido](/pt/api-reference/orders/get-order) e no [webhook `order.updated`](/pt/api-reference/webhooks/overview).
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Conectar um cliente" icon="plug" href="/pt/agents/connect">
+    Claude, ChatGPT, Claude Code, Codex e Cursor — passo a passo.
+  </Card>
+  <Card title="Desenvolver com MCP" icon="code" href="/pt/agents/build/overview">
+    Use o servidor MCP da TronRental no seu próprio app ou agente, com exemplos funcionais.
+  </Card>
+  <Card title="Referência de ferramentas" icon="list" href="/pt/agents/reference/tools">
+    Cada ferramenta, a permissão dela e o que ela faz com dinheiro.
+  </Card>
+  <Card title="Gastos e erros" icon="triangle-exclamation" href="/pt/agents/reference/spending-and-errors">
+    `max_price_trx`, chaves de idempotência, o limite diário e os códigos de erro.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Os agentes podem ler um guia curto de configuração em [tronrental.com/skill.md](https://tronrental.com/skill.md): indique-o ao seu agente e peça para ele se conectar.
+</Tip>

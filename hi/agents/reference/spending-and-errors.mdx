@@ -1,0 +1,96 @@
+---
+title: "खर्च और त्रुटियां"
+description: "max_price_trx, आइडेम्पोटेंसी कुंजियाँ, दैनिक खर्च सीमा और वे त्रुटि कोड जो कनेक्ट किए गए ऐप को मिलते हैं"
+---
+
+## पहले कोट, फिर `max_price_trx` के साथ ख़रीद
+
+कनेक्ट किए गए ऐप को `buy_energy` और `buy_bandwidth` में `max_price_trx` भेजना ज़रूरी है। इसके बिना कॉल `MAX_PRICE_REQUIRED` के साथ विफल होती है — दैनिक सीमा को जानना होता है कि एक कॉल अधिकतम कितने की हो सकती है।
+
+1. मात्रा और अवधि के साथ `quote_energy` (या `quote_bandwidth`) कॉल करें।
+2. उपयोगकर्ता को कोट का `total_trx` दिखाएँ।
+3. उसी मात्रा और अवधि के साथ `buy_energy` कॉल करें, और `max_price_trx` = कोट का `total_trx`।
+
+अगर कीमत `max_price_trx` से ऊपर जाती है, तो ख़रीद `PRICE_CHANGED` के साथ अस्वीकार होती है और कोई पैसा नहीं कटता। फिर से कोट लें और उपयोगकर्ता से पूछें।
+
+API कुंजी के लिए `max_price_trx` वैकल्पिक है, लेकिन इसी कारण से हम इसकी सलाह देते हैं।
+
+## आइडेम्पोटेंसी कुंजियाँ
+
+कुछ बनाने वाले टूल्स `idempotency_key` लेते हैं — यह उनके रूट का [`Idempotency-Key`](/hi/api-reference/energy/buy-energy) हेडर है। हर नई कार्रवाई के लिए नया UUID बनाएँ और टाइमआउट या खोए जवाब के बाद **उसी कार्रवाई को दोबारा आज़माते समय उसे ही इस्तेमाल करें**: सर्वर दोबारा पैसे काटने के बजाय पहला परिणाम लौटाता है। कुंजी 24 घंटे वैध रहती है और अधिकतम 64 अक्षरों की होती है।
+
+| टूल | रूट |
+|---|---|
+| `buy_energy` | `POST /energy/buy` |
+| `buy_bandwidth` | `POST /bandwidth/buy` |
+| `buy_package` | `POST /transfer-packages/buy` |
+| `activate_smart_mode` | `POST /smart-mode/activate` |
+| `create_auto_bw` | `POST /bandwidth/auto` |
+| `create_energy_autorefill` | `POST /energy/auto-refill` |
+| `create_bandwidth_autorefill` | `POST /bandwidth/auto-refill` |
+| `activate_resale` | `POST /sublease/activate` |
+| `generate_resale_address` | `POST /sublease/generate` |
+| `create_broadcast_slug` | `POST /broadcast/slugs` |
+| `stake` | `POST /account/stake` |
+| `withdraw` (सिर्फ़ API कुंजी) | `POST /account/withdrawal` |
+
+वही कुंजी अलग अनुरोध के साथ `IDEMPOTENCY_KEY_REUSED` से अस्वीकार होती है; जिस कुंजी का पहला अनुरोध अभी चल रहा है, वह `IDEMPOTENT_REQUEST_IN_PROGRESS` लौटाती है — रुकें और उसी कुंजी से दोबारा कोशिश करें।
+
+## दैनिक खर्च सीमा
+
+हर कनेक्शन किसी भी 24 घंटे में एक तय राशि खर्च कर सकता है — **100 TRX**, जब तक उपयोगकर्ता ने सहमति स्क्रीन पर या **कनेक्ट किए गए ऐप** में कोई और राशि न चुनी हो। सिर्फ़ खाते का मालिक सीमा हटा सकता है।
+
+- खर्च करने वाली कॉल से पहले सर्वर अधिकतम संभव लागत आरक्षित करता है: ख़रीद के लिए `max_price_trx` और नए पते का सक्रियण; Smart Mode, पैकेज, सक्रियण और Node API प्लान के लिए उनकी कीमत; स्टेक के लिए उसकी राशि।
+- कॉल के बाद आरक्षण असली राशि बन जाता है, या कुछ न कटने पर छोड़ दिया जाता है। अगर परिणाम अज्ञात है (टाइमआउट), तो आरक्षण 24 घंटे रहता है — संदेह में सीमा अस्वीकार करने की ओर झुकती है।
+- अपने-आप चलने वाला खर्च (`recurring`) सीमा से बाहर है।
+- डैशबोर्ड में **कनेक्ट किए गए ऐप** दिखाता है कि हर ऐप ने पिछले 24 घंटों में कितना खर्च किया।
+
+जो कॉल सीमा में नहीं समाती, वह `AGENT_SPEND_CAP` के साथ विफल होती है:
+
+```json
+{
+  "error": {
+    "code": "AGENT_SPEND_CAP",
+    "message": "This app may spend 5 TRX a day; 2.90065 TRX is left and this call may cost up to 3.3 TRX. A call whose answer was lost may have gone through: check the orders before retrying",
+    "status": 409,
+    "cap_trx": "5",
+    "remaining_trx": "2.90065",
+    "required_trx": "3.3"
+  }
+}
+```
+
+<Note>
+  खोई हुई ख़रीद को दोबारा आज़माने पर उसकी राशि फिर से आरक्षित होती है। सीमा के पास होने पर दोबारा कोशिश से पहले `list_orders` जाँचें: पहली कॉल शायद पूरी हो चुकी हो।
+</Note>
+
+## ऑर्डर का स्रोत
+
+कनेक्ट किए गए ऐप द्वारा दिए गए ऑर्डर में `"source": "agent"` होता है — `get_order`, `list_orders` और [`order.updated` webhook](/hi/api-reference/webhooks/overview) में। API कुंजी से दिए गए ऑर्डर में `"source": "api"` होता है।
+
+## त्रुटि कोड
+
+MCP पर त्रुटि `isError: true` वाले टूल परिणाम के रूप में आती है:
+
+```json
+{"error": {"code": "MAX_PRICE_REQUIRED", "message": "Pass max_price_trx: the quote's total_trx", "status": 422}}
+```
+
+REST पर वही कोड [मानक त्रुटि प्रारूप](/hi/errors) में आता है।
+
+| कोड | HTTP | अर्थ और क्या करें |
+|---|---|---|
+| `AGENT_SPEND_CAP` | `409` | कॉल कनेक्शन की दैनिक सीमा में नहीं समाती। `cap_trx`, `remaining_trx` और `required_trx` बताते हैं कितना कम है। उपयोगकर्ता से कनेक्ट किए गए ऐप में सीमा बढ़ाने को कहें, या इंतज़ार करें |
+| `MAX_PRICE_REQUIRED` | `422` | कनेक्ट किए गए ऐप ने `max_price_trx` के बिना ख़रीद की। पहले कोट लें और कोट का `total_trx` भेजें |
+| `AGENT_SPEND_UNBOUNDED` | `403` | यह कार्रवाई अभी कनेक्ट किए गए ऐप्स के लिए खुली नहीं है। डैशबोर्ड या API कुंजी इस्तेमाल करें |
+| `AGENT_ROUTE_CLOSED` | `403` | रूट [टूल्स कैटलॉग](/hi/agents/reference/tools) में नहीं है, इसलिए कनेक्ट किया गया ऐप इसे REST पर कॉल नहीं कर सकता |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | ख़रीद के लिए कुल 100 TRX के टॉप-अप चाहिए। `required_trx` और `missing_trx` बताते हैं कितना बाकी है। डिपॉज़िट पता दिखाएँ, फिर दोबारा कनेक्ट करें |
+| `OAUTH_UNCAPPED_OWNER_ONLY` | `403` | टीम सदस्य ने दैनिक सीमा हटाने की कोशिश की। यह सिर्फ़ खाते का मालिक कर सकता है |
+| `OAUTH_GRANT_LIMIT_REACHED` | `409` | खाते में पहले से कनेक्ट किए गए ऐप्स की अधिकतम संख्या (`limit`) है। पहले किसी एक को डिस्कनेक्ट करें |
+| `PRICE_CHANGED` | `409` | कीमत `max_price_trx` से ऊपर है। कोई पैसा नहीं कटा; फिर से कोट लें |
+| `VALIDATION_ERROR` | `422` | किसी आर्ग्युमेंट का प्रकार गलत है या वह मौजूद नहीं है। टूल का `inputSchema` जाँचें |
+| `INTERNAL_ERROR` | `5xx` | बिना कोड की सर्वर त्रुटि। ख़रीद के लिए उसी `idempotency_key` से दोबारा कोशिश करने से पहले `list_orders` जाँचें |
+
+बाकी सभी कोड REST API के हैं — देखें [त्रुटियां](/hi/errors)।
+
+समाप्त या रद्द टोकन को `/mcp` अनुरोध पर ही HTTP `401` और `WWW-Authenticate: Bearer ... error="invalid_token"` मिलता है; तब MCP क्लाइंट टोकन रिफ़्रेश करते हैं या उपयोगकर्ता से फिर से साइन इन करने को कहते हैं।

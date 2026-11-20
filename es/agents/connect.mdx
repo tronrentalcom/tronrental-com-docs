@@ -1,135 +1,106 @@
 ---
-title: "Servidor MCP"
-description: "Usa TronRental a través de agentes de IA con Model Context Protocol (MCP)"
+title: "Conectar un cliente"
+description: "Añade TronRental a Claude, ChatGPT, Claude Code, Codex o Cursor, inicia sesión y empieza"
 ---
 
-## ¿Qué es MCP?
+Todos los clientes de abajo se conectan al mismo servidor e inician sesión con TronRental, sin copiar ninguna clave API:
 
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io) es un estándar abierto que permite a los agentes de IA (Claude Code, Cursor, Windsurf y otros) interactuar con servicios externos a través de una interfaz unificada.
-
-TronRental proporciona un servidor MCP oficial que da a los agentes de IA acceso completo a la API de compra de energía — desde consultar precios hasta completar compras.
-
-## Servidor remoto (iniciar sesión con TronRental)
-
-La forma principal de conectarse. El agente trabaja con `https://mcp.tronrental.com/mcp`; inicias sesión con TronRental y eliges qué puede hacer y cuánto puede gastar al día. No hay que copiar ninguna clave API. Detalles: [OAuth para agentes](/es/resources/oauth-for-agents).
-
-**Claude (web / desktop):** [Añadir a Claude](https://claude.ai/new?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp#settings/customize-connectors) — o Settings → Connectors → Add custom connector con la URL de arriba. Después Connect e inicia sesión.
-
-**ChatGPT (web):** Plugins → Add → Add Custom MCP Server → pega la URL → deja Authentication en OAuth → crea → inicia sesión con TronRental. Si no aparece, activa el modo desarrollador en Ajustes.
-
-```bash Claude Code
-claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
-# then: /mcp → tronrental → Authenticate
+```
+https://mcp.tronrental.com/mcp
 ```
 
-```bash Codex
-codex mcp add tronrental --url https://mcp.tronrental.com/mcp
-# if the browser does not open: codex mcp login tronrental
-```
+En el primer uso, el cliente abre tronrental.com. Inicia sesión (o regístrate), elige la cuenta, marca los [permisos](/es/agents/reference/permissions), fija el límite diario de gasto y aprueba. El cliente recibe un token solo para esta conexión.
 
-```json Cursor (~/.cursor/mcp.json)
-{ "mcpServers": { "tronrental": { "url": "https://mcp.tronrental.com/mcp" } } }
-```
+<Tabs>
+  <Tab title="Claude">
+    Funciona en Claude en la web y en la app de escritorio, en todos los planes (el plan Free permite un conector personalizado).
 
-El servidor muestra solo las herramientas que permite tu conexión. Antes de comprar, el agente consulta el precio y lo pasa como `max_price_trx`, y envía un `idempotency_key` para que un reintento nunca cobre dos veces.
+    1. Abre [Add to Claude](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp) — o ve a **Customize → Connectors → Add → Add custom connector** e introduce el nombre `TronRental` y la URL de arriba.
+    2. Haz clic en **Connect** junto a TronRental.
+    3. Inicia sesión en tronrental.com y aprueba.
+    4. En un chat, activa TronRental en el menú de herramientas y pregunta, por ejemplo: *«¿Cuál es mi saldo en TronRental?»*
 
-Guía para agentes: [tronrental.com/skill.md](https://tronrental.com/skill.md).
+    En los planes Team y Enterprise, un propietario añade el conector en **Organization settings → Connectors**; después los miembros hacen clic en **Connect**.
+  </Tab>
+  <Tab title="ChatGPT">
+    1. Abre [ChatGPT Plugins](https://chatgpt.com/plugins) y haz clic en **+** → **Add custom MCP server**.
+    2. Introduce el nombre `TronRental`, elige **Public endpoint** y pega la URL de arriba.
+    3. Deja la autenticación en **OAuth**, confirma el aviso y haz clic en **Create as a plugin**.
+    4. Inicia sesión en tronrental.com y aprueba.
+    5. En un chat, elige TronRental en el menú de herramientas.
 
-## Paquete local (clave API)
+    Si no ves la opción, puede que tu espacio de trabajo no permita servidores MCP personalizados: pregunta a su administrador. ChatGPT solo se conecta con OAuth; no puede usar una clave API.
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
+    ```
 
-Añade a tu agente de IA:
+    Después, dentro de Claude Code, ejecuta `/mcp`, elige **tronrental** y **Authenticate**. El navegador abre tronrental.com; aprueba y vuelve a la terminal.
 
-```bash
-npx -y @tronrental-com/mcp-server
-```
+    Añade `--scope user` para usar TronRental en todos los proyectos, o `--scope project` para compartirlo con tu equipo mediante `.mcp.json`.
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add tronrental --url https://mcp.tronrental.com/mcp
+    ```
 
-### Claude Code
+    Codex abre el navegador para iniciar sesión. Si no lo hace, ejecuta:
 
-```bash
-# Sin clave API (el agente registra una cuenta con tu email)
-claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
+    ```bash
+    codex mcp login tronrental
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    Añade el servidor a `~/.cursor/mcp.json` (todos los proyectos) o `.cursor/mcp.json` (un proyecto):
 
-# Con clave API
-claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-com/mcp-server
-```
-
-### Cursor / Windsurf
-
-Añade a tu configuración de MCP:
-
-```json
-{
-  "mcpServers": {
-    "tronrental": {
-      "command": "npx",
-      "args": ["-y", "@tronrental-com/mcp-server"],
-      "env": {
-        "TRONRENTAL_API_KEY": "your_key"  // pragma: allowlist secret
+    ```json
+    {
+      "mcpServers": {
+        "tronrental": {
+          "url": "https://mcp.tronrental.com/mcp"
+        }
       }
     }
-  }
-}
+    ```
+
+    Cursor abre tronrental.com para iniciar sesión la primera vez que usa el servidor.
+
+    {/* TODO: an "Add to Cursor" button (cursor://anysphere.cursor-deeplink/mcp/install?name=TronRental&config=<base64 of {"url":"https://mcp.tronrental.com/mcp"}>) — check in Cursor whether the base64 must be URL-encoded before adding it. */}
+  </Tab>
+</Tabs>
+
+## Comprueba que funciona
+
+Pregunta al agente: *«Cotiza 65,000 de energía por 1 hora en TronRental.»* Llama a `quote_energy` y muestra el precio; no se cobra nada.
+
+Antes de cualquier compra, el agente cotiza el precio, te lo muestra y lo pasa como `max_price_trx`; también envía una `idempotency_key`, así que un reintento nunca cobra dos veces. Las compras requieren recargas por un total de 100 TRX en la cuenta; hasta entonces la conexión solo puede leer. Consulta [Gasto y errores](/es/agents/reference/spending-and-errors).
+
+## Gestionar y desconectar
+
+La lista **Aplicaciones conectadas** de la [página API](https://tronrental.com/dashboard/api) muestra cada cliente conectado: quién lo conectó, sus permisos, su límite diario y lo que gastó en las últimas 24 horas. Cambia el límite allí, o haz clic en **Desconectar** para revocar la conexión al instante.
+
+## Usar una clave API en su lugar
+
+Los clientes que permiten definir cabeceras pueden conectarse con una [clave API](/es/authentication) en lugar de iniciar sesión; por ejemplo, para un agente que se ejecuta en tu servidor:
+
+```bash
+claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp \
+  --header "Authorization: Bearer $TRONRENTAL_API_KEY"
 ```
 
-La variable de entorno `TRONRENTAL_API_KEY` es opcional. Si no se proporciona, el agente puede registrar una nueva cuenta a través de las herramientas MCP y trabajar con su token de inicio de sesión; la clave API se emite cuando las recargas de la cuenta suman 100 TRX. El agente te pide tu email: TronRental envía allí un código de 6 dígitos, y la cuenta solo se crea después de que le des ese código al agente.
+En Codex, pon la variable de entorno de la clave en `~/.codex/config.toml`:
 
-## Herramientas disponibles
+```toml
+[mcp_servers.tronrental]
+url = "https://mcp.tronrental.com/mcp"
+bearer_token_env_var = "TRONRENTAL_API_KEY"
+```
 
-El servidor MCP proporciona 12 herramientas:
+En Cursor, añade `"headers": { "Authorization": "Bearer ${env:TRONRENTAL_API_KEY}" }` junto a `url`.
 
-| Herramienta | Autenticación | Descripción |
-|-------------|---------------|-------------|
-| `get_prices` | Ninguna | Precios actuales de energía y bandwidth |
-| `calculate_savings` | Ninguna | Calcular ahorro: coste de quemado vs coste de alquiler |
-| `register` | Ninguna | Iniciar el registro: envía un código de 6 dígitos al email del usuario |
-| `verify_email_code` | Ninguna | Confirmar el código y crear la cuenta |
-| `resend_email_code` | Ninguna | Enviar un código nuevo (si caducó o no llegó) |
-| `login` | Ninguna | Iniciar sesión en una cuenta existente |
-| `create_api_key` | Token | Crear una clave API (tras recargas de 100 TRX en total) |
-| `get_deposit_address` | Clave API o token | Obtener dirección de depósito de TRX |
-| `get_balance` | Clave API o token | Consultar saldo de la cuenta |
-| `buy_energy` | Clave API o token | Comprar energía para una dirección TRON |
-| `get_order` | Clave API o token | Consultar estado del pedido |
-| `regenerate_deposit_address` | Clave API o token | Generar una nueva dirección de depósito |
+Una clave API no tiene límite diario: dale solo los permisos que el agente necesita. Consulta [Desarrollar con MCP](/es/agents/build/overview).
 
-## Flujo típico
+## Agentes sin navegador
 
-### Nuevo usuario (sin clave API)
-
-1. `get_prices` — mostrar precios actuales
-2. `calculate_savings` — calcular ahorro para el volumen de transferencias del usuario
-3. `register` — el email real del usuario y una contraseña; allí se envía un código de 6 dígitos
-4. El usuario lee el código en el correo y se lo da al agente
-5. `verify_email_code` — crea la cuenta e inicia sesión
-6. `get_deposit_address` — obtener dirección de depósito, el usuario envía TRX o USDT
-7. `get_balance` — verificar que el depósito llegó
-8. `buy_energy` — comprar energía
-9. `get_order` — confirmar delegación
-10. `create_api_key` — cuando las recargas sumen 100 TRX: la clave mantiene el acceso después de la sesión (configúrala como `TRONRENTAL_API_KEY`)
-
-<Note>
-  El agente nunca inventa una dirección de email: sin un código de una bandeja de entrada real no se crea ninguna cuenta. El código es válido durante 10 minutos; `resend_email_code` envía uno nuevo (hasta 3 correos por hora). Mientras no haya clave, las herramientas usan el token de inicio de sesión; vale 1 hora, y después el agente vuelve a llamar a `login`. Por debajo de 100 TRX, `create_api_key` indica cuánto falta recargar. Los mismos pasos mediante HTTP simple se describen en [Autenticación](/es/authentication).
-</Note>
-
-### Usuario existente (clave API configurada)
-
-1. `get_balance` — consultar saldo
-2. `buy_energy` — comprar energía
-3. `get_order` — confirmar delegación
-
-## Cantidades de energía
-
-| Escenario | Energía |
-|-----------|---------|
-| El destinatario ya tiene USDT | 65,000 |
-| El destinatario nunca tuvo USDT | 131,000 |
-| Pedido mínimo | 1 |
-| Pedido máximo | 5,000,000 |
-
-La duración es siempre `1h` — la energía se usa en segundos, 1 hora es la ventana de alquiler.
-
-## Enlaces
-
-- **npm:** [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)
-- **GitHub:** [tronrentalcom/tronrental-com-mcp](https://github.com/tronrentalcom/tronrental-com-mcp)
-- **MCP Registry:** `io.github.tronrental-com/tronrental`
+Los agentes que no pueden abrir un navegador pueden usar el paquete local [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server): se ejecuta en tu máquina con una clave API en `TRONRENTAL_API_KEY`, o permite al agente registrar una cuenta con tu email y un código que llega a él. La configuración está en su [README](https://github.com/tronrentalcom/tronrental-com-mcp).

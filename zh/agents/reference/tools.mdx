@@ -1,0 +1,18 @@
+---
+title: "工具"
+description: "TronRental MCP 服务器的全部工具：所需权限、如何处理资金以及背后的 API 路由"
+---
+
+import AgentTools from "/snippets/agent-tools-zh.mdx";
+
+每个工具对应 [REST API](/zh/api-reference/energy/get-prices) 的一个路由，在服务器上以调用方的凭证调用。规则与 REST 相同：价格、检查、幂等和错误代码都一样。
+
+- **参数**是该路由的参数，扁平展开：路径和查询参数以及 JSON 请求体的字段。其名称和类型见工具的 `inputSchema` 和该路由的 API 参考。
+- **`idempotency_key`** 是该路由的 `Idempotency-Key` 请求头，凡是路由接受该请求头的工具都提供此参数。
+- **结果**以 `structuredContent`（路由的 JSON 响应；列表包装为 `{"result": [...]}`）返回，同时以文本块返回相同的 JSON。
+- **错误**带有 `isError: true` 和 `{"error": {"code", "message", "status"}}`——即 API 自身的[错误代码](/zh/agents/reference/spending-and-errors)。
+- **提示：** 每个工具都带有 `title`、`readOnlyHint`、`destructiveHint` 和 `openWorldHint`。所有花费余额或开启周期性支出的工具都标记为 `destructiveHint: true`，因此客户端会在调用前询问。
+
+**资金：** `spends`——调用时从余额扣款；`recurring`——开启自动执行的支出，已连接的应用需要 [`recurring`](/zh/agents/reference/permissions) 权限；`to balance`——把资金退回余额。
+
+<AgentTools />

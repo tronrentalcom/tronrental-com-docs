@@ -1,0 +1,100 @@
+---
+title: "Claude API"
+description: "Дайте Claude инструменты TronRental в запросе Messages API с MCP-коннектором"
+---
+
+<Info>
+  Проверено 20 ноября 2026 года по [документации MCP-коннектора](https://platform.claude.com/docs/en/agents-and-tools/mcp-connector) (beta `mcp-client-2025-11-20`), `anthropic` **2.11.0** (Python) и `@anthropic-ai/sdk` **1.11.0** (TypeScript).
+</Info>
+
+С MCP-коннектором Claude вызывает TronRental со стороны Anthropic во время запроса — MCP-клиент в вашем коде не нужен. Коннектор передаёт только `authorization_token`, как `Authorization: Bearer <token>`: API-ключ или OAuth access-токен пользователя. Вызовы приходят с IP-адресов Anthropic, поэтому ключ с белым списком IP их отклонит.
+
+Каждому серверу в `mcp_servers` нужна соответствующая запись `mcp_toolset` в `tools`.
+
+## Python
+
+```bash
+pip install "anthropic>=2.11"
+```
+
+```python claude.py
+import os
+
+import anthropic
+
+client = anthropic.Anthropic()  # читает ANTHROPIC_API_KEY
+
+response = client.beta.messages.create(
+    model="claude-opus-5-5",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "How much is 65,000 energy for 1 hour on TronRental?"}],
+    mcp_servers=[
+        {
+            "type": "url",
+            "url": "https://mcp.tronrental.com/mcp",
+            "name": "tronrental",
+            "authorization_token": os.environ["TRONRENTAL_API_KEY"],
+        }
+    ],
+    tools=[
+        {
+            "type": "mcp_toolset",
+            "mcp_server_name": "tronrental",
+            # Только инструменты, нужные этому ассистенту; остальные выключены.
+            "default_config": {"enabled": False},
+            "configs": {
+                "get_energy_prices": {"enabled": True},
+                "quote_energy": {"enabled": True},
+                "get_balance": {"enabled": True},
+            },
+        }
+    ],
+    betas=["mcp-client-2025-11-20"],
+)
+
+for block in response.content:
+    if block.type == "text":
+        print(block.text)
+```
+
+## TypeScript
+
+```bash
+npm install @anthropic-ai/sdk
+```
+
+```ts claude.mjs
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropic = new Anthropic(); // читает ANTHROPIC_API_KEY
+
+const response = await anthropic.beta.messages.create({
+  model: "claude-opus-5-5",
+  max_tokens: 1024,
+  messages: [{ role: "user", content: "How much is 65,000 energy for 1 hour on TronRental?" }],
+  mcp_servers: [
+    {
+      type: "url",
+      url: "https://mcp.tronrental.com/mcp",
+      name: "tronrental",
+      authorization_token: process.env.TRONRENTAL_API_KEY,
+    },
+  ],
+  tools: [{ type: "mcp_toolset", mcp_server_name: "tronrental" }],
+  betas: ["mcp-client-2025-11-20"],
+});
+
+for (const block of response.content) {
+  if (block.type === "text") console.log(block.text);
+}
+```
+
+## Покупки
+
+Коннектор выполняет вызовы инструментов внутри запроса, не спрашивая вас. Прежде чем позволить Claude тратить:
+
+- включите только нужные ему инструменты (`default_config` и `configs`, как в примере на Python);
+- используйте API-ключ с узкими правами или OAuth-токен пользователя, у которого [суточный лимит расходов](/ru/agents/reference/spending-and-errors#суточный-лимит-расходов) ограничивает траты одного запроса;
+- если человек должен подтверждать каждую покупку, запускайте собственный MCP-клиент ([TypeScript](/ru/agents/build/typescript), [Python](/ru/agents/build/python)) и вызывайте `buy_energy` после его согласия.
+
+Вызовы инструментов и их результаты возвращаются в `response.content` как блоки `mcp_tool_use` и `mcp_tool_result`.

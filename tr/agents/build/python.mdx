@@ -1,0 +1,84 @@
+---
+title: "Python"
+description: "Resmi MCP Python SDK'sı ile TronRental MCP sunucusuna bağlanın"
+---
+
+<Info>
+  20 Kasım 2026'da `mcp` **2.3.0** (Python 3.11+, HTTP `httpx2` ile) ile kontrol edildi. `mcp` 2.x'te aktarım fonksiyonu `streamable_http_client` adını taşır ve başlıkları HTTP istemcisinden alır; 1.x'teki `streamablehttp_client` adı artık yok.
+</Info>
+
+## Kurulum
+
+```bash
+pip install "mcp>=2.3"
+```
+
+## Araçları listeleme ve teklif alma
+
+```python quote.py
+import asyncio
+import os
+
+import httpx2
+from mcp import Client
+from mcp.client.streamable_http import streamable_http_client
+
+URL = "https://mcp.tronrental.com/mcp"
+
+
+async def main() -> None:
+    headers = {"Authorization": f"Bearer {os.environ['TRONRENTAL_API_KEY']}"}
+    async with httpx2.AsyncClient(headers=headers, timeout=httpx2.Timeout(30.0, read=120.0)) as http:
+        async with Client(streamable_http_client(URL, http_client=http)) as client:
+            tools = await client.list_tools()
+            print([tool.name for tool in tools.tools])
+
+            quote = await client.call_tool("quote_energy", {"volume": 65000, "duration": "1h"})
+            print(quote.structuredContent)
+            # {'volume': 65000, 'duration': '1h', 'total_trx': '1.694350', ...}
+
+
+asyncio.run(main())
+```
+
+```bash
+TRONRENTAL_API_KEY=your_key python quote.py
+```
+
+`Client`, MCP `initialize` el sıkışmasını sizin için yapar. `tools/list` yalnızca anahtarınızın kapsamlarının izin verdiği araçları döndürür.
+
+## Enerji satın alma
+
+Önce teklif alın, teklifin `total_trx` değerini `max_price_trx` olarak gönderin ve satın alma için tek bir `idempotency_key` kullanın; böylece tekrar deneme iki kez ücret alamaz:
+
+```python
+import uuid
+
+
+async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
+    quote = await client.call_tool("quote_energy", {"volume": volume, "duration": "1h"})
+    total = quote.structuredContent["total_trx"]
+
+    key = str(uuid.uuid4())  # bu satın almayı tekrar denerseniz aynısını kullanın
+    order = await client.call_tool(
+        "buy_energy",
+        {
+            "target_address": target,
+            "volume": volume,
+            "duration": "1h",
+            "max_price_trx": total,
+            "idempotency_key": key,
+        },
+    )
+    if order.isError:
+        raise RuntimeError(order.structuredContent["error"])  # {code, message, status}
+    return order.structuredContent  # sipariş: id, status, price_trx, ...
+```
+
+Reddedilen bir çağrı SDK'da istisna fırlatmaz: sonuçta `isError` ayarlıdır ve `structuredContent["error"]` içinde [hata kodu](/tr/agents/reference/spending-and-errors#hata-kodları) bulunur.
+
+## Kullanıcıları OAuth ile giriş yaptırma
+
+Her kullanıcının kendi hesabını bağladığı bir uygulamada başlık yerine SDK'nın `mcp.client.auth.OAuthClientProvider` sınıfını `httpx2.AsyncClient` için `auth` olarak kullanın. Bu sınıf TronRental'ın [OAuth sunucusuna](/tr/agents/reference/oauth) karşı keşfi, istemci kaydını ve PKCE'yi yürütür; belirteç deposunu ve yönlendirme ile callback işleyicilerini siz sağlarsınız. Bkz. SDK'nın [yetkilendirme kılavuzu](https://py.sdk.modelcontextprotocol.io/).
+
+Masaüstü ve CLI uygulamaları için loopback redirect URI (`http://127.0.0.1:<port>/callback`) kullanın; bir web uygulamasının kendi callback adresi için [destekle iletişime geçin](https://t.me/TronRentalcom_Help_bot).

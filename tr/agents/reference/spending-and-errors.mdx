@@ -1,0 +1,96 @@
+---
+title: "Harcamalar ve hatalar"
+description: "max_price_trx, idempotency anahtarları, günlük harcama limiti ve bağlı bir uygulamanın karşılaştığı hata kodları"
+---
+
+## Önce teklif, sonra `max_price_trx` ile satın alma
+
+Bağlı bir uygulama `buy_energy` ve `buy_bandwidth` çağrılarına `max_price_trx` göndermek zorundadır. Bu olmadan çağrı `MAX_PRICE_REQUIRED` ile başarısız olur — günlük limitin bir çağrının en fazla ne kadar tutabileceğini bilmesi gerekir.
+
+1. Hacim ve süreyle `quote_energy` (veya `quote_bandwidth`) çağırın.
+2. Kullanıcıya tekliften gelen `total_trx` değerini gösterin.
+3. Aynı hacim ve süreyle, `max_price_trx` = teklifin `total_trx` değeri olacak şekilde `buy_energy` çağırın.
+
+Fiyat `max_price_trx` üzerine çıkarsa satın alma `PRICE_CHANGED` ile reddedilir ve ücret alınmaz. Yeniden teklif alın ve kullanıcıya sorun.
+
+API anahtarı için `max_price_trx` isteğe bağlıdır, ancak aynı nedenle kullanmanızı öneririz.
+
+## Idempotency anahtarları
+
+Bir şey oluşturan araçlar `idempotency_key` alır — rotalarının [`Idempotency-Key`](/tr/api-reference/energy/buy-energy) başlığı. Her yeni işlem için yeni bir UUID üretin ve zaman aşımı veya kaybolan bir yanıttan sonra **aynı işlemi tekrar denerken aynısını kullanın**: sunucu yeniden ücret almak yerine ilk sonucu döndürür. Bir anahtar 24 saat geçerlidir ve en fazla 64 karakterdir.
+
+| Araç | Rota |
+|---|---|
+| `buy_energy` | `POST /energy/buy` |
+| `buy_bandwidth` | `POST /bandwidth/buy` |
+| `buy_package` | `POST /transfer-packages/buy` |
+| `activate_smart_mode` | `POST /smart-mode/activate` |
+| `create_auto_bw` | `POST /bandwidth/auto` |
+| `create_energy_autorefill` | `POST /energy/auto-refill` |
+| `create_bandwidth_autorefill` | `POST /bandwidth/auto-refill` |
+| `activate_resale` | `POST /sublease/activate` |
+| `generate_resale_address` | `POST /sublease/generate` |
+| `create_broadcast_slug` | `POST /broadcast/slugs` |
+| `stake` | `POST /account/stake` |
+| `withdraw` (yalnızca API anahtarı) | `POST /account/withdrawal` |
+
+Aynı anahtar farklı bir istekle kullanılırsa `IDEMPOTENCY_KEY_REUSED` ile reddedilir; ilk isteği hâlâ işlenen bir anahtar `IDEMPOTENT_REQUEST_IN_PROGRESS` döndürür — bekleyin ve aynı anahtarla tekrar deneyin.
+
+## Günlük harcama limiti
+
+Her bağlantı herhangi bir 24 saatte belirli bir tutar harcayabilir — kullanıcı onay ekranında veya **Bağlı uygulamalar** bölümünde başka bir tutar seçmediyse **100 TRX**. Limiti yalnızca hesap sahibi kaldırabilir.
+
+- Harcama yapan bir çağrıdan önce sunucu, çağrının tutabileceği en yüksek tutarı ayırır: satın almalarda `max_price_trx` artı yeni bir adresin aktivasyonu; Smart Mode, paketler, aktivasyonlar ve Node API planlarında fiyat; stake işleminde tutar.
+- Çağrıdan sonra ayrılan tutar gerçek tutara dönüşür veya ücret alınmadıysa serbest bırakılır. Sonuç bilinmiyorsa (zaman aşımı), ayrılan tutar 24 saat kalır — limit şüphede reddetmeyi tercih eder.
+- Kendi kendine çalışan harcamalar (`recurring`) limitin dışındadır.
+- Paneldeki **Bağlı uygulamalar** her uygulamanın son 24 saatte ne harcadığını gösterir.
+
+Sığmayan bir çağrı `AGENT_SPEND_CAP` ile başarısız olur:
+
+```json
+{
+  "error": {
+    "code": "AGENT_SPEND_CAP",
+    "message": "This app may spend 5 TRX a day; 2.90065 TRX is left and this call may cost up to 3.3 TRX. A call whose answer was lost may have gone through: check the orders before retrying",
+    "status": 409,
+    "cap_trx": "5",
+    "remaining_trx": "2.90065",
+    "required_trx": "3.3"
+  }
+}
+```
+
+<Note>
+  Yanıtı kaybolan bir satın almayı tekrar denemek tutarını yeniden ayırır. Limite yakınken tekrar denemeden önce `list_orders` kontrol edin: ilk çağrı gerçekleşmiş olabilir.
+</Note>
+
+## Sipariş kaynağı
+
+Bağlı bir uygulamanın verdiği siparişler `"source": "agent"` taşır — `get_order`, `list_orders` ve [`order.updated` webhook'unda](/tr/api-reference/webhooks/overview). API anahtarıyla verilen siparişler `"source": "api"` taşır.
+
+## Hata kodları
+
+MCP üzerinden hata, `isError: true` taşıyan bir araç sonucu olarak gelir:
+
+```json
+{"error": {"code": "MAX_PRICE_REQUIRED", "message": "Pass max_price_trx: the quote's total_trx", "status": 422}}
+```
+
+REST üzerinden aynı kod [standart hata biçiminde](/tr/errors) gelir.
+
+| Kod | HTTP | Anlamı ve ne yapılmalı |
+|---|---|---|
+| `AGENT_SPEND_CAP` | `409` | Çağrı bağlantının günlük limitine sığmıyor. `cap_trx`, `remaining_trx` ve `required_trx` ne kadar aşıldığını gösterir. Kullanıcıdan Bağlı uygulamalar'te limiti yükseltmesini isteyin veya bekleyin |
+| `MAX_PRICE_REQUIRED` | `422` | Bağlı bir uygulamanın `max_price_trx` olmadan yaptığı satın alma. Önce teklif alın ve teklifin `total_trx` değerini gönderin |
+| `AGENT_SPEND_UNBOUNDED` | `403` | Bu işlem henüz bağlı uygulamalara açık değil. Paneli veya bir API anahtarını kullanın |
+| `AGENT_ROUTE_CLOSED` | `403` | Rota [araç kataloğunda](/tr/agents/reference/tools) değil, bu yüzden bağlı bir uygulama onu REST üzerinden çağıramaz |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | Satın almalar toplam 100 TRX yükleme gerektirir. `required_trx` ve `missing_trx` ne kadar kaldığını gösterir. Yatırma adresini gösterin, ardından yeniden bağlanın |
+| `OAUTH_UNCAPPED_OWNER_ONLY` | `403` | Bir ekip üyesi günlük limiti kaldırmaya çalıştı. Bunu yalnızca hesap sahibi yapabilir |
+| `OAUTH_GRANT_LIMIT_REACHED` | `409` | Hesapta zaten azami sayıda bağlı uygulama var (`limit`). Önce birinin bağlantısını kesin |
+| `PRICE_CHANGED` | `409` | Fiyat `max_price_trx` üzerinde. Ücret alınmadı; yeniden teklif alın |
+| `VALIDATION_ERROR` | `422` | Bir argümanın türü yanlış veya eksik. Aracın `inputSchema` alanını kontrol edin |
+| `INTERNAL_ERROR` | `5xx` | Kodsuz sunucu hatası. Satın almalarda aynı `idempotency_key` ile tekrar denemeden önce `list_orders` kontrol edin |
+
+Diğer tüm kodlar REST API'nin kodlarıdır — bkz. [Hatalar](/tr/errors).
+
+Süresi dolmuş veya iptal edilmiş bir belirteç, `/mcp` isteğinin kendisinde `WWW-Authenticate: Bearer ... error="invalid_token"` ile HTTP `401` alır; MCP istemcileri bu durumda belirteci yeniler veya kullanıcıdan yeniden giriş yapmasını ister.

@@ -1,43 +1,46 @@
 ---
-title: "OAuth para agentes"
-description: "Cómo un agente de IA se conecta a TronRental con «Iniciar sesión con TronRental»: permisos, límite diario de gasto, desconexión"
+title: "OAuth para clientes MCP"
+sidebarTitle: "OAuth"
+description: "Cómo un cliente MCP inicia la sesión de un usuario en TronRental: descubrimiento, registro, PKCE, tokens y revocación"
 ---
 
-## Cómo funciona
+Los clientes listos para usar (Claude, ChatGPT, Claude Code, Codex, Cursor) hacen todo esto por sí mismos. Esta página es para quienes desarrollan sus propios clientes MCP y apps. El flujo sigue la [especificación de autorización de MCP](https://modelcontextprotocol.io/specification/latest/basic/authorization).
 
-1. Añade el servidor de TronRental a tu agente: ver [Servidor MCP](/es/resources/mcp-server).
-2. El agente abre la página de inicio de sesión de TronRental. Inicia sesión (o regístrate) y verás la pantalla de consentimiento: el nombre de la app, el sitio al que vuelve y lo que pide.
-3. Elige la cuenta, los permisos y el límite diario, y aprueba.
-4. El agente recibe un token solo para esta conexión. Nunca ve tu contraseña ni una clave API.
+## Descubrimiento
 
-## Permisos
+1. Un `POST https://mcp.tronrental.com/mcp` sin autenticar responde `401` con
+   ```
+   WWW-Authenticate: Bearer resource_metadata="https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp"
+   ```
+2. Los metadatos del recurso protegido (RFC 9728) indican el recurso `https://mcp.tronrental.com/mcp` y el servidor de autorización `https://mcp.tronrental.com`.
+3. Los metadatos del servidor de autorización (RFC 8414) están en `https://mcp.tronrental.com/.well-known/oauth-authorization-server`. Sus endpoints son `/oauth/register`, `/oauth/authorize`, `/oauth/token` y `/oauth/revoke` en el mismo host.
 
-| Permiso | Qué puede hacer el agente |
-|---|---|
-| `view` | Saldo, historial, pedidos, comprobación de direcciones |
-| `deposit_view` | Dirección de depósito y depósitos |
-| `buy_energy` | Comprar energía, activar direcciones, facturas |
-| `buy_bandwidth` | Comprar ancho de banda |
-| `smart_mode` | Smart Mode |
-| `transfer_packages` | Paquetes de transferencias |
-| `energy_resale` | Energy Resale |
-| `recurring` | Activar gastos que se ejecutan solos (recarga automática, ancho de banda automático, Smart Mode, Energy Resale, broadcaster). Desactivado por defecto |
+## Registro del cliente
 
-Hasta que las recargas de la cuenta sumen 100 TRX, la conexión solo obtiene `view` y `deposit_view`; tras recargar, vuelve a conectar para permitir compras.
+- **Dynamic Client Registration** (RFC 7591) en `/oauth/register`. Los clientes son públicos: `token_endpoint_auth_method` siempre es `none`.
+- Se aceptan **Client ID Metadata Documents** de las plataformas compatibles.
+- Las **redirect URI** deben estar en la lista permitida: loopback (`http://127.0.0.1:<any port>`, `http://localhost:<any port>`) y los callbacks de las plataformas compatibles. Cualquier otra URI se rechaza con `invalid_redirect_uri`. ¿Estás creando una app web con su propio callback? [Contacta con soporte](https://t.me/TronRentalcom_Help_bot) para que lo añadamos.
 
-**Los retiros nunca están disponibles para una app conectada.** Siguen siendo de las claves API con el permiso `withdraw`, 2FA y lista blanca de IP.
+## Autorización
 
-## Límite diario de gasto
+- Flujo authorization code con **PKCE, solo `S256`**.
+- El parámetro `resource` es obligatorio y debe ser `https://mcp.tronrental.com/mcp`; los tokens se emiten para esta audiencia.
+- `scope` enumera los [permisos](/es/agents/reference/permissions) que pide la app, separados por espacios, por ejemplo `view deposit_view buy_energy`. El usuario puede conceder menos; el `scope` de la respuesta del token indica lo concedido. `withdraw` no existe para OAuth y se rechaza con `invalid_scope`.
+- El usuario inicia sesión (o se registra) en tronrental.com, elige la cuenta, los permisos y el límite diario de gasto, y aprueba. Una app que TronRental no conoce se muestra como no verificada.
 
-Cada conexión tiene un límite de gasto en 24 horas: 100 TRX salvo que fijes otra cifra en la pantalla de consentimiento. El propietario de la cuenta puede elegir «sin límite». Los gastos que se ejecutan solos (`recurring`) quedan fuera del límite: se ven en el panel y se desactivan allí.
+## Tokens
 
-## Apps conectadas
+| Token | Duración | Notas |
+|---|---|---|
+| Access token | 1 hora | Envíalo como `Authorization: Bearer <token>` a `/mcp` y a la [API REST](/es/api-reference/energy/get-prices) |
+| Refresh token | 30 días | Se rota en cada uso. Reutilizar un refresh token antiguo revoca toda la conexión |
 
-La página API del panel lista todas las apps conectadas: quién la conectó, permisos, solicitudes de los últimos 7 días. «Desconectar» revoca la conexión y todos sus tokens a la vez: la siguiente llamada del agente se rechaza.
+Solo se admiten los grants `authorization_code` y `refresh_token`; `client_credentials` no. Para llamadas de servidor a servidor usa una [clave API](/es/agents/build/overview#elige-cómo-autenticarte).
 
-## Para desarrolladores de clientes MCP
+Con un access token, una app conectada también puede llamar a la API REST, pero solo a las rutas que figuran en la [referencia de herramientas](/es/agents/reference/tools); cualquier otra ruta responde `403 AGENT_ROUTE_CLOSED`.
 
-- Descubrimiento: `https://mcp.tronrental.com/mcp` → `401` + `WWW-Authenticate` → `https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp` (RFC 9728); `https://mcp.tronrental.com/.well-known/oauth-authorization-server` (RFC 8414).
-- OAuth 2.1 con PKCE (solo `S256`), clientes públicos (`token_endpoint_auth_method: none`). Registro de clientes: Dynamic Client Registration (RFC 7591); los Client ID Metadata Documents se aceptan de plataformas compatibles.
-- Redirect URI: loopback (`http://127.0.0.1:<cualquier puerto>`, `http://localhost:<cualquier puerto>`) y las URL de retorno de plataformas compatibles. ¿Necesitas otra? Escribe a soporte.
-- Token de acceso: 1 hora; refresh: 30 días con rotación; reutilizar un refresh antiguo revoca la conexión.
+## Revocación
+
+- La app puede revocar sus tokens en `/oauth/revoke`.
+- El usuario puede desconectar la app en **Aplicaciones conectadas**, en la [página API](https://tronrental.com/dashboard/api) del panel: la conexión y todos sus tokens se revocan a la vez, y la siguiente llamada a `/mcp` recibe `401` con `error="invalid_token"`.
+- Hay una conexión por cuenta y app: volver a conectar la misma app actualiza sus permisos y su límite en lugar de añadir una segunda.

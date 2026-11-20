@@ -1,0 +1,72 @@
+---
+title: "智能体概览"
+sidebarTitle: "概览"
+description: "通过 MCP 把 AI 智能体连接到 TronRental：智能体能做什么，以及你如何掌控它的支出"
+---
+
+TronRental 运行一个远程 [Model Context Protocol](https://modelcontextprotocol.io)（MCP）服务器，地址为：
+
+```
+https://mcp.tronrental.com/mcp
+```
+
+任何 MCP 客户端——Claude、ChatGPT、Claude Code、Codex、Cursor 或你自己的代码——都可以连接它，使用 TronRental 登录，并获得操作你账户的工具。无需安装，也无需复制 API 密钥。
+
+## 智能体能做什么
+
+| 领域 | 示例 |
+|---|---|
+| 能量和带宽 | 为任意 TRON 地址报价并购买能量或带宽，激活新地址，回收带宽订单 |
+| Energy Broadcaster | 为钱包创建广播 URL，修改其设置，查看配额和事件 |
+| 订阅 | Smart Mode、转账套餐、能量和带宽自动充值、自动带宽、Energy Resale |
+| 质押 | 从余额质押 TRX、解除质押、领取奖励 |
+| Node API | 查看套餐和用量，购买套餐，开始试用 |
+| 发票 | 创建发票，通过邮件发送，跟踪状态 |
+| 账户 | 余额、历史、订单、充值地址、报表 |
+
+完整列表见[工具参考](/zh/agents/reference/tools)。智能体只能看到其连接允许的工具。
+
+## 一切由你掌控
+
+<CardGroup cols={2}>
+  <Card title="授权页面" icon="hand">
+    智能体首次连接时，你在 tronrental.com 登录，并看到应用名称和它将返回的网站。在你批准之前，不会共享任何内容。
+  </Card>
+  <Card title="权限" icon="key">
+    你勾选智能体可以做什么：读取、购买能量、运行 Smart Mode 等。自动执行的支出是单独的选项，默认关闭。见[权限](/zh/agents/reference/permissions)。
+  </Card>
+  <Card title="每日消费上限" icon="gauge">
+    除非你设置其他金额，每个连接 **24 小时内最多花费 100 TRX**。可随时在控制台 [API 页面](https://tronrental.com/dashboard/api)的 **已连接的应用** 中修改。
+  </Card>
+  <Card title="随时断开" icon="plug-circle-xmark">
+    在 已连接的应用 中点击 **断开连接**，会一次性撤销该连接及其所有令牌。智能体的下一次调用将被拒绝。
+  </Card>
+</CardGroup>
+
+- **先充值再购买。** 在账户累计充值达到 100 TRX 之前，连接只能读取：余额、历史和充值地址。充值后重新连接即可允许购买。
+- **按你同意的价格。** 每次购买都带有 `max_price_trx`——智能体先报价，再传入报价总额。如果价格超过它，购买会被拒绝，不会扣款。
+- **不会重复扣款。** 购买及其他创建类调用接受幂等键，因此在响应丢失后重试会返回第一次的结果。
+- **不能提现。** 已连接的应用永远无法提取资金。提现仍只限于具有 `withdraw` 权限、开启 2FA 并设置 IP 白名单的 API 密钥。
+
+智能体下的订单在[订单](/zh/api-reference/orders/get-order)和 [`order.updated` webhook](/zh/api-reference/webhooks/overview) 中标记为 `source: "agent"`。
+
+## 下一步
+
+<CardGroup cols={2}>
+  <Card title="连接客户端" icon="plug" href="/zh/agents/connect">
+    Claude、ChatGPT、Claude Code、Codex 和 Cursor——分步说明。
+  </Card>
+  <Card title="使用 MCP 开发" icon="code" href="/zh/agents/build/overview">
+    在你自己的应用或智能体中使用 TronRental 的 MCP 服务器，附可运行的示例。
+  </Card>
+  <Card title="工具参考" icon="list" href="/zh/agents/reference/tools">
+    每个工具、它所需的权限以及它如何处理资金。
+  </Card>
+  <Card title="支出和错误" icon="triangle-exclamation" href="/zh/agents/reference/spending-and-errors">
+    `max_price_trx`、幂等键、每日上限和错误代码。
+  </Card>
+</CardGroup>
+
+<Tip>
+  智能体可以阅读简短的设置指南 [tronrental.com/skill.md](https://tronrental.com/skill.md)：把它发给你的智能体，让它完成连接。
+</Tip>

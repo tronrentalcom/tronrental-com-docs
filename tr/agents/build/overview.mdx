@@ -1,0 +1,58 @@
+---
+title: "MCP ile geliştirin"
+sidebarTitle: "Genel bakış"
+description: "TronRental'ın MCP sunucusunu kendi uygulamanızdan veya ajanınızdan kullanın: kimlik doğrulama yolunu seçin, ardından bir örnek seçin"
+---
+
+TronRental MCP sunucusu `https://mcp.tronrental.com/mcp` adresinde standart [Streamable HTTP aktarımını](https://modelcontextprotocol.io/specification/latest/basic/transports) kullanır. Uzak MCP sunucularını destekleyen her MCP SDK'sı veya LLM platformu onu kullanabilir.
+
+- **Durumsuz:** her istek düz bir `POST`'tur; tutulacak oturum yoktur.
+- **Araçlar kimlik bilgisini izler:** `tools/list` yalnızca anahtarın veya bağlantının çağırabileceği araçları döndürür.
+- **REST ile aynı kurallar:** her araç arka planda bir [REST API](/tr/api-reference/energy/get-prices) rotasıdır; fiyatlar, kontroller ve hata kodları aynıdır.
+
+## Kimlik doğrulama yolunu seçin
+
+<CardGroup cols={2}>
+  <Card title="API anahtarı — kendi sunucunuz" icon="server">
+    **Sizin** hesabınızda işlem yapan backend'iniz, betikleriniz ve ajanlarınız için. Anahtarı `Authorization: Bearer <key>` veya `X-API-Key: <key>` olarak gönderin. Günlük limit yok, `max_price_trx` isteğe bağlı, `withdraw` kapsamıyla para çekme mümkün.
+  </Card>
+  <Card title="OAuth — kullanıcılarınızın hesapları" icon="user-shield">
+    **Her kullanıcının** kendi TronRental hesabını bağladığı uygulamalar için. Kullanıcı [onay ekranını](/tr/agents/overview#kontrol-sizde) onaylar; siz onun seçtiği izinler ve günlük limitle bir belirteç alırsınız. Bkz. [MCP istemcileri için OAuth](/tr/agents/reference/oauth).
+  </Card>
+</CardGroup>
+
+Panelin [API sayfasında](https://tronrental.com/dashboard/api) bir API anahtarı oluşturun (toplam 100 TRX yüklemeden sonra kullanılabilir). Ona yalnızca ajanınızın ihtiyaç duyduğu kapsamları verin.
+
+<Warning>
+  Bir LLM platformu MCP sunucusunu sizin adınıza çağırdığında (OpenAI hosted MCP, Claude API MCP bağlayıcısı), anahtarınız veya belirteciniz o platforma gönderilir ve çağrılar **onun** IP adreslerinden gelir. `withdraw` içermeyen bir anahtar kullanın, kapsamlarını dar tutun ve IP izin listesi olan bir anahtarın bu çağrıları reddedeceğini unutmayın. Anahtarı kendi sunucunuzda tutmak için MCP istemcisini kendiniz çalıştırın (TypeScript ve Python örnekleri).
+</Warning>
+
+## Bir örnek seçin
+
+<CardGroup cols={2}>
+  <Card title="TypeScript" icon="js" href="/tr/agents/build/typescript">
+    Resmi TypeScript SDK'sı ile Streamable HTTP üzerinden MCP istemcisi.
+  </Card>
+  <Card title="Python" icon="python" href="/tr/agents/build/python">
+    Resmi Python SDK'sı ile Streamable HTTP üzerinden MCP istemcisi.
+  </Card>
+  <Card title="OpenAI Agents SDK" icon="robot" href="/tr/agents/build/openai-agents">
+    OpenAI ajanları için barındırılan MCP aracı ve yerel MCP istemcisi.
+  </Card>
+  <Card title="Claude API" icon="message-bot" href="/tr/agents/build/claude-api">
+    Bir Messages API isteğinde MCP bağlayıcısı.
+  </Card>
+</CardGroup>
+
+## MCP mi, REST mi?
+
+Hangi çağrının yapılacağına bir dil modeli karar veriyorsa **MCP** kullanın: model araç listesini ve açıklamalarını okur ve aracı seçer.
+
+Kodunuz ne yapacağını zaten biliyorsa **[REST API](/tr/api-reference/energy/get-prices)** kullanın — örneğin "her ödemeden önce 65.000 enerji satın al". MCP katmanı olmadan tek bir HTTP isteğidir ve [webhook'lar](/tr/api-reference/webhooks/overview) bir sipariş tamamlandığında size haber verir. İkisi de aynı API anahtarını kullanır, yani birlikte kullanabilirsiniz.
+
+## Canlıya geçmeden önce
+
+- **Önce teklif, sonra satın alma.** Teklifin `total_trx` değerini `max_price_trx` olarak gönderin. Bkz. [Harcamalar ve hatalar](/tr/agents/reference/spending-and-errors).
+- **Güvenle tekrar deneyin.** Her işlem için bir `idempotency_key` (UUID) üretin ve tekrar denemelerde aynısını kullanın.
+- **Maliyeti gösterin.** Harcama yapan bir aracı çağırmadan önce kullanıcıya çağrının maliyetini söyleyin — bu tür her araç `destructiveHint: true` ile işaretlidir.
+- **Sonucu kontrol edin.** Siparişler saniyeler içinde zincir üzerinde teslim edilir; `get_order` okuyun veya `order.updated` webhook'unu bekleyin.

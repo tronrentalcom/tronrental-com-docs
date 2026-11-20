@@ -1,0 +1,58 @@
+---
+title: "Desenvolver com MCP"
+sidebarTitle: "Visão geral"
+description: "Use o servidor MCP da TronRental no seu próprio app ou agente: escolha como autenticar e depois um exemplo"
+---
+
+O servidor MCP da TronRental usa o [transporte Streamable HTTP](https://modelcontextprotocol.io/specification/latest/basic/transports) padrão em `https://mcp.tronrental.com/mcp`. Qualquer SDK MCP ou plataforma de LLM que suporte servidores MCP remotos pode usá-lo.
+
+- **Sem estado:** cada requisição é um `POST` simples; não há sessões para manter.
+- **As ferramentas seguem a credencial:** `tools/list` devolve apenas as ferramentas que a chave ou a conexão pode chamar.
+- **As mesmas regras do REST:** por trás, cada ferramenta é uma rota da [API REST](/pt/api-reference/energy/get-prices), com os mesmos preços, verificações e códigos de erro.
+
+## Escolha como autenticar
+
+<CardGroup cols={2}>
+  <Card title="Chave de API — o seu próprio servidor" icon="server">
+    Para o seu backend, scripts e agentes que agem na **sua** conta. Envie a chave como `Authorization: Bearer <key>` ou `X-API-Key: <key>`. Sem limite diário, `max_price_trx` opcional, saques possíveis com o escopo `withdraw`.
+  </Card>
+  <Card title="OAuth — as contas dos seus usuários" icon="user-shield">
+    Para apps em que **cada usuário** conecta a própria conta TronRental. O usuário aprova a [tela de consentimento](/pt/agents/overview#você-mantém-o-controle); você recebe um token com as permissões e o limite diário que ele escolheu. Veja [OAuth para clientes MCP](/pt/agents/reference/oauth).
+  </Card>
+</CardGroup>
+
+Crie uma chave de API na [página de API](https://tronrental.com/dashboard/api) do painel (disponível após recargas de 100 TRX no total). Dê a ela só os escopos de que o seu agente precisa.
+
+<Warning>
+  Quando uma plataforma de LLM chama o servidor MCP por você (MCP hospedado da OpenAI, o conector MCP da Claude API), a sua chave ou token é enviado a essa plataforma, e as chamadas vêm dos endereços IP **dela**. Use uma chave sem `withdraw`, mantenha os escopos restritos e saiba que uma chave com lista de IPs permitidos vai recusar essas chamadas. Para manter a chave no seu próprio servidor, rode você mesmo um cliente MCP (os exemplos em TypeScript e Python).
+</Warning>
+
+## Escolha um exemplo
+
+<CardGroup cols={2}>
+  <Card title="TypeScript" icon="js" href="/pt/agents/build/typescript">
+    Cliente MCP via Streamable HTTP com o SDK oficial de TypeScript.
+  </Card>
+  <Card title="Python" icon="python" href="/pt/agents/build/python">
+    Cliente MCP via Streamable HTTP com o SDK oficial de Python.
+  </Card>
+  <Card title="OpenAI Agents SDK" icon="robot" href="/pt/agents/build/openai-agents">
+    Ferramenta MCP hospedada e um cliente MCP local para agentes da OpenAI.
+  </Card>
+  <Card title="Claude API" icon="message-bot" href="/pt/agents/build/claude-api">
+    O conector MCP em uma requisição da Messages API.
+  </Card>
+</CardGroup>
+
+## MCP ou REST?
+
+Use **MCP** quando um modelo de linguagem decide qual chamada fazer: o modelo lê a lista de ferramentas e as descrições e escolhe a ferramenta.
+
+Use a **[API REST](/pt/api-reference/energy/get-prices)** quando o seu código já sabe o que fazer — por exemplo, "comprar 65.000 de energia antes de cada pagamento". É uma requisição HTTP sem camada MCP, e os [webhooks](/pt/api-reference/webhooks/overview) avisam quando um pedido é concluído. Os dois usam a mesma chave de API, então você pode combiná-los.
+
+## Antes de entrar em produção
+
+- **Cote e depois compre.** Envie o `total_trx` da cotação como `max_price_trx`. Veja [Gastos e erros](/pt/agents/reference/spending-and-errors).
+- **Repita com segurança.** Gere um `idempotency_key` (um UUID) por ação e reutilize-o nas novas tentativas.
+- **Mostre o custo.** Diga ao usuário quanto uma chamada custa antes de chamar uma ferramenta que gasta — toda ferramenta assim é marcada com `destructiveHint: true`.
+- **Confira o resultado.** Os pedidos são entregues on-chain em segundos; leia `get_order` ou aguarde o webhook `order.updated`.

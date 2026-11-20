@@ -1,0 +1,58 @@
+---
+title: "MCP के साथ बनाएँ"
+sidebarTitle: "अवलोकन"
+description: "अपने ऐप या एजेंट से TronRental का MCP सर्वर इस्तेमाल करें: ऑथेंटिकेशन का तरीका चुनें, फिर एक उदाहरण चुनें"
+---
+
+TronRental MCP सर्वर `https://mcp.tronrental.com/mcp` पर मानक [Streamable HTTP ट्रांसपोर्ट](https://modelcontextprotocol.io/specification/latest/basic/transports) इस्तेमाल करता है। रिमोट MCP सर्वर को सपोर्ट करने वाला कोई भी MCP SDK या LLM प्लेटफ़ॉर्म इसे इस्तेमाल कर सकता है।
+
+- **स्टेटलेस:** हर अनुरोध एक सामान्य `POST` है; कोई सेशन नहीं रखना।
+- **टूल्स क्रेडेंशियल पर निर्भर:** `tools/list` सिर्फ़ वही टूल्स लौटाता है जिन्हें कुंजी या कनेक्शन कॉल कर सकता है।
+- **REST जैसे ही नियम:** हर टूल के पीछे एक [REST API](/hi/api-reference/energy/get-prices) रूट है, वही कीमतें, जाँचें और त्रुटि कोड।
+
+## ऑथेंटिकेशन का तरीका चुनें
+
+<CardGroup cols={2}>
+  <Card title="API कुंजी — आपका अपना सर्वर" icon="server">
+    आपके बैकएंड, स्क्रिप्ट और उन एजेंटों के लिए जो **आपके** खाते पर काम करते हैं। कुंजी `Authorization: Bearer <key>` या `X-API-Key: <key>` के रूप में भेजें। कोई दैनिक सीमा नहीं, `max_price_trx` वैकल्पिक, `withdraw` स्कोप के साथ निकासी संभव।
+  </Card>
+  <Card title="OAuth — आपके उपयोगकर्ताओं के खाते" icon="user-shield">
+    उन ऐप्स के लिए जहाँ **हर उपयोगकर्ता** अपना TronRental खाता जोड़ता है। उपयोगकर्ता [सहमति स्क्रीन](/hi/agents/overview) पर स्वीकृति देता है; आपको उसकी चुनी अनुमतियों और दैनिक सीमा वाला टोकन मिलता है। देखें [MCP क्लाइंट्स के लिए OAuth](/hi/agents/reference/oauth)।
+  </Card>
+</CardGroup>
+
+डैशबोर्ड के [API पेज](https://tronrental.com/dashboard/api) पर API कुंजी बनाएँ (कुल 100 TRX के टॉप-अप के बाद उपलब्ध)। उसे सिर्फ़ वही स्कोप दें जो आपके एजेंट को चाहिए।
+
+<Warning>
+  जब कोई LLM प्लेटफ़ॉर्म आपकी ओर से MCP सर्वर को कॉल करता है (OpenAI hosted MCP, Claude API MCP कनेक्टर), तो आपकी कुंजी या टोकन उस प्लेटफ़ॉर्म को भेजा जाता है, और कॉल्स **उसके** IP पतों से आती हैं। `withdraw` के बिना कुंजी इस्तेमाल करें, उसके स्कोप सीमित रखें, और ध्यान दें कि IP व्हाइटलिस्ट वाली कुंजी ये कॉल्स अस्वीकार कर देगी। कुंजी को अपने सर्वर पर ही रखने के लिए MCP क्लाइंट ख़ुद चलाएँ (TypeScript और Python उदाहरण)।
+</Warning>
+
+## एक उदाहरण चुनें
+
+<CardGroup cols={2}>
+  <Card title="TypeScript" icon="js" href="/hi/agents/build/typescript">
+    आधिकारिक TypeScript SDK के साथ Streamable HTTP पर MCP क्लाइंट।
+  </Card>
+  <Card title="Python" icon="python" href="/hi/agents/build/python">
+    आधिकारिक Python SDK के साथ Streamable HTTP पर MCP क्लाइंट।
+  </Card>
+  <Card title="OpenAI Agents SDK" icon="robot" href="/hi/agents/build/openai-agents">
+    OpenAI एजेंटों के लिए hosted MCP टूल और लोकल MCP क्लाइंट।
+  </Card>
+  <Card title="Claude API" icon="message-bot" href="/hi/agents/build/claude-api">
+    Messages API अनुरोध में MCP कनेक्टर।
+  </Card>
+</CardGroup>
+
+## MCP या REST?
+
+**MCP** तब इस्तेमाल करें जब भाषा मॉडल तय करता है कि कौन-सी कॉल करनी है: मॉडल टूल्स की सूची और उनके विवरण पढ़कर टूल चुनता है।
+
+**[REST API](/hi/api-reference/energy/get-prices)** तब इस्तेमाल करें जब आपका कोड पहले से जानता है कि क्या करना है — उदाहरण के लिए, "हर पेआउट से पहले 65,000 एनर्जी ख़रीदो"। यह एक HTTP अनुरोध है, बिना MCP परत के, और [webhooks](/hi/api-reference/webhooks/overview) आपको बताते हैं कि ऑर्डर कब पूरा हुआ। दोनों एक ही API कुंजी इस्तेमाल करते हैं, इसलिए आप इन्हें मिला सकते हैं।
+
+## लाइव होने से पहले
+
+- **पहले कोट, फिर ख़रीद।** कोट का `total_trx` `max_price_trx` के रूप में भेजें। देखें [खर्च और त्रुटियां](/hi/agents/reference/spending-and-errors)।
+- **सुरक्षित रूप से दोबारा कोशिश करें।** हर कार्रवाई के लिए एक `idempotency_key` (UUID) बनाएँ और दोबारा कोशिश में उसे ही इस्तेमाल करें।
+- **लागत दिखाएँ।** खर्च करने वाले टूल को कॉल करने से पहले उपयोगकर्ता को बताएँ कि कॉल की लागत क्या है — ऐसा हर टूल `destructiveHint: true` से चिह्नित है।
+- **परिणाम जाँचें।** ऑर्डर कुछ सेकंड में ऑन-चेन डिलीवर होते हैं; `get_order` पढ़ें या `order.updated` webhook का इंतज़ार करें।

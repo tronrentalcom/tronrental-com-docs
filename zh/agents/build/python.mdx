@@ -1,0 +1,84 @@
+---
+title: "Python"
+description: "使用官方 MCP Python SDK 连接 TronRental MCP 服务器"
+---
+
+<Info>
+  于 2026 年 11 月 20 日针对 `mcp` **2.3.0**（Python 3.11+，HTTP 通过 `httpx2`）验证。在 `mcp` 2.x 中，传输函数是 `streamable_http_client`，它从 HTTP 客户端获取请求头；1.x 中的名称 `streamablehttp_client` 已不存在。
+</Info>
+
+## 安装
+
+```bash
+pip install "mcp>=2.3"
+```
+
+## 列出工具并获取报价
+
+```python quote.py
+import asyncio
+import os
+
+import httpx2
+from mcp import Client
+from mcp.client.streamable_http import streamable_http_client
+
+URL = "https://mcp.tronrental.com/mcp"
+
+
+async def main() -> None:
+    headers = {"Authorization": f"Bearer {os.environ['TRONRENTAL_API_KEY']}"}
+    async with httpx2.AsyncClient(headers=headers, timeout=httpx2.Timeout(30.0, read=120.0)) as http:
+        async with Client(streamable_http_client(URL, http_client=http)) as client:
+            tools = await client.list_tools()
+            print([tool.name for tool in tools.tools])
+
+            quote = await client.call_tool("quote_energy", {"volume": 65000, "duration": "1h"})
+            print(quote.structuredContent)
+            # {'volume': 65000, 'duration': '1h', 'total_trx': '1.694350', ...}
+
+
+asyncio.run(main())
+```
+
+```bash
+TRONRENTAL_API_KEY=your_key python quote.py
+```
+
+`Client` 会替你完成 MCP `initialize` 握手。`tools/list` 只返回你的密钥权限范围允许的工具。
+
+## 购买能量
+
+先报价，把报价的 `total_trx` 作为 `max_price_trx` 传入，并为这次购买保留同一个 `idempotency_key`，这样重试不会重复扣款：
+
+```python
+import uuid
+
+
+async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
+    quote = await client.call_tool("quote_energy", {"volume": volume, "duration": "1h"})
+    total = quote.structuredContent["total_trx"]
+
+    key = str(uuid.uuid4())  # 重试这次购买时复用它
+    order = await client.call_tool(
+        "buy_energy",
+        {
+            "target_address": target,
+            "volume": volume,
+            "duration": "1h",
+            "max_price_trx": total,
+            "idempotency_key": key,
+        },
+    )
+    if order.isError:
+        raise RuntimeError(order.structuredContent["error"])  # {code, message, status}
+    return order.structuredContent  # 订单：id、status、price_trx、...
+```
+
+在 SDK 中，被拒绝的调用不会抛出异常：结果中设置了 `isError`，[错误代码](/zh/agents/reference/spending-and-errors)位于 `structuredContent["error"]`。
+
+## 使用 OAuth 让用户登录
+
+对于每个用户连接自己账户的应用，请把 SDK 的 `mcp.client.auth.OAuthClientProvider` 作为 `httpx2.AsyncClient` 的 `auth` 使用，而不是请求头。它会针对 TronRental 的 [OAuth 服务器](/zh/agents/reference/oauth)执行发现、客户端注册和 PKCE；你提供令牌存储以及重定向和回调处理程序。见 SDK 的[授权指南](https://py.sdk.modelcontextprotocol.io/)。
+
+桌面和 CLI 应用请使用回环重定向 URI（`http://127.0.0.1:<port>/callback`）；如需使用 Web 应用自己的回调地址，请[联系支持](https://t.me/TronRentalcom_Help_bot)。

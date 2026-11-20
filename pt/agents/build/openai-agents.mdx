@@ -1,0 +1,141 @@
+---
+title: "OpenAI Agents SDK"
+description: "Dê ferramentas da TronRental a um agente da OpenAI — como ferramenta MCP hospedada ou por um cliente MCP local"
+---
+
+<Info>
+  Verificado em 20 de novembro de 2026 com `openai-agents` **0.25.0** (Python) e `@openai/agents` **0.22.0** (TypeScript).
+</Info>
+
+Há duas formas de conectar:
+
+| | Ferramenta MCP hospedada | Cliente MCP local |
+|---|---|---|
+| Quem chama a TronRental | os servidores da OpenAI | o seu processo |
+| Para onde vai a chave | para a OpenAI a cada requisição | fica no seu servidor |
+| Chave com lista de IPs permitidos | recusada (IPs da OpenAI) | funciona |
+
+## Instalação
+
+```bash
+pip install "openai-agents>=0.25"
+```
+
+## Ferramenta MCP hospedada
+
+O modelo chama a TronRental a partir da OpenAI. Peça aprovação antes de qualquer ferramenta que altere algo: as ferramentas só de leitura rodam sozinhas, as demais passam pelo seu callback.
+
+```python hosted.py
+import asyncio
+import os
+
+from agents import Agent, HostedMCPTool, Runner
+from agents.tool import MCPToolApprovalFunctionResult, MCPToolApprovalRequest
+
+
+def approve(request: MCPToolApprovalRequest) -> MCPToolApprovalFunctionResult:
+    answer = input(f"Allow {request.data.name}({request.data.arguments})? [y/N] ")
+    return {"approve": answer.strip().lower() == "y"}
+
+
+tronrental = HostedMCPTool(
+    tool_config={
+        "type": "mcp",
+        "server_label": "tronrental",
+        "server_url": "https://mcp.tronrental.com/mcp",
+        "authorization": os.environ["TRONRENTAL_API_KEY"],
+        "require_approval": {"never": {"read_only": True}},
+    },
+    on_approval_request=approve,
+)
+
+agent = Agent(
+    name="Energy assistant",
+    instructions="Quote before buying and pass the quote's total_trx as max_price_trx.",
+    tools=[tronrental],
+)
+
+
+async def main() -> None:
+    result = await Runner.run(agent, "How much is 65,000 energy for 1 hour on TronRental?")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+`authorization` é enviado à TronRental como `Authorization: Bearer <value>`: uma chave de API ou um token de acesso OAuth do usuário. Para restringir o que o modelo vê, adicione `"allowed_tools": ["quote_energy", "buy_energy", "get_order"]`.
+
+## Cliente MCP local
+
+O seu processo se conecta à TronRental e entrega as ferramentas ao agente; a chave nunca sai do seu servidor.
+
+```python local.py
+import asyncio
+import os
+
+from agents import Agent, Runner
+from agents.mcp import MCPServerStreamableHttp
+
+
+async def main() -> None:
+    async with MCPServerStreamableHttp(
+        name="tronrental",
+        params={
+            "url": "https://mcp.tronrental.com/mcp",
+            "headers": {"Authorization": f"Bearer {os.environ['TRONRENTAL_API_KEY']}"},
+            "timeout": 30,
+        },
+        cache_tools_list=True,
+    ) as tronrental:
+        agent = Agent(
+            name="Energy assistant",
+            instructions="Quote before buying and pass the quote's total_trx as max_price_trx.",
+            mcp_servers=[tronrental],
+        )
+        result = await Runner.run(agent, "What is my TronRental balance?")
+        print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+## TypeScript
+
+```ts
+import { Agent, run, hostedMcpTool } from "@openai/agents";
+
+const agent = new Agent({
+  name: "Energy assistant",
+  instructions: "Quote before buying and pass the quote's total_trx as max_price_trx.",
+  tools: [
+    hostedMcpTool({
+      serverLabel: "tronrental",
+      serverUrl: "https://mcp.tronrental.com/mcp",
+      authorization: process.env.TRONRENTAL_API_KEY,
+      requireApproval: { never: { readOnly: true } },
+    }),
+  ],
+});
+
+const result = await run(agent, "How much is 65,000 energy for 1 hour on TronRental?");
+console.log(result.finalOutput);
+```
+
+Com `requireApproval` diferente de `"never"`, a execução para nas ferramentas que precisam de aprovação e as devolve em `result.interruptions`; aprove-as com `result.state.approve(...)` e execute de novo com `result.state`.
+
+Para um cliente local em TypeScript, use `new MCPServerStreamableHttp({ url, requestInit: { headers } })` de `@openai/agents` e passe-o em `mcpServers`.
+
+## Responses API sem o SDK
+
+A ferramenta hospedada é a ferramenta `mcp` da Responses API:
+
+```json
+{
+  "type": "mcp",
+  "server_label": "tronrental",
+  "server_url": "https://mcp.tronrental.com/mcp",
+  "authorization": "<API key or OAuth access token>",
+  "require_approval": { "never": { "read_only": true } }
+}
+```

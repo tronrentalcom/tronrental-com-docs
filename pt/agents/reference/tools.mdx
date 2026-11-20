@@ -1,0 +1,18 @@
+---
+title: "Ferramentas"
+description: "Todas as ferramentas do servidor MCP da TronRental: a permissão, o que fazem com dinheiro e a rota da API por trás"
+---
+
+import AgentTools from "/snippets/agent-tools-pt.mdx";
+
+Cada ferramenta é uma rota da [API REST](/pt/api-reference/energy/get-prices), chamada no servidor com as credenciais de quem chama. As regras são as mesmas do REST: os mesmos preços, verificações, idempotência e códigos de erro.
+
+- **Argumentos** são os parâmetros da rota, achatados: parâmetros de caminho e de consulta e os campos do corpo JSON. Os nomes e tipos estão no `inputSchema` da ferramenta e na referência da API da rota.
+- **`idempotency_key`** é o cabeçalho `Idempotency-Key` da rota, oferecido em toda ferramenta cuja rota o aceita.
+- **Um resultado** chega como `structuredContent` (a resposta JSON da rota; uma lista vem envolvida como `{"result": [...]}`) e como o mesmo JSON em um bloco de texto.
+- **Um erro** chega com `isError: true` e `{"error": {"code", "message", "status"}}` — o próprio [código de erro](/pt/agents/reference/spending-and-errors#códigos-de-erro) da API.
+- **Hints:** toda ferramenta traz `title`, `readOnlyHint`, `destructiveHint` e `openWorldHint`. Tudo o que gasta o saldo ou ativa gastos recorrentes é marcado com `destructiveHint: true`, então os clientes perguntam antes de chamar.
+
+**Dinheiro:** `gasta` — cobra o saldo na chamada; `recorrente` — ativa gastos que rodam sozinhos e exige [`recurring`](/pt/agents/reference/permissions#gastos-que-rodam-sozinhos-recurring) para um app conectado; `para o saldo` — devolve dinheiro ao saldo.
+
+<AgentTools />

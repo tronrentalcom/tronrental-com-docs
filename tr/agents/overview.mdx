@@ -1,0 +1,72 @@
+---
+title: "Ajanlara genel bakış"
+sidebarTitle: "Genel bakış"
+description: "Yapay zekâ ajanlarını MCP üzerinden TronRental'a bağlayın: bir ajan neler yapabilir ve harcamalarını nasıl kontrol edersiniz"
+---
+
+TronRental, uzak bir [Model Context Protocol](https://modelcontextprotocol.io) (MCP) sunucusu çalıştırır:
+
+```
+https://mcp.tronrental.com/mcp
+```
+
+Her MCP istemcisi — Claude, ChatGPT, Claude Code, Codex, Cursor veya kendi kodunuz — bu sunucuya bağlanır, TronRental ile giriş yapar ve hesabınız için araçlar alır. Kurulacak bir şey yok, kopyalanacak API anahtarı yok.
+
+## Bir ajan neler yapabilir
+
+| Alan | Örnekler |
+|---|---|
+| Enerji ve bant genişliği | Herhangi bir TRON adresi için enerji veya bant genişliği teklifi alma ve satın alma, yeni bir adresi aktive etme, bir bant genişliği siparişini geri alma |
+| Energy Broadcaster | Bir cüzdan için broadcast URL'si oluşturma, ayarlarını değiştirme, kotasını ve olaylarını görme |
+| Abonelikler | Smart Mode, transfer paketleri, enerji ve bant genişliği otomatik dolumu, otomatik bant genişliği, Energy Resale |
+| Staking | Bakiyeden TRX stake etme, stake'i geri çekme, ödülleri talep etme |
+| Node API | Planları ve kullanımı görme, plan satın alma, deneme başlatma |
+| Faturalar | Fatura oluşturma, e-postayla gönderme, durumunu takip etme |
+| Hesap | Bakiye, geçmiş, siparişler, yatırma adresi, raporlar |
+
+Tam liste [araç referansında](/tr/agents/reference/tools). Bir ajan yalnızca bağlantısının izin verdiği araçları görür.
+
+## Kontrol sizde
+
+<CardGroup cols={2}>
+  <Card title="Onay ekranı" icon="hand">
+    Bir ajan ilk kez bağlandığında tronrental.com'da giriş yapar, uygulamanın adını ve döneceği siteyi görürsünüz. Siz onaylayana kadar hiçbir şey paylaşılmaz.
+  </Card>
+  <Card title="İzinler" icon="key">
+    Ajanın neler yapabileceğini işaretlersiniz: okuma, enerji satın alma, Smart Mode kullanma vb. Kendi kendine çalışan harcamalar ayrı bir kutudur ve varsayılan olarak kapalıdır. Bkz. [izinler](/tr/agents/reference/permissions).
+  </Card>
+  <Card title="Günlük harcama limiti" icon="gauge">
+    Başka bir tutar belirlemezseniz her bağlantı **24 saatte en fazla 100 TRX** harcayabilir. Bunu istediğiniz zaman panelin [API sayfasındaki](https://tronrental.com/dashboard/api) **Bağlı uygulamalar** bölümünden değiştirin.
+  </Card>
+  <Card title="İstediğiniz zaman bağlantıyı kesin" icon="plug-circle-xmark">
+    Bağlı uygulamalar'teki **Bağlantıyı kes**, bağlantıyı ve tüm belirteçlerini tek seferde iptal eder. Ajanın sonraki çağrısı reddedilir.
+  </Card>
+</CardGroup>
+
+- **Satın almadan önce yükleme.** Hesabın yüklemeleri toplam 100 TRX'e ulaşana kadar bir bağlantı yalnızca okuyabilir: bakiye, geçmiş ve yatırma adresi. Satın almaya izin vermek için yükleme yaptıktan sonra yeniden bağlanın.
+- **Kabul ettiğiniz fiyat.** Her satın alma `max_price_trx` taşır — ajan önce teklif alır ve teklifteki toplamı gönderir. Fiyat bunun üzerine çıkarsa satın alma reddedilir, ücret alınmaz.
+- **Çift ücret yok.** Satın almalar ve bir şey oluşturan diğer çağrılar bir idempotency anahtarı alır; böylece kaybolan bir yanıttan sonraki tekrar ilk sonucu döndürür.
+- **Para çekme yok.** Bağlı bir uygulama asla para çekemez. Para çekme, `withdraw` izni, 2FA ve IP izin listesi olan API anahtarlarında kalır.
+
+Bir ajanın verdiği siparişler [siparişte](/tr/api-reference/orders/get-order) ve [`order.updated` webhook'unda](/tr/api-reference/webhooks/overview) `source: "agent"` ile işaretlenir.
+
+## Sonraki adımlar
+
+<CardGroup cols={2}>
+  <Card title="Bir istemci bağlayın" icon="plug" href="/tr/agents/connect">
+    Claude, ChatGPT, Claude Code, Codex ve Cursor — adım adım.
+  </Card>
+  <Card title="MCP ile geliştirin" icon="code" href="/tr/agents/build/overview">
+    TronRental'ın MCP sunucusunu kendi uygulamanızdan veya ajanınızdan, çalışan örneklerle kullanın.
+  </Card>
+  <Card title="Araç referansı" icon="list" href="/tr/agents/reference/tools">
+    Her araç, izni ve parayla ne yaptığı.
+  </Card>
+  <Card title="Harcamalar ve hatalar" icon="triangle-exclamation" href="/tr/agents/reference/spending-and-errors">
+    `max_price_trx`, idempotency anahtarları, günlük limit ve hata kodları.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Ajanlar kısa bir kurulum kılavuzunu [tronrental.com/skill.md](https://tronrental.com/skill.md) adresinden okuyabilir: ajanınızı oraya yönlendirin ve bağlanmasını isteyin.
+</Tip>

@@ -1,43 +1,46 @@
 ---
-title: "智能体 OAuth"
-description: "AI 智能体如何通过「使用 TronRental 登录」连接 TronRental：权限、每日消费上限、断开连接"
+title: "面向 MCP 客户端的 OAuth"
+sidebarTitle: "OAuth"
+description: "MCP 客户端如何让用户登录 TronRental：发现、注册、PKCE、令牌和撤销"
 ---
 
-## 工作原理
+现成的客户端（Claude、ChatGPT、Claude Code、Codex、Cursor）会自行完成以下全部步骤。本页面向开发自己的 MCP 客户端和应用的开发者。流程遵循 [MCP 授权规范](https://modelcontextprotocol.io/specification/latest/basic/authorization)。
 
-1. 把 TronRental 服务器添加到你的智能体——见 [MCP 服务器](/zh/resources/mcp-server)。
-2. 智能体打开 TronRental 登录页。登录（或注册）后会看到授权页面：应用名称、它返回的网站以及它请求的权限。
-3. 选择账户、权限和每日上限，然后批准。
-4. 智能体只获得此连接的令牌，永远看不到你的密码或 API 密钥。
+## 发现
 
-## 权限
+1. 未经身份验证的 `POST https://mcp.tronrental.com/mcp` 返回 `401`，并带有
+   ```
+   WWW-Authenticate: Bearer resource_metadata="https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp"
+   ```
+2. 受保护资源元数据（RFC 9728）指明资源 `https://mcp.tronrental.com/mcp` 和授权服务器 `https://mcp.tronrental.com`。
+3. 授权服务器元数据（RFC 8414）位于 `https://mcp.tronrental.com/.well-known/oauth-authorization-server`。其端点为同一主机上的 `/oauth/register`、`/oauth/authorize`、`/oauth/token` 和 `/oauth/revoke`。
 
-| 权限 | 智能体可以做什么 |
-|---|---|
-| `view` | 余额、历史、订单、地址检查 |
-| `deposit_view` | 充值地址和充值记录 |
-| `buy_energy` | 购买能量、激活地址、发票 |
-| `buy_bandwidth` | 购买带宽 |
-| `smart_mode` | Smart Mode |
-| `transfer_packages` | 转账套餐 |
-| `energy_resale` | Energy Resale |
-| `recurring` | 开启自动执行的扣款（自动充能、自动带宽、Smart Mode、Energy Resale、广播器）。默认关闭 |
+## 客户端注册
 
-在账户累计充值达到 100 TRX 之前，连接只获得 `view` 和 `deposit_view`；充值后重新连接即可允许购买。
+- **Dynamic Client Registration**（RFC 7591）位于 `/oauth/register`。客户端为公共客户端：`token_endpoint_auth_method` 始终为 `none`。
+- 接受来自受支持平台的 **Client ID Metadata Documents**。
+- **Redirect URI** 必须在允许列表中：回环地址（`http://127.0.0.1:<any port>`、`http://localhost:<any port>`）以及受支持平台的回调地址。其他 URI 会以 `invalid_redirect_uri` 被拒绝。正在开发带有自己回调地址的 Web 应用？请[联系支持](https://t.me/TronRentalcom_Help_bot)添加。
 
-**已连接的应用永远无法提现。** 提现仍只限于具有 `withdraw` 权限、开启 2FA 并设置 IP 白名单的 API 密钥。
+## 授权
 
-## 每日消费上限
+- 授权码流程，使用 **PKCE，仅支持 `S256`**。
+- `resource` 参数为必填，且必须为 `https://mcp.tronrental.com/mcp`；令牌针对此受众签发。
+- `scope` 列出应用请求的[权限](/zh/agents/reference/permissions)，以空格分隔，例如 `view deposit_view buy_energy`。用户可以授予更少的权限；令牌响应中的 `scope` 说明实际授予了什么。OAuth 不存在 `withdraw`，请求它会以 `invalid_scope` 被拒绝。
+- 用户在 tronrental.com 登录（或注册），选择账户、权限和每日消费上限，然后批准。TronRental 不认识的应用会显示为未验证。
 
-每个连接都有 24 小时消费上限——除非你在授权页面设置其他数字，否则为 100 TRX。账户所有者可以选择「无上限」。自动执行的扣款（`recurring`）不计入上限：它们在控制台中列出，也可在那里关闭。
+## 令牌
 
-## 已连接的应用
+| 令牌 | 有效期 | 说明 |
+|---|---|---|
+| 访问令牌 | 1 小时 | 以 `Authorization: Bearer <token>` 发送到 `/mcp` 和 [REST API](/zh/api-reference/energy/get-prices) |
+| 刷新令牌 | 30 天 | 每次使用时轮换。重复使用旧的刷新令牌会撤销整个连接 |
 
-控制台的 API 页面列出所有已连接的应用：谁连接的、权限、最近 7 天的请求。「断开」会一次性撤销该连接及其所有令牌——智能体的下一次调用将被拒绝。
+只支持 `authorization_code` 和 `refresh_token` 授权类型；不支持 `client_credentials`——服务器间调用请使用 [API 密钥](/zh/agents/build/overview)。
 
-## 面向 MCP 客户端开发者
+已连接的应用也可以用访问令牌调用 REST API，但只能调用[工具参考](/zh/agents/reference/tools)中列出的路由；其他任何路由都返回 `403 AGENT_ROUTE_CLOSED`。
 
-- 发现: `https://mcp.tronrental.com/mcp` → `401` + `WWW-Authenticate` → `https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp` (RFC 9728); `https://mcp.tronrental.com/.well-known/oauth-authorization-server` (RFC 8414).
-- OAuth 2.1 + PKCE（仅 `S256`），公共客户端（`token_endpoint_auth_method: none`）。客户端注册：Dynamic Client Registration（RFC 7591）；受支持平台的 Client ID Metadata Document 也可使用。
-- Redirect URI：回环地址（`http://127.0.0.1:<任意端口>`、`http://localhost:<任意端口>`）以及受支持平台的回调地址。需要其他地址请联系支持。
-- 访问令牌 1 小时，刷新令牌 30 天并轮换；重复使用旧的刷新令牌会撤销该连接。
+## 撤销
+
+- 应用可以在 `/oauth/revoke` 撤销自己的令牌。
+- 用户可以在控制台 [API 页面](https://tronrental.com/dashboard/api)的 **已连接的应用** 中断开应用：该连接及其所有令牌会被一次性撤销，下一次对 `/mcp` 的调用会得到 `401` 和 `error="invalid_token"`。
+- 每个账户和应用只有一个连接：再次连接同一个应用会更新其权限和上限，而不是新增第二个连接。

@@ -1,0 +1,86 @@
+---
+title: "TypeScript"
+description: "Conecte-se ao servidor MCP da TronRental a partir do Node.js com o SDK oficial de MCP para TypeScript"
+---
+
+<Info>
+  Verificado em 20 de novembro de 2026 com `@modelcontextprotocol/client` **2.4.0** (o SDK v2, Node.js 20+). No antigo `@modelcontextprotocol/sdk` 1.x as classes são as mesmas; importe-as de `@modelcontextprotocol/sdk/client/index.js` e `@modelcontextprotocol/sdk/client/streamableHttp.js`.
+</Info>
+
+## Instalação
+
+```bash
+npm install @modelcontextprotocol/client
+```
+
+Rode o cliente no seu servidor, não em um navegador: o servidor MCP recusa requisições com um cabeçalho `Origin` de outro domínio.
+
+## Listar ferramentas e obter uma cotação
+
+```ts quote.mjs
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+
+const transport = new StreamableHTTPClientTransport(new URL("https://mcp.tronrental.com/mcp"), {
+  requestInit: { headers: { Authorization: `Bearer ${process.env.TRONRENTAL_API_KEY}` } },
+});
+const client = new Client({ name: "my-app", version: "1.0.0" });
+await client.connect(transport);
+
+const { tools } = await client.listTools();
+console.log(tools.map((t) => t.name));
+
+const quote = await client.callTool({
+  name: "quote_energy",
+  arguments: { volume: 65000, duration: "1h" },
+});
+console.log(quote.structuredContent);
+// { volume: 65000, duration: "1h", total_trx: "1.694350", ... }
+
+await client.close();
+```
+
+```bash
+TRONRENTAL_API_KEY=your_key node quote.mjs
+```
+
+`tools/list` devolve apenas as ferramentas que os escopos da sua chave permitem. O `inputSchema` de cada ferramenta descreve os argumentos.
+
+## Comprar energia
+
+Cote primeiro, envie o `total_trx` da cotação como `max_price_trx` e mantenha um único `idempotency_key` para a compra, para que uma nova tentativa não cobre duas vezes:
+
+```ts
+import { randomUUID } from "node:crypto";
+
+const target = "TRecipientAddress...";
+const quote = await client.callTool({
+  name: "quote_energy",
+  arguments: { volume: 65000, duration: "1h" },
+});
+
+const idempotencyKey = randomUUID(); // reutilize-o se repetir esta compra
+const order = await client.callTool({
+  name: "buy_energy",
+  arguments: {
+    target_address: target,
+    volume: 65000,
+    duration: "1h",
+    max_price_trx: quote.structuredContent.total_trx,
+    idempotency_key: idempotencyKey,
+  },
+});
+
+if (order.isError) {
+  console.error(order.structuredContent.error); // { code, message, status }
+} else {
+  console.log(order.structuredContent); // o pedido: id, status, price_trx, ...
+}
+```
+
+Uma chamada recusada não lança exceção: o resultado tem `isError: true` e o [código de erro](/pt/agents/reference/spending-and-errors#códigos-de-erro) em `structuredContent.error`.
+
+## Login de usuários com OAuth
+
+Para um app em que cada usuário conecta a própria conta, passe um `authProvider` ao transporte em vez de um cabeçalho. A interface `OAuthClientProvider` do SDK executa a descoberta, o registro do cliente e o PKCE com o [servidor OAuth](/pt/agents/reference/oauth) da TronRental; você guarda os tokens e envia o usuário à URL de autorização. Veja o [guia de OAuth](https://ts.sdk.modelcontextprotocol.io/v2/clients/oauth) do SDK.
+
+Use uma redirect URI de loopback (`http://127.0.0.1:<port>/callback`) para apps de desktop e CLI; para o callback próprio de um app web, [fale com o suporte](https://t.me/TronRentalcom_Help_bot).

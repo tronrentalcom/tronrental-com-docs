@@ -1,135 +1,106 @@
 ---
-title: "MCP 服务器"
-description: "通过 Model Context Protocol (MCP) 使用 AI 代理访问 TronRental"
+title: "连接客户端"
+description: "把 TronRental 添加到 Claude、ChatGPT、Claude Code、Codex 或 Cursor，登录并开始使用"
 ---
 
-## 什么是 MCP？
+下面的每个客户端都连接同一个服务器，并使用 TronRental 为你登录——无需复制 API 密钥：
 
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io) 是一个开放标准，允许 AI 代理（Claude Code、Cursor、Windsurf 等）通过统一接口与外部服务交互。
-
-TronRental 提供官方 MCP 服务器，使 AI 代理能够完整访问能量购买 API — 从查询价格到完成购买。
-
-## 远程服务器（使用 TronRental 登录）
-
-主要的连接方式。智能体使用 `https://mcp.tronrental.com/mcp`；你通过 TronRental 登录，选择智能体可以做什么、每天最多花多少。无需复制 API 密钥。详情见 [智能体 OAuth](/zh/resources/oauth-for-agents)。
-
-**Claude (web / desktop):** [添加到 Claude](https://claude.ai/new?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp#settings/customize-connectors) — 或在 Settings → Connectors → Add custom connector 中填入上面的地址。然后 Connect 并登录。
-
-**ChatGPT (web):** Plugins → Add → Add Custom MCP Server → 粘贴地址 → Authentication 保持 OAuth → 创建 → 使用 TronRental 登录。如果没有该选项，请在设置中开启开发者模式。
-
-```bash Claude Code
-claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
-# then: /mcp → tronrental → Authenticate
+```
+https://mcp.tronrental.com/mcp
 ```
 
-```bash Codex
-codex mcp add tronrental --url https://mcp.tronrental.com/mcp
-# if the browser does not open: codex mcp login tronrental
-```
+首次使用时，客户端会打开 tronrental.com。登录（或注册），选择账户，勾选[权限](/zh/agents/reference/permissions)，设置每日消费上限并批准。客户端获得的令牌仅用于此连接。
 
-```json Cursor (~/.cursor/mcp.json)
-{ "mcpServers": { "tronrental": { "url": "https://mcp.tronrental.com/mcp" } } }
-```
+<Tabs>
+  <Tab title="Claude">
+    适用于网页版 Claude 和桌面应用，所有套餐均可（Free 套餐允许一个自定义连接器）。
 
-服务器只列出你的连接允许的工具。购买前，智能体先报价并把价格作为 `max_price_trx` 传入，同时发送 `idempotency_key`，重试永远不会重复扣款。
+    1. 打开 [Add to Claude](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp)——或进入 **Customize → Connectors → Add → Add custom connector**，填入名称 `TronRental` 和上面的 URL。
+    2. 点击 TronRental 旁边的 **Connect**。
+    3. 在 tronrental.com 登录并批准。
+    4. 在对话中，从工具菜单开启 TronRental 并提问，例如：*"What is my TronRental balance?"*
 
-智能体设置指南: [tronrental.com/skill.md](https://tronrental.com/skill.md).
+    在 Team 和 Enterprise 套餐中，由所有者在 **Organization settings → Connectors** 中添加连接器；成员随后点击 **Connect**。
+  </Tab>
+  <Tab title="ChatGPT">
+    1. 打开 [ChatGPT Plugins](https://chatgpt.com/plugins)，点击 **+** → **Add custom MCP server**。
+    2. 填入名称 `TronRental`，选择 **Public endpoint** 并粘贴上面的 URL。
+    3. 身份验证保持 **OAuth**，确认警告并点击 **Create as a plugin**。
+    4. 在 tronrental.com 登录并批准。
+    5. 在对话中，从工具菜单选择 TronRental。
 
-## 本地包（API 密钥）
+    如果看不到该选项，可能是你的工作区不允许自定义 MCP 服务器——请联系其管理员。ChatGPT 只能通过 OAuth 连接，不能使用 API 密钥。
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
+    ```
 
-添加到您的 AI 代理：
+    然后在 Claude Code 中运行 `/mcp`，选择 **tronrental** 和 **Authenticate**。浏览器会打开 tronrental.com；批准后返回终端。
 
-```bash
-npx -y @tronrental-com/mcp-server
-```
+    添加 `--scope user` 可在所有项目中使用 TronRental，添加 `--scope project` 可通过 `.mcp.json` 与团队共享。
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add tronrental --url https://mcp.tronrental.com/mcp
+    ```
 
-### Claude Code
+    Codex 会打开浏览器进行登录。如果没有打开，请运行：
 
-```bash
-# 无需 API 密钥（代理将使用您的邮箱注册账户）
-claude mcp add tronrental -- npx -y @tronrental-com/mcp-server
+    ```bash
+    codex mcp login tronrental
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    把服务器添加到 `~/.cursor/mcp.json`（所有项目）或 `.cursor/mcp.json`（单个项目）：
 
-# 使用 API 密钥
-claude mcp add tronrental -e TRONRENTAL_API_KEY=your_key -- npx -y @tronrental-com/mcp-server
-```
-
-### Cursor / Windsurf
-
-添加到您的 MCP 配置：
-
-```json
-{
-  "mcpServers": {
-    "tronrental": {
-      "command": "npx",
-      "args": ["-y", "@tronrental-com/mcp-server"],
-      "env": {
-        "TRONRENTAL_API_KEY": "your_key"  // pragma: allowlist secret
+    ```json
+    {
+      "mcpServers": {
+        "tronrental": {
+          "url": "https://mcp.tronrental.com/mcp"
+        }
       }
     }
-  }
-}
+    ```
+
+    Cursor 首次使用该服务器时会打开 tronrental.com 让你登录。
+
+    {/* TODO: an "Add to Cursor" button (cursor://anysphere.cursor-deeplink/mcp/install?name=TronRental&config=<base64 of {"url":"https://mcp.tronrental.com/mcp"}>) — check in Cursor whether the base64 must be URL-encoded before adding it. */}
+  </Tab>
+</Tabs>
+
+## 检查是否可用
+
+问智能体：*"Quote 65,000 energy for 1 hour on TronRental."* 它会调用 `quote_energy` 并显示价格——不会扣款。
+
+每次购买前，智能体都会报价、向你展示价格并把它作为 `max_price_trx` 传入；它还会发送 `idempotency_key`，因此重试永远不会重复扣款。购买要求账户累计充值达到 100 TRX——在此之前连接只能读取。见[支出和错误](/zh/agents/reference/spending-and-errors)。
+
+## 管理和断开连接
+
+[API 页面](https://tronrental.com/dashboard/api)上的 **已连接的应用** 列表显示每个已连接的客户端：谁连接的、它的权限、每日上限以及最近 24 小时的支出。可以在那里修改上限，或点击 **断开连接** 立即撤销连接。
+
+## 改用 API 密钥
+
+允许设置请求头的客户端可以使用 [API 密钥](/zh/authentication)连接，而无需登录——例如在你的服务器上运行的智能体：
+
+```bash
+claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp \
+  --header "Authorization: Bearer $TRONRENTAL_API_KEY"
 ```
 
-`TRONRENTAL_API_KEY` 环境变量是可选的。如果未提供，代理可以通过 MCP 工具注册新账户，并使用该账户的登录令牌工作；账户累计充值达到 100 TRX 后才会发放 API 密钥。代理会询问您的邮箱：TronRental 会向该邮箱发送 6 位验证码，只有在您把验证码提供给代理后，账户才会创建。
+在 Codex 中，把密钥所在的环境变量写入 `~/.codex/config.toml`：
 
-## 可用工具
+```toml
+[mcp_servers.tronrental]
+url = "https://mcp.tronrental.com/mcp"
+bearer_token_env_var = "TRONRENTAL_API_KEY"
+```
 
-MCP 服务器提供 12 个工具：
+在 Cursor 中，在 `url` 旁边添加 `"headers": { "Authorization": "Bearer ${env:TRONRENTAL_API_KEY}" }`。
 
-| 工具 | 认证 | 描述 |
-|------|------|------|
-| `get_prices` | 无需 | 当前能量和带宽价格 |
-| `calculate_savings` | 无需 | 计算节省：燃烧成本与租赁成本对比 |
-| `register` | 无需 | 开始注册：向用户邮箱发送 6 位验证码 |
-| `verify_email_code` | 无需 | 确认验证码并创建账户 |
-| `resend_email_code` | 无需 | 重新发送验证码（已过期或未收到） |
-| `login` | 无需 | 登录现有账户 |
-| `create_api_key` | 令牌 | 创建 API 密钥（累计充值 100 TRX 后） |
-| `get_deposit_address` | API 密钥或令牌 | 获取 TRX 充值地址 |
-| `get_balance` | API 密钥或令牌 | 查询账户余额 |
-| `buy_energy` | API 密钥或令牌 | 为 TRON 地址购买能量 |
-| `get_order` | API 密钥或令牌 | 查询订单状态 |
-| `regenerate_deposit_address` | API 密钥或令牌 | 生成新的充值地址 |
+API 密钥没有每日上限：只授予智能体所需的权限范围。见[使用 MCP 开发](/zh/agents/build/overview)。
 
-## 典型流程
+## 没有浏览器的智能体
 
-### 新用户（无 API 密钥）
-
-1. `get_prices` — 查看当前价格
-2. `calculate_savings` — 根据用户的转账量计算节省
-3. `register` — 用户的真实邮箱和密码；系统向该邮箱发送 6 位验证码
-4. 用户在邮件中查看验证码并提供给代理
-5. `verify_email_code` — 创建账户并登录
-6. `get_deposit_address` — 获取充值地址，用户发送 TRX 或 USDT
-7. `get_balance` — 确认充值到账
-8. `buy_energy` — 购买能量
-9. `get_order` — 确认委托
-10. `create_api_key` — 累计充值达到 100 TRX 后：密钥可在会话结束后保留访问权限（将其设置为 `TRONRENTAL_API_KEY`）
-
-<Note>
-  代理绝不会编造邮箱地址：没有来自真实邮箱的验证码，就不会创建账户。验证码有效期为 10 分钟；`resend_email_code` 会发送新的验证码（每小时最多 3 封邮件）。在获得密钥之前，工具使用登录令牌；令牌有效期为 1 小时，之后代理会再次调用 `login`。累计充值不足 100 TRX 时，`create_api_key` 会告知还需充值多少。 通过普通 HTTP 完成相同步骤的说明见[身份验证](/zh/authentication)。
-</Note>
-
-### 现有用户（已设置 API 密钥）
-
-1. `get_balance` — 查询余额
-2. `buy_energy` — 购买能量
-3. `get_order` — 确认委托
-
-## 能量数量
-
-| 场景 | 能量 |
-|------|------|
-| 接收方已持有 USDT | 65,000 |
-| 接收方从未持有 USDT | 131,000 |
-| 最小订单 | 1 |
-| 最大订单 | 5,000,000 |
-
-时长始终为 `1h` — 能量在几秒内即被使用，1 小时是租赁窗口。
-
-## 链接
-
-- **npm:** [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)
-- **GitHub:** [tronrentalcom/tronrental-com-mcp](https://github.com/tronrentalcom/tronrental-com-mcp)
-- **MCP Registry:** `io.github.tronrental-com/tronrental`
+无法打开浏览器的智能体可以使用本地包 [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server)：它在你的机器上运行，使用 `TRONRENTAL_API_KEY` 中的 API 密钥，或者让智能体用你的邮箱和邮件中的验证码注册账户。设置方法见其 [README](https://github.com/tronrentalcom/tronrental-com-mcp)。
