@@ -34,7 +34,7 @@ async def main() -> None:
             print([tool.name for tool in tools.tools])
 
             quote = await client.call_tool("quote_energy", {"volume": 65000, "duration": "1h"})
-            print(quote.structuredContent)
+            print(quote.structured_content)
             # {'volume': 65000, 'duration': '1h', 'total_trx': '1.694350', ...}
 
 
@@ -57,7 +57,7 @@ import uuid
 
 async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
     quote = await client.call_tool("quote_energy", {"volume": volume, "duration": "1h"})
-    total = quote.structuredContent["total_trx"]
+    total = quote.structured_content["total_trx"]
 
     key = str(uuid.uuid4())  # 重试这次购买时复用它
     order = await client.call_tool(
@@ -70,12 +70,12 @@ async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
             "idempotency_key": key,
         },
     )
-    if order.isError:
-        raise RuntimeError(order.structuredContent["error"])  # {code, message, status}
-    return order.structuredContent  # 订单：id、status、price_trx、...
+    if order.is_error:
+        raise RuntimeError(order.structured_content["error"])  # {code, message, status}
+    return order.structured_content  # 订单：id、status、price_trx、...
 ```
 
-在 SDK 中，被拒绝的调用不会抛出异常：结果中设置了 `isError`，[错误代码](/zh/agents/reference/spending-and-errors)位于 `structuredContent["error"]`。
+在 SDK 中，被拒绝的调用不会抛出异常：结果中设置了 `is_error`，[错误代码](/zh/agents/reference/spending-and-errors)位于 `structured_content["error"]`。
 
 ## 使用 OAuth 让用户登录
 

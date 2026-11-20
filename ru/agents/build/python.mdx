@@ -34,7 +34,7 @@ async def main() -> None:
             print([tool.name for tool in tools.tools])
 
             quote = await client.call_tool("quote_energy", {"volume": 65000, "duration": "1h"})
-            print(quote.structuredContent)
+            print(quote.structured_content)
             # {'volume': 65000, 'duration': '1h', 'total_trx': '1.694350', ...}
 
 
@@ -57,7 +57,7 @@ import uuid
 
 async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
     quote = await client.call_tool("quote_energy", {"volume": volume, "duration": "1h"})
-    total = quote.structuredContent["total_trx"]
+    total = quote.structured_content["total_trx"]
 
     key = str(uuid.uuid4())  # используйте его повторно, если повторяете эту покупку
     order = await client.call_tool(
@@ -70,12 +70,12 @@ async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
             "idempotency_key": key,
         },
     )
-    if order.isError:
-        raise RuntimeError(order.structuredContent["error"])  # {code, message, status}
-    return order.structuredContent  # заказ: id, status, price_trx, ...
+    if order.is_error:
+        raise RuntimeError(order.structured_content["error"])  # {code, message, status}
+    return order.structured_content  # заказ: id, status, price_trx, ...
 ```
 
-Отклонённый вызов не вызывает исключение в SDK: у результата выставлен `isError`, а [код ошибки](/ru/agents/reference/spending-and-errors#коды-ошибок) — в `structuredContent["error"]`.
+Отклонённый вызов не вызывает исключение в SDK: у результата выставлен `is_error`, а [код ошибки](/ru/agents/reference/spending-and-errors#коды-ошибок) — в `structured_content["error"]`.
 
 ## Вход пользователей через OAuth
 

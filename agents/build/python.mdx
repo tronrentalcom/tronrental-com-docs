@@ -34,7 +34,7 @@ async def main() -> None:
             print([tool.name for tool in tools.tools])
 
             quote = await client.call_tool("quote_energy", {"volume": 65000, "duration": "1h"})
-            print(quote.structuredContent)
+            print(quote.structured_content)
             # {'volume': 65000, 'duration': '1h', 'total_trx': '1.694350', ...}
 
 
@@ -57,7 +57,7 @@ import uuid
 
 async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
     quote = await client.call_tool("quote_energy", {"volume": volume, "duration": "1h"})
-    total = quote.structuredContent["total_trx"]
+    total = quote.structured_content["total_trx"]
 
     key = str(uuid.uuid4())  # reuse it if you retry this purchase
     order = await client.call_tool(
@@ -70,12 +70,12 @@ async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
             "idempotency_key": key,
         },
     )
-    if order.isError:
-        raise RuntimeError(order.structuredContent["error"])  # {code, message, status}
-    return order.structuredContent  # the order: id, status, price_trx, ...
+    if order.is_error:
+        raise RuntimeError(order.structured_content["error"])  # {code, message, status}
+    return order.structured_content  # the order: id, status, price_trx, ...
 ```
 
-A refused call does not raise in the SDK: the result has `isError` set and the [error code](/agents/reference/spending-and-errors#error-codes) in `structuredContent["error"]`.
+A refused call does not raise in the SDK: the result has `is_error` set and the [error code](/agents/reference/spending-and-errors#error-codes) in `structured_content["error"]`.
 
 ## Sign users in with OAuth
 

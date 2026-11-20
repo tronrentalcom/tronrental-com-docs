@@ -34,7 +34,7 @@ async def main() -> None:
             print([tool.name for tool in tools.tools])
 
             quote = await client.call_tool("quote_energy", {"volume": 65000, "duration": "1h"})
-            print(quote.structuredContent)
+            print(quote.structured_content)
             # {'volume': 65000, 'duration': '1h', 'total_trx': '1.694350', ...}
 
 
@@ -57,7 +57,7 @@ import uuid
 
 async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
     quote = await client.call_tool("quote_energy", {"volume": volume, "duration": "1h"})
-    total = quote.structuredContent["total_trx"]
+    total = quote.structured_content["total_trx"]
 
     key = str(uuid.uuid4())  # bu satın almayı tekrar denerseniz aynısını kullanın
     order = await client.call_tool(
@@ -70,12 +70,12 @@ async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
             "idempotency_key": key,
         },
     )
-    if order.isError:
-        raise RuntimeError(order.structuredContent["error"])  # {code, message, status}
-    return order.structuredContent  # sipariş: id, status, price_trx, ...
+    if order.is_error:
+        raise RuntimeError(order.structured_content["error"])  # {code, message, status}
+    return order.structured_content  # sipariş: id, status, price_trx, ...
 ```
 
-Reddedilen bir çağrı SDK'da istisna fırlatmaz: sonuçta `isError` ayarlıdır ve `structuredContent["error"]` içinde [hata kodu](/tr/agents/reference/spending-and-errors#hata-kodları) bulunur.
+Reddedilen bir çağrı SDK'da istisna fırlatmaz: sonuçta `is_error` ayarlıdır ve `structured_content["error"]` içinde [hata kodu](/tr/agents/reference/spending-and-errors#hata-kodları) bulunur.
 
 ## Kullanıcıları OAuth ile giriş yaptırma
 
