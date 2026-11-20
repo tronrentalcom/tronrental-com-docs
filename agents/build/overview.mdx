@@ -1,0 +1,58 @@
+---
+title: "Build with MCP"
+sidebarTitle: "Overview"
+description: "Use TronRental's MCP server from your own app or agent: choose how to authenticate, then pick an example"
+---
+
+The TronRental MCP server speaks the standard [Streamable HTTP transport](https://modelcontextprotocol.io/specification/latest/basic/transports) at `https://mcp.tronrental.com/mcp`. Any MCP SDK or LLM platform that supports remote MCP servers can use it.
+
+- **Stateless:** every request is a plain `POST`; there are no sessions to keep.
+- **Tools follow the credential:** `tools/list` returns only the tools the key or connection may call.
+- **Same rules as REST:** each tool is a [REST API](/api-reference/energy/get-prices) route behind the scenes, with the same prices, checks and error codes.
+
+## Choose how to authenticate
+
+<CardGroup cols={2}>
+  <Card title="API key — your own server" icon="server">
+    For your backend, scripts and agents that act on **your** account. Send the key as `Authorization: Bearer <key>` or `X-API-Key: <key>`. No daily cap, `max_price_trx` optional, withdrawals possible with the `withdraw` scope.
+  </Card>
+  <Card title="OAuth — your users' accounts" icon="user-shield">
+    For apps where **each user** connects their own TronRental account. The user approves the [consent screen](/agents/overview#you-stay-in-control); you get a token with the permissions and the daily cap they chose. See [OAuth for MCP clients](/agents/reference/oauth).
+  </Card>
+</CardGroup>
+
+Create an API key on the [API page](https://tronrental.com/dashboard/api) of the dashboard (available after top-ups of 100 TRX in total). Give it only the scopes your agent needs.
+
+<Warning>
+  When an LLM platform calls the MCP server for you (OpenAI hosted MCP, the Claude API MCP connector), your key or token is sent to that platform, and the calls come from **its** IP addresses. Use a key without `withdraw`, keep its scopes narrow, and note that a key with an IP whitelist will refuse those calls. To keep the key on your own server, run an MCP client yourself (the TypeScript and Python examples).
+</Warning>
+
+## Pick an example
+
+<CardGroup cols={2}>
+  <Card title="TypeScript" icon="js" href="/agents/build/typescript">
+    MCP client over Streamable HTTP with the official TypeScript SDK.
+  </Card>
+  <Card title="Python" icon="python" href="/agents/build/python">
+    MCP client over Streamable HTTP with the official Python SDK.
+  </Card>
+  <Card title="OpenAI Agents SDK" icon="robot" href="/agents/build/openai-agents">
+    Hosted MCP tool and a local MCP client for OpenAI agents.
+  </Card>
+  <Card title="Claude API" icon="message-bot" href="/agents/build/claude-api">
+    The MCP connector in a Messages API request.
+  </Card>
+</CardGroup>
+
+## MCP or REST?
+
+Use **MCP** when a language model decides which call to make: the model reads the tool list and their descriptions and picks the tool.
+
+Use the **[REST API](/api-reference/energy/get-prices)** when your code already knows what to do — for example, "buy 65,000 energy before each payout". It is one HTTP request with no MCP layer, and the [webhooks](/api-reference/webhooks/overview) tell you when an order is done. Both use the same API key, so you can mix them.
+
+## Before you go live
+
+- **Quote, then buy.** Pass the quote's `total_trx` as `max_price_trx`. See [Spending and errors](/agents/reference/spending-and-errors).
+- **Retry safely.** Generate an `idempotency_key` (a UUID) per action and reuse it on retries.
+- **Show the cost.** Tell the user what a call costs before calling a tool that spends — every such tool is marked `destructiveHint: true`.
+- **Check the result.** Orders are delivered on-chain within seconds; read `get_order` or wait for the `order.updated` webhook.

@@ -203,13 +203,42 @@
             ]
           },
           {
+            "tab": "Agents",
+            "groups": [
+              {
+                "group": "Get started",
+                "pages": [
+                  "agents/overview",
+                  "agents/connect"
+                ]
+              },
+              {
+                "group": "Build with MCP",
+                "pages": [
+                  "agents/build/overview",
+                  "agents/build/typescript",
+                  "agents/build/python",
+                  "agents/build/openai-agents",
+                  "agents/build/claude-api"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "agents/reference/tools",
+                  "agents/reference/permissions",
+                  "agents/reference/spending-and-errors",
+                  "agents/reference/oauth"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "Resources",
             "groups": [
               {
                 "group": "Resources",
                 "pages": [
-                  "resources/mcp-server",
-                  "resources/oauth-for-agents",
                   "resources/rate-limits",
                   "resources/changelog"
                 ]
@@ -379,13 +408,42 @@
             ]
           },
           {
+            "tab": "Агенты",
+            "groups": [
+              {
+                "group": "Начало",
+                "pages": [
+                  "ru/agents/overview",
+                  "ru/agents/connect"
+                ]
+              },
+              {
+                "group": "Встраивание MCP",
+                "pages": [
+                  "ru/agents/build/overview",
+                  "ru/agents/build/typescript",
+                  "ru/agents/build/python",
+                  "ru/agents/build/openai-agents",
+                  "ru/agents/build/claude-api"
+                ]
+              },
+              {
+                "group": "Справочник",
+                "pages": [
+                  "ru/agents/reference/tools",
+                  "ru/agents/reference/permissions",
+                  "ru/agents/reference/spending-and-errors",
+                  "ru/agents/reference/oauth"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "Ресурсы",
             "groups": [
               {
                 "group": "Ресурсы",
                 "pages": [
-                  "ru/resources/mcp-server",
-                  "ru/resources/oauth-for-agents",
                   "ru/resources/rate-limits",
                   "ru/resources/changelog"
                 ]
@@ -555,13 +613,42 @@
             ]
           },
           {
+            "tab": "智能体",
+            "groups": [
+              {
+                "group": "入门",
+                "pages": [
+                  "zh/agents/overview",
+                  "zh/agents/connect"
+                ]
+              },
+              {
+                "group": "用 MCP 构建",
+                "pages": [
+                  "zh/agents/build/overview",
+                  "zh/agents/build/typescript",
+                  "zh/agents/build/python",
+                  "zh/agents/build/openai-agents",
+                  "zh/agents/build/claude-api"
+                ]
+              },
+              {
+                "group": "参考",
+                "pages": [
+                  "zh/agents/reference/tools",
+                  "zh/agents/reference/permissions",
+                  "zh/agents/reference/spending-and-errors",
+                  "zh/agents/reference/oauth"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "资源",
             "groups": [
               {
                 "group": "资源",
                 "pages": [
-                  "zh/resources/mcp-server",
-                  "zh/resources/oauth-for-agents",
                   "zh/resources/rate-limits",
                   "zh/resources/changelog"
                 ]
@@ -731,13 +818,42 @@
             ]
           },
           {
+            "tab": "Agentes",
+            "groups": [
+              {
+                "group": "Primeros pasos",
+                "pages": [
+                  "es/agents/overview",
+                  "es/agents/connect"
+                ]
+              },
+              {
+                "group": "Integrar MCP",
+                "pages": [
+                  "es/agents/build/overview",
+                  "es/agents/build/typescript",
+                  "es/agents/build/python",
+                  "es/agents/build/openai-agents",
+                  "es/agents/build/claude-api"
+                ]
+              },
+              {
+                "group": "Referencia",
+                "pages": [
+                  "es/agents/reference/tools",
+                  "es/agents/reference/permissions",
+                  "es/agents/reference/spending-and-errors",
+                  "es/agents/reference/oauth"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "Recursos",
             "groups": [
               {
                 "group": "Recursos",
                 "pages": [
-                  "es/resources/mcp-server",
-                  "es/resources/oauth-for-agents",
                   "es/resources/rate-limits",
                   "es/resources/changelog"
                 ]
@@ -907,13 +1023,42 @@
             ]
           },
           {
+            "tab": "Ajanlar",
+            "groups": [
+              {
+                "group": "Başlangıç",
+                "pages": [
+                  "tr/agents/overview",
+                  "tr/agents/connect"
+                ]
+              },
+              {
+                "group": "MCP ile geliştirme",
+                "pages": [
+                  "tr/agents/build/overview",
+                  "tr/agents/build/typescript",
+                  "tr/agents/build/python",
+                  "tr/agents/build/openai-agents",
+                  "tr/agents/build/claude-api"
+                ]
+              },
+              {
+                "group": "Başvuru",
+                "pages": [
+                  "tr/agents/reference/tools",
+                  "tr/agents/reference/permissions",
+                  "tr/agents/reference/spending-and-errors",
+                  "tr/agents/reference/oauth"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "Kaynaklar",
             "groups": [
               {
                 "group": "Kaynaklar",
                 "pages": [
-                  "tr/resources/mcp-server",
-                  "tr/resources/oauth-for-agents",
                   "tr/resources/rate-limits",
                   "tr/resources/changelog"
                 ]
@@ -1083,13 +1228,42 @@
             ]
           },
           {
+            "tab": "Agentes",
+            "groups": [
+              {
+                "group": "Primeiros passos",
+                "pages": [
+                  "pt/agents/overview",
+                  "pt/agents/connect"
+                ]
+              },
+              {
+                "group": "Integrar MCP",
+                "pages": [
+                  "pt/agents/build/overview",
+                  "pt/agents/build/typescript",
+                  "pt/agents/build/python",
+                  "pt/agents/build/openai-agents",
+                  "pt/agents/build/claude-api"
+                ]
+              },
+              {
+                "group": "Referência",
+                "pages": [
+                  "pt/agents/reference/tools",
+                  "pt/agents/reference/permissions",
+                  "pt/agents/reference/spending-and-errors",
+                  "pt/agents/reference/oauth"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "Recursos",
             "groups": [
               {
                 "group": "Recursos",
                 "pages": [
-                  "pt/resources/mcp-server",
-                  "pt/resources/oauth-for-agents",
                   "pt/resources/rate-limits",
                   "pt/resources/changelog"
                 ]
@@ -1259,13 +1433,42 @@
             ]
           },
           {
+            "tab": "एजेंट",
+            "groups": [
+              {
+                "group": "शुरुआत",
+                "pages": [
+                  "hi/agents/overview",
+                  "hi/agents/connect"
+                ]
+              },
+              {
+                "group": "MCP के साथ बनाएँ",
+                "pages": [
+                  "hi/agents/build/overview",
+                  "hi/agents/build/typescript",
+                  "hi/agents/build/python",
+                  "hi/agents/build/openai-agents",
+                  "hi/agents/build/claude-api"
+                ]
+              },
+              {
+                "group": "संदर्भ",
+                "pages": [
+                  "hi/agents/reference/tools",
+                  "hi/agents/reference/permissions",
+                  "hi/agents/reference/spending-and-errors",
+                  "hi/agents/reference/oauth"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "संसाधन",
             "groups": [
               {
                 "group": "संसाधन",
                 "pages": [
-                  "hi/resources/mcp-server",
-                  "hi/resources/oauth-for-agents",
                   "hi/resources/rate-limits",
                   "hi/resources/changelog"
                 ]
@@ -1290,6 +1493,62 @@
     {
       "source": "/",
       "destination": "/introduction"
+    },
+    {
+      "source": "/resources/mcp-server",
+      "destination": "/agents/connect"
+    },
+    {
+      "source": "/resources/oauth-for-agents",
+      "destination": "/agents/reference/oauth"
+    },
+    {
+      "source": "/es/resources/mcp-server",
+      "destination": "/es/agents/connect"
+    },
+    {
+      "source": "/es/resources/oauth-for-agents",
+      "destination": "/es/agents/reference/oauth"
+    },
+    {
+      "source": "/hi/resources/mcp-server",
+      "destination": "/hi/agents/connect"
+    },
+    {
+      "source": "/hi/resources/oauth-for-agents",
+      "destination": "/hi/agents/reference/oauth"
+    },
+    {
+      "source": "/pt/resources/mcp-server",
+      "destination": "/pt/agents/connect"
+    },
+    {
+      "source": "/pt/resources/oauth-for-agents",
+      "destination": "/pt/agents/reference/oauth"
+    },
+    {
+      "source": "/ru/resources/mcp-server",
+      "destination": "/ru/agents/connect"
+    },
+    {
+      "source": "/ru/resources/oauth-for-agents",
+      "destination": "/ru/agents/reference/oauth"
+    },
+    {
+      "source": "/tr/resources/mcp-server",
+      "destination": "/tr/agents/connect"
+    },
+    {
+      "source": "/tr/resources/oauth-for-agents",
+      "destination": "/tr/agents/reference/oauth"
+    },
+    {
+      "source": "/zh/resources/mcp-server",
+      "destination": "/zh/agents/connect"
+    },
+    {
+      "source": "/zh/resources/oauth-for-agents",
+      "destination": "/zh/agents/reference/oauth"
     }
   ],
   "footerSocials": {

@@ -1,0 +1,46 @@
+---
+title: "OAuth for MCP clients"
+sidebarTitle: "OAuth"
+description: "How an MCP client signs a user in to TronRental: discovery, registration, PKCE, tokens and revocation"
+---
+
+Ready-made clients (Claude, ChatGPT, Claude Code, Codex, Cursor) do all of this by themselves. This page is for developers of their own MCP clients and apps. The flow follows the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization).
+
+## Discovery
+
+1. An unauthenticated `POST https://mcp.tronrental.com/mcp` answers `401` with
+   ```
+   WWW-Authenticate: Bearer resource_metadata="https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp"
+   ```
+2. The protected resource metadata (RFC 9728) names the resource `https://mcp.tronrental.com/mcp` and the authorization server `https://mcp.tronrental.com`.
+3. The authorization server metadata (RFC 8414) is at `https://mcp.tronrental.com/.well-known/oauth-authorization-server`. Its endpoints are `/oauth/register`, `/oauth/authorize`, `/oauth/token` and `/oauth/revoke` on the same host.
+
+## Client registration
+
+- **Dynamic Client Registration** (RFC 7591) at `/oauth/register`. Clients are public: `token_endpoint_auth_method` is always `none`.
+- **Client ID Metadata Documents** are accepted from supported platforms.
+- **Redirect URIs** must be on the allowlist: loopback (`http://127.0.0.1:<any port>`, `http://localhost:<any port>`) and the callbacks of supported platforms. Any other URI is refused with `invalid_redirect_uri`. Building a web app with its own callback? [Contact support](https://t.me/TronRentalcom_Help_bot) to add it.
+
+## Authorization
+
+- Authorization code flow with **PKCE, `S256` only**.
+- The `resource` parameter is required and must be `https://mcp.tronrental.com/mcp`; tokens are issued for this audience.
+- `scope` lists the [permissions](/agents/reference/permissions) the app asks for, separated by spaces, for example `view deposit_view buy_energy`. The user may grant fewer; the token response's `scope` says what was granted. `withdraw` does not exist for OAuth and is refused with `invalid_scope`.
+- The user signs in (or signs up) on tronrental.com, picks the account, the permissions and the daily spending cap, and approves. An app not known to TronRental is shown as unverified.
+
+## Tokens
+
+| Token | Lifetime | Notes |
+|---|---|---|
+| Access token | 1 hour | Send as `Authorization: Bearer <token>` to `/mcp` and to the [REST API](/api-reference/energy/get-prices) |
+| Refresh token | 30 days | Rotated on every use. Reusing an old refresh token revokes the whole connection |
+
+Only `authorization_code` and `refresh_token` grants are supported; `client_credentials` is not — for server-to-server calls use an [API key](/agents/build/overview#choose-how-to-authenticate).
+
+With an access token a connected app can call the REST API too, but only the routes listed in the [tools reference](/agents/reference/tools); any other route answers `403 AGENT_ROUTE_CLOSED`.
+
+## Revocation
+
+- The app can revoke its tokens at `/oauth/revoke`.
+- The user can disconnect the app in **Connected apps** on the [API page](https://tronrental.com/dashboard/api) of the dashboard: the connection and all its tokens are revoked at once, and the next call to `/mcp` gets `401` with `error="invalid_token"`.
+- A connection is one per account and app: connecting the same app again updates its permissions and cap instead of adding a second one.

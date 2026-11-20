@@ -1,0 +1,18 @@
+---
+title: "Tools"
+description: "Every tool of the TronRental MCP server: its permission, what it does with money and the API route behind it"
+---
+
+import AgentTools from "/snippets/agent-tools-en.mdx";
+
+Each tool is one route of the [REST API](/api-reference/energy/get-prices), called on the server with the caller's credentials. The rules are the same as over REST: the same prices, checks, idempotency and error codes.
+
+- **Arguments** are the route's parameters, flat: path and query parameters and the fields of the JSON body. Their names and types are in the tool's `inputSchema` and in the API reference of the route.
+- **`idempotency_key`** is the route's `Idempotency-Key` header, offered on every tool whose route takes one.
+- **A result** comes as `structuredContent` (the route's JSON answer; a list is wrapped as `{"result": [...]}`) and as the same JSON in a text block.
+- **An error** comes with `isError: true` and `{"error": {"code", "message", "status"}}` — the API's own [error code](/agents/reference/spending-and-errors#error-codes).
+- **Hints:** every tool carries `title`, `readOnlyHint`, `destructiveHint` and `openWorldHint`. Everything that spends the balance or turns on recurring spending is marked `destructiveHint: true`, so clients ask before calling it.
+
+**Money:** `spends` — charges the balance at the call; `recurring` — turns on spending that runs by itself and needs [`recurring`](/agents/reference/permissions#spending-that-runs-by-itself-recurring) for a connected app; `to balance` — returns money to the balance.
+
+<AgentTools />

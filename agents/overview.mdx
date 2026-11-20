@@ -1,0 +1,72 @@
+---
+title: "Agents overview"
+sidebarTitle: "Overview"
+description: "Connect AI agents to TronRental over MCP: what an agent can do, and how you stay in control of its spending"
+---
+
+TronRental runs a remote [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server at:
+
+```
+https://mcp.tronrental.com/mcp
+```
+
+Any MCP client — Claude, ChatGPT, Claude Code, Codex, Cursor or your own code — connects to it, signs in with TronRental and gets tools for your account. Nothing to install, no API key to copy.
+
+## What an agent can do
+
+| Area | Examples |
+|---|---|
+| Energy and bandwidth | Quote and buy energy or bandwidth for any TRON address, activate a new address, reclaim a bandwidth order |
+| Energy Broadcaster | Create a broadcast URL for a wallet, change its settings, see its quota and events |
+| Subscriptions | Smart Mode, transfer packages, energy and bandwidth auto-refill, auto bandwidth, Energy Resale |
+| Staking | Stake TRX from the balance, unstake, claim rewards |
+| Node API | See plans and usage, buy a plan, start a trial |
+| Invoices | Create an invoice, send it by email, follow its status |
+| Account | Balance, history, orders, deposit address, reports |
+
+The full list is in the [tools reference](/agents/reference/tools). An agent only sees the tools its connection allows.
+
+## You stay in control
+
+<CardGroup cols={2}>
+  <Card title="Consent screen" icon="hand">
+    The first time an agent connects, you sign in on tronrental.com and see the app's name and the site it returns to. Nothing is shared until you approve.
+  </Card>
+  <Card title="Permissions" icon="key">
+    You tick what the agent may do: read, buy energy, run Smart Mode and so on. Spending that runs by itself is a separate box, off by default. See [permissions](/agents/reference/permissions).
+  </Card>
+  <Card title="Daily spending cap" icon="gauge">
+    Every connection may spend at most **100 TRX in 24 hours** unless you set another amount. Change it any time in **Connected apps** on the [API page](https://tronrental.com/dashboard/api) of the dashboard.
+  </Card>
+  <Card title="Disconnect any time" icon="plug-circle-xmark">
+    **Disconnect** in Connected apps revokes the connection and all its tokens at once. The agent's next call is refused.
+  </Card>
+</CardGroup>
+
+- **Top-up before purchases.** Until your account's top-ups total 100 TRX, a connection can only read: balance, history and the deposit address. Connect again after topping up to allow purchases.
+- **Price you agreed to.** Every purchase carries `max_price_trx` — the agent quotes first and passes the quoted total. If the price moves above it, the purchase is refused, not charged.
+- **No double charges.** Purchases and other creating calls take an idempotency key, so a retry after a lost answer returns the first result.
+- **No withdrawals.** A connected app can never withdraw funds. Withdrawals stay with API keys that have the `withdraw` permission, 2FA and an IP whitelist.
+
+Orders an agent places are marked `source: "agent"` in the [order](/api-reference/orders/get-order) and in the [`order.updated` webhook](/api-reference/webhooks/overview).
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Connect a client" icon="plug" href="/agents/connect">
+    Claude, ChatGPT, Claude Code, Codex and Cursor — step by step.
+  </Card>
+  <Card title="Build with MCP" icon="code" href="/agents/build/overview">
+    Use TronRental's MCP server from your own app or agent, with working examples.
+  </Card>
+  <Card title="Tools reference" icon="list" href="/agents/reference/tools">
+    Every tool, its permission and what it does with money.
+  </Card>
+  <Card title="Spending and errors" icon="triangle-exclamation" href="/agents/reference/spending-and-errors">
+    `max_price_trx`, idempotency keys, the daily cap and error codes.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Agents can read a short setup guide at [tronrental.com/skill.md](https://tronrental.com/skill.md): point your agent to it and ask it to connect.
+</Tip>
