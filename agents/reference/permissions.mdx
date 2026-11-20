@@ -1,0 +1,49 @@
+---
+title: "Permissions"
+description: "What each permission lets an agent do, for a connected app (OAuth) and for an API key"
+---
+
+A connection gets the permissions you tick on the consent screen. An API key gets the scopes you set when you create it in the dashboard. The MCP server lists only the tools those permissions open (`tools/list`), and every call is checked again on the server.
+
+| Permission | What it opens | Connected app (OAuth) | API key |
+|---|---|---|---|
+| `view` | Balance, history, reports, orders, quotes, address checks, broadcaster quota and events, staking positions, Node API plan and usage | ✓ | ✓ |
+| `deposit_view` | Deposit address, deposits, deposits in other coins | ✓ | ✓ |
+| `buy_energy` | Buy energy, activate an address, energy auto-refill, invoices | ✓ | ✓ |
+| `buy_bandwidth` | Buy and reclaim bandwidth, bandwidth auto-refill, auto bandwidth | ✓ | ✓ |
+| `smart_mode` | Smart Mode | ✓ | ✓ |
+| `transfer_packages` | Transfer packages | ✓ | ✓ |
+| `energy_resale` | Energy Resale | ✓ | ✓ |
+| `broadcaster` | Create, change and delete broadcast URLs | ✓ | ✓ |
+| `staking` | Stake, unstake, claim rewards, reward auto-claim | ✓ account owner only | ✓ account owner only |
+| `node_api_plan` | Buy a Node API plan, start a trial, auto-renewal | ✓ account owner only | ✓ account owner only |
+| `recurring` | Turn on spending that runs by itself — see below | ✓ off by default | not needed |
+| `withdraw` | Withdrawals | **never** | ✓ with 2FA and an IP whitelist |
+
+## Spending that runs by itself (`recurring`)
+
+Some tools do not spend at the moment of the call but switch on spending that continues later: auto-refill, auto bandwidth, Smart Mode, Energy Resale, a broadcast URL, Node API auto-renewal. For a connected app, creating or changing them needs `recurring` on top of the product's permission. Switching off and deleting never need it. Pausing Smart Mode does, because the same tool also resumes it.
+
+<Warning>
+  Spending that runs by itself is **outside the daily cap** and **keeps running after you disconnect the app**. Switch it off on its page in the dashboard.
+</Warning>
+
+## Before the first top-up
+
+Until the account's top-ups total 100 TRX, the consent screen grants `view` and `deposit_view` only, and shows how much is left to top up. After the top-up, connect the app again and tick more permissions — the same connection is updated.
+
+## Team accounts
+
+On the consent screen you choose which account the app works on: your own or a team account where you manage API keys. A team member can grant only the permissions their role has, cannot grant `staking` or `node_api_plan`, and cannot remove the daily cap (`OAUTH_UNCAPPED_OWNER_ONLY`).
+
+## API key or connected app
+
+| | Connected app (OAuth) | API key |
+|---|---|---|
+| Who it suits | People using an agent or your app | Your own servers and scripts |
+| Daily spending cap | 100 TRX by default | none |
+| `max_price_trx` on purchases | required | optional |
+| Withdrawals | never | with `withdraw`, 2FA and an IP whitelist |
+| Order `source` | `agent` | `api` |
+
+API keys are issued after the account's top-ups total 100 TRX — see [Authentication](/authentication).

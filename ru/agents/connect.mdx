@@ -1,0 +1,106 @@
+---
+title: "Подключить клиент"
+description: "Добавьте TronRental в Claude, ChatGPT, Claude Code, Codex или Cursor, войдите и начните работу"
+---
+
+Каждый клиент ниже подключается к одному и тому же серверу и входит через TronRental — API-ключ копировать не нужно:
+
+```
+https://mcp.tronrental.com/mcp
+```
+
+При первом использовании клиент открывает tronrental.com. Войдите (или зарегистрируйтесь), выберите аккаунт, отметьте [права](/ru/agents/reference/permissions), задайте суточный лимит расходов и подтвердите. Клиент получит токен только для этого подключения.
+
+<Tabs>
+  <Tab title="Claude">
+    Работает в Claude в вебе и в десктоп-приложении, на любом тарифе (на тарифе Free можно добавить один собственный коннектор).
+
+    1. Откройте [Add to Claude](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp) — или перейдите в **Customize → Connectors → Add → Add custom connector** и введите имя `TronRental` и адрес выше.
+    2. Нажмите **Connect** рядом с TronRental.
+    3. Войдите на tronrental.com и подтвердите.
+    4. В чате включите TronRental в меню инструментов и спросите, например: *«Какой у меня баланс в TronRental?»*
+
+    На тарифах Team и Enterprise коннектор добавляет владелец в **Organization settings → Connectors**; участники затем нажимают **Connect**.
+  </Tab>
+  <Tab title="ChatGPT">
+    1. Откройте [ChatGPT Plugins](https://chatgpt.com/plugins) и нажмите **+** → **Add custom MCP server**.
+    2. Введите имя `TronRental`, выберите **Public endpoint** и вставьте адрес выше.
+    3. Оставьте аутентификацию **OAuth**, подтвердите предупреждение и нажмите **Create as a plugin**.
+    4. Войдите на tronrental.com и подтвердите.
+    5. В чате выберите TronRental в меню инструментов.
+
+    Если такого пункта нет, возможно, ваше рабочее пространство не разрешает собственные MCP-серверы — спросите его администратора. ChatGPT подключается только через OAuth; API-ключ он использовать не может.
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
+    ```
+
+    Затем в Claude Code выполните `/mcp`, выберите **tronrental** и **Authenticate**. Браузер откроет tronrental.com; подтвердите и вернитесь в терминал.
+
+    Добавьте `--scope user`, чтобы TronRental был доступен во всех проектах, или `--scope project`, чтобы поделиться им с командой через `.mcp.json`.
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add tronrental --url https://mcp.tronrental.com/mcp
+    ```
+
+    Codex откроет браузер для входа. Если этого не произошло, выполните:
+
+    ```bash
+    codex mcp login tronrental
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    Добавьте сервер в `~/.cursor/mcp.json` (все проекты) или `.cursor/mcp.json` (один проект):
+
+    ```json
+    {
+      "mcpServers": {
+        "tronrental": {
+          "url": "https://mcp.tronrental.com/mcp"
+        }
+      }
+    }
+    ```
+
+    При первом обращении к серверу Cursor откроет tronrental.com для входа.
+
+    {/* TODO: an "Add to Cursor" button (cursor://anysphere.cursor-deeplink/mcp/install?name=TronRental&config=<base64 of {"url":"https://mcp.tronrental.com/mcp"}>) — check in Cursor whether the base64 must be URL-encoded before adding it. */}
+  </Tab>
+</Tabs>
+
+## Проверьте, что всё работает
+
+Спросите агента: *«Сколько стоит 65,000 энергии на 1 час в TronRental?»* Он вызовет `quote_energy` и покажет цену — ничего не списывается.
+
+Перед любой покупкой агент запрашивает цену, показывает её вам и передаёт как `max_price_trx`; он также отправляет `idempotency_key`, поэтому повтор никогда не спишет дважды. Для покупок нужны пополнения аккаунта на 100 TRX в сумме — до этого подключение может только читать. См. [Расходы и ошибки](/ru/agents/reference/spending-and-errors).
+
+## Управление и отключение
+
+Список **Подключённые приложения** на [странице API](https://tronrental.com/dashboard/api) показывает каждый подключённый клиент: кто его подключил, его права, суточный лимит и сколько он потратил за последние 24 часа. Там же можно изменить лимит или нажать **Отключить**, чтобы сразу отозвать подключение.
+
+## Вместо этого — API-ключ
+
+Клиенты, в которых можно задать заголовки, могут подключаться с [API-ключом](/ru/authentication) без входа — например, для агента, который работает на вашем сервере:
+
+```bash
+claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp \
+  --header "Authorization: Bearer $TRONRENTAL_API_KEY"
+```
+
+В Codex укажите переменную окружения с ключом в `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.tronrental]
+url = "https://mcp.tronrental.com/mcp"
+bearer_token_env_var = "TRONRENTAL_API_KEY"
+```
+
+В Cursor добавьте `"headers": { "Authorization": "Bearer ${env:TRONRENTAL_API_KEY}" }` рядом с `url`.
+
+У API-ключа нет суточного лимита: давайте ему только те права, которые нужны агенту. См. [Разработка с MCP](/ru/agents/build/overview).
+
+## Агенты без браузера
+
+Агенты, которые не могут открыть браузер, могут использовать локальный пакет [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server): он работает на вашей машине с API-ключом в `TRONRENTAL_API_KEY` или позволяет агенту зарегистрировать аккаунт на ваш email с кодом из письма. Настройка описана в его [README](https://github.com/tronrentalcom/tronrental-com-mcp).

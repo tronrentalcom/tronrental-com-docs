@@ -1,0 +1,100 @@
+---
+title: "Claude API"
+description: "通过 MCP 连接器在 Messages API 请求中为 Claude 提供 TronRental 工具"
+---
+
+<Info>
+  于 2026 年 11 月 20 日针对 [MCP 连接器文档](https://platform.claude.com/docs/en/agents-and-tools/mcp-connector)（beta `mcp-client-2025-11-20`）、`anthropic` **2.11.0**（Python）和 `@anthropic-ai/sdk` **1.11.0**（TypeScript）验证。
+</Info>
+
+使用 MCP 连接器时，Claude 在请求过程中从 Anthropic 一侧调用 TronRental——你的代码中不需要 MCP 客户端。连接器只发送 `authorization_token`，形式为 `Authorization: Bearer <token>`：API 密钥，或用户的 OAuth 访问令牌。调用来自 Anthropic 的 IP 地址，因此带有 IP 白名单的密钥会被拒绝。
+
+`mcp_servers` 中的每个服务器都需要在 `tools` 中有对应的 `mcp_toolset` 条目。
+
+## Python
+
+```bash
+pip install "anthropic>=2.11"
+```
+
+```python claude.py
+import os
+
+import anthropic
+
+client = anthropic.Anthropic()  # 读取 ANTHROPIC_API_KEY
+
+response = client.beta.messages.create(
+    model="claude-opus-5-5",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "How much is 65,000 energy for 1 hour on TronRental?"}],
+    mcp_servers=[
+        {
+            "type": "url",
+            "url": "https://mcp.tronrental.com/mcp",
+            "name": "tronrental",
+            "authorization_token": os.environ["TRONRENTAL_API_KEY"],
+        }
+    ],
+    tools=[
+        {
+            "type": "mcp_toolset",
+            "mcp_server_name": "tronrental",
+            # 只启用这个助手需要的工具，其余全部关闭。
+            "default_config": {"enabled": False},
+            "configs": {
+                "get_energy_prices": {"enabled": True},
+                "quote_energy": {"enabled": True},
+                "get_balance": {"enabled": True},
+            },
+        }
+    ],
+    betas=["mcp-client-2025-11-20"],
+)
+
+for block in response.content:
+    if block.type == "text":
+        print(block.text)
+```
+
+## TypeScript
+
+```bash
+npm install @anthropic-ai/sdk
+```
+
+```ts claude.mjs
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropic = new Anthropic(); // 读取 ANTHROPIC_API_KEY
+
+const response = await anthropic.beta.messages.create({
+  model: "claude-opus-5-5",
+  max_tokens: 1024,
+  messages: [{ role: "user", content: "How much is 65,000 energy for 1 hour on TronRental?" }],
+  mcp_servers: [
+    {
+      type: "url",
+      url: "https://mcp.tronrental.com/mcp",
+      name: "tronrental",
+      authorization_token: process.env.TRONRENTAL_API_KEY,
+    },
+  ],
+  tools: [{ type: "mcp_toolset", mcp_server_name: "tronrental" }],
+  betas: ["mcp-client-2025-11-20"],
+});
+
+for (const block of response.content) {
+  if (block.type === "text") console.log(block.text);
+}
+```
+
+## 购买
+
+连接器在请求内部执行工具调用，不会询问你。在允许 Claude 花钱之前：
+
+- 只启用它需要的工具（`default_config` 和 `configs`，如 Python 示例所示）；
+- 优先使用权限范围较窄的 API 密钥，或用户的 OAuth 令牌——其[每日消费上限](/zh/agents/reference/spending-and-errors)限制了单个请求能花多少；
+- 如果每次购买都必须由人确认，请改为运行你自己的 MCP 客户端（[TypeScript](/zh/agents/build/typescript)、[Python](/zh/agents/build/python)），并在对方同意后调用 `buy_energy`。
+
+工具调用及其结果在 `response.content` 中以 `mcp_tool_use` 和 `mcp_tool_result` 块返回。

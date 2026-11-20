@@ -1,0 +1,141 @@
+---
+title: "OpenAI Agents SDK"
+description: "为 OpenAI 智能体提供 TronRental 工具——作为 hosted MCP 工具，或通过本地 MCP 客户端"
+---
+
+<Info>
+  于 2026 年 11 月 20 日针对 `openai-agents` **0.25.0**（Python）和 `@openai/agents` **0.22.0**（TypeScript）验证。
+</Info>
+
+有两种连接方式：
+
+| | Hosted MCP 工具 | 本地 MCP 客户端 |
+|---|---|---|
+| 谁调用 TronRental | OpenAI 的服务器 | 你的进程 |
+| 密钥去向 | 随每个请求发送给 OpenAI | 留在你的服务器上 |
+| 带 IP 白名单的密钥 | 被拒绝（OpenAI 的 IP） | 可用 |
+
+## 安装
+
+```bash
+pip install "openai-agents>=0.25"
+```
+
+## Hosted MCP 工具
+
+模型从 OpenAI 一侧调用 TronRental。在调用任何会改变数据的工具之前请求批准：只读工具自动运行，其余工具经过你的回调。
+
+```python hosted.py
+import asyncio
+import os
+
+from agents import Agent, HostedMCPTool, Runner
+from agents.tool import MCPToolApprovalFunctionResult, MCPToolApprovalRequest
+
+
+def approve(request: MCPToolApprovalRequest) -> MCPToolApprovalFunctionResult:
+    answer = input(f"Allow {request.data.name}({request.data.arguments})? [y/N] ")
+    return {"approve": answer.strip().lower() == "y"}
+
+
+tronrental = HostedMCPTool(
+    tool_config={
+        "type": "mcp",
+        "server_label": "tronrental",
+        "server_url": "https://mcp.tronrental.com/mcp",
+        "authorization": os.environ["TRONRENTAL_API_KEY"],
+        "require_approval": {"never": {"read_only": True}},
+    },
+    on_approval_request=approve,
+)
+
+agent = Agent(
+    name="Energy assistant",
+    instructions="Quote before buying and pass the quote's total_trx as max_price_trx.",
+    tools=[tronrental],
+)
+
+
+async def main() -> None:
+    result = await Runner.run(agent, "How much is 65,000 energy for 1 hour on TronRental?")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+`authorization` 以 `Authorization: Bearer <value>` 发送给 TronRental：API 密钥，或用户的 OAuth 访问令牌。若要缩小模型能看到的范围，请添加 `"allowed_tools": ["quote_energy", "buy_energy", "get_order"]`。
+
+## 本地 MCP 客户端
+
+你的进程连接 TronRental 并把工具交给智能体；密钥永远不会离开你的服务器。
+
+```python local.py
+import asyncio
+import os
+
+from agents import Agent, Runner
+from agents.mcp import MCPServerStreamableHttp
+
+
+async def main() -> None:
+    async with MCPServerStreamableHttp(
+        name="tronrental",
+        params={
+            "url": "https://mcp.tronrental.com/mcp",
+            "headers": {"Authorization": f"Bearer {os.environ['TRONRENTAL_API_KEY']}"},
+            "timeout": 30,
+        },
+        cache_tools_list=True,
+    ) as tronrental:
+        agent = Agent(
+            name="Energy assistant",
+            instructions="Quote before buying and pass the quote's total_trx as max_price_trx.",
+            mcp_servers=[tronrental],
+        )
+        result = await Runner.run(agent, "What is my TronRental balance?")
+        print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+## TypeScript
+
+```ts
+import { Agent, run, hostedMcpTool } from "@openai/agents";
+
+const agent = new Agent({
+  name: "Energy assistant",
+  instructions: "Quote before buying and pass the quote's total_trx as max_price_trx.",
+  tools: [
+    hostedMcpTool({
+      serverLabel: "tronrental",
+      serverUrl: "https://mcp.tronrental.com/mcp",
+      authorization: process.env.TRONRENTAL_API_KEY,
+      requireApproval: { never: { readOnly: true } },
+    }),
+  ],
+});
+
+const result = await run(agent, "How much is 65,000 energy for 1 hour on TronRental?");
+console.log(result.finalOutput);
+```
+
+当 `requireApproval` 不是 `"never"` 时，运行会在需要批准的工具处停止，并在 `result.interruptions` 中返回它们；用 `result.state.approve(...)` 批准，然后用 `result.state` 再次运行。
+
+在 TypeScript 中使用本地客户端时，请使用 `@openai/agents` 中的 `new MCPServerStreamableHttp({ url, requestInit: { headers } })`，并把它传入 `mcpServers`。
+
+## 不使用 SDK 调用 Responses API
+
+Hosted 工具就是 Responses API 的 `mcp` 工具：
+
+```json
+{
+  "type": "mcp",
+  "server_label": "tronrental",
+  "server_url": "https://mcp.tronrental.com/mcp",
+  "authorization": "<API key or OAuth access token>",
+  "require_approval": { "never": { "read_only": true } }
+}
+```

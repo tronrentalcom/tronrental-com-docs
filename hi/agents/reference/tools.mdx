@@ -1,0 +1,18 @@
+---
+title: "टूल्स"
+description: "TronRental MCP सर्वर का हर टूल: उसकी अनुमति, वह पैसों के साथ क्या करता है और उसके पीछे का API रूट"
+---
+
+import AgentTools from "/snippets/agent-tools-hi.mdx";
+
+हर टूल [REST API](/hi/api-reference/energy/get-prices) का एक रूट है, जिसे सर्वर पर कॉल करने वाले के क्रेडेंशियल से कॉल किया जाता है। नियम REST जैसे ही हैं: वही कीमतें, जाँचें, आइडेम्पोटेंसी और त्रुटि कोड।
+
+- **आर्ग्युमेंट** रूट के पैरामीटर हैं, एक ही स्तर पर: पाथ और क्वेरी पैरामीटर और JSON बॉडी के फ़ील्ड। उनके नाम और प्रकार टूल के `inputSchema` में और रूट के API संदर्भ में हैं।
+- **`idempotency_key`** रूट का `Idempotency-Key` हेडर है, जो हर उस टूल में उपलब्ध है जिसका रूट इसे लेता है।
+- **परिणाम** `structuredContent` (रूट का JSON जवाब; सूची `{"result": [...]}` में लपेटी जाती है) के रूप में और टेक्स्ट ब्लॉक में उसी JSON के रूप में आता है।
+- **त्रुटि** `isError: true` और `{"error": {"code", "message", "status"}}` के साथ आती है — API का अपना [त्रुटि कोड](/hi/agents/reference/spending-and-errors)।
+- **हिंट:** हर टूल में `title`, `readOnlyHint`, `destructiveHint` और `openWorldHint` होते हैं। बैलेंस खर्च करने वाला या आवर्ती खर्च चालू करने वाला हर टूल `destructiveHint: true` से चिह्नित है, इसलिए क्लाइंट उसे कॉल करने से पहले पूछते हैं।
+
+**पैसे:** `spends` — कॉल के समय बैलेंस से पैसे काटता है; `recurring` — अपने-आप चलने वाला खर्च चालू करता है और कनेक्ट किए गए ऐप के लिए [`recurring`](/hi/agents/reference/permissions) चाहिए; `to balance` — पैसे बैलेंस में लौटाता है।
+
+<AgentTools />

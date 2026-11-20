@@ -1,0 +1,96 @@
+---
+title: "支出和错误"
+description: "max_price_trx、幂等键、每日消费上限以及已连接的应用会遇到的错误代码"
+---
+
+## 先报价，再用 `max_price_trx` 购买
+
+已连接的应用必须向 `buy_energy` 和 `buy_bandwidth` 传入 `max_price_trx`。缺少它时调用会以 `MAX_PRICE_REQUIRED` 失败——每日上限需要知道一次调用最多可能花多少。
+
+1. 使用数量和时长调用 `quote_energy`（或 `quote_bandwidth`）。
+2. 向用户展示报价中的 `total_trx`。
+3. 使用相同的数量和时长调用 `buy_energy`，并令 `max_price_trx` = 报价的 `total_trx`。
+
+如果价格超过 `max_price_trx`，购买会以 `PRICE_CHANGED` 被拒绝，不会扣款。请重新报价并询问用户。
+
+对于 API 密钥，`max_price_trx` 是可选的，但出于同样的原因我们建议传入。
+
+## 幂等键
+
+创建类工具接受 `idempotency_key`——即其路由的 [`Idempotency-Key`](/zh/api-reference/energy/buy-energy) 请求头。为每个新操作生成新的 UUID，并在超时或响应丢失后**重试同一操作时复用它**：服务器会返回第一次的结果，而不会再次扣款。密钥有效期 24 小时，最长 64 个字符。
+
+| 工具 | 路由 |
+|---|---|
+| `buy_energy` | `POST /energy/buy` |
+| `buy_bandwidth` | `POST /bandwidth/buy` |
+| `buy_package` | `POST /transfer-packages/buy` |
+| `activate_smart_mode` | `POST /smart-mode/activate` |
+| `create_auto_bw` | `POST /bandwidth/auto` |
+| `create_energy_autorefill` | `POST /energy/auto-refill` |
+| `create_bandwidth_autorefill` | `POST /bandwidth/auto-refill` |
+| `activate_resale` | `POST /sublease/activate` |
+| `generate_resale_address` | `POST /sublease/generate` |
+| `create_broadcast_slug` | `POST /broadcast/slugs` |
+| `stake` | `POST /account/stake` |
+| `withdraw`（仅 API 密钥） | `POST /account/withdrawal` |
+
+同一个密钥用于不同的请求会以 `IDEMPOTENCY_KEY_REUSED` 被拒绝；如果该密钥的第一个请求仍在执行，会返回 `IDEMPOTENT_REQUEST_IN_PROGRESS`——请稍候，并用同一个密钥重试。
+
+## 每日消费上限
+
+每个连接在任意 24 小时内可以花费一个设定的金额——**100 TRX**，除非用户在授权页面或 **已连接的应用** 中选择了其他金额。只有账户所有者可以取消上限。
+
+- 在会产生支出的调用之前，服务器会预留它最多可能花费的金额：购买时为 `max_price_trx` 加上新地址的激活费用；Smart Mode、套餐、激活和 Node API 套餐为其价格；质押为质押金额。
+- 调用结束后，预留变为实际金额；如果没有扣款则释放。如果结果未知（超时），预留保留 24 小时——上限宁可拒绝也不冒险。
+- 自动执行的支出（`recurring`）不计入上限。
+- 控制台中的 **已连接的应用** 显示每个应用最近 24 小时的支出。
+
+超出上限的调用会以 `AGENT_SPEND_CAP` 失败：
+
+```json
+{
+  "error": {
+    "code": "AGENT_SPEND_CAP",
+    "message": "This app may spend 5 TRX a day; 2.90065 TRX is left and this call may cost up to 3.3 TRX. A call whose answer was lost may have gone through: check the orders before retrying",
+    "status": 409,
+    "cap_trx": "5",
+    "remaining_trx": "2.90065",
+    "required_trx": "3.3"
+  }
+}
+```
+
+<Note>
+  重试响应丢失的购买会再次预留其金额。接近上限时，重试前请先检查 `list_orders`：第一次调用可能已经成功。
+</Note>
+
+## 订单来源
+
+已连接的应用下的订单带有 `"source": "agent"`——在 `get_order`、`list_orders` 和 [`order.updated` webhook](/zh/api-reference/webhooks/overview) 中。使用 API 密钥下的订单带有 `"source": "api"`。
+
+## 错误代码
+
+通过 MCP，错误以 `isError: true` 的工具结果返回：
+
+```json
+{"error": {"code": "MAX_PRICE_REQUIRED", "message": "Pass max_price_trx: the quote's total_trx", "status": 422}}
+```
+
+通过 REST，同样的代码以[标准错误格式](/zh/errors)返回。
+
+| 代码 | HTTP | 含义和处理方式 |
+|---|---|---|
+| `AGENT_SPEND_CAP` | `409` | 调用超出连接的每日上限。`cap_trx`、`remaining_trx` 和 `required_trx` 说明差多少。请用户在 已连接的应用 中提高上限，或等待 |
+| `MAX_PRICE_REQUIRED` | `422` | 已连接的应用购买时未传 `max_price_trx`。先报价，再传入报价的 `total_trx` |
+| `AGENT_SPEND_UNBOUNDED` | `403` | 此操作尚未对已连接的应用开放。请使用控制台或 API 密钥 |
+| `AGENT_ROUTE_CLOSED` | `403` | 该路由不在[工具目录](/zh/agents/reference/tools)中，因此已连接的应用不能通过 REST 调用它 |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | 购买要求累计充值 100 TRX。`required_trx` 和 `missing_trx` 说明还差多少。展示充值地址，然后重新连接 |
+| `OAUTH_UNCAPPED_OWNER_ONLY` | `403` | 团队成员试图取消每日上限。只有账户所有者可以 |
+| `OAUTH_GRANT_LIMIT_REACHED` | `409` | 账户的已连接应用数已达上限（`limit`）。请先断开一个 |
+| `PRICE_CHANGED` | `409` | 价格高于 `max_price_trx`。未扣款；请重新报价 |
+| `VALIDATION_ERROR` | `422` | 某个参数类型错误或缺失。请检查工具的 `inputSchema` |
+| `INTERNAL_ERROR` | `5xx` | 没有代码的服务器错误。对于购买，请先检查 `list_orders`，再用同一个 `idempotency_key` 重试 |
+
+其他所有代码与 REST API 相同——见[错误处理](/zh/errors)。
+
+过期或已撤销的令牌在 `/mcp` 请求本身上会得到 HTTP `401` 和 `WWW-Authenticate: Bearer ... error="invalid_token"`；MCP 客户端随后会刷新令牌或请用户重新登录。

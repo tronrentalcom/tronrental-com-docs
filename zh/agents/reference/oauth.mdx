@@ -1,0 +1,46 @@
+---
+title: "面向 MCP 客户端的 OAuth"
+sidebarTitle: "OAuth"
+description: "MCP 客户端如何让用户登录 TronRental：发现、注册、PKCE、令牌和撤销"
+---
+
+现成的客户端（Claude、ChatGPT、Claude Code、Codex、Cursor）会自行完成以下全部步骤。本页面向开发自己的 MCP 客户端和应用的开发者。流程遵循 [MCP 授权规范](https://modelcontextprotocol.io/specification/latest/basic/authorization)。
+
+## 发现
+
+1. 未经身份验证的 `POST https://mcp.tronrental.com/mcp` 返回 `401`，并带有
+   ```
+   WWW-Authenticate: Bearer resource_metadata="https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp"
+   ```
+2. 受保护资源元数据（RFC 9728）指明资源 `https://mcp.tronrental.com/mcp` 和授权服务器 `https://mcp.tronrental.com`。
+3. 授权服务器元数据（RFC 8414）位于 `https://mcp.tronrental.com/.well-known/oauth-authorization-server`。其端点为同一主机上的 `/oauth/register`、`/oauth/authorize`、`/oauth/token` 和 `/oauth/revoke`。
+
+## 客户端注册
+
+- **Dynamic Client Registration**（RFC 7591）位于 `/oauth/register`。客户端为公共客户端：`token_endpoint_auth_method` 始终为 `none`。
+- 接受来自受支持平台的 **Client ID Metadata Documents**。
+- **Redirect URI** 必须在允许列表中：回环地址（`http://127.0.0.1:<any port>`、`http://localhost:<any port>`）以及受支持平台的回调地址。其他 URI 会以 `invalid_redirect_uri` 被拒绝。正在开发带有自己回调地址的 Web 应用？请[联系支持](https://t.me/TronRentalcom_Help_bot)添加。
+
+## 授权
+
+- 授权码流程，使用 **PKCE，仅支持 `S256`**。
+- `resource` 参数为必填，且必须为 `https://mcp.tronrental.com/mcp`；令牌针对此受众签发。
+- `scope` 列出应用请求的[权限](/zh/agents/reference/permissions)，以空格分隔，例如 `view deposit_view buy_energy`。用户可以授予更少的权限；令牌响应中的 `scope` 说明实际授予了什么。OAuth 不存在 `withdraw`，请求它会以 `invalid_scope` 被拒绝。
+- 用户在 tronrental.com 登录（或注册），选择账户、权限和每日消费上限，然后批准。TronRental 不认识的应用会显示为未验证。
+
+## 令牌
+
+| 令牌 | 有效期 | 说明 |
+|---|---|---|
+| 访问令牌 | 1 小时 | 以 `Authorization: Bearer <token>` 发送到 `/mcp` 和 [REST API](/zh/api-reference/energy/get-prices) |
+| 刷新令牌 | 30 天 | 每次使用时轮换。重复使用旧的刷新令牌会撤销整个连接 |
+
+只支持 `authorization_code` 和 `refresh_token` 授权类型；不支持 `client_credentials`——服务器间调用请使用 [API 密钥](/zh/agents/build/overview)。
+
+已连接的应用也可以用访问令牌调用 REST API，但只能调用[工具参考](/zh/agents/reference/tools)中列出的路由；其他任何路由都返回 `403 AGENT_ROUTE_CLOSED`。
+
+## 撤销
+
+- 应用可以在 `/oauth/revoke` 撤销自己的令牌。
+- 用户可以在控制台 [API 页面](https://tronrental.com/dashboard/api)的 **已连接的应用** 中断开应用：该连接及其所有令牌会被一次性撤销，下一次对 `/mcp` 的调用会得到 `401` 和 `error="invalid_token"`。
+- 每个账户和应用只有一个连接：再次连接同一个应用会更新其权限和上限，而不是新增第二个连接。

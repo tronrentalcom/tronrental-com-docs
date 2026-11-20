@@ -1,0 +1,49 @@
+---
+title: "Permissões"
+description: "O que cada permissão deixa um agente fazer, para um app conectado (OAuth) e para uma chave de API"
+---
+
+Uma conexão recebe as permissões que você marca na tela de consentimento. Uma chave de API recebe os escopos que você define ao criá-la no painel. O servidor MCP lista apenas as ferramentas que essas permissões liberam (`tools/list`), e cada chamada é verificada de novo no servidor.
+
+| Permissão | O que libera | App conectado (OAuth) | Chave de API |
+|---|---|---|---|
+| `view` | Saldo, histórico, relatórios, pedidos, cotações, verificação de endereços, cota e eventos do broadcaster, posições de staking, plano e uso do Node API | ✓ | ✓ |
+| `deposit_view` | Endereço de depósito, depósitos, depósitos em outras moedas | ✓ | ✓ |
+| `buy_energy` | Comprar energia, ativar um endereço, recarga automática de energia, faturas | ✓ | ✓ |
+| `buy_bandwidth` | Comprar e recuperar largura de banda, recarga automática de largura de banda, largura de banda automática | ✓ | ✓ |
+| `smart_mode` | Smart Mode | ✓ | ✓ |
+| `transfer_packages` | Pacotes de transferências | ✓ | ✓ |
+| `energy_resale` | Energy Resale | ✓ | ✓ |
+| `broadcaster` | Criar, alterar e excluir URLs de broadcast | ✓ | ✓ |
+| `staking` | Fazer stake, retirar o stake, resgatar recompensas, resgate automático de recompensas | ✓ só o dono da conta | ✓ só o dono da conta |
+| `node_api_plan` | Comprar um plano do Node API, iniciar um teste, renovação automática | ✓ só o dono da conta | ✓ só o dono da conta |
+| `recurring` | Ativar gastos que rodam sozinhos — veja abaixo | ✓ desativado por padrão | não é necessário |
+| `withdraw` | Saques | **nunca** | ✓ com 2FA e lista de IPs permitidos |
+
+## Gastos que rodam sozinhos (`recurring`)
+
+Algumas ferramentas não gastam no momento da chamada, mas ativam gastos que continuam depois: recarga automática, largura de banda automática, Smart Mode, Energy Resale, uma URL de broadcast, renovação automática do Node API. Para um app conectado, criá-los ou alterá-los exige `recurring` além da permissão do produto. Desativar e excluir nunca exigem. Pausar o Smart Mode exige, porque a mesma ferramenta também o retoma.
+
+<Warning>
+  Gastos que rodam sozinhos ficam **fora do limite diário** e **continuam depois que você desconecta o app**. Desative-os na página correspondente do painel.
+</Warning>
+
+## Antes da primeira recarga
+
+Até que as recargas da conta somem 100 TRX, a tela de consentimento concede apenas `view` e `deposit_view` e mostra quanto falta recarregar. Depois da recarga, conecte o app de novo e marque mais permissões — a mesma conexão é atualizada.
+
+## Contas de equipe
+
+Na tela de consentimento você escolhe em qual conta o app trabalha: a sua ou uma conta de equipe em que você gerencia chaves de API. Um membro da equipe só pode conceder as permissões que a função dele tem, não pode conceder `staking` nem `node_api_plan` e não pode remover o limite diário (`OAUTH_UNCAPPED_OWNER_ONLY`).
+
+## Chave de API ou app conectado
+
+| | App conectado (OAuth) | Chave de API |
+|---|---|---|
+| Para quem serve | Pessoas que usam um agente ou o seu app | Os seus próprios servidores e scripts |
+| Limite diário de gastos | 100 TRX por padrão | nenhum |
+| `max_price_trx` nas compras | obrigatório | opcional |
+| Saques | nunca | com `withdraw`, 2FA e lista de IPs permitidos |
+| `source` do pedido | `agent` | `api` |
+
+As chaves de API são emitidas depois que as recargas da conta somam 100 TRX — veja [Autenticação](/pt/authentication).

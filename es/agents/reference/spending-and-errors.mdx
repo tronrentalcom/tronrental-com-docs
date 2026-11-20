@@ -1,0 +1,96 @@
+---
+title: "Gasto y errores"
+description: "max_price_trx, claves de idempotencia, el límite diario de gasto y los códigos de error que encuentra una app conectada"
+---
+
+## Cotiza y luego compra con `max_price_trx`
+
+Una app conectada debe pasar `max_price_trx` a `buy_energy` y `buy_bandwidth`. Sin él, la llamada falla con `MAX_PRICE_REQUIRED`: el límite diario necesita saber lo máximo que puede costar una llamada.
+
+1. Llama a `quote_energy` (o `quote_bandwidth`) con el volumen y la duración.
+2. Muestra al usuario el `total_trx` de la cotización.
+3. Llama a `buy_energy` con el mismo volumen y duración y `max_price_trx` = el `total_trx` de la cotización.
+
+Si el precio sube por encima de `max_price_trx`, la compra se rechaza con `PRICE_CHANGED` y no se cobra nada. Vuelve a cotizar y pregunta al usuario.
+
+Para una clave API `max_price_trx` es opcional, pero lo recomendamos por el mismo motivo.
+
+## Claves de idempotencia
+
+Las herramientas que crean algo aceptan `idempotency_key`: la cabecera [`Idempotency-Key`](/es/api-reference/energy/buy-energy) de su ruta. Genera un UUID nuevo para cada acción nueva y **reutilízalo cuando reintentes la misma acción** tras un timeout o una respuesta perdida: el servidor devuelve el primer resultado en lugar de cobrar otra vez. Una clave dura 24 horas y tiene como máximo 64 caracteres.
+
+| Herramienta | Ruta |
+|---|---|
+| `buy_energy` | `POST /energy/buy` |
+| `buy_bandwidth` | `POST /bandwidth/buy` |
+| `buy_package` | `POST /transfer-packages/buy` |
+| `activate_smart_mode` | `POST /smart-mode/activate` |
+| `create_auto_bw` | `POST /bandwidth/auto` |
+| `create_energy_autorefill` | `POST /energy/auto-refill` |
+| `create_bandwidth_autorefill` | `POST /bandwidth/auto-refill` |
+| `activate_resale` | `POST /sublease/activate` |
+| `generate_resale_address` | `POST /sublease/generate` |
+| `create_broadcast_slug` | `POST /broadcast/slugs` |
+| `stake` | `POST /account/stake` |
+| `withdraw` (solo clave API) | `POST /account/withdrawal` |
+
+La misma clave con una solicitud distinta se rechaza con `IDEMPOTENCY_KEY_REUSED`; una clave cuya primera solicitud sigue en curso responde `IDEMPOTENT_REQUEST_IN_PROGRESS`: espera y reintenta con la misma clave.
+
+## Límite diario de gasto
+
+Cada conexión puede gastar una cantidad fija en cualquier periodo de 24 horas: **100 TRX**, salvo que el usuario haya elegido otra cantidad en la pantalla de consentimiento o en **Aplicaciones conectadas**. Solo el propietario de la cuenta puede quitar el límite.
+
+- Antes de una llamada que gasta, el servidor reserva lo máximo que puede costar: `max_price_trx` más la activación de una dirección nueva en las compras, el precio en Smart Mode, paquetes, activaciones y planes de Node API, el importe en un stake.
+- Tras la llamada, la reserva pasa a ser el importe real, o se libera si no se cobró nada. Si el resultado es desconocido (un timeout), la reserva se mantiene 24 horas: ante la duda, el límite rechaza.
+- El gasto que se ejecuta solo (`recurring`) queda fuera del límite.
+- **Aplicaciones conectadas** en el panel muestra lo que gastó cada app en las últimas 24 horas.
+
+Una llamada que no cabe falla con `AGENT_SPEND_CAP`:
+
+```json
+{
+  "error": {
+    "code": "AGENT_SPEND_CAP",
+    "message": "This app may spend 5 TRX a day; 2.90065 TRX is left and this call may cost up to 3.3 TRX. A call whose answer was lost may have gone through: check the orders before retrying",
+    "status": 409,
+    "cap_trx": "5",
+    "remaining_trx": "2.90065",
+    "required_trx": "3.3"
+  }
+}
+```
+
+<Note>
+  El reintento de una compra cuya respuesta se perdió vuelve a reservar su importe. Cerca del límite, consulta `list_orders` antes de reintentar: puede que la primera llamada se haya completado.
+</Note>
+
+## Origen del pedido
+
+Los pedidos hechos por una app conectada llevan `"source": "agent"`, en `get_order`, `list_orders` y el [webhook `order.updated`](/es/api-reference/webhooks/overview). Los pedidos hechos con una clave API llevan `"source": "api"`.
+
+## Códigos de error
+
+Por MCP, un error llega como resultado de herramienta con `isError: true`:
+
+```json
+{"error": {"code": "MAX_PRICE_REQUIRED", "message": "Pass max_price_trx: the quote's total_trx", "status": 422}}
+```
+
+Por REST, el mismo código llega en el [formato de error estándar](/es/errors).
+
+| Código | HTTP | Significado y qué hacer |
+|---|---|---|
+| `AGENT_SPEND_CAP` | `409` | La llamada no cabe en el límite diario de la conexión. `cap_trx`, `remaining_trx` y `required_trx` indican por cuánto. Pide al usuario que suba el límite en Aplicaciones conectadas, o espera |
+| `MAX_PRICE_REQUIRED` | `422` | Una compra de una app conectada sin `max_price_trx`. Cotiza primero y pasa el `total_trx` de la cotización |
+| `AGENT_SPEND_UNBOUNDED` | `403` | Esta acción aún no está abierta a las apps conectadas. Usa el panel o una clave API |
+| `AGENT_ROUTE_CLOSED` | `403` | La ruta no está en el [catálogo de herramientas](/es/agents/reference/tools), así que una app conectada no puede llamarla por REST |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | Las compras requieren recargas por un total de 100 TRX. `required_trx` y `missing_trx` indican cuánto falta. Muestra la dirección de depósito y vuelve a conectar |
+| `OAUTH_UNCAPPED_OWNER_ONLY` | `403` | Un miembro del equipo intentó quitar el límite diario. Solo puede hacerlo el propietario de la cuenta |
+| `OAUTH_GRANT_LIMIT_REACHED` | `409` | La cuenta ya tiene el número máximo de apps conectadas (`limit`). Desconecta una primero |
+| `PRICE_CHANGED` | `409` | El precio supera `max_price_trx`. No se cobró nada; vuelve a cotizar |
+| `VALIDATION_ERROR` | `422` | Un argumento tiene un tipo incorrecto o falta. Revisa el `inputSchema` de la herramienta |
+| `INTERNAL_ERROR` | `5xx` | Error del servidor sin código. En las compras, consulta `list_orders` antes de reintentar con la misma `idempotency_key` |
+
+Todos los demás códigos son los de la API REST; consulta [Errores](/es/errors).
+
+Un token caducado o revocado recibe HTTP `401` con `WWW-Authenticate: Bearer ... error="invalid_token"` en la propia solicitud a `/mcp`; los clientes MCP entonces renuevan el token o piden al usuario que vuelva a iniciar sesión.

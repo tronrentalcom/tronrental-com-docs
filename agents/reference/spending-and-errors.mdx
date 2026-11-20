@@ -1,0 +1,96 @@
+---
+title: "Spending and errors"
+description: "max_price_trx, idempotency keys, the daily spending cap and the error codes a connected app meets"
+---
+
+## Quote, then buy with `max_price_trx`
+
+A connected app must pass `max_price_trx` to `buy_energy` and `buy_bandwidth`. Without it the call fails with `MAX_PRICE_REQUIRED` — the daily cap needs to know the most a call can cost.
+
+1. Call `quote_energy` (or `quote_bandwidth`) with the volume and duration.
+2. Show the user `total_trx` from the quote.
+3. Call `buy_energy` with the same volume and duration and `max_price_trx` = the quote's `total_trx`.
+
+If the price moves above `max_price_trx`, the purchase is refused with `PRICE_CHANGED` and nothing is charged. Quote again and ask the user.
+
+For an API key `max_price_trx` is optional, but we recommend it for the same reason.
+
+## Idempotency keys
+
+Tools that create something take `idempotency_key` — the [`Idempotency-Key`](/api-reference/energy/buy-energy) header of their route. Generate a new UUID for every new action and **reuse it when you retry the same action** after a timeout or a lost answer: the server returns the first result instead of charging again. A key lives 24 hours and is at most 64 characters.
+
+| Tool | Route |
+|---|---|
+| `buy_energy` | `POST /energy/buy` |
+| `buy_bandwidth` | `POST /bandwidth/buy` |
+| `buy_package` | `POST /transfer-packages/buy` |
+| `activate_smart_mode` | `POST /smart-mode/activate` |
+| `create_auto_bw` | `POST /bandwidth/auto` |
+| `create_energy_autorefill` | `POST /energy/auto-refill` |
+| `create_bandwidth_autorefill` | `POST /bandwidth/auto-refill` |
+| `activate_resale` | `POST /sublease/activate` |
+| `generate_resale_address` | `POST /sublease/generate` |
+| `create_broadcast_slug` | `POST /broadcast/slugs` |
+| `stake` | `POST /account/stake` |
+| `withdraw` (API key only) | `POST /account/withdrawal` |
+
+The same key with a different request is refused with `IDEMPOTENCY_KEY_REUSED`; a key whose first request is still running answers `IDEMPOTENT_REQUEST_IN_PROGRESS` — wait and retry with the same key.
+
+## The daily spending cap
+
+Each connection may spend a set amount in any 24 hours — **100 TRX** unless the user chose another amount on the consent screen or in **Connected apps**. Only the account owner can remove the cap.
+
+- Before a call that spends, the server reserves the most it can cost: `max_price_trx` plus the activation of a new address for purchases, the price for Smart Mode, packages, activations and Node API plans, the amount for a stake.
+- After the call the reserve becomes the real amount, or is released if nothing was charged. If the outcome is unknown (a timeout), the reserve stays for 24 hours — the cap errs on the side of refusing.
+- Spending that runs by itself (`recurring`) is outside the cap.
+- **Connected apps** in the dashboard shows what each app spent in the last 24 hours.
+
+A call that does not fit fails with `AGENT_SPEND_CAP`:
+
+```json
+{
+  "error": {
+    "code": "AGENT_SPEND_CAP",
+    "message": "This app may spend 5 TRX a day; 2.90065 TRX is left and this call may cost up to 3.3 TRX. A call whose answer was lost may have gone through: check the orders before retrying",
+    "status": 409,
+    "cap_trx": "5",
+    "remaining_trx": "2.90065",
+    "required_trx": "3.3"
+  }
+}
+```
+
+<Note>
+  A retry of a lost purchase reserves its amount again. Near the cap, check `list_orders` before retrying: the first call may have gone through.
+</Note>
+
+## Order source
+
+Orders placed by a connected app carry `"source": "agent"` — in `get_order`, `list_orders` and the [`order.updated` webhook](/api-reference/webhooks/overview). Orders placed with an API key carry `"source": "api"`.
+
+## Error codes
+
+Over MCP an error comes as a tool result with `isError: true`:
+
+```json
+{"error": {"code": "MAX_PRICE_REQUIRED", "message": "Pass max_price_trx: the quote's total_trx", "status": 422}}
+```
+
+Over REST the same code comes in the [standard error format](/errors).
+
+| Code | HTTP | Meaning and what to do |
+|---|---|---|
+| `AGENT_SPEND_CAP` | `409` | The call does not fit the connection's daily cap. `cap_trx`, `remaining_trx` and `required_trx` say by how much. Ask the user to raise the cap in Connected apps, or wait |
+| `MAX_PRICE_REQUIRED` | `422` | A purchase by a connected app without `max_price_trx`. Quote first and pass the quote's `total_trx` |
+| `AGENT_SPEND_UNBOUNDED` | `403` | This action is not open to connected apps yet. Use the dashboard or an API key |
+| `AGENT_ROUTE_CLOSED` | `403` | The route is not in the [tools catalog](/agents/reference/tools), so a connected app cannot call it over REST |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | Purchases need top-ups of 100 TRX in total. `required_trx` and `missing_trx` say how much is left. Show the deposit address, then connect again |
+| `OAUTH_UNCAPPED_OWNER_ONLY` | `403` | A team member tried to remove the daily cap. Only the account owner can |
+| `OAUTH_GRANT_LIMIT_REACHED` | `409` | The account already has the maximum number of connected apps (`limit`). Disconnect one first |
+| `PRICE_CHANGED` | `409` | The price is above `max_price_trx`. Nothing was charged; quote again |
+| `VALIDATION_ERROR` | `422` | An argument has the wrong type or is missing. Check the tool's `inputSchema` |
+| `INTERNAL_ERROR` | `5xx` | Server error without a code. For purchases, check `list_orders` before retrying with the same `idempotency_key` |
+
+All other codes are those of the REST API — see [Errors](/errors).
+
+An expired or revoked token gets HTTP `401` with `WWW-Authenticate: Bearer ... error="invalid_token"` on the `/mcp` request itself; MCP clients then refresh the token or ask the user to sign in again.

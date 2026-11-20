@@ -1,0 +1,58 @@
+---
+title: "使用 MCP 开发"
+sidebarTitle: "概览"
+description: "在你自己的应用或智能体中使用 TronRental 的 MCP 服务器：选择身份验证方式，然后选择示例"
+---
+
+TronRental MCP 服务器在 `https://mcp.tronrental.com/mcp` 上使用标准的 [Streamable HTTP 传输](https://modelcontextprotocol.io/specification/latest/basic/transports)。任何支持远程 MCP 服务器的 MCP SDK 或 LLM 平台都可以使用它。
+
+- **无状态：** 每个请求都是普通的 `POST`，无需保持会话。
+- **工具取决于凭证：** `tools/list` 只返回该密钥或连接可以调用的工具。
+- **与 REST 规则相同：** 每个工具背后都是一个 [REST API](/zh/api-reference/energy/get-prices) 路由，价格、检查和错误代码都相同。
+
+## 选择身份验证方式
+
+<CardGroup cols={2}>
+  <Card title="API 密钥——你自己的服务器" icon="server">
+    适用于代表**你的**账户操作的后端、脚本和智能体。以 `Authorization: Bearer <key>` 或 `X-API-Key: <key>` 发送密钥。没有每日上限，`max_price_trx` 可选，具有 `withdraw` 权限范围时可以提现。
+  </Card>
+  <Card title="OAuth——你的用户的账户" icon="user-shield">
+    适用于**每个用户**连接自己 TronRental 账户的应用。用户在[授权页面](/zh/agents/overview)上批准；你获得带有用户所选权限和每日上限的令牌。见[面向 MCP 客户端的 OAuth](/zh/agents/reference/oauth)。
+  </Card>
+</CardGroup>
+
+在控制台的 [API 页面](https://tronrental.com/dashboard/api)创建 API 密钥（累计充值达到 100 TRX 后可用）。只授予智能体所需的权限范围。
+
+<Warning>
+  当 LLM 平台替你调用 MCP 服务器时（OpenAI hosted MCP、Claude API MCP 连接器），你的密钥或令牌会发送给该平台，调用来自**该平台的** IP 地址。请使用没有 `withdraw` 的密钥，尽量缩小其权限范围，并注意带有 IP 白名单的密钥会拒绝这些调用。若要让密钥只留在你自己的服务器上，请自行运行 MCP 客户端（TypeScript 和 Python 示例）。
+</Warning>
+
+## 选择示例
+
+<CardGroup cols={2}>
+  <Card title="TypeScript" icon="js" href="/zh/agents/build/typescript">
+    使用官方 TypeScript SDK、通过 Streamable HTTP 的 MCP 客户端。
+  </Card>
+  <Card title="Python" icon="python" href="/zh/agents/build/python">
+    使用官方 Python SDK、通过 Streamable HTTP 的 MCP 客户端。
+  </Card>
+  <Card title="OpenAI Agents SDK" icon="robot" href="/zh/agents/build/openai-agents">
+    面向 OpenAI 智能体的 hosted MCP 工具和本地 MCP 客户端。
+  </Card>
+  <Card title="Claude API" icon="message-bot" href="/zh/agents/build/claude-api">
+    Messages API 请求中的 MCP 连接器。
+  </Card>
+</CardGroup>
+
+## MCP 还是 REST？
+
+当由语言模型决定调用什么时，使用 **MCP**：模型读取工具列表及其描述，然后选择工具。
+
+当你的代码已经知道要做什么时，使用 **[REST API](/zh/api-reference/energy/get-prices)**——例如"每次付款前购买 65,000 能量"。它只是一个 HTTP 请求，没有 MCP 层，订单完成时 [webhooks](/zh/api-reference/webhooks/overview) 会通知你。两者使用同一个 API 密钥，因此可以混合使用。
+
+## 上线之前
+
+- **先报价，再购买。** 把报价的 `total_trx` 作为 `max_price_trx` 传入。见[支出和错误](/zh/agents/reference/spending-and-errors)。
+- **安全重试。** 为每个操作生成一个 `idempotency_key`（UUID），重试时复用它。
+- **展示费用。** 在调用会产生支出的工具之前，告诉用户这次调用的费用——每个此类工具都标记为 `destructiveHint: true`。
+- **检查结果。** 订单会在几秒内在链上交付；读取 `get_order` 或等待 `order.updated` webhook。

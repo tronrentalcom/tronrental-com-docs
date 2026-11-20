@@ -1,0 +1,58 @@
+---
+title: "Desarrollar con MCP"
+sidebarTitle: "Introducción"
+description: "Usa el servidor MCP de TronRental desde tu propia app o agente: elige cómo autenticarte y después un ejemplo"
+---
+
+El servidor MCP de TronRental usa el [transporte Streamable HTTP](https://modelcontextprotocol.io/specification/latest/basic/transports) estándar en `https://mcp.tronrental.com/mcp`. Cualquier SDK de MCP o plataforma de LLM que admita servidores MCP remotos puede usarlo.
+
+- **Sin estado:** cada solicitud es un `POST` simple; no hay sesiones que mantener.
+- **Las herramientas dependen de la credencial:** `tools/list` devuelve solo las herramientas que la clave o la conexión puede llamar.
+- **Mismas reglas que REST:** cada herramienta es por dentro una ruta de la [API REST](/es/api-reference/energy/get-prices), con los mismos precios, comprobaciones y códigos de error.
+
+## Elige cómo autenticarte
+
+<CardGroup cols={2}>
+  <Card title="Clave API — tu propio servidor" icon="server">
+    Para tu backend, scripts y agentes que actúan sobre **tu** cuenta. Envía la clave como `Authorization: Bearer <key>` o `X-API-Key: <key>`. Sin límite diario, `max_price_trx` opcional, retiros posibles con el permiso `withdraw`.
+  </Card>
+  <Card title="OAuth — las cuentas de tus usuarios" icon="user-shield">
+    Para apps en las que **cada usuario** conecta su propia cuenta de TronRental. El usuario aprueba la [pantalla de consentimiento](/es/agents/overview#tú-mantienes-el-control); tú obtienes un token con los permisos y el límite diario que eligió. Consulta [OAuth para clientes MCP](/es/agents/reference/oauth).
+  </Card>
+</CardGroup>
+
+Crea una clave API en la [página API](https://tronrental.com/dashboard/api) del panel (disponible tras recargas por un total de 100 TRX). Dale solo los permisos que tu agente necesita.
+
+<Warning>
+  Cuando una plataforma de LLM llama al servidor MCP por ti (hosted MCP de OpenAI, el conector MCP de la Claude API), tu clave o token se envía a esa plataforma y las llamadas salen de **sus** direcciones IP. Usa una clave sin `withdraw`, mantén sus permisos acotados y ten en cuenta que una clave con lista blanca de IP rechazará esas llamadas. Para que la clave se quede en tu servidor, ejecuta tú mismo un cliente MCP (los ejemplos de TypeScript y Python).
+</Warning>
+
+## Elige un ejemplo
+
+<CardGroup cols={2}>
+  <Card title="TypeScript" icon="js" href="/es/agents/build/typescript">
+    Cliente MCP sobre Streamable HTTP con el SDK oficial de TypeScript.
+  </Card>
+  <Card title="Python" icon="python" href="/es/agents/build/python">
+    Cliente MCP sobre Streamable HTTP con el SDK oficial de Python.
+  </Card>
+  <Card title="OpenAI Agents SDK" icon="robot" href="/es/agents/build/openai-agents">
+    Herramienta hosted MCP y un cliente MCP local para agentes de OpenAI.
+  </Card>
+  <Card title="Claude API" icon="message-bot" href="/es/agents/build/claude-api">
+    El conector MCP en una solicitud a la Messages API.
+  </Card>
+</CardGroup>
+
+## ¿MCP o REST?
+
+Usa **MCP** cuando un modelo de lenguaje decide qué llamada hacer: el modelo lee la lista de herramientas y sus descripciones y elige la herramienta.
+
+Usa la **[API REST](/es/api-reference/energy/get-prices)** cuando tu código ya sabe qué hacer; por ejemplo, «comprar 65,000 de energía antes de cada pago». Es una sola solicitud HTTP sin capa MCP, y los [webhooks](/es/api-reference/webhooks/overview) te avisan cuando un pedido está listo. Ambas usan la misma clave API, así que puedes combinarlas.
+
+## Antes de pasar a producción
+
+- **Cotiza y luego compra.** Pasa el `total_trx` de la cotización como `max_price_trx`. Consulta [Gasto y errores](/es/agents/reference/spending-and-errors).
+- **Reintenta con seguridad.** Genera una `idempotency_key` (un UUID) por acción y reutilízala en los reintentos.
+- **Muestra el coste.** Di al usuario cuánto cuesta una llamada antes de llamar a una herramienta que gasta; todas ellas están marcadas con `destructiveHint: true`.
+- **Comprueba el resultado.** Los pedidos se entregan on-chain en segundos; consulta `get_order` o espera el webhook `order.updated`.

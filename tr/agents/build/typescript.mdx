@@ -1,0 +1,86 @@
+---
+title: "TypeScript"
+description: "Resmi MCP TypeScript SDK'sı ile Node.js'ten TronRental MCP sunucusuna bağlanın"
+---
+
+<Info>
+  20 Kasım 2026'da `@modelcontextprotocol/client` **2.4.0** (v2 SDK, Node.js 20+) ile kontrol edildi. Eski `@modelcontextprotocol/sdk` 1.x sürümünde sınıflar aynıdır; onları `@modelcontextprotocol/sdk/client/index.js` ve `@modelcontextprotocol/sdk/client/streamableHttp.js` içinden içe aktarın.
+</Info>
+
+## Kurulum
+
+```bash
+npm install @modelcontextprotocol/client
+```
+
+İstemciyi tarayıcıda değil, sunucunuzda çalıştırın: MCP sunucusu yabancı bir `Origin` başlığı taşıyan istekleri reddeder.
+
+## Araçları listeleme ve teklif alma
+
+```ts quote.mjs
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+
+const transport = new StreamableHTTPClientTransport(new URL("https://mcp.tronrental.com/mcp"), {
+  requestInit: { headers: { Authorization: `Bearer ${process.env.TRONRENTAL_API_KEY}` } },
+});
+const client = new Client({ name: "my-app", version: "1.0.0" });
+await client.connect(transport);
+
+const { tools } = await client.listTools();
+console.log(tools.map((t) => t.name));
+
+const quote = await client.callTool({
+  name: "quote_energy",
+  arguments: { volume: 65000, duration: "1h" },
+});
+console.log(quote.structuredContent);
+// { volume: 65000, duration: "1h", total_trx: "1.694350", ... }
+
+await client.close();
+```
+
+```bash
+TRONRENTAL_API_KEY=your_key node quote.mjs
+```
+
+`tools/list` yalnızca anahtarınızın kapsamlarının izin verdiği araçları döndürür. Her aracın `inputSchema` alanı argümanlarını tanımlar.
+
+## Enerji satın alma
+
+Önce teklif alın, teklifin `total_trx` değerini `max_price_trx` olarak gönderin ve satın alma için tek bir `idempotency_key` kullanın; böylece tekrar deneme iki kez ücret alamaz:
+
+```ts
+import { randomUUID } from "node:crypto";
+
+const target = "TRecipientAddress...";
+const quote = await client.callTool({
+  name: "quote_energy",
+  arguments: { volume: 65000, duration: "1h" },
+});
+
+const idempotencyKey = randomUUID(); // bu satın almayı tekrar denerseniz aynısını kullanın
+const order = await client.callTool({
+  name: "buy_energy",
+  arguments: {
+    target_address: target,
+    volume: 65000,
+    duration: "1h",
+    max_price_trx: quote.structuredContent.total_trx,
+    idempotency_key: idempotencyKey,
+  },
+});
+
+if (order.isError) {
+  console.error(order.structuredContent.error); // { code, message, status }
+} else {
+  console.log(order.structuredContent); // sipariş: id, status, price_trx, ...
+}
+```
+
+Reddedilen bir çağrı istisna fırlatmaz: sonuçta `isError: true` ve `structuredContent.error` içinde [hata kodu](/tr/agents/reference/spending-and-errors#hata-kodları) bulunur.
+
+## Kullanıcıları OAuth ile giriş yaptırma
+
+Her kullanıcının kendi hesabını bağladığı bir uygulamada aktarıma başlık yerine bir `authProvider` verin. SDK'nın `OAuthClientProvider` arayüzü TronRental'ın [OAuth sunucusuna](/tr/agents/reference/oauth) karşı keşfi, istemci kaydını ve PKCE'yi yürütür; belirteçleri siz saklar ve kullanıcıyı yetkilendirme URL'sine yönlendirirsiniz. Bkz. SDK'nın [OAuth kılavuzu](https://ts.sdk.modelcontextprotocol.io/v2/clients/oauth).
+
+Masaüstü ve CLI uygulamaları için loopback redirect URI (`http://127.0.0.1:<port>/callback`) kullanın; bir web uygulamasının kendi callback adresi için [destekle iletişime geçin](https://t.me/TronRentalcom_Help_bot).

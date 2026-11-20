@@ -1,0 +1,46 @@
+---
+title: "MCP क्लाइंट्स के लिए OAuth"
+sidebarTitle: "OAuth"
+description: "MCP क्लाइंट उपयोगकर्ता को TronRental में कैसे साइन इन कराता है: डिस्कवरी, पंजीकरण, PKCE, टोकन और रद्दीकरण"
+---
+
+तैयार क्लाइंट (Claude, ChatGPT, Claude Code, Codex, Cursor) यह सब अपने-आप करते हैं। यह पेज उन डेवलपर्स के लिए है जो अपने MCP क्लाइंट और ऐप बनाते हैं। फ़्लो [MCP ऑथराइज़ेशन स्पेसिफ़िकेशन](https://modelcontextprotocol.io/specification/latest/basic/authorization) का पालन करता है।
+
+## डिस्कवरी
+
+1. बिना ऑथेंटिकेशन का `POST https://mcp.tronrental.com/mcp` `401` लौटाता है, इस हेडर के साथ
+   ```
+   WWW-Authenticate: Bearer resource_metadata="https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp"
+   ```
+2. संरक्षित रिसोर्स मेटाडेटा (RFC 9728) रिसोर्स `https://mcp.tronrental.com/mcp` और ऑथराइज़ेशन सर्वर `https://mcp.tronrental.com` बताता है।
+3. ऑथराइज़ेशन सर्वर मेटाडेटा (RFC 8414) `https://mcp.tronrental.com/.well-known/oauth-authorization-server` पर है। इसके एंडपॉइंट उसी होस्ट पर `/oauth/register`, `/oauth/authorize`, `/oauth/token` और `/oauth/revoke` हैं।
+
+## क्लाइंट पंजीकरण
+
+- `/oauth/register` पर **Dynamic Client Registration** (RFC 7591)। क्लाइंट पब्लिक हैं: `token_endpoint_auth_method` हमेशा `none` होता है।
+- समर्थित प्लेटफ़ॉर्म से **Client ID Metadata Documents** स्वीकार किए जाते हैं।
+- **Redirect URI** अनुमत सूची में होने चाहिए: लूपबैक (`http://127.0.0.1:<any port>`, `http://localhost:<any port>`) और समर्थित प्लेटफ़ॉर्म के कॉलबैक। कोई और URI `invalid_redirect_uri` के साथ अस्वीकार होता है। अपने कॉलबैक वाला वेब ऐप बना रहे हैं? उसे जुड़वाने के लिए [सपोर्ट से संपर्क करें](https://t.me/TronRentalcom_Help_bot)।
+
+## ऑथराइज़ेशन
+
+- **PKCE, सिर्फ़ `S256`** के साथ ऑथराइज़ेशन कोड फ़्लो।
+- `resource` पैरामीटर ज़रूरी है और `https://mcp.tronrental.com/mcp` होना चाहिए; टोकन इसी ऑडियंस के लिए जारी होते हैं।
+- `scope` में वे [अनुमतियाँ](/hi/agents/reference/permissions) होती हैं जो ऐप माँगता है, स्पेस से अलग, उदाहरण के लिए `view deposit_view buy_energy`। उपयोगकर्ता कम अनुमतियाँ दे सकता है; टोकन प्रतिक्रिया का `scope` बताता है कि क्या दिया गया। OAuth के लिए `withdraw` मौजूद नहीं है और `invalid_scope` के साथ अस्वीकार होता है।
+- उपयोगकर्ता tronrental.com पर साइन इन (या साइन अप) करता है, खाता, अनुमतियाँ और दैनिक खर्च सीमा चुनता है और स्वीकृति देता है। जो ऐप TronRental को ज्ञात नहीं है, वह असत्यापित के रूप में दिखता है।
+
+## टोकन
+
+| टोकन | अवधि | टिप्पणी |
+|---|---|---|
+| एक्सेस टोकन | 1 घंटा | `/mcp` और [REST API](/hi/api-reference/energy/get-prices) को `Authorization: Bearer <token>` के रूप में भेजें |
+| रिफ़्रेश टोकन | 30 दिन | हर उपयोग पर बदलता है (रोटेशन)। पुराने रिफ़्रेश टोकन का दोबारा उपयोग पूरा कनेक्शन रद्द कर देता है |
+
+सिर्फ़ `authorization_code` और `refresh_token` ग्रांट समर्थित हैं; `client_credentials` नहीं — सर्वर-से-सर्वर कॉल्स के लिए [API कुंजी](/hi/agents/build/overview) इस्तेमाल करें।
+
+एक्सेस टोकन से कनेक्ट किया गया ऐप REST API को भी कॉल कर सकता है, लेकिन सिर्फ़ [टूल्स संदर्भ](/hi/agents/reference/tools) में सूचीबद्ध रूट; कोई और रूट `403 AGENT_ROUTE_CLOSED` लौटाता है।
+
+## रद्दीकरण
+
+- ऐप `/oauth/revoke` पर अपने टोकन रद्द कर सकता है।
+- उपयोगकर्ता डैशबोर्ड के [API पेज](https://tronrental.com/dashboard/api) पर **कनेक्ट किए गए ऐप** में ऐप डिस्कनेक्ट कर सकता है: कनेक्शन और उसके सभी टोकन एक साथ रद्द होते हैं, और `/mcp` की अगली कॉल को `error="invalid_token"` के साथ `401` मिलता है।
+- हर खाते और ऐप के लिए एक ही कनेक्शन होता है: उसी ऐप को दोबारा कनेक्ट करने पर दूसरा कनेक्शन नहीं जुड़ता, बल्कि उसकी अनुमतियाँ और सीमा अपडेट होती हैं।

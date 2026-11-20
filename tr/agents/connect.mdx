@@ -1,0 +1,106 @@
+---
+title: "Bir istemci bağlayın"
+description: "TronRental'ı Claude, ChatGPT, Claude Code, Codex veya Cursor'a ekleyin, giriş yapın ve başlayın"
+---
+
+Aşağıdaki tüm istemciler aynı sunucuya bağlanır ve sizi TronRental ile giriş yaptırır — kopyalanacak API anahtarı yok:
+
+```
+https://mcp.tronrental.com/mcp
+```
+
+İlk kullanımda istemci tronrental.com'u açar. Giriş yapın (veya kaydolun), hesabı seçin, [izinleri](/tr/agents/reference/permissions) işaretleyin, günlük harcama limitini belirleyin ve onaylayın. İstemci yalnızca bu bağlantı için bir belirteç alır.
+
+<Tabs>
+  <Tab title="Claude">
+    Web'deki Claude'da ve masaüstü uygulamasında, tüm planlarda çalışır (Free plan bir özel bağlayıcıya izin verir).
+
+    1. [Claude'a ekle](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=TronRental&connectorUrl=https%3A%2F%2Fmcp.tronrental.com%2Fmcp) bağlantısını açın — veya **Customize → Connectors → Add → Add custom connector** yoluna gidip `TronRental` adını ve yukarıdaki URL'yi girin.
+    2. TronRental'ın yanındaki **Connect** düğmesine tıklayın.
+    3. tronrental.com'da giriş yapın ve onaylayın.
+    4. Bir sohbette araçlar menüsünden TronRental'ı açın ve örneğin şunu sorun: *"TronRental bakiyem ne kadar?"*
+
+    Team ve Enterprise planlarında bir owner bağlayıcıyı **Organization settings → Connectors** bölümünden ekler; ardından üyeler **Connect** düğmesine tıklar.
+  </Tab>
+  <Tab title="ChatGPT">
+    1. [ChatGPT Plugins](https://chatgpt.com/plugins) sayfasını açın ve **+** → **Add custom MCP server** seçeneğine tıklayın.
+    2. `TronRental` adını girin, **Public endpoint** seçin ve yukarıdaki URL'yi yapıştırın.
+    3. Kimlik doğrulamayı **OAuth** olarak bırakın, uyarıyı onaylayın ve **Create as a plugin** düğmesine tıklayın.
+    4. tronrental.com'da giriş yapın ve onaylayın.
+    5. Bir sohbette araçlar menüsünden TronRental'ı seçin.
+
+    Seçeneği görmüyorsanız çalışma alanınız özel MCP sunucularına izin vermiyor olabilir — yöneticisine sorun. ChatGPT yalnızca OAuth ile bağlanır; API anahtarı kullanamaz.
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp
+    ```
+
+    Ardından Claude Code içinde `/mcp` çalıştırın, **tronrental** ve **Authenticate** seçin. Tarayıcınız tronrental.com'u açar; onaylayın ve terminale dönün.
+
+    TronRental'ı tüm projelerde kullanmak için `--scope user`, `.mcp.json` üzerinden ekibinizle paylaşmak için `--scope project` ekleyin.
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add tronrental --url https://mcp.tronrental.com/mcp
+    ```
+
+    Codex giriş için tarayıcıyı açar. Açmazsa şunu çalıştırın:
+
+    ```bash
+    codex mcp login tronrental
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    Sunucuyu `~/.cursor/mcp.json` (tüm projeler) veya `.cursor/mcp.json` (tek proje) dosyasına ekleyin:
+
+    ```json
+    {
+      "mcpServers": {
+        "tronrental": {
+          "url": "https://mcp.tronrental.com/mcp"
+        }
+      }
+    }
+    ```
+
+    Cursor sunucuyu ilk kez kullandığında giriş için tronrental.com'u açar.
+
+    {/* TODO: an "Add to Cursor" button (cursor://anysphere.cursor-deeplink/mcp/install?name=TronRental&config=<base64 of {"url":"https://mcp.tronrental.com/mcp"}>) — check in Cursor whether the base64 must be URL-encoded before adding it. */}
+  </Tab>
+</Tabs>
+
+## Çalıştığını kontrol edin
+
+Ajana sorun: *"TronRental'da 1 saatlik 65.000 enerji için teklif al."* Ajan `quote_energy` çağırır ve fiyatı gösterir — ücret alınmaz.
+
+Her satın almadan önce ajan fiyat teklifi alır, size gösterir ve `max_price_trx` olarak gönderir; ayrıca bir `idempotency_key` gönderir, böylece tekrar deneme asla iki kez ücret almaz. Satın almalar hesapta toplam 100 TRX yükleme gerektirir — o zamana kadar bağlantı yalnızca okuyabilir. Bkz. [Harcamalar ve hatalar](/tr/agents/reference/spending-and-errors).
+
+## Yönetme ve bağlantıyı kesme
+
+[API sayfasındaki](https://tronrental.com/dashboard/api) **Bağlı uygulamalar** listesi tüm bağlı istemcileri gösterir: kimin bağladığı, izinleri, günlük limiti ve son 24 saatte ne harcadığı. Limiti orada değiştirin veya bağlantıyı hemen iptal etmek için **Bağlantıyı kes** düğmesine tıklayın.
+
+## Bunun yerine API anahtarı kullanın
+
+Başlık ayarlamaya izin veren istemciler, giriş yapmak yerine bir [API anahtarıyla](/tr/authentication) bağlanabilir — örneğin sunucunuzda çalışan bir ajan için:
+
+```bash
+claude mcp add --transport http tronrental https://mcp.tronrental.com/mcp \
+  --header "Authorization: Bearer $TRONRENTAL_API_KEY"
+```
+
+Codex'te anahtarın ortam değişkenini `~/.codex/config.toml` dosyasına yazın:
+
+```toml
+[mcp_servers.tronrental]
+url = "https://mcp.tronrental.com/mcp"
+bearer_token_env_var = "TRONRENTAL_API_KEY"
+```
+
+Cursor'da `url` alanının yanına `"headers": { "Authorization": "Bearer ${env:TRONRENTAL_API_KEY}" }` ekleyin.
+
+API anahtarının günlük limiti yoktur: ona yalnızca ajanın ihtiyaç duyduğu kapsamları verin. Bkz. [MCP ile geliştirin](/tr/agents/build/overview).
+
+## Tarayıcısı olmayan ajanlar
+
+Tarayıcı açamayan ajanlar yerel [@tronrental-com/mcp-server](https://www.npmjs.com/package/@tronrental-com/mcp-server) paketini kullanabilir: paket makinenizde `TRONRENTAL_API_KEY` içindeki bir API anahtarıyla çalışır veya ajanın e-postanız ve o adrese gelen bir kodla hesap açmasına izin verir. Kurulum [README](https://github.com/tronrentalcom/tronrental-com-mcp) dosyasında.

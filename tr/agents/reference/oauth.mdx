@@ -1,0 +1,46 @@
+---
+title: "MCP istemcileri için OAuth"
+sidebarTitle: "OAuth"
+description: "Bir MCP istemcisi kullanıcıyı TronRental'a nasıl giriş yaptırır: keşif, kayıt, PKCE, belirteçler ve iptal"
+---
+
+Hazır istemciler (Claude, ChatGPT, Claude Code, Codex, Cursor) bunların hepsini kendileri yapar. Bu sayfa kendi MCP istemcilerini ve uygulamalarını geliştirenler içindir. Akış [MCP yetkilendirme spesifikasyonunu](https://modelcontextprotocol.io/specification/latest/basic/authorization) izler.
+
+## Keşif
+
+1. Kimlik doğrulaması olmayan bir `POST https://mcp.tronrental.com/mcp` isteği `401` ve şu başlıkla yanıt verir:
+   ```
+   WWW-Authenticate: Bearer resource_metadata="https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp"
+   ```
+2. Korumalı kaynak meta verileri (RFC 9728) kaynağı `https://mcp.tronrental.com/mcp`, yetkilendirme sunucusunu `https://mcp.tronrental.com` olarak belirtir.
+3. Yetkilendirme sunucusu meta verileri (RFC 8414) `https://mcp.tronrental.com/.well-known/oauth-authorization-server` adresindedir. Uç noktaları aynı host üzerindeki `/oauth/register`, `/oauth/authorize`, `/oauth/token` ve `/oauth/revoke`'tur.
+
+## İstemci kaydı
+
+- `/oauth/register` üzerinde **Dynamic Client Registration** (RFC 7591). İstemciler açıktır: `token_endpoint_auth_method` her zaman `none`.
+- **Client ID Metadata Documents** desteklenen platformlardan kabul edilir.
+- **Redirect URI**'ler izin listesinde olmalıdır: loopback (`http://127.0.0.1:<any port>`, `http://localhost:<any port>`) ve desteklenen platformların callback adresleri. Diğer her URI `invalid_redirect_uri` ile reddedilir. Kendi callback adresi olan bir web uygulaması mı geliştiriyorsunuz? Eklenmesi için [destekle iletişime geçin](https://t.me/TronRentalcom_Help_bot).
+
+## Yetkilendirme
+
+- **PKCE (yalnızca `S256`)** ile authorization code akışı.
+- `resource` parametresi zorunludur ve `https://mcp.tronrental.com/mcp` olmalıdır; belirteçler bu hedef kitle için verilir.
+- `scope`, uygulamanın istediği [izinleri](/tr/agents/reference/permissions) boşlukla ayrılmış olarak listeler, örneğin `view deposit_view buy_energy`. Kullanıcı daha azını verebilir; belirteç yanıtındaki `scope` neyin verildiğini söyler. `withdraw` OAuth için yoktur ve `invalid_scope` ile reddedilir.
+- Kullanıcı tronrental.com'da giriş yapar (veya kaydolur), hesabı, izinleri ve günlük harcama limitini seçer ve onaylar. TronRental'ın tanımadığı bir uygulama doğrulanmamış olarak gösterilir.
+
+## Belirteçler
+
+| Belirteç | Ömür | Notlar |
+|---|---|---|
+| Erişim belirteci | 1 saat | `/mcp` ve [REST API](/tr/api-reference/energy/get-prices) için `Authorization: Bearer <token>` olarak gönderin |
+| Yenileme belirteci | 30 gün | Her kullanımda yenilenir. Eski bir yenileme belirtecini tekrar kullanmak tüm bağlantıyı iptal eder |
+
+Yalnızca `authorization_code` ve `refresh_token` grant'leri desteklenir; `client_credentials` desteklenmez — sunucudan sunucuya çağrılar için bir [API anahtarı](/tr/agents/build/overview#kimlik-doğrulama-yolunu-seçin) kullanın.
+
+Erişim belirteciyle bağlı bir uygulama REST API'yi de çağırabilir, ancak yalnızca [araç referansında](/tr/agents/reference/tools) listelenen rotaları; diğer her rota `403 AGENT_ROUTE_CLOSED` ile yanıt verir.
+
+## İptal
+
+- Uygulama kendi belirteçlerini `/oauth/revoke` üzerinden iptal edebilir.
+- Kullanıcı uygulamanın bağlantısını panelin [API sayfasındaki](https://tronrental.com/dashboard/api) **Bağlı uygulamalar** bölümünden kesebilir: bağlantı ve tüm belirteçleri tek seferde iptal edilir ve `/mcp`'ye yapılan sonraki çağrı `error="invalid_token"` ile `401` alır.
+- Her hesap ve uygulama için tek bağlantı vardır: aynı uygulamayı yeniden bağlamak ikinci bir bağlantı eklemek yerine izinlerini ve limitini günceller.

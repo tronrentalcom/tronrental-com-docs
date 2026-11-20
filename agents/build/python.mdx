@@ -1,0 +1,84 @@
+---
+title: "Python"
+description: "Connect to the TronRental MCP server with the official MCP Python SDK"
+---
+
+<Info>
+  Checked on November 20, 2026 against `mcp` **2.3.0** (Python 3.11+, HTTP via `httpx2`). In `mcp` 2.x the transport function is `streamable_http_client` and it takes headers from the HTTP client; the 1.x name `streamablehttp_client` no longer exists.
+</Info>
+
+## Install
+
+```bash
+pip install "mcp>=2.3"
+```
+
+## List tools and get a quote
+
+```python quote.py
+import asyncio
+import os
+
+import httpx2
+from mcp import Client
+from mcp.client.streamable_http import streamable_http_client
+
+URL = "https://mcp.tronrental.com/mcp"
+
+
+async def main() -> None:
+    headers = {"Authorization": f"Bearer {os.environ['TRONRENTAL_API_KEY']}"}
+    async with httpx2.AsyncClient(headers=headers, timeout=httpx2.Timeout(30.0, read=120.0)) as http:
+        async with Client(streamable_http_client(URL, http_client=http)) as client:
+            tools = await client.list_tools()
+            print([tool.name for tool in tools.tools])
+
+            quote = await client.call_tool("quote_energy", {"volume": 65000, "duration": "1h"})
+            print(quote.structured_content)
+            # {'volume': 65000, 'duration': '1h', 'total_trx': '1.694350', ...}
+
+
+asyncio.run(main())
+```
+
+```bash
+TRONRENTAL_API_KEY=your_key python quote.py
+```
+
+`Client` runs the MCP `initialize` handshake for you. `tools/list` returns only the tools your key's scopes allow.
+
+## Buy energy
+
+Quote first, pass the quote's `total_trx` as `max_price_trx`, and keep one `idempotency_key` for the purchase so a retry cannot charge twice:
+
+```python
+import uuid
+
+
+async def buy_energy(client: Client, target: str, volume: int = 65000) -> dict:
+    quote = await client.call_tool("quote_energy", {"volume": volume, "duration": "1h"})
+    total = quote.structured_content["total_trx"]
+
+    key = str(uuid.uuid4())  # reuse it if you retry this purchase
+    order = await client.call_tool(
+        "buy_energy",
+        {
+            "target_address": target,
+            "volume": volume,
+            "duration": "1h",
+            "max_price_trx": total,
+            "idempotency_key": key,
+        },
+    )
+    if order.is_error:
+        raise RuntimeError(order.structured_content["error"])  # {code, message, status}
+    return order.structured_content  # the order: id, status, price_trx, ...
+```
+
+A refused call does not raise in the SDK: the result has `is_error` set and the [error code](/agents/reference/spending-and-errors#error-codes) in `structured_content["error"]`.
+
+## Sign users in with OAuth
+
+For an app where each user connects their own account, use the SDK's `mcp.client.auth.OAuthClientProvider` as the `auth` of the `httpx2.AsyncClient` instead of a header. It runs discovery, client registration and PKCE against TronRental's [OAuth server](/agents/reference/oauth); you provide token storage and the redirect and callback handlers. See the SDK's [authorization guide](https://py.sdk.modelcontextprotocol.io/).
+
+Use a loopback redirect URI (`http://127.0.0.1:<port>/callback`) for desktop and CLI apps; for a web app's own callback, [contact support](https://t.me/TronRentalcom_Help_bot).

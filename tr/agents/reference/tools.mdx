@@ -1,0 +1,18 @@
+---
+title: "Araçlar"
+description: "TronRental MCP sunucusunun tüm araçları: izinleri, parayla ne yaptıkları ve arkalarındaki API rotası"
+---
+
+import AgentTools from "/snippets/agent-tools-tr.mdx";
+
+Her araç, çağıranın kimlik bilgileriyle sunucuda çağrılan bir [REST API](/tr/api-reference/energy/get-prices) rotasıdır. Kurallar REST ile aynıdır: aynı fiyatlar, kontroller, idempotency ve hata kodları.
+
+- **Argümanlar**, rotanın düz hâldeki parametreleridir: yol ve sorgu parametreleri ile JSON gövdesinin alanları. Adları ve türleri aracın `inputSchema` alanında ve rotanın API referansında bulunur.
+- **`idempotency_key`**, rotanın `Idempotency-Key` başlığıdır; rotası bu başlığı alan her araçta sunulur.
+- **Sonuç**, `structuredContent` (rotanın JSON yanıtı; liste `{"result": [...]}` içine sarılır) olarak ve aynı JSON bir metin bloğunda gelir.
+- **Hata**, `isError: true` ve `{"error": {"code", "message", "status"}}` ile gelir — API'nin kendi [hata kodu](/tr/agents/reference/spending-and-errors#hata-kodları).
+- **İpuçları:** her araç `title`, `readOnlyHint`, `destructiveHint` ve `openWorldHint` taşır. Bakiyeden harcayan veya düzenli harcamayı açan her şey `destructiveHint: true` ile işaretlidir, böylece istemciler çağırmadan önce sorar.
+
+**Para:** `harcar` — çağrı anında bakiyeden ücret alır; `düzenli` — kendi kendine çalışan harcamayı açar ve bağlı bir uygulama için [`recurring`](/tr/agents/reference/permissions#kendi-kendine-çalışan-harcamalar-recurring) gerektirir; `bakiyeye` — parayı bakiyeye geri verir.
+
+<AgentTools />

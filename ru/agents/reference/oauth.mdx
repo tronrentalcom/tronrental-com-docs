@@ -1,0 +1,46 @@
+---
+title: "OAuth для MCP-клиентов"
+sidebarTitle: "OAuth"
+description: "Как MCP-клиент выполняет вход пользователя в TronRental: обнаружение, регистрация, PKCE, токены и отзыв"
+---
+
+Готовые клиенты (Claude, ChatGPT, Claude Code, Codex, Cursor) делают всё это сами. Эта страница — для разработчиков собственных MCP-клиентов и приложений. Поток следует [спецификации авторизации MCP](https://modelcontextprotocol.io/specification/latest/basic/authorization).
+
+## Обнаружение
+
+1. Неаутентифицированный `POST https://mcp.tronrental.com/mcp` отвечает `401` с
+   ```
+   WWW-Authenticate: Bearer resource_metadata="https://mcp.tronrental.com/.well-known/oauth-protected-resource/mcp"
+   ```
+2. Метаданные защищённого ресурса (RFC 9728) называют ресурс `https://mcp.tronrental.com/mcp` и сервер авторизации `https://mcp.tronrental.com`.
+3. Метаданные сервера авторизации (RFC 8414) находятся по адресу `https://mcp.tronrental.com/.well-known/oauth-authorization-server`. Его эндпоинты — `/oauth/register`, `/oauth/authorize`, `/oauth/token` и `/oauth/revoke` на том же хосте.
+
+## Регистрация клиента
+
+- **Dynamic Client Registration** (RFC 7591) на `/oauth/register`. Клиенты публичные: `token_endpoint_auth_method` всегда `none`.
+- **Client ID Metadata Documents** принимаются от поддерживаемых платформ.
+- **Redirect URI** должны быть в списке разрешённых: loopback (`http://127.0.0.1:<any port>`, `http://localhost:<any port>`) и адреса возврата поддерживаемых платформ. Любой другой URI отклоняется с `invalid_redirect_uri`. Делаете веб-приложение с собственным адресом возврата? [Напишите в поддержку](https://t.me/TronRentalcom_Help_bot), чтобы его добавили.
+
+## Авторизация
+
+- Authorization code flow с **PKCE, только `S256`**.
+- Параметр `resource` обязателен и должен быть `https://mcp.tronrental.com/mcp`; токены выдаются для этой аудитории.
+- `scope` перечисляет [права](/ru/agents/reference/permissions), которые просит приложение, через пробел, например `view deposit_view buy_energy`. Пользователь может выдать меньше; `scope` в ответе с токеном показывает, что выдано. `withdraw` для OAuth не существует и отклоняется с `invalid_scope`.
+- Пользователь входит (или регистрируется) на tronrental.com, выбирает аккаунт, права и суточный лимит расходов и подтверждает. Приложение, неизвестное TronRental, показывается как непроверенное.
+
+## Токены
+
+| Токен | Срок жизни | Примечания |
+|---|---|---|
+| Access-токен | 1 час | Передавайте как `Authorization: Bearer <token>` в `/mcp` и в [REST API](/ru/api-reference/energy/get-prices) |
+| Refresh-токен | 30 дней | Меняется при каждом использовании. Повторное использование старого refresh-токена отзывает всё подключение |
+
+Поддерживаются только гранты `authorization_code` и `refresh_token`; `client_credentials` — нет: для вызовов между серверами используйте [API-ключ](/ru/agents/build/overview#выберите-способ-аутентификации).
+
+С access-токеном подключённое приложение может вызывать и REST API, но только маршруты из [справочника инструментов](/ru/agents/reference/tools); любой другой маршрут отвечает `403 AGENT_ROUTE_CLOSED`.
+
+## Отзыв
+
+- Приложение может отозвать свои токены на `/oauth/revoke`.
+- Пользователь может отключить приложение в разделе **Подключённые приложения** на [странице API](https://tronrental.com/dashboard/api) личного кабинета: подключение и все его токены отзываются сразу, а следующий вызов `/mcp` получает `401` с `error="invalid_token"`.
+- Подключение одно на аккаунт и приложение: повторное подключение того же приложения обновляет его права и лимит, а не добавляет второе.

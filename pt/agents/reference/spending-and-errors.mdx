@@ -1,0 +1,96 @@
+---
+title: "Gastos e erros"
+description: "max_price_trx, chaves de idempotência, o limite diário de gastos e os códigos de erro que um app conectado encontra"
+---
+
+## Cote e depois compre com `max_price_trx`
+
+Um app conectado precisa enviar `max_price_trx` para `buy_energy` e `buy_bandwidth`. Sem ele, a chamada falha com `MAX_PRICE_REQUIRED` — o limite diário precisa saber o máximo que uma chamada pode custar.
+
+1. Chame `quote_energy` (ou `quote_bandwidth`) com o volume e a duração.
+2. Mostre ao usuário o `total_trx` da cotação.
+3. Chame `buy_energy` com o mesmo volume e a mesma duração e `max_price_trx` = o `total_trx` da cotação.
+
+Se o preço subir acima de `max_price_trx`, a compra é recusada com `PRICE_CHANGED` e nada é cobrado. Cote de novo e pergunte ao usuário.
+
+Para uma chave de API, `max_price_trx` é opcional, mas recomendamos usá-lo pelo mesmo motivo.
+
+## Chaves de idempotência
+
+As ferramentas que criam algo aceitam `idempotency_key` — o cabeçalho [`Idempotency-Key`](/pt/api-reference/energy/buy-energy) da rota delas. Gere um UUID novo para cada nova ação e **reutilize-o ao repetir a mesma ação** após um timeout ou uma resposta perdida: o servidor devolve o primeiro resultado em vez de cobrar de novo. Uma chave vale 24 horas e tem no máximo 64 caracteres.
+
+| Ferramenta | Rota |
+|---|---|
+| `buy_energy` | `POST /energy/buy` |
+| `buy_bandwidth` | `POST /bandwidth/buy` |
+| `buy_package` | `POST /transfer-packages/buy` |
+| `activate_smart_mode` | `POST /smart-mode/activate` |
+| `create_auto_bw` | `POST /bandwidth/auto` |
+| `create_energy_autorefill` | `POST /energy/auto-refill` |
+| `create_bandwidth_autorefill` | `POST /bandwidth/auto-refill` |
+| `activate_resale` | `POST /sublease/activate` |
+| `generate_resale_address` | `POST /sublease/generate` |
+| `create_broadcast_slug` | `POST /broadcast/slugs` |
+| `stake` | `POST /account/stake` |
+| `withdraw` (só chave de API) | `POST /account/withdrawal` |
+
+A mesma chave com uma requisição diferente é recusada com `IDEMPOTENCY_KEY_REUSED`; uma chave cuja primeira requisição ainda está em andamento responde `IDEMPOTENT_REQUEST_IN_PROGRESS` — aguarde e tente de novo com a mesma chave.
+
+## O limite diário de gastos
+
+Cada conexão pode gastar um valor definido em quaisquer 24 horas — **100 TRX**, a menos que o usuário tenha escolhido outro valor na tela de consentimento ou em **Aplicativos conectados**. Só o dono da conta pode remover o limite.
+
+- Antes de uma chamada que gasta, o servidor reserva o máximo que ela pode custar: `max_price_trx` mais a ativação de um endereço novo nas compras, o preço no Smart Mode, pacotes, ativações e planos do Node API, o valor em um stake.
+- Depois da chamada, a reserva vira o valor real, ou é liberada se nada foi cobrado. Se o resultado é desconhecido (um timeout), a reserva fica por 24 horas — na dúvida, o limite prefere recusar.
+- Gastos que rodam sozinhos (`recurring`) ficam fora do limite.
+- **Aplicativos conectados** no painel mostra quanto cada app gastou nas últimas 24 horas.
+
+Uma chamada que não cabe falha com `AGENT_SPEND_CAP`:
+
+```json
+{
+  "error": {
+    "code": "AGENT_SPEND_CAP",
+    "message": "This app may spend 5 TRX a day; 2.90065 TRX is left and this call may cost up to 3.3 TRX. A call whose answer was lost may have gone through: check the orders before retrying",
+    "status": 409,
+    "cap_trx": "5",
+    "remaining_trx": "2.90065",
+    "required_trx": "3.3"
+  }
+}
+```
+
+<Note>
+  Repetir uma compra cuja resposta se perdeu reserva o valor de novo. Perto do limite, confira `list_orders` antes de repetir: a primeira chamada pode ter sido concluída.
+</Note>
+
+## Origem do pedido
+
+Os pedidos feitos por um app conectado trazem `"source": "agent"` — em `get_order`, `list_orders` e no [webhook `order.updated`](/pt/api-reference/webhooks/overview). Os pedidos feitos com uma chave de API trazem `"source": "api"`.
+
+## Códigos de erro
+
+Via MCP, um erro chega como resultado de ferramenta com `isError: true`:
+
+```json
+{"error": {"code": "MAX_PRICE_REQUIRED", "message": "Pass max_price_trx: the quote's total_trx", "status": 422}}
+```
+
+Via REST, o mesmo código chega no [formato de erro padrão](/pt/errors).
+
+| Código | HTTP | Significado e o que fazer |
+|---|---|---|
+| `AGENT_SPEND_CAP` | `409` | A chamada não cabe no limite diário da conexão. `cap_trx`, `remaining_trx` e `required_trx` mostram em quanto. Peça ao usuário para aumentar o limite em Aplicativos conectados, ou aguarde |
+| `MAX_PRICE_REQUIRED` | `422` | Uma compra de um app conectado sem `max_price_trx`. Cote primeiro e envie o `total_trx` da cotação |
+| `AGENT_SPEND_UNBOUNDED` | `403` | Esta ação ainda não está aberta para apps conectados. Use o painel ou uma chave de API |
+| `AGENT_ROUTE_CLOSED` | `403` | A rota não está no [catálogo de ferramentas](/pt/agents/reference/tools), então um app conectado não pode chamá-la via REST |
+| `API_KEY_DEPOSIT_REQUIRED` | `403` | As compras exigem recargas de 100 TRX no total. `required_trx` e `missing_trx` mostram quanto falta. Mostre o endereço de depósito e depois conecte de novo |
+| `OAUTH_UNCAPPED_OWNER_ONLY` | `403` | Um membro da equipe tentou remover o limite diário. Só o dono da conta pode |
+| `OAUTH_GRANT_LIMIT_REACHED` | `409` | A conta já tem o número máximo de apps conectados (`limit`). Desconecte um primeiro |
+| `PRICE_CHANGED` | `409` | O preço está acima de `max_price_trx`. Nada foi cobrado; cote de novo |
+| `VALIDATION_ERROR` | `422` | Um argumento tem o tipo errado ou está faltando. Confira o `inputSchema` da ferramenta |
+| `INTERNAL_ERROR` | `5xx` | Erro do servidor sem código. Nas compras, confira `list_orders` antes de repetir com o mesmo `idempotency_key` |
+
+Todos os outros códigos são os da API REST — veja [Erros](/pt/errors).
+
+Um token expirado ou revogado recebe HTTP `401` com `WWW-Authenticate: Bearer ... error="invalid_token"` na própria requisição a `/mcp`; os clientes MCP então renovam o token ou pedem ao usuário que entre de novo.

@@ -1,0 +1,86 @@
+---
+title: "TypeScript"
+description: "使用官方 MCP TypeScript SDK 从 Node.js 连接 TronRental MCP 服务器"
+---
+
+<Info>
+  于 2026 年 11 月 20 日针对 `@modelcontextprotocol/client` **2.4.0**（v2 SDK，Node.js 20+）验证。在较旧的 `@modelcontextprotocol/sdk` 1.x 中类名相同；从 `@modelcontextprotocol/sdk/client/index.js` 和 `@modelcontextprotocol/sdk/client/streamableHttp.js` 导入。
+</Info>
+
+## 安装
+
+```bash
+npm install @modelcontextprotocol/client
+```
+
+请在服务器上运行客户端，而不是在浏览器中：MCP 服务器会拒绝带有外部 `Origin` 请求头的请求。
+
+## 列出工具并获取报价
+
+```ts quote.mjs
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+
+const transport = new StreamableHTTPClientTransport(new URL("https://mcp.tronrental.com/mcp"), {
+  requestInit: { headers: { Authorization: `Bearer ${process.env.TRONRENTAL_API_KEY}` } },
+});
+const client = new Client({ name: "my-app", version: "1.0.0" });
+await client.connect(transport);
+
+const { tools } = await client.listTools();
+console.log(tools.map((t) => t.name));
+
+const quote = await client.callTool({
+  name: "quote_energy",
+  arguments: { volume: 65000, duration: "1h" },
+});
+console.log(quote.structuredContent);
+// { volume: 65000, duration: "1h", total_trx: "1.694350", ... }
+
+await client.close();
+```
+
+```bash
+TRONRENTAL_API_KEY=your_key node quote.mjs
+```
+
+`tools/list` 只返回你的密钥权限范围允许的工具。每个工具的 `inputSchema` 描述其参数。
+
+## 购买能量
+
+先报价，把报价的 `total_trx` 作为 `max_price_trx` 传入，并为这次购买保留同一个 `idempotency_key`，这样重试不会重复扣款：
+
+```ts
+import { randomUUID } from "node:crypto";
+
+const target = "TRecipientAddress...";
+const quote = await client.callTool({
+  name: "quote_energy",
+  arguments: { volume: 65000, duration: "1h" },
+});
+
+const idempotencyKey = randomUUID(); // 重试这次购买时复用它
+const order = await client.callTool({
+  name: "buy_energy",
+  arguments: {
+    target_address: target,
+    volume: 65000,
+    duration: "1h",
+    max_price_trx: quote.structuredContent.total_trx,
+    idempotency_key: idempotencyKey,
+  },
+});
+
+if (order.isError) {
+  console.error(order.structuredContent.error); // { code, message, status }
+} else {
+  console.log(order.structuredContent); // 订单：id、status、price_trx、...
+}
+```
+
+被拒绝的调用不会抛出异常：结果中 `isError: true`，[错误代码](/zh/agents/reference/spending-and-errors)位于 `structuredContent.error`。
+
+## 使用 OAuth 让用户登录
+
+对于每个用户连接自己账户的应用，请向传输传入 `authProvider` 而不是请求头。SDK 的 `OAuthClientProvider` 接口会针对 TronRental 的 [OAuth 服务器](/zh/agents/reference/oauth)执行发现、客户端注册和 PKCE；你负责保存令牌并把用户引导到授权 URL。见 SDK 的 [OAuth 指南](https://ts.sdk.modelcontextprotocol.io/v2/clients/oauth)。
+
+桌面和 CLI 应用请使用回环重定向 URI（`http://127.0.0.1:<port>/callback`）；如需使用 Web 应用自己的回调地址，请[联系支持](https://t.me/TronRentalcom_Help_bot)。
