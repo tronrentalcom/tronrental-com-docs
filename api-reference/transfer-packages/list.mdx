@@ -10,7 +10,7 @@ Returns all your transfer packages.
 
 ### Response
 
-Array of package objects. Main fields: `id`, `address`, `package_size`, `quota_total` (transfers in the package), `quota_used` (transfers delivered), `subscription_used` (transfers taken by the daily subscription fee, one per day), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (when the package was paused; `null` unless `status` is `paused`), `created_at`.
+Array of package objects. Main fields: `id`, `address`, `package_size`, `quota_total` (transfers in the package), `quota_used` (transfers delivered), `subscription_used` (transfers taken by the daily subscription fee, one per day), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (what switching the BW Guarantee off refunds per transfer left; `null` when it is off), `status`, `paused_at` (when the package was paused; `null` unless `status` is `paused`), `created_at`.
 
 ### Package statuses
 
@@ -44,6 +44,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "subscription_used": 1,
     "remaining": 312,
     "bw_guarantee": true,
+    "bw_fee_per_transfer": "0.3",
     "status": "active",
     "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"

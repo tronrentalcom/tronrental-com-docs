@@ -10,7 +10,7 @@ Devuelve todos tus paquetes de transferencias.
 
 ### Respuesta
 
-Array de objetos de paquetes. Campos principales: `id`, `address`, `package_size`, `quota_total` (transferencias del paquete), `quota_used` (transferencias atendidas), `subscription_used` (transferencias que consume la tarifa diaria, una por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (cuándo se pausó el paquete; `null` salvo que `status` sea `paused`), `created_at`.
+Array de objetos de paquetes. Campos principales: `id`, `address`, `package_size`, `quota_total` (transferencias del paquete), `quota_used` (transferencias atendidas), `subscription_used` (transferencias que consume la tarifa diaria, una por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (lo que devuelve desactivar la Garantía BW por cada transferencia restante; `null` si está desactivada), `status`, `paused_at` (cuándo se pausó el paquete; `null` salvo que `status` sea `paused`), `created_at`.
 
 ### Estados del paquete
 
@@ -44,6 +44,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "subscription_used": 1,
     "remaining": 312,
     "bw_guarantee": true,
+    "bw_fee_per_transfer": "0.3",
     "status": "active",
     "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"

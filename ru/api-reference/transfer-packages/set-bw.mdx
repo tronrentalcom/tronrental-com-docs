@@ -1,0 +1,63 @@
+---
+title: Гарантия BW пакета
+api: POST /v1/transfer-packages/{package_id}/bw
+description: "Включить или выключить Гарантию BW купленного пакета"
+---
+
+## Включить или выключить Гарантию BW
+
+Включает или выключает Гарантию BW у пакета в статусе `active` или `paused` — не чаще раза в 3 минуты на пакет.
+
+- **Включение:** плата за BW (`bw_fee_per_transfer` из [Get Tiers](/ru/api-reference/transfer-packages/get-tiers)) за каждый оставшийся перевод (`remaining`) списывается с баланса — столько же, сколько при покупке пакета сразу с гарантией. Bandwidth приходит на адрес в течение минуты; пакет на паузе получит его после возобновления.
+- **Выключение:** оплаченное за гарантию оставшихся переводов (`bw_fee_per_transfer` пакета) возвращается на баланс, bandwidth снимается.
+
+Запрос состояния, которое у пакета уже есть, ничего не меняет и денег не двигает (`changed: false`) — повтор безопасен.
+
+<ParamField path="package_id" type="number" required>
+  ID пакета из [List Packages](/ru/api-reference/transfer-packages/list)
+</ParamField>
+
+### Тело запроса
+
+<ParamField body="enabled" type="boolean" required>
+  `true` — включить, `false` — выключить
+</ParamField>
+
+### Ответ
+
+`changed`, `charged_trx`, `refunded_trx` и `package` — пакет после вызова.
+
+### Ошибки
+
+| Код | HTTP | Когда |
+|-----|------|-------|
+| `PACKAGE_NOT_FOUND` | 404 | Такого пакета на вашем аккаунте нет |
+| `PACKAGE_NOT_ACTIVE` | 409 | Пакет не `active` и не `paused` или в нём не осталось переводов |
+| `INSUFFICIENT_BALANCE` | 402 | Баланса не хватает на плату; ничего не изменено |
+| `ADDRESS_BUSY` | 409 | Пакет сейчас меняет другой запрос — повторите через несколько секунд |
+| `BW_SWITCH_TOO_SOON` | 429 | Гарантию этого пакета меняли меньше 3 минут назад; `retry_after_s` — сколько подождать |
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/101/bw \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
+
+```json Response
+{
+  "changed": true,
+  "charged_trx": "93.6",
+  "refunded_trx": "0",
+  "package": {
+    "id": 101,
+    "address": "TYourAddress...",
+    "remaining": 312,
+    "bw_guarantee": true,
+    "bw_fee_per_transfer": "0.3",
+    "status": "active"
+  }
+}
+```

@@ -1,0 +1,63 @@
+---
+title: 切换带宽保证
+api: POST /v1/transfer-packages/{package_id}/bw
+description: "为已购套餐开启或关闭带宽保证"
+---
+
+## 开启或关闭带宽保证
+
+为状态为 `active` 或 `paused` 的套餐开启或关闭带宽保证——每个套餐每 3 分钟最多一次。
+
+- **开启：** 按每笔剩余转账（`remaining`）从余额扣除带宽费用（[Get Tiers](/zh/api-reference/transfer-packages/get-tiers) 中的 `bw_fee_per_transfer`），与购买时直接带保证相同。带宽在一分钟内到达地址；已暂停的套餐在恢复后获得。
+- **关闭：** 为剩余转账支付的保证费用（套餐的 `bw_fee_per_transfer`）退回余额，带宽被撤回。
+
+请求套餐已有的状态不会产生任何变化，也不会动用资金（`changed: false`）——重试是安全的。
+
+<ParamField path="package_id" type="number" required>
+  来自 [List Packages](/zh/api-reference/transfer-packages/list) 的套餐 ID
+</ParamField>
+
+### 请求体
+
+<ParamField body="enabled" type="boolean" required>
+  `true` — 开启，`false` — 关闭
+</ParamField>
+
+### 响应
+
+`changed`、`charged_trx`、`refunded_trx` 和 `package`（调用后的套餐）。
+
+### 错误
+
+| 代码 | HTTP | 情况 |
+|------|------|------|
+| `PACKAGE_NOT_FOUND` | 404 | 您的账户中没有该套餐 |
+| `PACKAGE_NOT_ACTIVE` | 409 | 套餐不是 `active` 或 `paused`，或已无剩余转账 |
+| `INSUFFICIENT_BALANCE` | 402 | 余额不足以支付费用；未做任何更改 |
+| `ADDRESS_BUSY` | 409 | 套餐正被另一个请求修改——几秒后重试 |
+| `BW_SWITCH_TOO_SOON` | 429 | 该套餐的保证在 3 分钟内已更改过；`retry_after_s` 表示需等待的秒数 |
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/101/bw \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
+
+```json Response
+{
+  "changed": true,
+  "charged_trx": "93.6",
+  "refunded_trx": "0",
+  "package": {
+    "id": 101,
+    "address": "TYourAddress...",
+    "remaining": 312,
+    "bw_guarantee": true,
+    "bw_fee_per_transfer": "0.3",
+    "status": "active"
+  }
+}
+```
