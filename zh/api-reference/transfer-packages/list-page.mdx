@@ -1,0 +1,104 @@
+---
+title: 分页列出套餐
+api: GET /v1/transfer-packages/list
+description: "您的转账套餐的一页 — 主列表或归档"
+---
+
+## 分页列出套餐
+
+返回您的转账套餐的一页：主列表，或在 `archived=true` 时返回归档。未结束的套餐（生效中、已暂停、等待付款或激活）排在最前，其后按最新排序。控制台显示的就是这个列表；[套餐列表](/zh/api-reference/transfer-packages/list) 仍一次返回全部套餐。
+
+### 查询参数
+
+<ParamField query="archived" type="boolean" default="false">
+  `true` — 归档（通过[归档钱包](/zh/api-reference/transfer-packages/archive)移入的套餐）；`false`（默认）— 主列表
+</ParamField>
+
+<ParamField query="page" type="number">
+  页码（默认 1）
+</ParamField>
+
+<ParamField query="page_size" type="number">
+  每页套餐数（默认 20，最多 100）
+</ParamField>
+
+### 响应
+
+<ResponseField name="packages" type="array">
+  该页的套餐 — 与[套餐列表](/zh/api-reference/transfer-packages/list)相同的对象，带 `label` 和 `archived_at`。
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  所请求列表的套餐总数（所有页）。
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  请求中的页码。
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  请求中的每页数量。
+</ResponseField>
+
+<ResponseField name="archived_packages" type="number">
+  您的账户在归档中的套餐数 — 无论请求的是哪个列表。
+</ResponseField>
+
+<ResponseField name="archived_wallets" type="number">
+  这些归档套餐所在的地址数。
+</ResponseField>
+
+### 示例
+
+```bash
+curl "https://api.tronrental.com/v1/transfer-packages/list?page=1&page_size=20" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "3.0",
+      "total_price_trx": "1500.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": true,
+      "bw_fee_per_transfer": "0.3",
+      "status": "active",
+      "next_subscription_at": "2026-11-26T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z",
+      "label": "主钱包",
+      "archived_at": null
+    }
+  ],
+  "total": 27,
+  "page": 1,
+  "page_size": 20,
+  "archived_packages": 2,
+  "archived_wallets": 2
+}
+```
+
+### 错误
+
+以[标准形式](/zh/errors)返回，错误码位于 `detail.error.code`。出现其中任何一个错误后，一切保持不变。
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| — | `422` | `page` < 1, `page_size` ∉ 1–100 |

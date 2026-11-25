@@ -1,0 +1,104 @@
+---
+title: List Packages by Page
+api: GET /v1/transfer-packages/list
+description: "One page of your transfer packages — the main list or the archive"
+---
+
+## List Packages by Page
+
+Returns one page of your transfer packages: the main list, or the archive with `archived=true`. Packages that are not closed — active, paused, awaiting payment or activation — come first, then the newest. This is the list the dashboard shows; [List Packages](/api-reference/transfer-packages/list) still returns every package at once.
+
+### Query parameters
+
+<ParamField query="archived" type="boolean" default="false">
+  `true` — the archive (packages moved there with [Archive Wallet](/api-reference/transfer-packages/archive)); `false` (default) — the main list
+</ParamField>
+
+<ParamField query="page" type="number">
+  Page number (default 1)
+</ParamField>
+
+<ParamField query="page_size" type="number">
+  Packages per page (default 20, max 100)
+</ParamField>
+
+### Response
+
+<ResponseField name="packages" type="array">
+  Packages of the page — the same objects as in [List Packages](/api-reference/transfer-packages/list), with `label` and `archived_at`.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Packages in the list you asked for, on all pages.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  The page from the request.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  The page size from the request.
+</ResponseField>
+
+<ResponseField name="archived_packages" type="number">
+  Packages your account has in the archive — whichever list you asked for.
+</ResponseField>
+
+<ResponseField name="archived_wallets" type="number">
+  Addresses those archived packages are on.
+</ResponseField>
+
+### Example
+
+```bash
+curl "https://api.tronrental.com/v1/transfer-packages/list?page=1&page_size=20" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "3.0",
+      "total_price_trx": "1500.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": true,
+      "bw_fee_per_transfer": "0.3",
+      "status": "active",
+      "next_subscription_at": "2026-11-26T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z",
+      "label": "Main wallet",
+      "archived_at": null
+    }
+  ],
+  "total": 27,
+  "page": 1,
+  "page_size": 20,
+  "archived_packages": 2,
+  "archived_wallets": 2
+}
+```
+
+### Errors
+
+Returned in the [standard shape](/errors), under `detail.error.code`. After any of them nothing has changed.
+
+| Code | Status | When |
+|------|--------|------|
+| — | `422` | `page` < 1 or `page_size` outside 1–100 |

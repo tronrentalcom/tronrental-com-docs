@@ -34,6 +34,12 @@ description: "预付费的 USDT 转账套餐，保证提供能量"
 - 新地址上必须没有转账套餐，也没有处于活跃状态的智能模式。
 - 该请求约 15 秒或更久后返回；响应之后，来自旧地址的转账不再获得服务。
 
+### 为钱包命名和归档
+
+- [为钱包命名](/zh/api-reference/transfer-packages/set-label) — 您为地址起的名称，该地址的每个套餐都会在 `label` 中返回。
+- [归档](/zh/api-reference/transfer-packages/archive)所有套餐都已结束的钱包：它连同历史一起离开主列表，并可按需[移回](/zh/api-reference/transfer-packages/restore)。仍在使用的套餐不会被归档。
+- [分页列出套餐](/zh/api-reference/transfer-packages/list-page) — 主列表或归档，每页 20 个套餐，未结束的在前。
+
 ### 定价
 
 | 套餐规模 | 每笔转账价格 |

@@ -10,7 +10,9 @@ description: "Список ваших пакетов переводов"
 
 ### Ответ
 
-Массив объектов пакетов. Основные поля: `id`, `address`, `package_size`, `quota_total` (переводов в пакете), `quota_used` (переводов обслужено), `subscription_used` (переводов списано суточной платой, по одному в день), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (сколько вернёт выключение Гарантии BW за каждый оставшийся перевод; `null`, если она выключена), `status`, `paused_at` (когда пакет приостановлен; `null`, если `status` не `paused`), `created_at`.
+Массив объектов пакетов. Основные поля: `id`, `address`, `package_size`, `quota_total` (переводов в пакете), `quota_used` (переводов обслужено), `subscription_used` (переводов списано суточной платой, по одному в день), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (сколько вернёт выключение Гарантии BW за каждый оставшийся перевод; `null`, если она выключена), `status`, `paused_at` (когда пакет приостановлен; `null`, если `status` не `paused`), `created_at`, `label` (ваше название адреса, см. [Подписать кошелёк](/ru/api-reference/transfer-packages/set-label); `null` — без подписи), `archived_at` (когда пакет убран в архив, см. [Архив кошелька](/ru/api-reference/transfer-packages/archive); `null` — в основном списке).
+
+Пакеты из архива входят в ответ. Читать список постранично, как кабинет, — [Пакеты постранично](/ru/api-reference/transfer-packages/list-page).
 
 ### Статусы пакетов
 

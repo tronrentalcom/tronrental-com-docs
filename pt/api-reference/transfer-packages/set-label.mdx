@@ -1,0 +1,61 @@
+---
+title: Nomear uma Carteira
+api: POST /v1/transfer-packages/label
+description: "Dar seu próprio nome a um endereço dos seus pacotes"
+---
+
+## Nomear uma Carteira
+
+Dá a um endereço dos seus pacotes o seu próprio nome — por exemplo, *Carteira principal* — para que a lista mostre de quem é o endereço. O nome pertence ao endereço, não a um pacote: todos os pacotes do endereço o retornam em `label`, inclusive os comprados depois. Um endereço tem um só nome; um novo substitui o anterior.
+
+### Corpo da requisição
+
+<ParamField body="address" type="string" required>
+  Endereço TRON dos seus pacotes
+</ParamField>
+
+<ParamField body="label" type="string">
+  O nome, até 50 caracteres. Espaços nas pontas são removidos; um nome vazio o remove.
+</ParamField>
+
+### Resposta
+
+<ResponseField name="address" type="string">
+  O endereço da requisição.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  O nome salvo; `null` — o nome foi removido.
+</ResponseField>
+
+<Note>
+  O nome é visto só pela sua conta e pelos membros da equipe com acesso a ela.
+</Note>
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/label \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Carteira principal"
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "label": "Carteira principal"
+}
+```
+
+### Erros
+
+Retornados no [formato padrão](/pt/errors), em `detail.error.code`. Depois de qualquer um deles, nada mudou.
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| `PACKAGE_NOT_FOUND` | `404` | Sua conta não tem nenhum pacote no endereço |
+| — | `422` | `label` tem mais de 50 caracteres |

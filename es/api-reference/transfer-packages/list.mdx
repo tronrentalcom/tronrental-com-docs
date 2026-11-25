@@ -10,7 +10,9 @@ Devuelve todos tus paquetes de transferencias.
 
 ### Respuesta
 
-Array de objetos de paquetes. Campos principales: `id`, `address`, `package_size`, `quota_total` (transferencias del paquete), `quota_used` (transferencias atendidas), `subscription_used` (transferencias que consume la tarifa diaria, una por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (lo que devuelve desactivar la Garantía BW por cada transferencia restante; `null` si está desactivada), `status`, `paused_at` (cuándo se pausó el paquete; `null` salvo que `status` sea `paused`), `created_at`.
+Array de objetos de paquetes. Campos principales: `id`, `address`, `package_size`, `quota_total` (transferencias del paquete), `quota_used` (transferencias atendidas), `subscription_used` (transferencias que consume la tarifa diaria, una por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (lo que devuelve desactivar la Garantía BW por cada transferencia restante; `null` si está desactivada), `status`, `paused_at` (cuándo se pausó el paquete; `null` salvo que `status` sea `paused`), `created_at`, `label` (tu nombre para la dirección, ver [Nombrar una billetera](/es/api-reference/transfer-packages/set-label); `null` — sin nombre), `archived_at` (cuándo se archivó el paquete, ver [Archivar billetera](/es/api-reference/transfer-packages/archive); `null` — en la lista principal).
+
+Los paquetes archivados se incluyen. Para leer la lista por páginas, como el panel, usa [Listar paquetes por páginas](/es/api-reference/transfer-packages/list-page).
 
 ### Estados del paquete
 

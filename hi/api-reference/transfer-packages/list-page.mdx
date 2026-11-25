@@ -1,0 +1,104 @@
+---
+title: पेज के अनुसार पैकेज सूची
+api: GET /v1/transfer-packages/list
+description: "आपके ट्रांसफर पैकेजों का एक पेज — मुख्य सूची या संग्रह"
+---
+
+## पेज के अनुसार पैकेज सूची
+
+आपके ट्रांसफर पैकेजों का एक पेज लौटाता है: मुख्य सूची, या `archived=true` के साथ संग्रह। पहले वे पैकेज आते हैं जो बंद नहीं हुए हैं — सक्रिय, रोके गए, भुगतान या सक्रियण की प्रतीक्षा में — फिर सबसे नए। डैशबोर्ड यही सूची दिखाता है; [पैकेज सूची](/hi/api-reference/transfer-packages/list) अब भी सभी पैकेज एक साथ लौटाता है।
+
+### क्वेरी पैरामीटर
+
+<ParamField query="archived" type="boolean" default="false">
+  `true` — संग्रह ([वॉलेट संग्रह में भेजें](/hi/api-reference/transfer-packages/archive) से वहाँ भेजे गए पैकेज); `false` (डिफ़ॉल्ट) — मुख्य सूची
+</ParamField>
+
+<ParamField query="page" type="number">
+  पेज संख्या (डिफ़ॉल्ट 1)
+</ParamField>
+
+<ParamField query="page_size" type="number">
+  प्रति पेज पैकेज (डिफ़ॉल्ट 20, अधिकतम 100)
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="packages" type="array">
+  पेज के पैकेज — [पैकेज सूची](/hi/api-reference/transfer-packages/list) वाले ही ऑब्जेक्ट, `label` और `archived_at` के साथ।
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  माँगी गई सूची में पैकेज, सभी पेजों पर।
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  अनुरोध का पेज।
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  अनुरोध का पेज आकार।
+</ResponseField>
+
+<ResponseField name="archived_packages" type="number">
+  संग्रह में आपके खाते के पैकेज — चाहे कोई भी सूची माँगी गई हो।
+</ResponseField>
+
+<ResponseField name="archived_wallets" type="number">
+  संग्रह के इन पैकेजों वाले एड्रेस।
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl "https://api.tronrental.com/v1/transfer-packages/list?page=1&page_size=20" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "3.0",
+      "total_price_trx": "1500.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": true,
+      "bw_fee_per_transfer": "0.3",
+      "status": "active",
+      "next_subscription_at": "2026-11-26T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z",
+      "label": "मुख्य वॉलेट",
+      "archived_at": null
+    }
+  ],
+  "total": 27,
+  "page": 1,
+  "page_size": 20,
+  "archived_packages": 2,
+  "archived_wallets": 2
+}
+```
+
+### त्रुटियाँ
+
+[मानक रूप](/hi/errors) में, `detail.error.code` के अंतर्गत लौटाई जाती हैं। इनमें से किसी के भी बाद कुछ नहीं बदला होता।
+
+| कोड | स्थिति | कब |
+|------|--------|------|
+| — | `422` | `page` < 1, `page_size` ∉ 1–100 |

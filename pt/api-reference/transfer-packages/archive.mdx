@@ -1,0 +1,58 @@
+---
+title: Arquivar Carteira
+api: POST /v1/transfer-packages/archive
+description: "Guardar no arquivo os pacotes encerrados de um endereço"
+---
+
+## Arquivar Carteira
+
+Move para o arquivo os pacotes **encerrados** da sua conta no endereço: o painel os mostra em *Arquivo* em vez da lista principal. Encerrados são `completed`, `expired`, `cancelled` e `failed_refunded`; um pacote ativo, pausado, aguardando pagamento ou ativação fica na lista principal.
+
+Nada mais muda: os pacotes, seu histórico e cobranças ficam como estão, e [Listar Pacotes](/pt/api-reference/transfer-packages/list) continua retornando-os, com `archived_at`. Um pacote comprado depois no endereço fica na lista principal. Traga a carteira de volta com [Restaurar Carteira](/pt/api-reference/transfer-packages/restore).
+
+### Corpo da requisição
+
+<ParamField body="address" type="string" required>
+  Endereço TRON cujos pacotes encerrados serão arquivados
+</ParamField>
+
+### Resposta
+
+<ResponseField name="address" type="string">
+  O endereço da requisição.
+</ResponseField>
+
+<ResponseField name="archived" type="boolean">
+  Sempre `true`.
+</ResponseField>
+
+<ResponseField name="packages" type="number">
+  Quantos pacotes foram para o arquivo agora; `0` — nada a arquivar (nenhum pacote encerrado ou todos já arquivados).
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/archive \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "archived": true,
+  "packages": 3
+}
+```
+
+### Erros
+
+Retornados no [formato padrão](/pt/errors), em `detail.error.code`. Depois de qualquer um deles, nada mudou.
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| `PACKAGE_NOT_FOUND` | `404` | Sua conta não tem nenhum pacote no endereço |

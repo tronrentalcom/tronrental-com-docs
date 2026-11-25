@@ -10,7 +10,9 @@ description: "अपने ट्रांसफर पैकेज की स�
 
 ### रिस्पॉन्स
 
-पैकेज ऑब्जेक्ट्स का ऐरे। मुख्य फ़ील्ड: `id`, `address`, `package_size`, `quota_total` (पैकेज में ट्रांसफ़र), `quota_used` (सेवा दिए गए ट्रांसफ़र), `subscription_used` (दैनिक सब्सक्रिप्शन शुल्क द्वारा लिए गए ट्रांसफ़र, प्रति दिन एक), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (BW गारंटी बंद करने पर हर बचे ट्रांसफर के लिए लौटने वाली राशि; बंद होने पर `null`), `status`, `paused_at` (पैकेज कब रोका गया; जब तक `status` `paused` न हो, `null`), `created_at`।
+पैकेज ऑब्जेक्ट्स का ऐरे। मुख्य फ़ील्ड: `id`, `address`, `package_size`, `quota_total` (पैकेज में ट्रांसफ़र), `quota_used` (सेवा दिए गए ट्रांसफ़र), `subscription_used` (दैनिक सब्सक्रिप्शन शुल्क द्वारा लिए गए ट्रांसफ़र, प्रति दिन एक), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (BW गारंटी बंद करने पर हर बचे ट्रांसफर के लिए लौटने वाली राशि; बंद होने पर `null`), `status`, `paused_at` (पैकेज कब रोका गया; जब तक `status` `paused` न हो, `null`), `created_at`, `label` (एड्रेस के लिए आपका नाम, देखें [वॉलेट को नाम दें](/hi/api-reference/transfer-packages/set-label); `null` — कोई नाम नहीं), `archived_at` (पैकेज कब संग्रह में गया, देखें [वॉलेट संग्रह में भेजें](/hi/api-reference/transfer-packages/archive); `null` — मुख्य सूची में)।
+
+संग्रहित पैकेज शामिल हैं। सूची को डैशबोर्ड की तरह पेज-दर-पेज पढ़ने के लिए [पेज के अनुसार पैकेज सूची](/hi/api-reference/transfer-packages/list-page) का उपयोग करें।
 
 ### पैकेज स्टेटस
 

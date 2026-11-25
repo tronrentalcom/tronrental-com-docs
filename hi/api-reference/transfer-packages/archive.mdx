@@ -1,0 +1,58 @@
+---
+title: वॉलेट संग्रह में भेजें
+api: POST /v1/transfer-packages/archive
+description: "किसी एड्रेस के बंद पैकेज संग्रह में रखें"
+---
+
+## वॉलेट संग्रह में भेजें
+
+एड्रेस पर आपके खाते के **बंद** पैकेज संग्रह में भेजता है: डैशबोर्ड उन्हें मुख्य सूची के बजाय *संग्रह* में दिखाता है। बंद हैं `completed`, `expired`, `cancelled` और `failed_refunded`; सक्रिय, रोका गया, भुगतान या सक्रियण की प्रतीक्षा वाला पैकेज मुख्य सूची में रहता है।
+
+और कुछ नहीं बदलता: पैकेज, उनका इतिहास और शुल्क जैसे थे वैसे ही रहते हैं, और [पैकेज सूची](/hi/api-reference/transfer-packages/list) उन्हें `archived_at` के साथ लौटाती रहती है। एड्रेस पर बाद में खरीदा गया पैकेज मुख्य सूची में होता है। वॉलेट को [वॉलेट वापस लाएँ](/hi/api-reference/transfer-packages/restore) से वापस लाएँ।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  वह TRON एड्रेस जिसके बंद पैकेज संग्रह में भेजने हैं
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="address" type="string">
+  अनुरोध का एड्रेस।
+</ResponseField>
+
+<ResponseField name="archived" type="boolean">
+  हमेशा `true`।
+</ResponseField>
+
+<ResponseField name="packages" type="number">
+  अभी कितने पैकेज संग्रह में गए; `0` — संग्रह में भेजने को कुछ नहीं (कोई बंद पैकेज नहीं या सभी पहले से संग्रह में)।
+</ResponseField>
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/archive \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "archived": true,
+  "packages": 3
+}
+```
+
+### त्रुटियाँ
+
+[मानक रूप](/hi/errors) में, `detail.error.code` के अंतर्गत लौटाई जाती हैं। इनमें से किसी के भी बाद कुछ नहीं बदला होता।
+
+| कोड | स्थिति | कब |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | एड्रेस पर आपके खाते का कोई पैकेज नहीं है |

@@ -1,0 +1,61 @@
+---
+title: Name a Wallet
+api: POST /v1/transfer-packages/label
+description: "Give an address of your packages your own name"
+---
+
+## Name a Wallet
+
+Gives an address of your packages your own name — for example, *Main wallet* — so the list shows whose address it is. The name belongs to the address, not to a package: every package on the address returns it in `label`, including packages you buy later. An address has one name; a new one replaces the old.
+
+### Request body
+
+<ParamField body="address" type="string" required>
+  TRON address of your packages
+</ParamField>
+
+<ParamField body="label" type="string">
+  The name, up to 50 characters. Spaces at the ends are trimmed; an empty name removes it.
+</ParamField>
+
+### Response
+
+<ResponseField name="address" type="string">
+  The address from the request.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  The saved name; `null` — the name was removed.
+</ResponseField>
+
+<Note>
+  The name is seen only by your account and by the team members who have access to it.
+</Note>
+
+### Example
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/label \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Main wallet"
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "label": "Main wallet"
+}
+```
+
+### Errors
+
+Returned in the [standard shape](/errors), under `detail.error.code`. After any of them nothing has changed.
+
+| Code | Status | When |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | Your account has no package on the address |
+| — | `422` | `label` is longer than 50 characters |

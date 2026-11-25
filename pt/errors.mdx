@@ -138,7 +138,7 @@ Retornados no formato padrão pelos endpoints de [Pacotes de Transferência](/pt
 | Código | Status | Descrição |
 |--------|--------|-------------|
 | `ADDRESS_PAUSED` | `400` | Compra de um pacote: seus pacotes neste endereço estão pausados — retome-os primeiro |
-| `PACKAGE_NOT_FOUND` | `404` | Pausa, retomada ou mudança: a conta não tem nenhum pacote no estado exigido no endereço |
+| `PACKAGE_NOT_FOUND` | `404` | Pausa, retomada ou mudança: a conta não tem nenhum pacote no estado exigido no endereço. Nomear, arquivar ou restaurar uma carteira: a conta não tem nenhum pacote no endereço |
 | `PACKAGE_NOT_SETTLED` | `400` | Pausa, retomada ou mudança: um pacote no endereço ainda está sendo ativado — tente novamente mais tarde |
 | `ADDRESS_SHARED` | `400` | Pausa ou mudança: outra conta tem um pacote ativo no endereço |
 | `SMART_MODE_ACTIVE` | `400` | Pausa, retomada ou mudança: o Smart Mode está ativo no endereço (na mudança — o antigo ou o novo) — desative-o primeiro |

@@ -1,0 +1,58 @@
+---
+title: 归档钱包
+api: POST /v1/transfer-packages/archive
+description: "将某个地址已结束的套餐移入归档"
+---
+
+## 归档钱包
+
+将您的账户在该地址上**已结束**的套餐移入归档：控制台在 *归档* 中显示它们，而不是在主列表中。已结束指 `completed`、`expired`、`cancelled` 和 `failed_refunded`；生效中、已暂停、等待付款或激活的套餐留在主列表中。
+
+其他一切不变：套餐、其历史和扣费保持原样，[套餐列表](/zh/api-reference/transfer-packages/list) 仍会返回它们，并带有 `archived_at`。以后在该地址购买的套餐位于主列表。用[恢复钱包](/zh/api-reference/transfer-packages/restore)把钱包移回。
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  要归档其已结束套餐的 TRON 地址
+</ParamField>
+
+### 响应
+
+<ResponseField name="address" type="string">
+  请求中的地址。
+</ResponseField>
+
+<ResponseField name="archived" type="boolean">
+  始终为 `true`。
+</ResponseField>
+
+<ResponseField name="packages" type="number">
+  本次移入归档的套餐数；`0` — 没有可归档的（没有已结束的套餐，或已全部归档）。
+</ResponseField>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/archive \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "archived": true,
+  "packages": 3
+}
+```
+
+### 错误
+
+以[标准形式](/zh/errors)返回，错误码位于 `detail.error.code`。出现其中任何一个错误后，一切保持不变。
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | 您的账户在该地址上没有套餐 |

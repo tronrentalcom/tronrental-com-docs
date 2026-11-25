@@ -1,0 +1,61 @@
+---
+title: Nombrar una billetera
+api: POST /v1/transfer-packages/label
+description: "Dar tu propio nombre a una dirección de tus paquetes"
+---
+
+## Nombrar una billetera
+
+Da a una dirección de tus paquetes tu propio nombre —por ejemplo, *Billetera principal*— para que la lista muestre de quién es la dirección. El nombre pertenece a la dirección, no a un paquete: todos los paquetes de la dirección lo devuelven en `label`, también los que compres después. Una dirección tiene un solo nombre; uno nuevo sustituye al anterior.
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Dirección TRON de tus paquetes
+</ParamField>
+
+<ParamField body="label" type="string">
+  El nombre, hasta 50 caracteres. Los espacios de los extremos se eliminan; un nombre vacío lo quita.
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="address" type="string">
+  La dirección de la solicitud.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  El nombre guardado; `null` — el nombre se quitó.
+</ResponseField>
+
+<Note>
+  El nombre solo lo ven tu cuenta y los miembros del equipo con acceso a ella.
+</Note>
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/label \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Billetera principal"
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "label": "Billetera principal"
+}
+```
+
+### Errores
+
+Se devuelven en la [forma estándar](/es/errors), en `detail.error.code`. Después de cualquiera de ellos no ha cambiado nada.
+
+| Código | Estado | Cuándo |
+|--------|--------|--------|
+| `PACKAGE_NOT_FOUND` | `404` | Tu cuenta no tiene ningún paquete en la dirección |
+| — | `422` | `label` tiene más de 50 caracteres |

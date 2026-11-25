@@ -138,7 +138,7 @@ Se devuelven en la forma estándar desde los endpoints de [Paquetes de Transfere
 | Código | Estado | Descripción |
 |--------|--------|-------------|
 | `ADDRESS_PAUSED` | `400` | Compra de un paquete: tus paquetes en esta dirección están en pausa — reanúdalos primero |
-| `PACKAGE_NOT_FOUND` | `404` | Pausa, reanudación o movimiento: la cuenta no tiene ningún paquete en el estado requerido en la dirección |
+| `PACKAGE_NOT_FOUND` | `404` | Pausa, reanudación o movimiento: la cuenta no tiene ningún paquete en el estado requerido en la dirección. Nombrar, archivar o restaurar una billetera: la cuenta no tiene ningún paquete en la dirección |
 | `PACKAGE_NOT_SETTLED` | `400` | Pausa, reanudación o movimiento: un paquete de la dirección todavía se está activando — reintenta más tarde |
 | `ADDRESS_SHARED` | `400` | Pausa o movimiento: otra cuenta tiene un paquete activo en la dirección |
 | `SMART_MODE_ACTIVE` | `400` | Pausa, reanudación o movimiento: Smart Mode está activo en la dirección (en un movimiento, la anterior o la nueva) — desactívalo primero |

@@ -34,6 +34,12 @@ Transferleri gonderen cuzdan degisirse, paketlerini yeni adrese [tasiyin](/tr/ap
 - Yeni adreste hic transfer paketi ve aktif Akilli Mod olmamalidir.
 - Istek yaklasik 15 saniyede veya daha uzun surede yanit verir; yanittan sonra eski adresten yapilan transferler artik karsilanmaz.
 
+### Cüzdanlara ad verme ve arşivleme
+
+- [Cüzdana ad verin](/tr/api-reference/transfer-packages/set-label) — bir adres için kendi adınız; adresin her paketi onu `label` içinde döndürür.
+- Tüm paketleri kapanmış bir cüzdanı [arşivleyin](/tr/api-reference/transfer-packages/archive): geçmişi korunarak ana listeden çıkar ve istediğinizde [geri gelir](/tr/api-reference/transfer-packages/restore). Canlı paketler asla arşivlenmez.
+- [Paketleri Sayfa Sayfa Listele](/tr/api-reference/transfer-packages/list-page) — ana liste veya arşiv, sayfa başına 20 paket, kapanmamışlar önce.
+
 ### Fiyatlandirma
 
 | Paket boyutu | Transfer basina fiyat |

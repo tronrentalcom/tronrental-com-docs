@@ -1,0 +1,104 @@
+---
+title: Listar Pacotes por Página
+api: GET /v1/transfer-packages/list
+description: "Uma página dos seus pacotes de transferência — a lista principal ou o arquivo"
+---
+
+## Listar Pacotes por Página
+
+Retorna uma página dos seus pacotes de transferência: a lista principal, ou o arquivo com `archived=true`. Primeiro vêm os pacotes não encerrados — ativos, pausados, aguardando pagamento ou ativação —, depois os mais recentes. É a lista que o painel mostra; [Listar Pacotes](/pt/api-reference/transfer-packages/list) continua retornando todos os pacotes de uma vez.
+
+### Parâmetros de consulta
+
+<ParamField query="archived" type="boolean" default="false">
+  `true` — o arquivo (pacotes movidos para lá com [Arquivar Carteira](/pt/api-reference/transfer-packages/archive)); `false` (padrão) — a lista principal
+</ParamField>
+
+<ParamField query="page" type="number">
+  Número da página (padrão 1)
+</ParamField>
+
+<ParamField query="page_size" type="number">
+  Pacotes por página (padrão 20, máximo 100)
+</ParamField>
+
+### Resposta
+
+<ResponseField name="packages" type="array">
+  Pacotes da página — os mesmos objetos de [Listar Pacotes](/pt/api-reference/transfer-packages/list), com `label` e `archived_at`.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Pacotes da lista pedida, em todas as páginas.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  A página da requisição.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  O tamanho de página da requisição.
+</ResponseField>
+
+<ResponseField name="archived_packages" type="number">
+  Pacotes que sua conta tem no arquivo — qualquer que seja a lista pedida.
+</ResponseField>
+
+<ResponseField name="archived_wallets" type="number">
+  Endereços em que esses pacotes arquivados estão.
+</ResponseField>
+
+### Exemplo
+
+```bash
+curl "https://api.tronrental.com/v1/transfer-packages/list?page=1&page_size=20" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "3.0",
+      "total_price_trx": "1500.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": true,
+      "bw_fee_per_transfer": "0.3",
+      "status": "active",
+      "next_subscription_at": "2026-11-26T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z",
+      "label": "Carteira principal",
+      "archived_at": null
+    }
+  ],
+  "total": 27,
+  "page": 1,
+  "page_size": 20,
+  "archived_packages": 2,
+  "archived_wallets": 2
+}
+```
+
+### Erros
+
+Retornados no [formato padrão](/pt/errors), em `detail.error.code`. Depois de qualquer um deles, nada mudou.
+
+| Código | Status | Quando |
+|--------|--------|--------|
+| — | `422` | `page` < 1, `page_size` ∉ 1–100 |

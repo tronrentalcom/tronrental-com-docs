@@ -1,0 +1,104 @@
+---
+title: Listar paquetes por páginas
+api: GET /v1/transfer-packages/list
+description: "Una página de tus paquetes de transferencias: la lista principal o el archivo"
+---
+
+## Listar paquetes por páginas
+
+Devuelve una página de tus paquetes de transferencias: la lista principal, o el archivo con `archived=true`. Primero van los paquetes no cerrados —activos, en pausa, pendientes de pago o de activación— y después los más recientes. Es la lista que muestra el panel; [Listar paquetes](/es/api-reference/transfer-packages/list) sigue devolviendo todos los paquetes a la vez.
+
+### Parámetros de consulta
+
+<ParamField query="archived" type="boolean" default="false">
+  `true` — el archivo (paquetes movidos allí con [Archivar billetera](/es/api-reference/transfer-packages/archive)); `false` (por defecto) — la lista principal
+</ParamField>
+
+<ParamField query="page" type="number">
+  Número de página (por defecto 1)
+</ParamField>
+
+<ParamField query="page_size" type="number">
+  Paquetes por página (por defecto 20, máximo 100)
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="packages" type="array">
+  Paquetes de la página: los mismos objetos que en [Listar paquetes](/es/api-reference/transfer-packages/list), con `label` y `archived_at`.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Paquetes de la lista pedida, en todas las páginas.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  La página de la solicitud.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  El tamaño de página de la solicitud.
+</ResponseField>
+
+<ResponseField name="archived_packages" type="number">
+  Paquetes que tu cuenta tiene en el archivo, sea cual sea la lista pedida.
+</ResponseField>
+
+<ResponseField name="archived_wallets" type="number">
+  Direcciones en las que están esos paquetes archivados.
+</ResponseField>
+
+### Ejemplo
+
+```bash
+curl "https://api.tronrental.com/v1/transfer-packages/list?page=1&page_size=20" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "3.0",
+      "total_price_trx": "1500.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": true,
+      "bw_fee_per_transfer": "0.3",
+      "status": "active",
+      "next_subscription_at": "2026-11-26T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z",
+      "label": "Billetera principal",
+      "archived_at": null
+    }
+  ],
+  "total": 27,
+  "page": 1,
+  "page_size": 20,
+  "archived_packages": 2,
+  "archived_wallets": 2
+}
+```
+
+### Errores
+
+Se devuelven en la [forma estándar](/es/errors), en `detail.error.code`. Después de cualquiera de ellos no ha cambiado nada.
+
+| Código | Estado | Cuándo |
+|--------|--------|--------|
+| — | `422` | `page` < 1, `page_size` ∉ 1–100 |

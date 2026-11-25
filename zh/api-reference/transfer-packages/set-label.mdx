@@ -1,0 +1,61 @@
+---
+title: 为钱包命名
+api: POST /v1/transfer-packages/label
+description: "为您套餐的地址起一个自己的名称"
+---
+
+## 为钱包命名
+
+为您套餐的某个地址起一个您自己的名称（例如 *主钱包*），让列表显示这是谁的地址。名称属于地址而不是套餐：该地址的每个套餐（包括以后购买的）都会在 `label` 中返回它。一个地址只有一个名称；新名称会替换旧名称。
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  您套餐的 TRON 地址
+</ParamField>
+
+<ParamField body="label" type="string">
+  名称，最多 50 个字符。首尾空格会被去除；空名称会删除名称。
+</ParamField>
+
+### 响应
+
+<ResponseField name="address" type="string">
+  请求中的地址。
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  保存的名称；`null` — 名称已删除。
+</ResponseField>
+
+<Note>
+  只有您的账户以及有权访问该账户的团队成员能看到该名称。
+</Note>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/label \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "主钱包"
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "label": "主钱包"
+}
+```
+
+### 错误
+
+以[标准形式](/zh/errors)返回，错误码位于 `detail.error.code`。出现其中任何一个错误后，一切保持不变。
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | 您的账户在该地址上没有套餐 |
+| — | `422` | `label` 超过 50 个字符 |

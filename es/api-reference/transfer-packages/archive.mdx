@@ -1,0 +1,58 @@
+---
+title: Archivar billetera
+api: POST /v1/transfer-packages/archive
+description: "Guardar en el archivo los paquetes cerrados de una dirección"
+---
+
+## Archivar billetera
+
+Mueve al archivo los paquetes **cerrados** de tu cuenta en la dirección: el panel los muestra en *Archivo* en lugar de en la lista principal. Cerrados son `completed`, `expired`, `cancelled` y `failed_refunded`; un paquete activo, en pausa, pendiente de pago o de activación se queda en la lista principal.
+
+Nada más cambia: los paquetes, su historial y sus cargos siguen igual, y [Listar paquetes](/es/api-reference/transfer-packages/list) los sigue devolviendo, con `archived_at`. Un paquete que compres después en la dirección está en la lista principal. Recupera la billetera con [Restaurar billetera](/es/api-reference/transfer-packages/restore).
+
+### Cuerpo de la solicitud
+
+<ParamField body="address" type="string" required>
+  Dirección TRON cuyos paquetes cerrados se archivan
+</ParamField>
+
+### Respuesta
+
+<ResponseField name="address" type="string">
+  La dirección de la solicitud.
+</ResponseField>
+
+<ResponseField name="archived" type="boolean">
+  Siempre `true`.
+</ResponseField>
+
+<ResponseField name="packages" type="number">
+  Cuántos paquetes pasaron al archivo ahora; `0` — no hay nada que archivar (ningún paquete cerrado o todos ya archivados).
+</ResponseField>
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/archive \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "archived": true,
+  "packages": 3
+}
+```
+
+### Errores
+
+Se devuelven en la [forma estándar](/es/errors), en `detail.error.code`. Después de cualquiera de ellos no ha cambiado nada.
+
+| Código | Estado | Cuándo |
+|--------|--------|--------|
+| `PACKAGE_NOT_FOUND` | `404` | Tu cuenta no tiene ningún paquete en la dirección |
