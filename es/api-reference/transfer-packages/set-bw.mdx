@@ -1,0 +1,63 @@
+---
+title: Garantía BW del paquete
+api: POST /v1/transfer-packages/{package_id}/bw
+description: "Activar o desactivar la Garantía BW de un paquete comprado"
+---
+
+## Activar o desactivar la Garantía BW
+
+Activa o desactiva la Garantía BW de un paquete `active` o `paused`, una vez cada 3 minutos por paquete.
+
+- **Activar:** la tarifa BW (`bw_fee_per_transfer` de [Get Tiers](/es/api-reference/transfer-packages/get-tiers)) por cada transferencia restante (`remaining`) se cobra del saldo, igual que al comprar el paquete con la garantía. El bandwidth llega a la dirección en un minuto; un paquete en pausa lo recibe al reanudarse.
+- **Desactivar:** lo pagado por la garantía de las transferencias restantes (`bw_fee_per_transfer` del paquete) se devuelve al saldo y el bandwidth se retira.
+
+Pedir el estado que el paquete ya tiene no cambia nada ni mueve dinero (`changed: false`): reintentar es seguro.
+
+<ParamField path="package_id" type="number" required>
+  ID del paquete de [List Packages](/es/api-reference/transfer-packages/list)
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="enabled" type="boolean" required>
+  `true` — activar, `false` — desactivar
+</ParamField>
+
+### Respuesta
+
+`changed`, `charged_trx`, `refunded_trx` y `package` — el paquete tras la llamada.
+
+### Errores
+
+| Código | HTTP | Cuándo |
+|--------|------|--------|
+| `PACKAGE_NOT_FOUND` | 404 | No existe ese paquete en su cuenta |
+| `PACKAGE_NOT_ACTIVE` | 409 | El paquete no está `active` ni `paused`, o no le quedan transferencias |
+| `INSUFFICIENT_BALANCE` | 402 | El saldo no cubre la tarifa; no se cambia nada |
+| `ADDRESS_BUSY` | 409 | Otra solicitud está cambiando el paquete: reintente en unos segundos |
+| `BW_SWITCH_TOO_SOON` | 429 | La garantía de este paquete se cambió hace menos de 3 minutos; `retry_after_s` indica cuánto esperar |
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/101/bw \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
+
+```json Response
+{
+  "changed": true,
+  "charged_trx": "93.6",
+  "refunded_trx": "0",
+  "package": {
+    "id": 101,
+    "address": "TYourAddress...",
+    "remaining": 312,
+    "bw_guarantee": true,
+    "bw_fee_per_transfer": "0.3",
+    "status": "active"
+  }
+}
+```

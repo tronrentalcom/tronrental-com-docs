@@ -1,0 +1,63 @@
+---
+title: पैकेज BW गारंटी
+api: POST /v1/transfer-packages/{package_id}/bw
+description: "खरीदे गए पैकेज की BW गारंटी चालू या बंद करें"
+---
+
+## BW गारंटी चालू या बंद करें
+
+`active` या `paused` पैकेज की BW गारंटी चालू या बंद करता है — हर पैकेज के लिए 3 मिनट में एक बार।
+
+- **चालू:** हर बचे ट्रांसफर (`remaining`) के लिए BW शुल्क ([Get Tiers](/hi/api-reference/transfer-packages/get-tiers) का `bw_fee_per_transfer`) बैलेंस से कटता है — गारंटी के साथ पैकेज खरीदने जितना ही। बैंडविड्थ एक मिनट में पते पर पहुँचती है; रुका हुआ पैकेज इसे फिर से शुरू होने पर पाता है।
+- **बंद:** बचे ट्रांसफर की गारंटी के लिए चुकाई गई राशि (पैकेज का `bw_fee_per_transfer`) बैलेंस में लौटती है, और बैंडविड्थ हटा ली जाती है।
+
+पैकेज की मौजूदा स्थिति माँगने से कुछ नहीं बदलता और पैसा नहीं हिलता (`changed: false`) — दोबारा भेजना सुरक्षित है।
+
+<ParamField path="package_id" type="number" required>
+  [List Packages](/hi/api-reference/transfer-packages/list) से पैकेज ID
+</ParamField>
+
+### अनुरोध बॉडी
+
+<ParamField body="enabled" type="boolean" required>
+  `true` — चालू, `false` — बंद
+</ParamField>
+
+### प्रतिक्रिया
+
+`changed`, `charged_trx`, `refunded_trx` और `package` — कॉल के बाद का पैकेज।
+
+### त्रुटियाँ
+
+| कोड | HTTP | कब |
+|-----|------|-----|
+| `PACKAGE_NOT_FOUND` | 404 | आपके खाते में ऐसा पैकेज नहीं है |
+| `PACKAGE_NOT_ACTIVE` | 409 | पैकेज `active` या `paused` नहीं है, या उसमें कोई ट्रांसफर नहीं बचा |
+| `INSUFFICIENT_BALANCE` | 402 | बैलेंस शुल्क के लिए कम है; कुछ नहीं बदला |
+| `ADDRESS_BUSY` | 409 | पैकेज को कोई दूसरा अनुरोध बदल रहा है — कुछ सेकंड बाद फिर कोशिश करें |
+| `BW_SWITCH_TOO_SOON` | 429 | इस पैकेज की गारंटी 3 मिनट से कम पहले बदली गई थी; `retry_after_s` बताता है कितना रुकना है |
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/101/bw \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
+
+```json Response
+{
+  "changed": true,
+  "charged_trx": "93.6",
+  "refunded_trx": "0",
+  "package": {
+    "id": 101,
+    "address": "TYourAddress...",
+    "remaining": 312,
+    "bw_guarantee": true,
+    "bw_fee_per_transfer": "0.3",
+    "status": "active"
+  }
+}
+```

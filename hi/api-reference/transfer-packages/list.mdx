@@ -10,7 +10,7 @@ description: "अपने ट्रांसफर पैकेज की स�
 
 ### रिस्पॉन्स
 
-पैकेज ऑब्जेक्ट्स का ऐरे। मुख्य फ़ील्ड: `id`, `address`, `package_size`, `quota_total` (पैकेज में ट्रांसफ़र), `quota_used` (सेवा दिए गए ट्रांसफ़र), `subscription_used` (दैनिक सब्सक्रिप्शन शुल्क द्वारा लिए गए ट्रांसफ़र, प्रति दिन एक), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `status`, `paused_at` (पैकेज कब रोका गया; जब तक `status` `paused` न हो, `null`), `created_at`।
+पैकेज ऑब्जेक्ट्स का ऐरे। मुख्य फ़ील्ड: `id`, `address`, `package_size`, `quota_total` (पैकेज में ट्रांसफ़र), `quota_used` (सेवा दिए गए ट्रांसफ़र), `subscription_used` (दैनिक सब्सक्रिप्शन शुल्क द्वारा लिए गए ट्रांसफ़र, प्रति दिन एक), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (BW गारंटी बंद करने पर हर बचे ट्रांसफर के लिए लौटने वाली राशि; बंद होने पर `null`), `status`, `paused_at` (पैकेज कब रोका गया; जब तक `status` `paused` न हो, `null`), `created_at`।
 
 ### पैकेज स्टेटस
 
@@ -44,6 +44,7 @@ curl https://api.tronrental.com/v1/transfer-packages/my \
     "subscription_used": 1,
     "remaining": 312,
     "bw_guarantee": true,
+    "bw_fee_per_transfer": "0.3",
     "status": "active",
     "paused_at": null,
     "created_at": "2026-03-01T10:00:00Z"
