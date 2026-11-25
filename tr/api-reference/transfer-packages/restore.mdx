@@ -1,0 +1,56 @@
+---
+title: Cüzdanı Geri Getir
+api: POST /v1/transfer-packages/restore
+description: "Bir adresin arşivlenmiş paketlerini ana listeye geri getirin"
+---
+
+## Cüzdanı Geri Getir
+
+Hesabınızın adresteki arşivlenmiş paketlerini ana listeye geri getirir. Paketlerin kendisi değişmez.
+
+### İstek gövdesi
+
+<ParamField body="address" type="string" required>
+  Arşivlenmiş paketleri geri getirilecek TRON adresi
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="address" type="string">
+  İstekteki adres.
+</ResponseField>
+
+<ResponseField name="archived" type="boolean">
+  Her zaman `false`.
+</ResponseField>
+
+<ResponseField name="packages" type="number">
+  Geri gelen paket sayısı; `0` — arşivde hiç yoktu.
+</ResponseField>
+
+### Örnek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/restore \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "archived": false,
+  "packages": 3
+}
+```
+
+### Hatalar
+
+[Standart biçimde](/tr/errors), `detail.error.code` altında döner. Bunların herhangi birinden sonra hiçbir şey değişmemiştir.
+
+| Kod | Durum | Ne zaman |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | Hesabınızın bu adreste paketi yok |

@@ -137,7 +137,7 @@ Returned in the standard shape by the [Transfer Packages](/api-reference/transfe
 | Code | Status | Description |
 |------|--------|-------------|
 | `ADDRESS_PAUSED` | `400` | Buying a package: your packages on this address are paused — resume them first |
-| `PACKAGE_NOT_FOUND` | `404` | Pause, resume or move: the account has no package in the required state on the address |
+| `PACKAGE_NOT_FOUND` | `404` | Pause, resume or move: the account has no package in the required state on the address. Name, archive or restore a wallet: the account has no package on the address |
 | `PACKAGE_NOT_SETTLED` | `400` | Pause, resume or move: a package on the address is still being activated — try again later |
 | `ADDRESS_SHARED` | `400` | Pause or move: another account has an active package on the address |
 | `SMART_MODE_ACTIVE` | `400` | Pause, resume or move: Smart Mode is active on the address (for a move — the old or the new one) — turn it off first |

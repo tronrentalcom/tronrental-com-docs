@@ -1,0 +1,61 @@
+---
+title: Cüzdana Ad Ver
+api: POST /v1/transfer-packages/label
+description: "Paketlerinizin bir adresine kendi adınızı verin"
+---
+
+## Cüzdana Ad Ver
+
+Paketlerinizin bir adresine kendi adınızı verir — örneğin *Ana cüzdan* — böylece liste adresin kime ait olduğunu gösterir. Ad pakete değil adrese aittir: adresteki her paket, sonradan satın aldıklarınız dahil, onu `label` içinde döndürür. Bir adresin tek adı olur; yenisi eskisinin yerini alır.
+
+### İstek gövdesi
+
+<ParamField body="address" type="string" required>
+  Paketlerinizin TRON adresi
+</ParamField>
+
+<ParamField body="label" type="string">
+  Ad, en fazla 50 karakter. Baştaki ve sondaki boşluklar kırpılır; boş ad, adı kaldırır.
+</ParamField>
+
+### Yanıt
+
+<ResponseField name="address" type="string">
+  İstekteki adres.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  Kaydedilen ad; `null` — ad kaldırıldı.
+</ResponseField>
+
+<Note>
+  Adı yalnızca hesabınız ve ona erişimi olan ekip üyeleri görür.
+</Note>
+
+### Örnek
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/label \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Ana cüzdan"
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "label": "Ana cüzdan"
+}
+```
+
+### Hatalar
+
+[Standart biçimde](/tr/errors), `detail.error.code` altında döner. Bunların herhangi birinden sonra hiçbir şey değişmemiştir.
+
+| Kod | Durum | Ne zaman |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | Hesabınızın bu adreste paketi yok |
+| — | `422` | `label` 50 karakterden uzun |

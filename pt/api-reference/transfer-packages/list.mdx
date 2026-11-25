@@ -10,7 +10,9 @@ Retorna todos os seus pacotes de transferência.
 
 ### Resposta
 
-Array de objetos de pacote. Campos principais: `id`, `address`, `package_size`, `quota_total` (transferências do pacote), `quota_used` (transferências atendidas), `subscription_used` (transferências consumidas pela taxa diária, uma por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (o valor devolvido por transferência restante ao desativar a Garantia BW; `null` quando desativada), `status`, `paused_at` (quando o pacote foi pausado; `null` a menos que `status` seja `paused`), `created_at`.
+Array de objetos de pacote. Campos principais: `id`, `address`, `package_size`, `quota_total` (transferências do pacote), `quota_used` (transferências atendidas), `subscription_used` (transferências consumidas pela taxa diária, uma por dia), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (o valor devolvido por transferência restante ao desativar a Garantia BW; `null` quando desativada), `status`, `paused_at` (quando o pacote foi pausado; `null` a menos que `status` seja `paused`), `created_at`, `label` (seu nome para o endereço, veja [Nomear uma Carteira](/pt/api-reference/transfer-packages/set-label); `null` — sem nome), `archived_at` (quando o pacote foi arquivado, veja [Arquivar Carteira](/pt/api-reference/transfer-packages/archive); `null` — na lista principal).
+
+Pacotes arquivados estão incluídos. Para ler a lista por páginas, como o painel, use [Listar Pacotes por Página](/pt/api-reference/transfer-packages/list-page).
 
 ### Status dos pacotes
 

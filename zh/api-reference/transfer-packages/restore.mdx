@@ -1,0 +1,56 @@
+---
+title: 恢复钱包
+api: POST /v1/transfer-packages/restore
+description: "将某个地址的归档套餐移回主列表"
+---
+
+## 恢复钱包
+
+将您的账户在该地址上的归档套餐移回主列表。套餐本身不变。
+
+### 请求体
+
+<ParamField body="address" type="string" required>
+  要移回其归档套餐的 TRON 地址
+</ParamField>
+
+### 响应
+
+<ResponseField name="address" type="string">
+  请求中的地址。
+</ResponseField>
+
+<ResponseField name="archived" type="boolean">
+  始终为 `false`。
+</ResponseField>
+
+<ResponseField name="packages" type="number">
+  移回的套餐数；`0` — 归档中没有。
+</ResponseField>
+
+### 示例
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/restore \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "archived": false,
+  "packages": 3
+}
+```
+
+### 错误
+
+以[标准形式](/zh/errors)返回，错误码位于 `detail.error.code`。出现其中任何一个错误后，一切保持不变。
+
+| 代码 | 状态 | 何时返回 |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | 您的账户在该地址上没有套餐 |

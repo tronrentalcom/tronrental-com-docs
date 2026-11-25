@@ -1,0 +1,56 @@
+---
+title: Вернуть из архива
+api: POST /v1/transfer-packages/restore
+description: "Вернуть пакеты адреса из архива в основной список"
+---
+
+## Вернуть из архива
+
+Возвращает пакеты вашего аккаунта на адресе из архива в основной список. Сами пакеты не меняются.
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Адрес TRON, пакеты которого вернуть из архива
+</ParamField>
+
+### Ответ
+
+<ResponseField name="address" type="string">
+  Адрес из запроса.
+</ResponseField>
+
+<ResponseField name="archived" type="boolean">
+  Всегда `false`.
+</ResponseField>
+
+<ResponseField name="packages" type="number">
+  Сколько пакетов вернулось; `0` — в архиве их не было.
+</ResponseField>
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/restore \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress..."
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "archived": false,
+  "packages": 3
+}
+```
+
+### Ошибки
+
+Приходят в [стандартной форме](/ru/errors), в `detail.error.code`. После любой из них ничего не изменилось.
+
+| Код | Статус | Когда |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | У вашего аккаунта нет пакета на адресе |

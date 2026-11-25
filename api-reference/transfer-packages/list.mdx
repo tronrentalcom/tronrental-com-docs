@@ -10,7 +10,9 @@ Returns all your transfer packages.
 
 ### Response
 
-Array of package objects. Main fields: `id`, `address`, `package_size`, `quota_total` (transfers in the package), `quota_used` (transfers delivered), `subscription_used` (transfers taken by the daily subscription fee, one per day), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (what switching the BW Guarantee off refunds per transfer left; `null` when it is off), `status`, `paused_at` (when the package was paused; `null` unless `status` is `paused`), `created_at`.
+Array of package objects. Main fields: `id`, `address`, `package_size`, `quota_total` (transfers in the package), `quota_used` (transfers delivered), `subscription_used` (transfers taken by the daily subscription fee, one per day), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (what switching the BW Guarantee off refunds per transfer left; `null` when it is off), `status`, `paused_at` (when the package was paused; `null` unless `status` is `paused`), `created_at`, `label` (your name for the address, see [Name a Wallet](/api-reference/transfer-packages/set-label); `null` — not named), `archived_at` (when the package was archived, see [Archive Wallet](/api-reference/transfer-packages/archive); `null` — in the main list).
+
+Archived packages are included. To read the list page by page, as the dashboard does, use [List Packages by Page](/api-reference/transfer-packages/list-page).
 
 ### Package statuses
 

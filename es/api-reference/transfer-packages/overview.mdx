@@ -34,6 +34,12 @@ Si cambia la billetera que envía las transferencias, [mueve](/es/api-reference/
 - La nueva dirección no debe tener paquetes de transferencias ni Smart Mode activo.
 - La solicitud responde en unos 15 segundos o más; las transferencias desde la dirección anterior dejan de atenderse tras la respuesta.
 
+### Nombrar y archivar billeteras
+
+- [Nombra una billetera](/es/api-reference/transfer-packages/set-label): tu propio nombre para una dirección, devuelto en `label` en cada paquete de ella.
+- [Archiva](/es/api-reference/transfer-packages/archive) una billetera cuyos paquetes están todos cerrados: sale de la lista principal conservando su historial y [vuelve](/es/api-reference/transfer-packages/restore) cuando lo pidas. Los paquetes vivos nunca se archivan.
+- [Listar paquetes por páginas](/es/api-reference/transfer-packages/list-page): la lista principal o el archivo, 20 paquetes por página, primero los no cerrados.
+
 ### Precios
 
 | Tamano del paquete | Precio por transferencia |

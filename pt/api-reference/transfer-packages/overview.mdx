@@ -34,6 +34,12 @@ Se a carteira que envia as transferências mudar, [mova](/pt/api-reference/trans
 - O novo endereço não pode ter pacotes de transferência nem Smart Mode ativo.
 - A requisição responde em cerca de 15 segundos ou mais; as transferências do endereço antigo deixam de ser atendidas depois da resposta.
 
+### Nomear e arquivar carteiras
+
+- [Nomeie uma carteira](/pt/api-reference/transfer-packages/set-label) — seu próprio nome para um endereço, retornado em `label` em cada pacote dele.
+- [Arquive](/pt/api-reference/transfer-packages/archive) uma carteira cujos pacotes estão todos encerrados: ela sai da lista principal com o histórico guardado e [volta](/pt/api-reference/transfer-packages/restore) quando você pedir. Pacotes vivos nunca são arquivados.
+- [Listar Pacotes por Página](/pt/api-reference/transfer-packages/list-page) — a lista principal ou o arquivo, 20 pacotes por página, os não encerrados primeiro.
+
 ### Preços
 
 | Tamanho do pacote | Preço por transferência |

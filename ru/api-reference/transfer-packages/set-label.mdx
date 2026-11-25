@@ -1,0 +1,61 @@
+---
+title: Подписать кошелёк
+api: POST /v1/transfer-packages/label
+description: "Дать адресу ваших пакетов своё название"
+---
+
+## Подписать кошелёк
+
+Даёт адресу ваших пакетов ваше название — например, *Основной кошелёк*, — чтобы по списку было видно, чей это адрес. Название принадлежит адресу, а не пакету: его возвращают в `label` все пакеты адреса, в том числе купленные позже. У адреса одно название; новое заменяет старое.
+
+### Тело запроса
+
+<ParamField body="address" type="string" required>
+  Адрес TRON ваших пакетов
+</ParamField>
+
+<ParamField body="label" type="string">
+  Название, до 50 символов. Пробелы по краям обрезаются; пустое название снимает подпись.
+</ParamField>
+
+### Ответ
+
+<ResponseField name="address" type="string">
+  Адрес из запроса.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  Сохранённое название; `null` — подпись снята.
+</ResponseField>
+
+<Note>
+  Название видят только ваш аккаунт и сотрудники с доступом к нему.
+</Note>
+
+### Пример
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/label \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "Основной кошелёк"
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "label": "Основной кошелёк"
+}
+```
+
+### Ошибки
+
+Приходят в [стандартной форме](/ru/errors), в `detail.error.code`. После любой из них ничего не изменилось.
+
+| Код | Статус | Когда |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | У вашего аккаунта нет пакета на адресе |
+| — | `422` | `label` длиннее 50 символов |

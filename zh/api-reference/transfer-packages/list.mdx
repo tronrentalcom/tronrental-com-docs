@@ -10,7 +10,9 @@ description: "列出您的转账套餐"
 
 ### 响应
 
-套餐对象数组。主要字段：`id`、`address`、`package_size`、`quota_total`（套餐内转账次数）、`quota_used`（已服务的转账）、`subscription_used`（每日订阅费占用的转账，每天一次）、`remaining`（`quota_total − quota_used − subscription_used`）、`bw_guarantee`、`bw_fee_per_transfer` (关闭带宽保证时每笔剩余转账退回的金额；关闭时为 `null`)、`status`、`paused_at`（套餐被暂停的时间；仅当 `status` 为 `paused` 时有值，否则为 `null`）、`created_at`。
+套餐对象数组。主要字段：`id`、`address`、`package_size`、`quota_total`（套餐内转账次数）、`quota_used`（已服务的转账）、`subscription_used`（每日订阅费占用的转账，每天一次）、`remaining`（`quota_total − quota_used − subscription_used`）、`bw_guarantee`、`bw_fee_per_transfer` (关闭带宽保证时每笔剩余转账退回的金额；关闭时为 `null`)、`status`、`paused_at`（套餐被暂停的时间；仅当 `status` 为 `paused` 时有值，否则为 `null`）、`created_at`、`label`（您为该地址起的名称，见[为钱包命名](/zh/api-reference/transfer-packages/set-label)；`null` — 未命名）、`archived_at`（套餐归档的时间，见[归档钱包](/zh/api-reference/transfer-packages/archive)；`null` — 在主列表中）。
+
+包含已归档的套餐。如需像控制台一样分页读取列表，请使用[分页列出套餐](/zh/api-reference/transfer-packages/list-page)。
 
 ### 套餐状态
 

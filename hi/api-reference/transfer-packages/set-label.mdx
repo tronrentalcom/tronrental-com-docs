@@ -1,0 +1,61 @@
+---
+title: वॉलेट को नाम दें
+api: POST /v1/transfer-packages/label
+description: "अपने पैकेजों के एड्रेस को अपना नाम दें"
+---
+
+## वॉलेट को नाम दें
+
+अपने पैकेजों के किसी एड्रेस को अपना नाम देता है — जैसे *मुख्य वॉलेट* — ताकि सूची में दिखे कि एड्रेस किसका है। नाम एड्रेस का होता है, पैकेज का नहीं: एड्रेस का हर पैकेज, बाद में खरीदे गए भी, इसे `label` में लौटाता है। एक एड्रेस का एक नाम होता है; नया नाम पुराने की जगह लेता है।
+
+### अनुरोध बॉडी
+
+<ParamField body="address" type="string" required>
+  आपके पैकेजों का TRON एड्रेस
+</ParamField>
+
+<ParamField body="label" type="string">
+  नाम, अधिकतम 50 अक्षर। किनारों के स्पेस हटा दिए जाते हैं; खाली नाम उसे हटा देता है।
+</ParamField>
+
+### रिस्पॉन्स
+
+<ResponseField name="address" type="string">
+  अनुरोध का एड्रेस।
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+  सहेजा गया नाम; `null` — नाम हटा दिया गया।
+</ResponseField>
+
+<Note>
+  नाम केवल आपका खाता और उसकी पहुँच वाले टीम सदस्य देखते हैं।
+</Note>
+
+### उदाहरण
+
+```bash
+curl -X POST https://api.tronrental.com/v1/transfer-packages/label \
+  -H "X-API-Key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "TYourAddress...",
+    "label": "मुख्य वॉलेट"
+  }'
+```
+
+```json Response
+{
+  "address": "TYourAddress...",
+  "label": "मुख्य वॉलेट"
+}
+```
+
+### त्रुटियाँ
+
+[मानक रूप](/hi/errors) में, `detail.error.code` के अंतर्गत लौटाई जाती हैं। इनमें से किसी के भी बाद कुछ नहीं बदला होता।
+
+| कोड | स्थिति | कब |
+|------|--------|------|
+| `PACKAGE_NOT_FOUND` | `404` | एड्रेस पर आपके खाते का कोई पैकेज नहीं है |
+| — | `422` | `label` 50 अक्षरों से लंबा है |

@@ -34,6 +34,12 @@ If the wallet that sends the transfers changes, [move](/api-reference/transfer-p
 - The new address must have no transfer packages and no active Smart Mode.
 - The request answers in about 15 seconds or more; transfers from the old address are no longer served after the response.
 
+### Name and archive wallets
+
+- [Name a wallet](/api-reference/transfer-packages/set-label) — your own name for an address, returned in `label` on every package of it.
+- [Archive](/api-reference/transfer-packages/archive) a wallet whose packages are all closed: it leaves the main list with its history kept, and [comes back](/api-reference/transfer-packages/restore) on request. Live packages are never archived.
+- [List Packages by Page](/api-reference/transfer-packages/list-page) — the main list or the archive, 20 packages a page, packages that are not closed first.
+
 ### Pricing
 
 | Package size | Price per transfer |

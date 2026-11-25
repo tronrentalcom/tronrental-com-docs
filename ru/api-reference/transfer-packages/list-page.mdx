@@ -1,0 +1,104 @@
+---
+title: Пакеты постранично
+api: GET /v1/transfer-packages/list
+description: "Страница ваших пакетов переводов — основной список или архив"
+---
+
+## Пакеты постранично
+
+Возвращает одну страницу ваших пакетов переводов: основной список или архив при `archived=true`. Сначала идут незакрытые пакеты — активные, на паузе, ожидающие оплаты или активации, — затем новые. Это тот список, что показывает кабинет; [Список пакетов](/ru/api-reference/transfer-packages/list) по-прежнему отдаёт все пакеты сразу.
+
+### Параметры запроса
+
+<ParamField query="archived" type="boolean" default="false">
+  `true` — архив (пакеты, убранные туда через [Архив кошелька](/ru/api-reference/transfer-packages/archive)); `false` (по умолчанию) — основной список
+</ParamField>
+
+<ParamField query="page" type="number">
+  Номер страницы (по умолчанию 1)
+</ParamField>
+
+<ParamField query="page_size" type="number">
+  Пакетов на странице (по умолчанию 20, максимум 100)
+</ParamField>
+
+### Ответ
+
+<ResponseField name="packages" type="array">
+  Пакеты страницы — те же объекты, что в [Списке пакетов](/ru/api-reference/transfer-packages/list), с `label` и `archived_at`.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Пакетов в запрошенном списке, на всех страницах.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  Страница из запроса.
+</ResponseField>
+
+<ResponseField name="page_size" type="number">
+  Размер страницы из запроса.
+</ResponseField>
+
+<ResponseField name="archived_packages" type="number">
+  Сколько пакетов у аккаунта в архиве — какой бы список ни был запрошен.
+</ResponseField>
+
+<ResponseField name="archived_wallets" type="number">
+  На скольких адресах лежат эти пакеты из архива.
+</ResponseField>
+
+### Пример
+
+```bash
+curl "https://api.tronrental.com/v1/transfer-packages/list?page=1&page_size=20" \
+  -H "X-API-Key: your_api_key"
+```
+
+```json Response
+{
+  "packages": [
+    {
+      "id": 101,
+      "user_id": 1234,
+      "address": "TYourAddress...",
+      "package_size": 500,
+      "price_per_transfer": "3.0",
+      "total_price_trx": "1500.0",
+      "quota_total": 500,
+      "quota_used": 187,
+      "subscription_used": 3,
+      "remaining": 310,
+      "payment_method": "balance",
+      "tx_hash": null,
+      "paid_amount": null,
+      "paid_currency": null,
+      "is_single_transfer": false,
+      "bw_guarantee": true,
+      "bw_fee_per_transfer": "0.3",
+      "status": "active",
+      "next_subscription_at": "2026-11-26T10:00:00Z",
+      "activated_at": "2026-11-15T10:00:00Z",
+      "completed_at": null,
+      "paused_at": null,
+      "expires_at": null,
+      "created_at": "2026-11-15T10:00:00Z",
+      "label": "Основной кошелёк",
+      "archived_at": null
+    }
+  ],
+  "total": 27,
+  "page": 1,
+  "page_size": 20,
+  "archived_packages": 2,
+  "archived_wallets": 2
+}
+```
+
+### Ошибки
+
+Приходят в [стандартной форме](/ru/errors), в `detail.error.code`. После любой из них ничего не изменилось.
+
+| Код | Статус | Когда |
+|------|--------|------|
+| — | `422` | `page` < 1, `page_size` ∉ 1–100 |

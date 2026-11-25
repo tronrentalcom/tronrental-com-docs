@@ -10,7 +10,9 @@ Tum transfer paketlerinizi dondurur.
 
 ### Yanit
 
-Paket nesneleri dizisi. Ana alanlar: `id`, `address`, `package_size`, `quota_total` (paketteki transfer sayisi), `quota_used` (hizmet verilen transferler), `subscription_used` (gunluk abonelik ucretinin kullandigi transferler, gunde bir), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (BW Garantisi kapatıldığında kalan her transfer için iade edilen tutar; kapalıysa `null`), `status`, `paused_at` (paketin duraklatildigi an; `status` `paused` degilse `null`), `created_at`.
+Paket nesneleri dizisi. Ana alanlar: `id`, `address`, `package_size`, `quota_total` (paketteki transfer sayisi), `quota_used` (hizmet verilen transferler), `subscription_used` (gunluk abonelik ucretinin kullandigi transferler, gunde bir), `remaining` (`quota_total − quota_used − subscription_used`), `bw_guarantee`, `bw_fee_per_transfer` (BW Garantisi kapatıldığında kalan her transfer için iade edilen tutar; kapalıysa `null`), `status`, `paused_at` (paketin duraklatildigi an; `status` `paused` degilse `null`), `created_at`, `label` (adres için verdiğiniz ad, bkz. [Cüzdana Ad Ver](/tr/api-reference/transfer-packages/set-label); `null` — ad yok), `archived_at` (paketin arşivlendiği an, bkz. [Cüzdanı Arşivle](/tr/api-reference/transfer-packages/archive); `null` — ana listede).
+
+Arşivlenmiş paketler dahildir. Listeyi panel gibi sayfa sayfa okumak için [Paketleri Sayfa Sayfa Listele](/tr/api-reference/transfer-packages/list-page) kullanın.
 
 ### Paket durumlari
 
