@@ -11,7 +11,7 @@ Returns a paginated list of your invoices.
 ### Query parameters
 
 <ParamField query="page" type="number" default="1">
-  Page number
+  Page number. At most `1000000`.
 </ParamField>
 
 <ParamField query="status" type="string">
