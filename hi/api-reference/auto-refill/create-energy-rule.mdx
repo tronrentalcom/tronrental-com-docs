@@ -124,6 +124,7 @@ console.log(await resp.json());
 |--------|------|------|
 | `400` | `INVALID_ADDRESS` | `target_address` मान्य TRON एड्रेस नहीं है |
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` एक स्मार्ट कॉन्ट्रैक्ट है |
+| `402` | `INSUFFICIENT_BALANCE` | नियम बनाने के लिए नए खाते के बैलेंस में कम से कम 10 TRX (`required_trx`) होना चाहिए; जिस खाते ने कभी कुल 10 TRX जमा किए हैं, उससे यह नहीं पूछा जाता। कोई नियम नहीं बना |
 | `403` | `FORBIDDEN` | API कुंजी के पास `buy_energy` स्कोप नहीं है |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | आपके खाते में इस एड्रेस के लिए पहले से एक एनर्जी नियम है — उसी को बदलें |
 | `422` | — | कोई फ़ील्ड गायब है या सीमा से बाहर है, या `duration` `"1h"` नहीं है |

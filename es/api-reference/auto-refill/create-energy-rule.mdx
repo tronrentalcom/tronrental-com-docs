@@ -124,6 +124,7 @@ console.log(await resp.json());
 |--------|--------|--------|
 | `400` | `INVALID_ADDRESS` | `target_address` no es una dirección TRON válida |
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` es un contrato inteligente |
+| `402` | `INSUFFICIENT_BALANCE` | Una cuenta nueva necesita al menos 10 TRX de saldo (`required_trx`) para crear una regla; a una cuenta que alguna vez depositó 10 TRX en total no se le exige. No se creó ninguna regla |
 | `403` | `FORBIDDEN` | La clave API carece del alcance `buy_energy` |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | Tu cuenta ya tiene una regla de energía para esta dirección — edítala en su lugar |
 | `422` | — | Falta un campo o está fuera de rango, o `duration` no es `"1h"` |

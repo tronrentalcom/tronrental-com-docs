@@ -128,6 +128,7 @@ console.log(await resp.json());
 |--------|------|------|
 | `400` | `INVALID_ADDRESS` | `target_address` — некорректный адрес TRON |
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` — смарт-контракт |
+| `402` | `INSUFFICIENT_BALANCE` | Новому аккаунту для создания правила нужно не меньше 10 TRX на балансе (`required_trx`); аккаунт, хоть раз пополнивший в сумме 10 TRX, не проверяется. Правило не создано |
 | `403` | `FORBIDDEN` | У API-ключа нет скоупа `buy_bandwidth` |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | В вашем аккаунте уже есть правило для bandwidth на этот адрес — вместо этого измените его |
 | `422` | — | Поле отсутствует или вне диапазона, либо `duration` — не `"1h"` и не `"1d"` |

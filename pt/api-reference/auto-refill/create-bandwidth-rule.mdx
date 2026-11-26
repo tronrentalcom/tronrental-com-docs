@@ -128,6 +128,7 @@ console.log(await resp.json());
 |--------|------|------|
 | `400` | `INVALID_ADDRESS` | `target_address` não é um endereço TRON válido |
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` é um contrato inteligente |
+| `402` | `INSUFFICIENT_BALANCE` | Uma conta nova precisa de pelo menos 10 TRX de saldo (`required_trx`) para criar uma regra; uma conta que já depositou 10 TRX no total não é verificada. Nenhuma regra foi criada |
 | `403` | `FORBIDDEN` | A chave de API não tem o escopo `buy_bandwidth` |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | A sua conta já tem uma regra de largura de banda para este endereço — edite-a |
 | `422` | — | Um campo está ausente ou fora do intervalo, ou `duration` não é `"1h"` nem `"1d"` |
