@@ -32,7 +32,7 @@ Zaten `reclaiming`, `reclaimed` veya `reclaim_failed` durumundaki bir sipariş i
 | Kod | Durum | Ne zaman |
 |------|--------|------|
 | `ORDER_NOT_FOUND` | `404` | Hesabınızda böyle bir sipariş yok |
-| `ORDER_NOT_RECLAIMABLE` | `409` | Sipariş henüz teslim edilmedi (`filled`) veya başarısız oldu |
+| `ORDER_NOT_RECLAIMABLE` | `409` | Sipariş henüz teslim edilmedi (`filled`) veya başarısız oldu; ya da bant genişliği süre bitince otomatik olarak geri alınır ve erken geri alınamaz |
 | `BAD_REQUEST` | `400` | Bant genişliği siparişi değil |
 | `FORBIDDEN` | `403` | API anahtarında `buy_bandwidth` yetkisi yok |
 

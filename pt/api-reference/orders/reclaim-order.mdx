@@ -32,7 +32,7 @@ Uma chamada repetida para um pedido que já está em `reclaiming`, `reclaimed` o
 | Código | Status | Quando |
 |------|--------|------|
 | `ORDER_NOT_FOUND` | `404` | Não existe esse pedido na sua conta |
-| `ORDER_NOT_RECLAIMABLE` | `409` | O pedido ainda não foi entregue (`filled`) ou falhou |
+| `ORDER_NOT_RECLAIMABLE` | `409` | O pedido ainda não foi entregue (`filled`) ou falhou; ou a largura de banda é liberada automaticamente no fim do prazo e não pode ser recuperada antes |
 | `BAD_REQUEST` | `400` | Não é um pedido de largura de banda |
 | `FORBIDDEN` | `403` | A chave de API não tem a permissão `buy_bandwidth` |
 

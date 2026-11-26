@@ -32,7 +32,7 @@ A repeated call for an order that is already `reclaiming`, `reclaimed` or `recla
 | Code | Status | When |
 |------|--------|------|
 | `ORDER_NOT_FOUND` | `404` | No such order on your account |
-| `ORDER_NOT_RECLAIMABLE` | `409` | The order is not delivered (`filled`) yet, or it failed |
+| `ORDER_NOT_RECLAIMABLE` | `409` | The order is not delivered (`filled`) yet, or it failed; or its bandwidth is released automatically when the term ends and cannot be reclaimed early |
 | `BAD_REQUEST` | `400` | Not a bandwidth order |
 | `FORBIDDEN` | `403` | The API key lacks the `buy_bandwidth` scope |
 

@@ -32,7 +32,7 @@ description: "在租期结束前收回订单的带宽"
 | 代码 | 状态 | 情况 |
 |------|--------|------|
 | `ORDER_NOT_FOUND` | `404` | 您的账户下没有该订单 |
-| `ORDER_NOT_RECLAIMABLE` | `409` | 订单尚未交付（`filled`）或已失败 |
+| `ORDER_NOT_RECLAIMABLE` | `409` | 订单尚未交付（`filled`）或已失败；或该订单的带宽在租期结束时自动收回，不能提前回收 |
 | `BAD_REQUEST` | `400` | 不是带宽订单 |
 | `FORBIDDEN` | `403` | API 密钥缺少 `buy_bandwidth` 权限 |
 
