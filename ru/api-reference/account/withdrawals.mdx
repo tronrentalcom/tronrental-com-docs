@@ -18,7 +18,7 @@ description: "Вывод TRX с вашего аккаунта"
 </ParamField>
 
 <ParamField body="amount_trx" type="string" required>
-  Сумма вывода в TRX
+  Сумма вывода в TRX. Не больше 6 знаков после запятой (1 SUN): сумма точнее отклоняется с `422`.
 </ParamField>
 
 <ParamField body="currency" type="string">
