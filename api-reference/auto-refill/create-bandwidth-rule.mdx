@@ -128,6 +128,7 @@ console.log(await resp.json());
 |--------|------|------|
 | `400` | `INVALID_ADDRESS` | `target_address` is not a valid TRON address |
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` is a smart contract |
+| `402` | `INSUFFICIENT_BALANCE` | A new account needs at least 10 TRX on the balance (`required_trx`) to create a rule; an account that has ever deposited 10 TRX in total is not asked. No rule was created |
 | `403` | `FORBIDDEN` | The API key lacks the `buy_bandwidth` scope |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | Your account already has a bandwidth rule for this address — edit it instead |
 | `422` | — | A field is missing or out of range, or `duration` is not `"1h"` or `"1d"` |

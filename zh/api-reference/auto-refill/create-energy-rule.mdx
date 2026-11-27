@@ -124,6 +124,7 @@ console.log(await resp.json());
 |--------|------|------|
 | `400` | `INVALID_ADDRESS` | `target_address` 不是有效的 TRON 地址 |
 | `400` | `CONTRACT_ADDRESS_NOT_SUPPORTED` | `target_address` 是智能合约 |
+| `402` | `INSUFFICIENT_BALANCE` | 新账户创建规则需要至少 10 TRX 余额（`required_trx`）；累计充值过 10 TRX 的账户不受此限制。未创建任何规则 |
 | `403` | `FORBIDDEN` | API 密钥缺少 `buy_energy` 权限 |
 | `409` | `AUTOREFILL_ADDRESS_TAKEN` | 您的账户已有该地址的能量规则——请改为编辑它 |
 | `422` | — | 缺少字段或字段超出范围，或 `duration` 不是 `"1h"` |
