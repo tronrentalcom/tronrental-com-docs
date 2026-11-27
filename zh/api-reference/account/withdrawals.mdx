@@ -18,7 +18,7 @@ description: "从您的账户提现 TRX"
 </ParamField>
 
 <ParamField body="amount_trx" type="string" required>
-  提现金额，以 TRX 计
+  提现金额，以 TRX 计。小数点后最多 6 位（1 SUN）：更精细的金额会以 `422` 被拒绝。
 </ParamField>
 
 <ParamField body="currency" type="string">

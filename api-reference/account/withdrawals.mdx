@@ -18,7 +18,7 @@ Withdraws TRX to any TRON address. Fee: 1 TRX.
 </ParamField>
 
 <ParamField body="amount_trx" type="string" required>
-  Amount to withdraw in TRX
+  Amount to withdraw in TRX. At most 6 decimal places (1 SUN): a finer amount is refused with `422`.
 </ParamField>
 
 <ParamField body="currency" type="string">
